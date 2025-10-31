@@ -42,11 +42,14 @@ A private artist portal where approved artists can log in, upload artwork, view 
 
 ### Environment Variables
 Required secrets:
+- `SESSION_SECRET`: Session secret (already configured)
+- `ADMIN_BOOTSTRAP_SECRET`: Secret for creating first admin account (already configured)
+
+Optional secrets (for production features):
 - `SUPABASE_URL`: Your Supabase project URL
 - `SUPABASE_KEY`: Your Supabase anon/public API key
 - `SHOPIFY_SHOP_URL`: Your Shopify store URL
 - `SHOPIFY_ACCESS_TOKEN`: Shopify Admin API access token
-- `SESSION_SECRET`: Session secret (already configured)
 
 ### Database Setup
 If using Supabase, create the following tables:
@@ -92,6 +95,9 @@ CREATE TABLE artworks (
 ```
 
 ### Initial Admin Setup
+
+**Important Security Note:** The admin creation endpoint is protected by the `ADMIN_BOOTSTRAP_SECRET` environment variable. This prevents unauthorized users from creating admin accounts.
+
 To create the first admin account, run:
 ```bash
 npx tsx server/seed-admin.ts
@@ -102,6 +108,14 @@ Default admin credentials:
 - Password: admin123
 
 **Important:** Change these credentials after first login!
+
+**Security Features:**
+- Admin creation requires `ADMIN_BOOTSTRAP_SECRET` header
+- Session-based authentication with HTTP-only cookies
+- Session regeneration on login prevents session fixation
+- CSRF protection with SameSite cookies
+- Password hashing with bcrypt (10 rounds)
+- Role-based access control (artist/admin)
 
 ## User Workflows
 
@@ -165,11 +179,23 @@ Default admin credentials:
 - File uploads are stored in the `/uploads` directory
 - Images are served statically from `/uploads/:filename`
 
-## Recent Changes
+## Recent Changes (October 31, 2025)
 
-- Complete artist portal implementation
-- Supabase integration for data persistence
-- Shopify integration for approved artwork
-- Beautiful, responsive UI following design guidelines
-- Authentication with protected routes
-- Admin approval workflow for both artists and artwork
+### Security Hardening
+- ✅ Implemented session-based authentication with express-session
+- ✅ Added authentication middleware (requireAuth, requireArtist, requireAdmin)
+- ✅ Protected all API endpoints with proper authorization checks
+- ✅ Session cookies configured with sameSite: 'lax' and secure flag
+- ✅ Session regeneration on login to prevent session fixation attacks
+- ✅ Admin creation endpoint secured with ADMIN_BOOTSTRAP_SECRET
+- ✅ Removed client-supplied user IDs - all authorization server-side
+- ✅ Password hashing with bcrypt
+
+### Features
+- ✅ Complete artist portal implementation
+- ✅ Supabase integration for data persistence (optional)
+- ✅ Shopify integration for approved artwork (optional)
+- ✅ Beautiful, responsive UI following design guidelines
+- ✅ Authentication with protected routes
+- ✅ Admin approval workflow for both artists and artwork
+- ✅ In-memory storage as default (no database setup required)

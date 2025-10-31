@@ -67,7 +67,7 @@ export const insertArtworkSchema = createInsertSchema(artworks).omit({
   title: z.string().min(1),
   description: z.string().optional(),
   tags: z.array(z.string()).default([]),
-  imageUrl: z.string().url(),
+  imageUrl: z.string().min(1), // Accept both URLs and paths
 });
 
 export const updateArtworkSchema = z.object({

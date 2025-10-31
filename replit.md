@@ -96,18 +96,19 @@ CREATE TABLE artworks (
 
 ### Initial Admin Setup
 
-**Important Security Note:** The admin creation endpoint is protected by the `ADMIN_BOOTSTRAP_SECRET` environment variable. This prevents unauthorized users from creating admin accounts.
-
-To create the first admin account, run:
-```bash
-npx tsx server/seed-admin.ts
-```
+**Automatic Bootstrap:** The application automatically creates a default admin account on startup if one doesn't exist.
 
 Default admin credentials:
 - Email: admin@example.com
 - Password: admin123
 
 **Important:** Change these credentials after first login!
+
+**Manual Admin Creation:**
+If you need to manually create an admin account, the `/api/admins/create` endpoint is protected by the `ADMIN_BOOTSTRAP_SECRET` environment variable. Run:
+```bash
+npx tsx server/seed-admin.ts
+```
 
 **Security Features:**
 - Admin creation requires `ADMIN_BOOTSTRAP_SECRET` header

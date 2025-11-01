@@ -11,6 +11,35 @@ import {
 import { randomUUID } from "crypto";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
 
+// Helper functions to convert between camelCase (TypeScript) and snake_case (Supabase)
+function toSnakeCase(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (obj instanceof Date) return obj; // Preserve Date objects
+  if (Array.isArray(obj)) return obj.map(toSnakeCase);
+  if (typeof obj !== 'object') return obj;
+  
+  const result: any = {};
+  for (const key in obj) {
+    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    result[snakeKey] = toSnakeCase(obj[key]); // Recursively convert nested objects
+  }
+  return result;
+}
+
+function toCamelCase(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (obj instanceof Date) return obj; // Preserve Date objects
+  if (Array.isArray(obj)) return obj.map(toCamelCase);
+  if (typeof obj !== 'object') return obj;
+  
+  const result: any = {};
+  for (const key in obj) {
+    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    result[camelKey] = toCamelCase(obj[key]); // Recursively convert nested objects
+  }
+  return result;
+}
+
 export interface IStorage {
   // Artist methods
   getArtist(id: string): Promise<Artist | undefined>;
@@ -41,7 +70,7 @@ class SupabaseStorage implements IStorage {
       .eq("id", id)
       .single();
     if (error) return undefined;
-    return data as Artist;
+    return toCamelCase(data) as Artist;
   }
 
   async getArtistByEmail(email: string): Promise<Artist | undefined> {
@@ -51,7 +80,7 @@ class SupabaseStorage implements IStorage {
       .eq("email", email)
       .single();
     if (error) return undefined;
-    return data as Artist;
+    return toCamelCase(data) as Artist;
   }
 
   async getAllArtists(): Promise<Artist[]> {
@@ -60,28 +89,28 @@ class SupabaseStorage implements IStorage {
       .select("*")
       .order("created_at", { ascending: false });
     if (error) return [];
-    return data as Artist[];
+    return toCamelCase(data) as Artist[];
   }
 
   async createArtist(insertArtist: InsertArtist): Promise<Artist> {
     const { data, error } = await supabase
       .from("artists")
-      .insert([insertArtist])
+      .insert([toSnakeCase(insertArtist)])
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return data as Artist;
+    return toCamelCase(data) as Artist;
   }
 
   async updateArtist(id: string, updates: Partial<Artist>): Promise<Artist> {
     const { data, error } = await supabase
       .from("artists")
-      .update(updates)
+      .update(toSnakeCase(updates))
       .eq("id", id)
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return data as Artist;
+    return toCamelCase(data) as Artist;
   }
 
   async getAdmin(id: string): Promise<Admin | undefined> {
@@ -91,7 +120,7 @@ class SupabaseStorage implements IStorage {
       .eq("id", id)
       .single();
     if (error) return undefined;
-    return data as Admin;
+    return toCamelCase(data) as Admin;
   }
 
   async getAdminByEmail(email: string): Promise<Admin | undefined> {
@@ -101,17 +130,17 @@ class SupabaseStorage implements IStorage {
       .eq("email", email)
       .single();
     if (error) return undefined;
-    return data as Admin;
+    return toCamelCase(data) as Admin;
   }
 
   async createAdmin(insertAdmin: InsertAdmin): Promise<Admin> {
     const { data, error } = await supabase
       .from("admins")
-      .insert([insertAdmin])
+      .insert([toSnakeCase(insertAdmin)])
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return data as Admin;
+    return toCamelCase(data) as Admin;
   }
 
   async getArtwork(id: string): Promise<Artwork | undefined> {
@@ -121,7 +150,7 @@ class SupabaseStorage implements IStorage {
       .eq("id", id)
       .single();
     if (error) return undefined;
-    return data as Artwork;
+    return toCamelCase(data) as Artwork;
   }
 
   async getArtworksByArtist(artistId: string): Promise<Artwork[]> {
@@ -131,7 +160,7 @@ class SupabaseStorage implements IStorage {
       .eq("artist_id", artistId)
       .order("created_at", { ascending: false });
     if (error) return [];
-    return data as Artwork[];
+    return toCamelCase(data) as Artwork[];
   }
 
   async getAllArtworks(): Promise<ArtworkWithArtist[]> {
@@ -143,28 +172,30 @@ class SupabaseStorage implements IStorage {
       `)
       .order("created_at", { ascending: false });
     if (error) return [];
-    return data as any;
+    return toCamelCase(data) as ArtworkWithArtist[];
   }
 
   async createArtwork(insertArtwork: InsertArtwork): Promise<Artwork> {
     const { data, error } = await supabase
       .from("artworks")
-      .insert([{ ...insertArtwork, artist_id: insertArtwork.artistId }])
+      .insert([toSnakeCase(insertArtwork)])
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return data as Artwork;
+    return toCamelCase(data) as Artwork;
   }
 
   async updateArtwork(id: string, updates: Partial<Artwork>): Promise<Artwork> {
+    const snakeUpdates = toSnakeCase(updates);
+    snakeUpdates.updated_at = new Date().toISOString();
     const { data, error } = await supabase
       .from("artworks")
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(snakeUpdates)
       .eq("id", id)
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return data as Artwork;
+    return toCamelCase(data) as Artwork;
   }
 }
 

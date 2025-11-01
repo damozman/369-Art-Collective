@@ -41,15 +41,17 @@ A private artist portal where approved artists can log in, upload artwork, view 
 - Shopify store with Admin API access
 
 ### Environment Variables
-Required secrets:
-- `SESSION_SECRET`: Session secret (already configured)
-- `ADMIN_BOOTSTRAP_SECRET`: Secret for creating first admin account (already configured)
+**Required secrets:**
+- `SESSION_SECRET`: Session secret (configured)
+- `ADMIN_BOOTSTRAP_SECRET`: Secret for creating first admin account (configured)
+- `SUPABASE_URL`: Your Supabase project URL (configured)
+- `SUPABASE_KEY`: Your Supabase anon/public API key (configured)
 
-Optional secrets (for production features):
-- `SUPABASE_URL`: Your Supabase project URL
-- `SUPABASE_KEY`: Your Supabase anon/public API key
+**Optional secrets:**
 - `SHOPIFY_SHOP_URL`: Your Shopify store URL
 - `SHOPIFY_ACCESS_TOKEN`: Shopify Admin API access token
+
+**Note:** The app uses Supabase for persistent storage. If Supabase credentials are not configured, it falls back to in-memory storage (data lost on restart).
 
 ### Database Setup
 If using Supabase, create the following tables:
@@ -180,7 +182,16 @@ npx tsx server/seed-admin.ts
 - File uploads are stored in the `/uploads` directory
 - Images are served statically from `/uploads/:filename`
 
-## Recent Changes (October 31, 2025)
+## Recent Changes
+
+### November 1, 2025 - Supabase Integration
+- ✅ Connected to Supabase for persistent database storage
+- ✅ Created database tables (artists, admins, artworks)
+- ✅ Configured automatic admin account bootstrap in Supabase
+- ✅ All data now persists across server restarts
+- ✅ Fallback to in-memory storage if Supabase not configured
+
+### October 31, 2025 - Security & Core Features
 
 ### Security Hardening
 - ✅ Implemented session-based authentication with express-session

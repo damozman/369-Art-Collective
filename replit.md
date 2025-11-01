@@ -184,6 +184,12 @@ npx tsx server/seed-admin.ts
 
 ## Recent Changes
 
+### November 1, 2025 - Registration Flow Fix
+- ✅ Fixed artist registration to automatically log in users
+- ✅ Registration now creates backend session and redirects to /artist/pending
+- ✅ Improved case conversion helpers to handle nested objects recursively
+- ✅ Fixed MemStorage type compatibility issue
+
 ### November 1, 2025 - Supabase Integration
 - ✅ Connected to Supabase for persistent database storage
 - ✅ Created database tables (artists, admins, artworks)

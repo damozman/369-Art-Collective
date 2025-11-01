@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth-context";
 import { Palette, Loader2 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Register() {
   const [, setLocation] = useLocation();
+  const { login } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,12 +37,18 @@ export default function Register() {
         throw new Error(error.message || "Registration failed");
       }
 
+      const artist = await response.json();
+      
+      // Automatically log in the user
+      login({ ...artist, type: "artist" });
+
       toast({
         title: "Registration successful!",
-        description: "Your account is pending admin approval. You'll be able to log in once approved.",
+        description: "Your account is pending admin approval.",
       });
 
-      setLocation("/login");
+      // Redirect to pending approval page
+      setLocation("/artist/pending");
     } catch (error: any) {
       toast({
         title: "Registration failed",

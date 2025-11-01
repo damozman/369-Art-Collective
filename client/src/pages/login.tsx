@@ -48,7 +48,10 @@ export default function Login() {
         description: `Logged in as ${user.name}`,
       });
 
-      setLocation(activeTab === "artist" ? "/artist/dashboard" : "/admin/dashboard");
+      // Use setTimeout to ensure state updates before navigation
+      setTimeout(() => {
+        setLocation(activeTab === "artist" ? "/artist/dashboard" : "/admin/dashboard");
+      }, 0);
     } catch (error: any) {
       toast({
         title: "Login failed",

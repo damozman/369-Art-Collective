@@ -47,8 +47,10 @@ export default function Register() {
         description: "Your account is pending admin approval.",
       });
 
-      // Redirect to pending approval page
-      setLocation("/artist/pending");
+      // Use setTimeout to ensure state updates before navigation
+      setTimeout(() => {
+        setLocation("/artist/pending");
+      }, 0);
     } catch (error: any) {
       toast({
         title: "Registration failed",

@@ -94,8 +94,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         password: hashedPassword,
       });
 
-      const { password, ...artistData } = artist;
-      res.status(201).json(artistData);
+      // Regenerate session and automatically log in the new artist
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error("Session regeneration error:", err);
+          return res.status(500).json({ message: "Registration failed" });
+        }
+
+        // Set session
+        req.session.user = {
+          id: artist.id,
+          email: artist.email,
+          name: artist.name,
+          type: "artist",
+          approved: artist.approved,
+        };
+
+        const { password, ...artistData } = artist;
+        res.status(201).json(artistData);
+      });
     } catch (error: any) {
       console.error("Artist registration error:", error);
       res.status(400).json({ message: error.message || "Registration failed" });

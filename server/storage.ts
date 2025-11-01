@@ -290,6 +290,7 @@ class MemStorage implements IStorage {
     const artwork: Artwork = {
       ...insertArtwork,
       id,
+      description: insertArtwork.description ?? null,
       status: "pending",
       rejectionReason: null,
       shopifyProductId: null,

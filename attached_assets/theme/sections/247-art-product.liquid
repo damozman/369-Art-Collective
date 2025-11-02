@@ -1,0 +1,29 @@
+
+{% comment %}
+247PN Art Product Section
+Assign this section to art products. Presents format/finish/size selectors,
+adds framing options, and supports digital download selection.
+{% endcomment %}
+
+<section class="247pn-art-product">
+  <div class="product__media">
+    {% render 'product-media', product: product %}
+  </div>
+
+  <div class="product__info">
+    <h1 class="product__title">{{ product.title }}</h1>
+    <div class="product__vendor">by {{ product.vendor }}</div>
+
+    {% render '247-art-options', product: product %}
+
+    <form method="post" action="/cart/add" id="add-to-cart-form" enctype="multipart/form-data">
+      <input type="hidden" name="id" id="selected-variant-id" value="{{ product.selected_or_first_available_variant.id }}">
+      {% render '247-art-lineitem-properties' %}
+      <button type="submit" class="button button--primary">Add to cart</button>
+    </form>
+
+    {% render '247-merch-upsell', product: product %}
+  </div>
+</section>
+
+<script src="{{ '247-art.js' | asset_url }}" defer="defer"></script>

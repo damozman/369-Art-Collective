@@ -1,0 +1,39 @@
+{
+  "finishes": [
+    "Paper",
+    "Canvas",
+    "Metal"
+  ],
+  "sizes": [
+    "8x10",
+    "12x16",
+    "18x24",
+    "24x36"
+  ],
+  "providers": {
+    "manual": {
+      "enabled": true
+    },
+    "printify": {
+      "enabled": false,
+      "shop_id": "",
+      "api_key": ""
+    },
+    "printful": {
+      "enabled": false,
+      "api_key": ""
+    }
+  },
+  "routing": {
+    "default_provider": "manual",
+    "per_finish": {
+      "Paper": "manual",
+      "Canvas": "manual",
+      "Metal": "printify"
+    }
+  },
+  "default_tags": [
+    "New"
+  ],
+  "_sku_docs": "ART-{artistShort}-{artworkId}-{size}-{finish}"
+}

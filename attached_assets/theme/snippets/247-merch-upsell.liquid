@@ -1,0 +1,11 @@
+
+{%- comment -%}
+Upsell block: link to merch collection filtered by artist or artwork tag.
+Ensure you create a collection handle like 'artist-{{ product.vendor | handle }}-merch'
+{%- endcomment -%}
+<div class="upsell">
+  <h3>Make it yours</h3>
+  <ul>
+    <li><a href="/collections/artist-{{ product.vendor | handle }}-merch">Shop {{ product.vendor }} merch</a></li>
+  </ul>
+</div>

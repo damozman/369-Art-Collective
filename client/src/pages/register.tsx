@@ -20,7 +20,7 @@ export default function Register() {
 
   const form = useForm<InsertArtist>({
     resolver: zodResolver(insertArtistSchema),
-    defaultValues: { email: "", password: "", name: "" },
+    defaultValues: { email: "", password: "", name: "", artistShort: "" },
   });
 
   async function onSubmit(data: InsertArtist) {
@@ -106,6 +106,29 @@ export default function Register() {
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="artistShort"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Artist Initials</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="JS"
+                          maxLength={10}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                          data-testid="input-artist-short"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <p className="text-xs text-muted-foreground">
+                        2-3 uppercase letters/numbers for product SKUs (e.g., "JS" or "JH")
+                      </p>
                     </FormItem>
                   )}
                 />

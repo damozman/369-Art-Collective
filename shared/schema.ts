@@ -9,6 +9,7 @@ export const artists = pgTable("artists", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
+  artistShort: text("artist_short").notNull(), // Initials for SKU generation (e.g., "JH")
   approved: boolean("approved").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -45,6 +46,7 @@ export const insertArtistSchema = createInsertSchema(artists).omit({
   email: z.string().email(),
   password: z.string().min(6),
   name: z.string().min(1),
+  artistShort: z.string().min(1).max(10).regex(/^[A-Z0-9]+$/, "Must be uppercase letters/numbers only"),
 });
 
 export const insertAdminSchema = createInsertSchema(admins).omit({

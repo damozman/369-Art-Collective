@@ -12,7 +12,7 @@ import {
   updateArtworkSchema,
   loginSchema,
 } from "@shared/schema";
-import { createDraftProduct, isShopifyConfigured } from "./lib/shopify";
+import { createDraftProduct, createArtworkProduct, isShopifyConfigured } from "./lib/shopify";
 import { requireAuth, requireArtist, requireAdmin } from "./middleware/auth";
 
 // Ensure uploads directory exists
@@ -353,9 +353,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Artwork not found" });
       }
 
+      // Get artist information
+      const artist = await storage.getArtist(artwork.artistId);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
       let shopifyProductId = null;
 
-      // Create Shopify product if configured
+      // Create Shopify product with variants if configured
       if (isShopifyConfigured()) {
         try {
           const baseUrl = process.env.REPL_SLUG 
@@ -366,14 +372,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? artwork.imageUrl 
             : `${baseUrl}${artwork.imageUrl}`;
 
-          const shopifyProduct = await createDraftProduct({
+          const shopifyProduct = await createArtworkProduct({
             title: artwork.title,
-            body_html: artwork.description || "",
-            vendor: "Artist Portal",
-            product_type: "Artwork",
-            tags: artwork.tags?.join(", ") || "",
-            status: "draft",
-            images: [{ src: imageUrl }],
+            description: artwork.description || undefined,
+            artistName: artist.name,
+            artistShort: artist.artistShort,
+            artworkId: id,
+            imageUrl,
+            tags: artwork.tags || [],
           });
 
           shopifyProductId = shopifyProduct.product.id.toString();

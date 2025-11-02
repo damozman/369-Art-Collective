@@ -1,0 +1,13 @@
+
+# Create product/variant metafield definitions via GraphQL (use Shopify Admin GraphiQL app)
+# Product metafields
+mutation {
+  metafieldsSet(metafields: [
+    {ownerId: "gid://shopify/Shop/1", namespace: "247pn", key: "artist_id", type: "single_line_text_field", value: "example"},
+    {ownerId: "gid://shopify/Shop/1", namespace: "247pn", key: "artwork_id", type: "single_line_text_field", value: "example"},
+    {ownerId: "gid://shopify/Shop/1", namespace: "247pn", key: "finish", type: "single_line_text_field", value: "example"},
+    {ownerId: "gid://shopify/Shop/1", namespace: "247pn", key: "provider", type: "single_line_text_field", value: "manual"},
+    {ownerId: "gid://shopify/Shop/1", namespace: "247pn", key: "provider_product_id", type: "single_line_text_field", value: "example"}
+  ]) { userErrors { field message } }
+}
+# Variant metafields similar: size, finish, provider_variant_id

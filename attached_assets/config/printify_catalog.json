@@ -1,0 +1,32 @@
+{
+  "Mug 11oz": {
+    "blueprint_id": 6,
+    "options": {
+      "size": [
+        "11oz"
+      ]
+    }
+  },
+  "Bella+Canvas 3001 Tee": {
+    "blueprint_id": 18,
+    "options": {
+      "size": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ]
+    }
+  },
+  "Hoodie 18500": {
+    "blueprint_id": 24,
+    "options": {
+      "size": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ]
+    }
+  }
+}

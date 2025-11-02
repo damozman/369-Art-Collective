@@ -1,0 +1,49 @@
+
+{%- comment -%}
+Options UI: Format (Digital / Physical), Size, Finish, Framing.
+Assumes variants are Size × Finish for physical. Digital handled via line properties.
+{%- endcomment -%}
+
+<div class="247pn-options">
+  <div class="field">
+    <label>Format</label>
+    <div class="radios">
+      <label><input type="radio" name="properties[Format]" value="Digital" data-format="digital"> Digital Download</label>
+      <label><input type="radio" name="properties[Format]" value="Physical" data-format="physical" checked> Physical Print</label>
+    </div>
+  </div>
+
+  <div class="field" data-physical-only>
+    <label>Finish</label>
+    <div class="radios">
+      {% assign finishes = 'Paper,Canvas,Metal' | split: ',' %}
+      {% for f in finishes %}
+        <label><input type="radio" name="properties[Finish]" value="{{ f }}" data-finish="{{ f }}" {% if forloop.first %}checked{% endif %}> {{ f }}</label>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="field" data-physical-only>
+    <label>Size</label>
+    <select name="properties[Size]" id="size-select">
+      {% assign sizes = '8x10,12x16,18x24,24x36' | split: ',' %}
+      {% for s in sizes %}
+        <option value="{{ s }}">{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="field" data-physical-only>
+    <label>Frame</label>
+    <select name="properties[Frame]">
+      <option value="No Frame" selected>No Frame</option>
+      <option value="Black Classic">Black Classic</option>
+      <option value="White Classic">White Classic</option>
+      <option value="Natural Wood">Natural Wood</option>
+    </select>
+  </div>
+
+  <div class="field" data-digital-only style="display:none">
+    <p>Digital download includes 1 high-res file for personal use.</p>
+  </div>
+</div>

@@ -266,22 +266,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create account link for onboarding
-      const accountLinkUrl = await stripeConnectService.createAccountLink({
+      // Create account link for onboarding (pass existing accountId if available)
+      const { url, accountId: newAccountId } = await stripeConnectService.createAccountLink({
         artistId: artist.id,
         artistEmail: artist.email,
+        stripeAccountId: accountId || undefined,
         refreshUrl,
         returnUrl,
       });
 
-      // Update artist with pending status
-      if (accountId) {
+      // Save the account ID to artist record if it was just created
+      if (!accountId && newAccountId) {
+        await storage.updateArtist(artist.id, {
+          stripeAccountId: newAccountId,
+          stripeAccountStatus: 'pending',
+        });
+      } else if (accountId) {
+        // Update existing artist with pending status
         await storage.updateArtist(artist.id, {
           stripeAccountStatus: 'pending',
         });
       }
 
-      res.json({ url: accountLinkUrl });
+      res.json({ url });
     } catch (error: any) {
       console.error("Stripe Connect URL error:", error);
       res.status(500).json({ message: error.message || "Failed to generate connect URL" });

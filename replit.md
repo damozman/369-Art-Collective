@@ -1,20 +1,45 @@
-# Artist Portal
+# 247 Print Network - Artist Portal & POD Marketplace
 
-A private artist portal where approved artists can log in, upload artwork, view their submissions, and track status. Admins can review uploads, approve or reject them, and automatically push approved art into Shopify as draft products.
+An artist-powered print-on-demand marketplace where artists upload artwork, admins approve submissions, and approved art automatically becomes POD products through Printify integration with automated fulfillment and tiered royalty payouts.
+
+## Vision
+
+Building a **creator-powered marketplace empire** where:
+- Artists become your product team (they upload the art)
+- Artists become your marketing team (referral bonuses for driving traffic)
+- Artists recruit more artists (network effect with recruitment bonuses)
+- Automated royalties incentivize performance (30% → 45% tiers based on sales)
+- Zero inventory - all print-on-demand through Printify
+- Automated fulfillment and payouts - hands-off operation at scale
 
 ## Features
 
-### MVP Features (Completed)
+### Phase 1: Foundation (In Progress)
 - ✅ Artist registration and login system with approval workflow
 - ✅ Admin dashboard to approve/reject artist accounts
 - ✅ Artwork upload form with title, description, tags, and image file (using Multer)
 - ✅ Artist dashboard showing all their submissions with status (pending, approved, rejected)
 - ✅ Admin review queue to view all pending artwork submissions
-- ✅ Approve artwork button that creates draft product in Shopify via Admin API
-- ✅ Reject artwork button with basic status update
-- ✅ Supabase integration for storing artist profiles, artwork metadata, and submission status
-- ✅ Clean, professional UI with separate artist and admin views
-- ✅ Image file storage and display for uploaded artwork
+- ✅ Database schema for orders, sales, royalties, referrals, and payouts
+- 🚧 **Printify API integration** (In Progress)
+- 🚧 Approve artwork → creates products in both Printify and Shopify
+- 🚧 Automated order fulfillment through Printify
+
+### Phase 2: Revenue & Automation (Planned)
+- ⏳ Shopify order webhooks capture sales
+- ⏳ Tiered royalty system (30% → 35% → 40% → 45% based on monthly sales)
+- ⏳ UTM tracking for artist referral links (+5% bonus)
+- ⏳ Artist recruitment tracking (5% of recruited artist's royalties)
+- ⏳ Stripe Connect integration for automated payouts
+- ⏳ Artist earnings dashboard with tier progress
+
+### Phase 3: Growth & Empire Mode (Planned)
+- ⏳ Public artist profile pages (`/creators/[artist-name]`) for SEO
+- ⏳ Artist referral link generator
+- ⏳ Tiered memberships (Free/Pro/Premium for artists)
+- ⏳ Digital downloads (wallpapers, brushes)
+- ⏳ Limited edition prints
+- ⏳ Admin empire dashboard (revenue, artist performance, referral networks)
 
 ## Tech Stack
 
@@ -30,7 +55,9 @@ A private artist portal where approved artists can log in, upload artwork, view 
 - Express.js with TypeScript
 - Multer for file uploads
 - Supabase for database (PostgreSQL)
-- Shopify Admin API for product creation
+- **Printify API** for POD products and fulfillment
+- Shopify Admin API for storefront products
+- Stripe Connect for automated artist payouts
 - Bcrypt for password hashing
 
 ## Getting Started
@@ -47,11 +74,16 @@ A private artist portal where approved artists can log in, upload artwork, view 
 - `SUPABASE_URL`: Your Supabase project URL (configured)
 - `SUPABASE_KEY`: Your Supabase anon/public API key (configured)
 
-**Optional secrets:**
-- `SHOPIFY_SHOP_URL`: Your Shopify store URL
-- `SHOPIFY_ACCESS_TOKEN`: Shopify Admin API access token
+**Required for full functionality:**
+- `SHOPIFY_SHOP_URL`: Your Shopify store URL (configured)
+- `SHOPIFY_ACCESS_TOKEN`: Shopify Admin API access token (configured)
+- `PRINTIFY_API_TOKEN`: Printify API token for POD integration (configured)
 
-**Note:** The app uses Supabase for persistent storage. If Supabase credentials are not configured, it falls back to in-memory storage (data lost on restart).
+**Coming soon:**
+- `STRIPE_SECRET_KEY`: Stripe API key for payments
+- `STRIPE_CONNECT_CLIENT_ID`: Stripe Connect for artist payouts
+
+**Note:** The app uses Supabase for persistent storage. Database tables are automatically created via Drizzle schema push.
 
 ### Database Setup
 If using Supabase, create the following tables:

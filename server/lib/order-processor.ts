@@ -178,8 +178,8 @@ export async function processShopifyOrder(shopifyOrder: ShopifyOrder) {
         console.log(`Referral bonus applied: +5% for artist ${artist.name}`);
       }
 
-      // Calculate recruitment bonus if artist was recruited
-      const recruitmentBonus = await calculateRecruitmentBonus(artist.id, productPrice);
+      // Calculate recruitment bonus if artist was recruited (5% of their base royalty goes to recruiter)
+      const recruitmentData = await calculateRecruitmentBonus(artist.id, royaltyData.baseRoyalty);
 
       // Create order record with UTM tracking
       const order = await storage.createOrder({
@@ -210,9 +210,27 @@ export async function processShopifyOrder(shopifyOrder: ShopifyOrder) {
         royaltyTier: royaltyData.royaltyTier,
         baseRoyalty: royaltyData.baseRoyalty.toFixed(2),
         referralBonus: royaltyData.referralBonus.toFixed(2),
-        recruitmentBonus: recruitmentBonus.toFixed(2),
-        totalEarnings: (royaltyData.totalEarnings + recruitmentBonus).toFixed(2),
+        recruitmentBonus: '0', // This sale doesn't earn recruitment bonus, it generates it for the recruiter
+        totalEarnings: royaltyData.totalEarnings.toFixed(2),
       });
+      
+      // If artist was recruited, create a separate bonus sale for the recruiter
+      if (recruitmentData.recruiterId) {
+        const recruiterBonus = await storage.createSale({
+          orderId: order.id,
+          artistId: recruitmentData.recruiterId,
+          artworkId: artwork.id,
+          saleAmount: '0', // No direct sale, just bonus
+          profit: '0',
+          royaltyTier: 0,
+          baseRoyalty: '0',
+          referralBonus: '0',
+          recruitmentBonus: recruitmentData.recruitmentBonus.toFixed(2),
+          totalEarnings: recruitmentData.recruitmentBonus.toFixed(2),
+        });
+        
+        console.log(`Recruitment bonus created: ${recruiterBonus.id}, Recruiter earns: $${recruiterBonus.totalEarnings}`);
+      }
 
       console.log(`Sale recorded: ${sale.id}, Artist earns: $${sale.totalEarnings}`);
 

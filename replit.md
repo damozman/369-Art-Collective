@@ -14,7 +14,7 @@ Building a **creator-powered marketplace empire** where:
 
 ## Features
 
-### Phase 1: Foundation (90% Complete)
+### Phase 1: Foundation (COMPLETE ✅)
 - ✅ Artist registration and login system with approval workflow
 - ✅ Admin dashboard to approve/reject artist accounts
 - ✅ Artwork upload form with title, description, tags, and image file (using Multer)
@@ -26,15 +26,15 @@ Building a **creator-powered marketplace empire** where:
 - ✅ Shopify order webhook endpoint - captures customer orders
 - ✅ Order tracking system with tiered royalty calculation (30%-45%)
 - ✅ Sale tracking with artist earnings
+- ✅ **Artist Earnings Dashboard** - Complete with tier badges, progress bars, sales history
 - 🚧 Printify fulfillment automation (deferred to post-MVP)
 
 ### Phase 2: Revenue & Automation (Planned)
-- ⏳ Shopify order webhooks capture sales
-- ⏳ Tiered royalty system (30% → 35% → 40% → 45% based on monthly sales)
+- ✅ Shopify order webhooks capture sales
+- ✅ Tiered royalty system (30% → 35% → 40% → 45% based on monthly sales)
 - ⏳ UTM tracking for artist referral links (+5% bonus)
 - ⏳ Artist recruitment tracking (5% of recruited artist's royalties)
 - ⏳ Stripe Connect integration for automated payouts
-- ⏳ Artist earnings dashboard with tier progress
 
 ### Phase 3: Growth & Empire Mode (Planned)
 - ⏳ Public artist profile pages (`/creators/[artist-name]`) for SEO
@@ -200,6 +200,7 @@ npx tsx server/seed-admin.ts
 ### Artist Management
 - `GET /api/artists` - Get all artists (admin)
 - `POST /api/artists/:id/approve` - Approve artist (admin)
+- `GET /api/artists/:id/earnings` - Get artist earnings stats (artist)
 
 ### Artwork Management
 - `POST /api/upload` - Upload image file
@@ -218,6 +219,21 @@ npx tsx server/seed-admin.ts
 - Images are served statically from `/uploads/:filename`
 
 ## Recent Changes
+
+### November 6, 2025 - Artist Earnings Dashboard Complete ✅
+- ✅ **Complete earnings dashboard** at `/artist/earnings` showing all artist revenue metrics
+- ✅ **API endpoint** `GET /api/artists/:id/earnings` returns totals, monthly sales, tier, and sales history
+- ✅ **Beautiful UI with:**
+  - Tier badges (Bronze 30%, Silver 35%, Gold 40%, Platinum 45%)
+  - 4 stats cards: Total Earnings, Monthly Sales, Current Tier, Sales Count
+  - Progress bar showing dollar amount to next tier
+  - Sales history table with artwork titles, dates, amounts, tiers, and earnings
+- ✅ **Navigation:** "View Earnings" button added to artist dashboard
+- ✅ **Security:** Session-based auth ensures artists can only view their own earnings
+- ✅ **getSalesByArtist** storage method implemented in both Drizzle and in-memory storage
+- ✅ **End-to-end tested:** All UI components render correctly, navigation works
+- ✅ **Architect approved:** Production-ready implementation
+- 📝 **Critical fix:** Corrected React Query key pattern to use full endpoint path
 
 ### November 6, 2025 - Complete Drizzle ORM Migration (CRITICAL FIX)
 - ✅ **Fixed Supabase PostgREST schema cache bug** - Migrated ALL storage methods from Supabase JS client to Drizzle ORM

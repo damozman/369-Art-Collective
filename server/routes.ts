@@ -430,9 +430,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log("Printify product created:", printifyProductId);
         } catch (error: any) {
           console.error("Printify product creation failed:", error);
-          return res.status(500).json({ 
-            message: "Failed to create Printify product: " + error.message 
-          });
+          // Continue approval process even if Printify fails
+          // Admin can manually retry or use different image
         }
       }
 

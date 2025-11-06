@@ -12,6 +12,7 @@ import Register from "@/pages/register";
 import ArtistDashboard from "@/pages/artist-dashboard";
 import UploadArtwork from "@/pages/upload-artwork";
 import ArtistEarnings from "@/pages/artist-earnings";
+import ArtistReferrals from "@/pages/artist-referrals";
 import ArtistPending from "@/pages/artist-pending";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminArtists from "@/pages/admin-artists";
@@ -45,6 +46,12 @@ function Router() {
       <Route path="/artist/earnings">
         <ProtectedRoute requiredType="artist">
           <ArtistEarnings />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/artist/referrals">
+        <ProtectedRoute requiredType="artist">
+          <ArtistReferrals />
         </ProtectedRoute>
       </Route>
       

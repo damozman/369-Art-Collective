@@ -11,6 +11,7 @@ export const artists = pgTable("artists", {
   name: text("name").notNull(),
   artistShort: text("artist_short").notNull(), // Initials for SKU generation (e.g., "JH")
   approved: boolean("approved").notNull().default(false),
+  monthlySales: decimal("monthly_sales", { precision: 10, scale: 2 }).notNull().default('0'), // Current month sales for tier calculation
   stripeAccountId: text("stripe_account_id"), // Stripe Connect account ID for payouts
   referredBy: varchar("referred_by").references((): any => artists.id), // Which artist recruited them
   createdAt: timestamp("created_at").notNull().defaultNow(),

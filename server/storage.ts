@@ -1,4 +1,7 @@
 import {
+  artists,
+  artworks as artworksTable,
+  admins as adminsTable,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -10,6 +13,8 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
+import { db, isDatabaseConfigured } from "./lib/db";
+import { eq } from "drizzle-orm";
 
 // Helper functions to convert between camelCase (TypeScript) and snake_case (Supabase)
 function toSnakeCase(obj: any): any {
@@ -81,43 +86,42 @@ class SupabaseStorage implements IStorage {
   }
 
   async getArtistByEmail(email: string): Promise<Artist | undefined> {
-    const { data, error } = await supabase
-      .from("artists")
-      .select("*")
-      .eq("email", email)
-      .single();
-    if (error) return undefined;
-    return toCamelCase(data) as Artist;
+    // Use Drizzle ORM to bypass Supabase schema cache issues
+    const [artist] = await db
+      .select()
+      .from(artists)
+      .where(eq(artists.email, email))
+      .limit(1);
+    return artist;
   }
 
   async getAllArtists(): Promise<Artist[]> {
-    const { data, error } = await supabase
-      .from("artists")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) return [];
-    return toCamelCase(data) as Artist[];
+    // Use Drizzle ORM to bypass Supabase schema cache issues
+    const allArtists = await db
+      .select()
+      .from(artists)
+      .orderBy(artists.createdAt);
+    return allArtists;
   }
 
   async createArtist(insertArtist: InsertArtist): Promise<Artist> {
-    const { data, error } = await supabase
-      .from("artists")
-      .insert([toSnakeCase(insertArtist)])
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return toCamelCase(data) as Artist;
+    // Use Drizzle ORM to bypass Supabase schema cache issues
+    const [artist] = await db
+      .insert(artists)
+      .values(insertArtist)
+      .returning();
+    return artist;
   }
 
   async updateArtist(id: string, updates: Partial<Artist>): Promise<Artist> {
-    const { data, error } = await supabase
-      .from("artists")
-      .update(toSnakeCase(updates))
-      .eq("id", id)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return toCamelCase(data) as Artist;
+    // Use Drizzle ORM to bypass Supabase schema cache issues
+    const [updatedArtist] = await db
+      .update(artists)
+      .set(updates)
+      .where(eq(artists.id, id))
+      .returning();
+    if (!updatedArtist) throw new Error("Artist not found");
+    return updatedArtist;
   }
 
   async getAdmin(id: string): Promise<Admin | undefined> {

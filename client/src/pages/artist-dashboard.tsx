@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
-import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet } from "lucide-react";
+import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Artwork } from "@shared/schema";
 
@@ -54,6 +54,9 @@ export default function ArtistDashboard() {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => setLocation("/artist/settings")} data-testid="button-settings">
+                <Settings className="h-5 w-5" />
+              </Button>
               <ThemeToggle />
               <Button variant="ghost" size="icon" onClick={logout} data-testid="button-logout">
                 <LogOut className="h-5 w-5" />

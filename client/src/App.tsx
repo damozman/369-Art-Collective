@@ -15,8 +15,10 @@ import ArtistEarnings from "@/pages/artist-earnings";
 import ArtistReferrals from "@/pages/artist-referrals";
 import ArtistPayouts from "@/pages/artist-payouts";
 import ArtistPending from "@/pages/artist-pending";
+import ArtistSettings from "@/pages/artist-settings";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminArtists from "@/pages/admin-artists";
+import AdminArtistDetail from "@/pages/admin-artist-detail";
 import AdminEmpire from "@/pages/admin-empire";
 import NotFound from "@/pages/not-found";
 
@@ -63,6 +65,12 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
+      <Route path="/artist/settings">
+        <ProtectedRoute requiredType="artist">
+          <ArtistSettings />
+        </ProtectedRoute>
+      </Route>
+      
       <Route path="/admin/dashboard">
         <ProtectedRoute requiredType="admin">
           <AdminDashboard />
@@ -72,6 +80,12 @@ function Router() {
       <Route path="/admin/artists">
         <ProtectedRoute requiredType="admin">
           <AdminArtists />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/artists/:id">
+        <ProtectedRoute requiredType="admin">
+          <AdminArtistDetail />
         </ProtectedRoute>
       </Route>
       

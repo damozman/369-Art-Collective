@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
-import { ArrowLeft, CheckCircle, XCircle, Clock } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -154,18 +154,29 @@ export default function AdminArtists() {
                         {new Date(artist.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        {!artist.approved && (
+                        <div className="flex gap-2 justify-end">
                           <Button
                             size="sm"
-                            onClick={() => approveMutation.mutate(artist.id)}
-                            disabled={approveMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700"
-                            data-testid={`button-approve-${artist.id}`}
+                            variant="outline"
+                            onClick={() => setLocation(`/admin/artists/${artist.id}`)}
+                            data-testid={`button-view-${artist.id}`}
                           >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Approve
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
                           </Button>
-                        )}
+                          {!artist.approved && (
+                            <Button
+                              size="sm"
+                              onClick={() => approveMutation.mutate(artist.id)}
+                              disabled={approveMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700"
+                              data-testid={`button-approve-${artist.id}`}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

@@ -6,45 +6,45 @@
 import { storage } from "../storage";
 
 /**
- * Royalty tier structure:
- * - Tier 1 (0-10 sales/month): 30%
- * - Tier 2 (11-25 sales/month): 35%
- * - Tier 3 (26-50 sales/month): 40%
- * - Tier 4 (51+ sales/month): 45%
+ * Royalty tier structure (based on monthly sales AMOUNT):
+ * - Tier 1 ($0-$999): 30%
+ * - Tier 2 ($1000-$4999): 35%
+ * - Tier 3 ($5000-$9999): 40%
+ * - Tier 4 ($10,000+): 45%
  */
-export function getRoyaltyTierPercentage(monthlySalesCount: number): number {
-  if (monthlySalesCount >= 51) return 45;
-  if (monthlySalesCount >= 26) return 40;
-  if (monthlySalesCount >= 11) return 35;
-  return 30; // 0-10 sales
+export function getRoyaltyTierPercentage(monthlySalesAmount: number): number {
+  if (monthlySalesAmount >= 10000) return 45;
+  if (monthlySalesAmount >= 5000) return 40;
+  if (monthlySalesAmount >= 1000) return 35;
+  return 30; // $0-$999
 }
 
 /**
- * Get artist's current monthly sales count
- * MVP: Simple counter - can be enhanced later
+ * Get artist's current monthly sales amount (in dollars)
+ * Reads from artist.monthly_sales column (updated periodically)
  */
 export async function getArtistMonthlySales(artistId: string): Promise<number> {
-  // TODO: Query database for current month's sales
-  // For MVP, return 0 (all artists start at 30% tier)
-  return 0;
+  const artist = await storage.getArtist(artistId);
+  if (!artist || !artist.monthlySales) return 0;
+  return parseFloat(artist.monthlySales.toString());
 }
 
 /**
  * Calculate royalty for a sale
  * @param profit - Net profit after Printify costs and shipping
- * @param monthlySalesCount - Artist's current monthly sales count
+ * @param monthlySalesAmount - Artist's current monthly sales amount (in dollars)
  * @param hasReferralBonus - Whether the sale came from artist's referral link (+5%)
  * @returns Royalty breakdown
  */
 export function calculateRoyalty(
   profit: number,
-  monthlySalesCount: number,
+  monthlySalesAmount: number,
   hasReferralBonus: boolean = false
 ) {
-  const tierPercentage = getRoyaltyTierPercentage(monthlySalesCount);
+  const tierPercentage = getRoyaltyTierPercentage(monthlySalesAmount);
   const baseRoyalty = profit * (tierPercentage / 100);
   
-  // Referral bonus: +5% of profit if sale came from artist's UTM link
+  // Referral bonus: +5% of profit if sale came from artist's referral link
   const referralBonus = hasReferralBonus ? profit * 0.05 : 0;
   
   const totalEarnings = baseRoyalty + referralBonus;

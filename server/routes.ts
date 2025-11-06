@@ -226,6 +226,137 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== STRIPE CONNECT ROUTES =====
+
+  // Generate Stripe Connect account link for artist
+  app.get("/api/stripe/connect-url", requireArtist, async (req, res) => {
+    try {
+      const { stripeConnectService } = await import("./lib/stripe-connect");
+      const artist = req.user!;
+      
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const refreshUrl = `${baseUrl}/artist/payouts?refresh=true`;
+      const returnUrl = `${baseUrl}/artist/payouts?success=true`;
+
+      // Check if artist already has a connected account
+      let accountId = artist.stripeAccountId;
+      
+      if (!accountId) {
+        // Try to find existing account by artist ID
+        accountId = await stripeConnectService.getAccountByArtistId(artist.id);
+      }
+
+      if (accountId) {
+        // Get account status
+        const accountStatus = await stripeConnectService.getAccountStatus(accountId);
+        
+        // Update artist record with account ID and status
+        await storage.updateArtist(artist.id, {
+          stripeAccountId: accountId,
+          stripeAccountStatus: accountStatus.payouts_enabled ? 'active' : 'pending',
+        });
+
+        // If account is already active, return status
+        if (accountStatus.payouts_enabled) {
+          return res.json({
+            accountId,
+            status: 'active',
+            message: 'Stripe account already connected'
+          });
+        }
+      }
+
+      // Create account link for onboarding
+      const accountLinkUrl = await stripeConnectService.createAccountLink({
+        artistId: artist.id,
+        artistEmail: artist.email,
+        refreshUrl,
+        returnUrl,
+      });
+
+      // Update artist with pending status
+      if (accountId) {
+        await storage.updateArtist(artist.id, {
+          stripeAccountStatus: 'pending',
+        });
+      }
+
+      res.json({ url: accountLinkUrl });
+    } catch (error: any) {
+      console.error("Stripe Connect URL error:", error);
+      res.status(500).json({ message: error.message || "Failed to generate connect URL" });
+    }
+  });
+
+  // Handle Stripe Connect OAuth callback (called automatically by Stripe)
+  app.get("/api/stripe/connect-callback", async (req, res) => {
+    try {
+      const { stripeConnectService } = await import("./lib/stripe-connect");
+      const { code } = req.query;
+
+      if (!code) {
+        return res.status(400).json({ message: "Missing authorization code" });
+      }
+
+      // Note: In production, you would exchange the code for account ID
+      // For now, we're using Express accounts which don't require OAuth code exchange
+      res.redirect("/artist/payouts?success=true");
+    } catch (error: any) {
+      console.error("Stripe Connect callback error:", error);
+      res.redirect("/artist/payouts?error=true");
+    }
+  });
+
+  // Get artist's Stripe account status
+  app.get("/api/stripe/account-status", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      
+      if (!artist.stripeAccountId) {
+        return res.json({ connected: false });
+      }
+
+      const { stripeConnectService } = await import("./lib/stripe-connect");
+      const accountStatus = await stripeConnectService.getAccountStatus(artist.stripeAccountId);
+
+      // Update artist record with latest status
+      await storage.updateArtist(artist.id, {
+        stripeAccountStatus: accountStatus.payouts_enabled ? 'active' : 'pending',
+      });
+
+      res.json({
+        connected: true,
+        accountId: artist.stripeAccountId,
+        payoutsEnabled: accountStatus.payouts_enabled,
+        chargesEnabled: accountStatus.charges_enabled,
+        detailsSubmitted: accountStatus.details_submitted,
+        status: accountStatus.payouts_enabled ? 'active' : 'pending',
+      });
+    } catch (error: any) {
+      console.error("Account status error:", error);
+      res.status(500).json({ message: "Failed to get account status" });
+    }
+  });
+
+  // Get artist payout history
+  app.get("/api/artists/:id/payouts", requireArtist, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const artist = req.user!;
+
+      // Artists can only view their own payouts
+      if (artist.id !== id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const payouts = await storage.getPayoutsByArtist(id);
+      res.json(payouts);
+    } catch (error: any) {
+      console.error("Get payouts error:", error);
+      res.status(500).json({ message: "Failed to fetch payouts" });
+    }
+  });
+
   // ===== ADMIN ROUTES =====
 
   // Admin login
@@ -771,6 +902,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Get empire stats error:", error);
       res.status(500).json({ message: error.message || "Failed to fetch empire stats" });
+    }
+  });
+
+  // Admin: Process monthly payouts for all artists
+  app.post("/api/admin/process-payouts", requireAdmin, async (req, res) => {
+    try {
+      const { processPayouts } = await import("./lib/payout-processor");
+      
+      const result = await processPayouts();
+
+      res.json({
+        message: "Payouts processed successfully",
+        ...result,
+      });
+    } catch (error: any) {
+      console.error("Process payouts error:", error);
+      res.status(500).json({ message: error.message || "Failed to process payouts" });
+    }
+  });
+
+  // Admin: Get all payouts
+  app.get("/api/admin/payouts", requireAdmin, async (_req, res) => {
+    try {
+      const payouts = await storage.getAllPayouts();
+      res.json(payouts);
+    } catch (error: any) {
+      console.error("Get all payouts error:", error);
+      res.status(500).json({ message: "Failed to fetch payouts" });
     }
   });
 

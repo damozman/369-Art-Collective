@@ -58,13 +58,37 @@ export function calculateRoyalty(
 }
 
 /**
- * Calculate recruitment bonus (5% of recruited artist's royalties)
- * MVP: DEFERRED - Return 0 for now, implement post-launch
+ * Calculate recruitment bonus (5% of recruited artist's base royalty)
+ * When an artist recruits another artist, they earn 5% of that artist's base royalty on every sale
+ * 
+ * @param recruitedArtistId - The artist who made the sale
+ * @param baseRoyalty - The base royalty amount the recruited artist earned
+ * @returns Bonus amount for the recruiter (5% of base royalty)
  */
 export async function calculateRecruitmentBonus(
   recruitedArtistId: string,
-  saleAmount: number
-): Promise<number> {
-  // TODO: Implement recruitment bonus post-launch
-  return 0;
+  baseRoyalty: number
+): Promise<{
+  recruitmentBonus: number;
+  recruiterId: string | null;
+}> {
+  // Check if this artist was recruited by someone
+  const recruitedArtist = await storage.getArtist(recruitedArtistId);
+  
+  if (!recruitedArtist || !recruitedArtist.referredBy) {
+    return {
+      recruitmentBonus: 0,
+      recruiterId: null,
+    };
+  }
+  
+  // Calculate 5% of the recruited artist's base royalty
+  const recruitmentBonus = baseRoyalty * 0.05;
+  
+  console.log(`Recruitment bonus: Artist ${recruitedArtist.referredBy} earns $${recruitmentBonus.toFixed(2)} from recruiting ${recruitedArtistId}`);
+  
+  return {
+    recruitmentBonus: Number(recruitmentBonus.toFixed(2)),
+    recruiterId: recruitedArtist.referredBy,
+  };
 }

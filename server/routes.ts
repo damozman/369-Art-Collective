@@ -488,6 +488,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get artist earnings stats
+  app.get("/api/artists/:id/earnings", requireArtist, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify artist can only access their own earnings
+      if (req.session.user?.id !== id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const artist = await storage.getArtist(id);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Get all sales for this artist
+      const sales = await storage.getSalesByArtist(id);
+
+      // Calculate total earnings
+      const totalEarnings = sales.reduce((sum, sale) => {
+        return sum + parseFloat(sale.totalEarnings || '0');
+      }, 0);
+
+      // Get monthly sales amount for tier calculation
+      const monthlySales = parseFloat(artist.monthlySales || '0');
+
+      // Determine current tier
+      const { getRoyaltyTierPercentage } = await import("./lib/royalty-calculator");
+      const currentTier = getRoyaltyTierPercentage(monthlySales);
+
+      // Determine next tier threshold
+      let nextTierThreshold = 0;
+      let nextTierPercentage = 0;
+      if (monthlySales < 1000) {
+        nextTierThreshold = 1000;
+        nextTierPercentage = 35;
+      } else if (monthlySales < 5000) {
+        nextTierThreshold = 5000;
+        nextTierPercentage = 40;
+      } else if (monthlySales < 10000) {
+        nextTierThreshold = 10000;
+        nextTierPercentage = 45;
+      } else {
+        nextTierThreshold = 10000;
+        nextTierPercentage = 45; // Max tier
+      }
+
+      // Get sales with artwork details
+      const salesWithArtwork = await Promise.all(
+        sales.map(async (sale) => {
+          const artwork = await storage.getArtwork(sale.artworkId);
+          return {
+            ...sale,
+            artworkTitle: artwork?.title || 'Unknown Artwork',
+          };
+        })
+      );
+
+      res.json({
+        totalEarnings: totalEarnings.toFixed(2),
+        monthlySales: monthlySales.toFixed(2),
+        currentTier,
+        nextTierThreshold,
+        nextTierPercentage,
+        salesCount: sales.length,
+        sales: salesWithArtwork.slice(0, 20), // Recent 20 sales
+      });
+    } catch (error: any) {
+      console.error("Get earnings error:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch earnings" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

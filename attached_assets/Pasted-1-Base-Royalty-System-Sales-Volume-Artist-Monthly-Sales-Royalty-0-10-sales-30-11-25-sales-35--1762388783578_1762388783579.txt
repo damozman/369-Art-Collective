@@ -1,0 +1,60 @@
+1. Base Royalty System (Sales Volume)
+Artist Monthly Sales	Royalty %
+0–10 sales	30%
+11–25 sales	35%
+26–50 sales	40%
+50+ sales	45%+ (Premier Artist)
+
+This motivates them to actively promote their page to hit a higher bracket (like commission tiers in sales jobs).
+
+2. Referral-Based Royalty Boost (Traffic Source Bonus)
+
+If a customer buys because they clicked an artist’s link, that artist gets a bonus royalty percentage, because they helped acquire the customer.
+
+Traffic Source	Artist Royalty Bonus
+Direct store traffic (no referral)	Normal royalty (30–40%)
+Customer came from Artist’s personal link (UTM tracking)	+5% bonus royalty
+Artist brought in another artist who sells artwork	5% of referred artist’s royalties (lifetime or 12-month)
+
+Example:
+
+Print sells for $100
+
+Print cost = $40
+
+Base royalty = 35% ($35)
+
+Came from artist’s link = +5% ($5 bonus)
+
+Artist earns: $40 total
+
+You still keep: $20 per sale → scalable with volume
+
+3. Special Edition / High-Value Tier (Optional)
+
+For limited-edition or high-ticket art:
+
+Product Type	Artist Royalty
+Standard Prints	30–40%
+Limited Edition (numbered, signed, certificate)	40–50%
+Artist collaborates with brand / influencer	Custom % (profit-share)
+🧠 Why This System is Smart (Strategically & Financially)
+Benefit to Artist	Benefit to You
+They get paid more when they work harder or sell more	You don’t pay for ads — artists become your marketing team
+They bring in their audience	You get new customers for free
+Tiers create goals & competition	Artists stay motivated instead of becoming inactive
+Referral artist % creates a mini “network effect”	Artists recruit more artists for you (for free)
+Higher royalties = stronger loyalty	You become “the best paying platform” → faster artist signup → faster inventory growth
+📊 Example with Real Numbers:
+
+$120 art print sold via Artist’s link
+
+Component	Amount
+Sale price	$120
+Printify cost	-$45
+Artist base royalty (35%)	-$42
+Referral traffic bonus (+5%)	-$6
+Artist receives	$48
+You earn	$27
+
+You still keep 22% profit margin without spending on ads or content creation. That’s the genius.

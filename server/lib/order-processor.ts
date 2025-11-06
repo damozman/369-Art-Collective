@@ -42,6 +42,8 @@ interface ShopifyOrder {
     zip: string;
     phone?: string;
   };
+  landing_site?: string; // URL with UTM parameters
+  referring_site?: string;
 }
 
 /**
@@ -60,15 +62,67 @@ function parseSKU(sku: string): { artistShort: string; artworkId: string } | nul
 }
 
 /**
+ * Extract UTM parameters from landing site URL
+ */
+function extractUTMParams(landingSite?: string): {
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  referralCode?: string;
+} | null {
+  if (!landingSite) return null;
+  
+  try {
+    const url = new URL(landingSite);
+    const params = new URLSearchParams(url.search);
+    
+    const utmSource = params.get('utm_source') || undefined;
+    const utmMedium = params.get('utm_medium') || undefined;
+    const utmCampaign = params.get('utm_campaign') || undefined;
+    
+    // Check if utm_source contains a referral code
+    const referralCode = utmSource?.match(/^[A-Z]+-[A-Z0-9]{8}$/)?.[0];
+    
+    if (utmSource || utmMedium || utmCampaign) {
+      return {
+        utmSource,
+        utmMedium,
+        utmCampaign,
+        referralCode,
+      };
+    }
+  } catch (error) {
+    console.error('Error parsing landing site URL:', error);
+  }
+  
+  return null;
+}
+
+/**
  * Process a Shopify order
  * 1. Parse order data
- * 2. Create order records in database
- * 3. Calculate royalties for each line item
- * 4. Create sale records
- * 5. Submit to Printify for fulfillment
+ * 2. Extract UTM/referral tracking
+ * 3. Create order records in database
+ * 4. Calculate royalties for each line item (with +5% referral bonus if applicable)
+ * 5. Create sale records
+ * 6. Submit to Printify for fulfillment
  */
 export async function processShopifyOrder(shopifyOrder: ShopifyOrder) {
   console.log(`Processing Shopify order: ${shopifyOrder.id}`);
+  
+  // Extract UTM parameters and referral code
+  const utmParams = extractUTMParams(shopifyOrder.landing_site);
+  let referralArtist = null;
+  
+  if (utmParams?.referralCode) {
+    // Find artist by referral code
+    const allArtists = await storage.getAllArtists();
+    referralArtist = allArtists.find(a => a.referralCode === utmParams.referralCode);
+    
+    if (referralArtist) {
+      console.log(`Order referred by artist: ${referralArtist.name} (${referralArtist.referralCode})`);
+    }
+  }
 
   // Process each line item (could be multiple artworks in one order)
   for (const lineItem of shopifyOrder.line_items) {
@@ -111,20 +165,23 @@ export async function processShopifyOrder(shopifyOrder: ShopifyOrder) {
       const shippingCost = 5.00 * lineItem.quantity; // Placeholder - should calculate actual
       const profit = productPrice - printifyCost - shippingCost;
 
-      // Check for referral source (UTM tracking)
-      // TODO: Implement UTM tracking - for now assume no referral
-      const hasReferralBonus = false;
+      // Check for referral bonus (+5% if referred by another artist)
+      const hasReferralBonus = !!referralArtist && referralArtist.id !== artist.id;
 
       // Get artist's current monthly sales for tier calculation
       const monthlySales = await getArtistMonthlySales(artist.id);
 
-      // Calculate royalties
+      // Calculate royalties (with +5% bonus if referred)
       const royaltyData = calculateRoyalty(profit, monthlySales, hasReferralBonus);
+      
+      if (hasReferralBonus) {
+        console.log(`Referral bonus applied: +5% for artist ${artist.name}`);
+      }
 
       // Calculate recruitment bonus if artist was recruited
       const recruitmentBonus = await calculateRecruitmentBonus(artist.id, productPrice);
 
-      // Create order record
+      // Create order record with UTM tracking
       const order = await storage.createOrder({
         shopifyOrderId: shopifyOrder.id.toString(),
         artworkId: artwork.id,
@@ -133,7 +190,10 @@ export async function processShopifyOrder(shopifyOrder: ShopifyOrder) {
         printifyCost: printifyCost.toFixed(2),
         shippingCost: shippingCost.toFixed(2),
         profit: profit.toFixed(2),
-        referralSource: null, // TODO: Get from UTM parameters
+        utmSource: utmParams?.utmSource || null,
+        utmMedium: utmParams?.utmMedium || null,
+        utmCampaign: utmParams?.utmCampaign || null,
+        referralArtistId: referralArtist?.id || null,
         referralBonus: hasReferralBonus,
         status: "pending",
       });

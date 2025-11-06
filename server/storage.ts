@@ -76,13 +76,13 @@ export interface IStorage {
 // Supabase storage implementation
 class SupabaseStorage implements IStorage {
   async getArtist(id: string): Promise<Artist | undefined> {
-    const { data, error } = await supabase
-      .from("artists")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error) return undefined;
-    return toCamelCase(data) as Artist;
+    // Use Drizzle ORM to bypass Supabase schema cache issues
+    const [artist] = await db
+      .select()
+      .from(artists)
+      .where(eq(artists.id, id))
+      .limit(1);
+    return artist;
   }
 
   async getArtistByEmail(email: string): Promise<Artist | undefined> {

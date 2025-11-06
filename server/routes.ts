@@ -561,6 +561,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get artist referral stats
+  app.get("/api/artists/:id/referrals", requireArtist, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify artist can only access their own referrals
+      if (req.session.user?.id !== id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const artist = await storage.getArtist(id);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Get all sales for this artist (includes recruitment bonuses)
+      const sales = await storage.getSalesByArtist(id);
+      
+      // Calculate referral-driven sales (sales where artist drove traffic)
+      const referralSales = sales.filter(sale => parseFloat(sale.referralBonus || '0') > 0);
+      const totalReferralEarnings = referralSales.reduce((sum, sale) => {
+        return sum + parseFloat(sale.referralBonus || '0');
+      }, 0);
+      
+      // Calculate recruitment bonuses (sales where this artist recruited someone)
+      const recruitmentSales = sales.filter(sale => parseFloat(sale.recruitmentBonus || '0') > 0);
+      const totalRecruitmentEarnings = recruitmentSales.reduce((sum, sale) => {
+        return sum + parseFloat(sale.recruitmentBonus || '0');
+      }, 0);
+
+      // Get list of artists recruited by this artist
+      const allArtists = await storage.getAllArtists();
+      const recruitedArtists = allArtists.filter(a => a.referredBy === id);
+
+      // Build referral stats for each recruited artist
+      const recruitedArtistStats = await Promise.all(
+        recruitedArtists.map(async (recruited) => {
+          const recruitedSales = await storage.getSalesByArtist(recruited.id);
+          const totalSales = recruitedSales.length;
+          const totalEarnings = recruitedSales.reduce((sum, sale) => {
+            return sum + parseFloat(sale.totalEarnings || '0');
+          }, 0);
+          
+          return {
+            id: recruited.id,
+            name: recruited.name,
+            email: recruited.email,
+            joinedAt: recruited.createdAt,
+            totalSales,
+            totalEarnings,
+          };
+        })
+      );
+
+      // Generate referral link
+      const shopifyUrl = process.env.SHOPIFY_SHOP_URL || 'your-store.myshopify.com';
+      const referralLink = `https://${shopifyUrl}?utm_source=${artist.referralCode}&utm_medium=referral&utm_campaign=artist_network`;
+
+      res.json({
+        referralCode: artist.referralCode,
+        referralLink,
+        stats: {
+          totalReferralSales: referralSales.length,
+          totalReferralEarnings,
+          totalArtistsRecruited: recruitedArtists.length,
+          totalRecruitmentEarnings,
+        },
+        recruitedArtists: recruitedArtistStats,
+      });
+    } catch (error: any) {
+      console.error("Get referrals error:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch referrals" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -13,6 +13,7 @@ export const artists = pgTable("artists", {
   approved: boolean("approved").notNull().default(false),
   monthlySales: decimal("monthly_sales", { precision: 10, scale: 2 }).notNull().default('0'), // Current month sales for tier calculation
   stripeAccountId: text("stripe_account_id"), // Stripe Connect account ID for payouts
+  stripeAccountStatus: text("stripe_account_status"), // pending, active, restricted
   referralCode: text("referral_code").notNull().unique(), // Unique code for referral links (e.g., "ARTIST-ABC123")
   referredBy: varchar("referred_by").references((): any => artists.id), // Which artist recruited them
   createdAt: timestamp("created_at").notNull().defaultNow(),

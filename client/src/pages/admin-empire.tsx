@@ -44,7 +44,7 @@ export default function AdminEmpire() {
 
   const processPayoutsMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('/api/admin/process-payouts', 'POST');
+      const response = await apiRequest('POST', '/api/admin/process-payouts');
       return response.json();
     },
     onSuccess: (data) => {

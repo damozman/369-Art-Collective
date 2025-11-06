@@ -28,6 +28,17 @@ export const admins = pgTable("admins", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Password Reset Tokens - Secure password reset flow
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull(), // User's email (artist or admin)
+  hashedToken: text("hashed_token").notNull().unique(), // SHA-256 hashed token
+  userType: text("user_type").notNull(), // "artist" or "admin"
+  expiresAt: timestamp("expires_at").notNull(), // 60 minutes from creation
+  isUsed: boolean("is_used").notNull().default(false), // Single-use enforcement
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Artworks table - submitted artwork
 export const artworks = pgTable("artworks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -125,6 +136,36 @@ export const updateArtistProfileSchema = z.object({
 });
 
 export type UpdateArtistProfile = z.infer<typeof updateArtistProfileSchema>;
+
+// Forgot password schema
+export const forgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+
+export type ForgotPassword = z.infer<typeof forgotPasswordSchema>;
+
+// Reset password schema
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+  newPassword: z.string().min(6),
+  confirmPassword: z.string().min(6),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+export type ResetPassword = z.infer<typeof resetPasswordSchema>;
+
+// Admin profile update schema
+export const updateAdminProfileSchema = z.object({
+  name: z.string().min(1).optional(),
+  email: z.string().email().optional(),
+});
+
+export type UpdateAdminProfile = z.infer<typeof updateAdminProfileSchema>;
+
+// Password Reset Token types
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 
 // Printify Products - Store blueprint/provider mappings
 export const printifyProducts = pgTable("printify_products", {

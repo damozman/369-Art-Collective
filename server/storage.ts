@@ -4,6 +4,7 @@ import {
   admins as adminsTable,
   orders as ordersTable,
   sales as salesTable,
+  payouts as payoutsTable,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -76,6 +77,13 @@ export interface IStorage {
   // Sale methods (MVP)
   createSale(sale: any): Promise<any>;
   getSalesByArtist(artistId: string): Promise<any[]>;
+  
+  // Payout methods
+  createPayout(payout: any): Promise<any>;
+  updatePayout(id: string, updates: any): Promise<any>;
+  getPayoutsByArtist(artistId: string): Promise<any[]>;
+  getPendingPayouts(): Promise<any[]>;
+  getAllPayouts(): Promise<any[]>;
 }
 
 // Supabase storage implementation
@@ -277,6 +285,50 @@ class SupabaseStorage implements IStorage {
       .orderBy(salesTable.createdAt);
     return artistSales;
   }
+
+  async createPayout(payout: any): Promise<any> {
+    const [createdPayout] = await db
+      .insert(payoutsTable)
+      .values(payout)
+      .returning();
+    return createdPayout;
+  }
+
+  async updatePayout(id: string, updates: any): Promise<any> {
+    const [updatedPayout] = await db
+      .update(payoutsTable)
+      .set(updates)
+      .where(eq(payoutsTable.id, id))
+      .returning();
+    if (!updatedPayout) throw new Error("Payout not found");
+    return updatedPayout;
+  }
+
+  async getPayoutsByArtist(artistId: string): Promise<any[]> {
+    const artistPayouts = await db
+      .select()
+      .from(payoutsTable)
+      .where(eq(payoutsTable.artistId, artistId))
+      .orderBy(payoutsTable.createdAt);
+    return artistPayouts;
+  }
+
+  async getPendingPayouts(): Promise<any[]> {
+    const pendingPayouts = await db
+      .select()
+      .from(payoutsTable)
+      .where(eq(payoutsTable.status, 'pending'))
+      .orderBy(payoutsTable.createdAt);
+    return pendingPayouts;
+  }
+
+  async getAllPayouts(): Promise<any[]> {
+    const allPayouts = await db
+      .select()
+      .from(payoutsTable)
+      .orderBy(payoutsTable.createdAt);
+    return allPayouts;
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -309,6 +361,7 @@ class MemStorage implements IStorage {
       approved: false,
       monthlySales: '0',
       stripeAccountId: null,
+      stripeAccountStatus: null,
       referredBy: null,
       createdAt: new Date(),
     };
@@ -419,6 +472,31 @@ class MemStorage implements IStorage {
 
   async getSalesByArtist(artistId: string): Promise<any[]> {
     console.log("MemStorage: getSalesByArtist called (stub)", artistId);
+    return [];
+  }
+
+  async createPayout(payout: any): Promise<any> {
+    console.log("MemStorage: createPayout called (stub)", payout);
+    return { id: randomUUID(), ...payout };
+  }
+
+  async updatePayout(id: string, updates: any): Promise<any> {
+    console.log("MemStorage: updatePayout called (stub)", id, updates);
+    return { id, ...updates };
+  }
+
+  async getPayoutsByArtist(artistId: string): Promise<any[]> {
+    console.log("MemStorage: getPayoutsByArtist called (stub)", artistId);
+    return [];
+  }
+
+  async getPendingPayouts(): Promise<any[]> {
+    console.log("MemStorage: getPendingPayouts called (stub)");
+    return [];
+  }
+
+  async getAllPayouts(): Promise<any[]> {
+    console.log("MemStorage: getAllPayouts called (stub)");
     return [];
   }
 }

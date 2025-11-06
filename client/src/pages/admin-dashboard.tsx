@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLocation } from "wouter";
-import { LogOut, CheckCircle, XCircle, Users, Eye } from "lucide-react";
+import { LogOut, CheckCircle, XCircle, Users, Eye, Network } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -121,6 +121,14 @@ export default function AdminDashboard() {
             </div>
 
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/admin/empire")}
+                data-testid="button-empire"
+              >
+                <Network className="mr-2 h-4 w-4" />
+                Empire Dashboard
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => setLocation("/admin/artists")}

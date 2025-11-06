@@ -636,6 +636,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Empire Dashboard - Network growth & revenue analytics
+  app.get("/api/admin/empire", requireAdmin, async (req, res) => {
+    try {
+      // Get all artists and sales
+      const allArtists = await storage.getAllArtists();
+      const allOrders = await storage.getAllOrders();
+
+      // Calculate total revenue from all sales
+      let totalRevenue = 0;
+      let totalReferralBonuses = 0;
+      let totalRecruitmentBonuses = 0;
+
+      // Build artist earnings map
+      const artistEarningsMap = new Map<string, {
+        totalEarnings: number;
+        salesCount: number;
+        monthlySales: number;
+        referralEarnings: number;
+        recruitmentEarnings: number;
+        recruitedCount: number;
+      }>();
+
+      // Initialize map for all artists
+      allArtists.forEach(artist => {
+        artistEarningsMap.set(artist.id, {
+          totalEarnings: 0,
+          salesCount: 0,
+          monthlySales: parseFloat(artist.monthlySales || '0'),
+          referralEarnings: 0,
+          recruitmentEarnings: 0,
+          recruitedCount: 0,
+        });
+      });
+
+      // Process all orders to calculate sales and bonuses
+      for (const order of allOrders) {
+        if (order.artistId) {
+          const sales = await storage.getSalesByArtist(order.artistId);
+          const orderSales = sales.filter(s => s.orderId === order.id);
+          
+          for (const sale of orderSales) {
+            const earnings = parseFloat(sale.totalEarnings || '0');
+            const referralBonus = parseFloat(sale.referralBonus || '0');
+            const recruitmentBonus = parseFloat(sale.recruitmentBonus || '0');
+
+            totalRevenue += earnings;
+            totalReferralBonuses += referralBonus;
+            totalRecruitmentBonuses += recruitmentBonus;
+
+            // Update artist's earnings
+            const artistStats = artistEarningsMap.get(sale.artistId);
+            if (artistStats) {
+              artistStats.totalEarnings += earnings;
+              artistStats.salesCount += 1;
+              artistStats.referralEarnings += referralBonus;
+            }
+
+            // Track recruitment earnings for recruiter
+            if (order.referralArtistId && order.referralArtistId !== sale.artistId) {
+              const recruiterStats = artistEarningsMap.get(order.referralArtistId);
+              if (recruiterStats) {
+                recruiterStats.recruitmentEarnings += recruitmentBonus;
+              }
+            }
+          }
+        }
+      }
+
+      // Count recruited artists per recruiter
+      allArtists.forEach(artist => {
+        if (artist.referredBy) {
+          const recruiterStats = artistEarningsMap.get(artist.referredBy);
+          if (recruiterStats) {
+            recruiterStats.recruitedCount += 1;
+          }
+        }
+      });
+
+      // Build top artists list
+      const topArtists = Array.from(artistEarningsMap.entries())
+        .map(([id, stats]) => {
+          const artist = allArtists.find(a => a.id === id);
+          if (!artist) return null;
+
+          // Calculate tier based on monthly sales
+          let currentTier = 'Bronze';
+          if (stats.monthlySales >= 10000) currentTier = 'Platinum';
+          else if (stats.monthlySales >= 5000) currentTier = 'Gold';
+          else if (stats.monthlySales >= 1000) currentTier = 'Silver';
+
+          return {
+            id,
+            name: artist.name,
+            email: artist.email,
+            totalEarnings: stats.totalEarnings,
+            salesCount: stats.salesCount,
+            currentTier,
+          };
+        })
+        .filter(a => a !== null && a.totalEarnings > 0)
+        .sort((a, b) => (b?.totalEarnings || 0) - (a?.totalEarnings || 0))
+        .slice(0, 10);
+
+      // Build top recruiters list
+      const topRecruiters = Array.from(artistEarningsMap.entries())
+        .map(([id, stats]) => {
+          const artist = allArtists.find(a => a.id === id);
+          if (!artist) return null;
+
+          return {
+            id,
+            name: artist.name,
+            email: artist.email,
+            recruitedCount: stats.recruitedCount,
+            recruitmentEarnings: stats.recruitmentEarnings,
+          };
+        })
+        .filter(a => a !== null && a.recruitedCount > 0)
+        .sort((a, b) => (b?.recruitedCount || 0) - (a?.recruitedCount || 0))
+        .slice(0, 10);
+
+      const totalRecruitedArtists = allArtists.filter(a => a.referredBy).length;
+
+      res.json({
+        totalRevenue,
+        totalReferralBonuses,
+        totalRecruitmentBonuses,
+        totalArtists: allArtists.length,
+        totalRecruitedArtists,
+        topArtists,
+        topRecruiters,
+      });
+    } catch (error: any) {
+      console.error("Get empire stats error:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch empire stats" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

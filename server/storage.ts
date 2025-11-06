@@ -71,6 +71,7 @@ export interface IStorage {
   // Order methods (MVP)
   createOrder(order: any): Promise<any>;
   updateOrder(id: string, updates: any): Promise<any>;
+  getAllOrders(): Promise<any[]>;
   
   // Sale methods (MVP)
   createSale(sale: any): Promise<any>;
@@ -253,6 +254,13 @@ class SupabaseStorage implements IStorage {
     return updatedOrder;
   }
 
+  async getAllOrders(): Promise<any[]> {
+    const allOrders = await db
+      .select()
+      .from(ordersTable);
+    return allOrders;
+  }
+
   async createSale(sale: any): Promise<any> {
     const [createdSale] = await db
       .insert(salesTable)
@@ -397,6 +405,11 @@ class MemStorage implements IStorage {
   async updateOrder(id: string, updates: any): Promise<any> {
     console.log("MemStorage: updateOrder called (stub)", id, updates);
     return { id, ...updates };
+  }
+
+  async getAllOrders(): Promise<any[]> {
+    console.log("MemStorage: getAllOrders called (stub)");
+    return [];
   }
 
   async createSale(sale: any): Promise<any> {

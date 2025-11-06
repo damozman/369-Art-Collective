@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, decimal, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -11,6 +11,8 @@ export const artists = pgTable("artists", {
   name: text("name").notNull(),
   artistShort: text("artist_short").notNull(), // Initials for SKU generation (e.g., "JH")
   approved: boolean("approved").notNull().default(false),
+  stripeAccountId: text("stripe_account_id"), // Stripe Connect account ID for payouts
+  referredBy: varchar("referred_by").references((): any => artists.id), // Which artist recruited them
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -34,6 +36,8 @@ export const artworks = pgTable("artworks", {
   status: text("status").notNull().default("pending"), // pending, approved, rejected
   rejectionReason: text("rejection_reason"),
   shopifyProductId: text("shopify_product_id"),
+  printifyProductId: text("printify_product_id"), // Printify product ID
+  printifyImageId: text("printify_image_id"), // Uploaded image ID in Printify
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -96,6 +100,92 @@ export const loginSchema = z.object({
 });
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
+
+// Printify Products - Store blueprint/provider mappings
+export const printifyProducts = pgTable("printify_products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  blueprintId: integer("blueprint_id").notNull(),
+  blueprintTitle: text("blueprint_title").notNull(),
+  printProviderId: integer("print_provider_id").notNull(),
+  printProviderTitle: text("print_provider_title").notNull(),
+  variants: jsonb("variants").notNull(), // Store variant details (id, size, price)
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Orders - Track customer orders
+export const orders = pgTable("orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  shopifyOrderId: text("shopify_order_id").notNull().unique(),
+  printifyOrderId: text("printify_order_id"), // Printify order ID after fulfillment
+  artworkId: varchar("artwork_id").notNull().references(() => artworks.id),
+  artistId: varchar("artist_id").notNull().references(() => artists.id),
+  productPrice: decimal("product_price", { precision: 10, scale: 2 }).notNull(),
+  printifyCost: decimal("printify_cost", { precision: 10, scale: 2 }).notNull(),
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).notNull(),
+  profit: decimal("profit", { precision: 10, scale: 2 }).notNull(), // Product price - Printify cost - shipping
+  referralSource: text("referral_source"), // UTM parameter or artist link
+  referralBonus: boolean("referral_bonus").notNull().default(false), // +5% bonus applied?
+  status: text("status").notNull().default("pending"), // pending, fulfilled, cancelled
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Sales - Individual sales for royalty calculation
+export const sales = pgTable("sales", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().references(() => orders.id),
+  artistId: varchar("artist_id").notNull().references(() => artists.id),
+  artworkId: varchar("artwork_id").notNull().references(() => artworks.id),
+  saleAmount: decimal("sale_amount", { precision: 10, scale: 2 }).notNull(),
+  profit: decimal("profit", { precision: 10, scale: 2 }).notNull(),
+  royaltyTier: integer("royalty_tier").notNull(), // 30, 35, 40, 45 (percentage)
+  baseRoyalty: decimal("base_royalty", { precision: 10, scale: 2 }).notNull(),
+  referralBonus: decimal("referral_bonus", { precision: 10, scale: 2 }).notNull().default('0'),
+  recruitmentBonus: decimal("recruitment_bonus", { precision: 10, scale: 2 }).notNull().default('0'),
+  totalEarnings: decimal("total_earnings", { precision: 10, scale: 2 }).notNull(),
+  payoutId: varchar("payout_id").references((): any => payouts.id), // Which payout this was included in
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Referrals - Track UTM-based referrals (artist drove traffic)
+export const referrals = pgTable("referrals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artistId: varchar("artist_id").notNull().references(() => artists.id),
+  utmSource: text("utm_source"),
+  utmMedium: text("utm_medium"),
+  utmCampaign: text("utm_campaign"),
+  orderId: varchar("order_id").references(() => orders.id), // If this referral led to a sale
+  bonusApplied: boolean("bonus_applied").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Artist Referrals - Track when artists recruit other artists
+export const artistReferrals = pgTable("artist_referrals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  recruiterId: varchar("recruiter_id").notNull().references(() => artists.id), // Artist who recruited
+  recruitedId: varchar("recruited_id").notNull().references(() => artists.id), // Artist who was recruited
+  bonusPercentage: integer("bonus_percentage").notNull().default(5), // 5% of recruited artist's royalties
+  totalEarned: decimal("total_earned", { precision: 10, scale: 2 }).notNull().default('0'),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Payouts - Track artist payouts
+export const payouts = pgTable("payouts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artistId: varchar("artist_id").notNull().references(() => artists.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  stripeTransferId: text("stripe_transfer_id"), // Stripe payout ID
+  status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  salesCount: integer("sales_count").notNull(), // Number of sales in this payout
+  baseRoyalties: decimal("base_royalties", { precision: 10, scale: 2 }).notNull(),
+  referralBonuses: decimal("referral_bonuses", { precision: 10, scale: 2 }).notNull().default('0'),
+  recruitmentBonuses: decimal("recruitment_bonuses", { precision: 10, scale: 2 }).notNull().default('0'),
+  failureReason: text("failure_reason"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
 
 // Artwork with artist info
 export type ArtworkWithArtist = Artwork & {

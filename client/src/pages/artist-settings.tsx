@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,13 +42,15 @@ export default function ArtistSettings() {
   });
 
   // Reset form when user data loads
-  if (user && !profileForm.formState.isDirty) {
-    profileForm.reset({
-      name: user.name,
-      email: user.email,
-      artistShort: user.artistShort,
-    });
-  }
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({
+        name: user.name,
+        email: user.email,
+        artistShort: user.artistShort,
+      });
+    }
+  }, [user, profileForm]);
 
   const changePasswordMutation = useMutation({
     mutationFn: async (data: ChangePasswordForm) => {

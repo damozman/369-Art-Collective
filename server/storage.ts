@@ -155,58 +155,73 @@ class SupabaseStorage implements IStorage {
   }
 
   async getArtwork(id: string): Promise<Artwork | undefined> {
-    const { data, error } = await supabase
-      .from("artworks")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error) return undefined;
-    return toCamelCase(data) as Artwork;
+    // Use Drizzle ORM to bypass Supabase schema cache issues
+    const [artwork] = await db
+      .select()
+      .from(artworksTable)
+      .where(eq(artworksTable.id, id))
+      .limit(1);
+    return artwork;
   }
 
   async getArtworksByArtist(artistId: string): Promise<Artwork[]> {
-    const { data, error } = await supabase
-      .from("artworks")
-      .select("*")
-      .eq("artist_id", artistId)
-      .order("created_at", { ascending: false });
-    if (error) return [];
-    return toCamelCase(data) as Artwork[];
+    // Use Drizzle ORM to bypass Supabase schema cache issues
+    const artworks = await db
+      .select()
+      .from(artworksTable)
+      .where(eq(artworksTable.artistId, artistId))
+      .orderBy(artworksTable.createdAt);
+    return artworks;
   }
 
   async getAllArtworks(): Promise<ArtworkWithArtist[]> {
-    const { data, error } = await supabase
-      .from("artworks")
-      .select(`
-        *,
-        artist:artists(id, name, email)
-      `)
-      .order("created_at", { ascending: false });
-    if (error) return [];
-    return toCamelCase(data) as ArtworkWithArtist[];
+    // Use Drizzle ORM to bypass Supabase schema cache issues
+    // Note: Drizzle doesn't support nested joins directly, so we fetch and combine manually
+    const allArtworks = await db
+      .select()
+      .from(artworksTable)
+      .orderBy(artworksTable.createdAt);
+    
+    const artworksWithArtist = await Promise.all(
+      allArtworks.map(async (artwork) => {
+        const [artist] = await db
+          .select({
+            id: artists.id,
+            name: artists.name,
+            email: artists.email,
+          })
+          .from(artists)
+          .where(eq(artists.id, artwork.artistId))
+          .limit(1);
+        
+        return {
+          ...artwork,
+          artist,
+        };
+      })
+    );
+    
+    return artworksWithArtist as ArtworkWithArtist[];
   }
 
   async createArtwork(insertArtwork: InsertArtwork): Promise<Artwork> {
-    const { data, error } = await supabase
-      .from("artworks")
-      .insert([toSnakeCase(insertArtwork)])
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return toCamelCase(data) as Artwork;
+    // Use Drizzle ORM to bypass Supabase schema cache issues
+    const [artwork] = await db
+      .insert(artworksTable)
+      .values(insertArtwork)
+      .returning();
+    return artwork;
   }
 
   async updateArtwork(id: string, updates: Partial<Artwork>): Promise<Artwork> {
-    const snakeUpdates = toSnakeCase(updates);
-    snakeUpdates.updated_at = new Date().toISOString();
-    const { data, error } = await supabase
-      .from("artworks")
-      .update(snakeUpdates)
-      .eq("id", id)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return toCamelCase(data) as Artwork;
+    // Use Drizzle ORM to bypass Supabase schema cache issues
+    const [updatedArtwork] = await db
+      .update(artworksTable)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(artworksTable.id, id))
+      .returning();
+    if (!updatedArtwork) throw new Error("Artwork not found");
+    return updatedArtwork;
   }
 
   // MVP Order/Sale methods - basic implementations

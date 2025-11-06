@@ -219,6 +219,14 @@ npx tsx server/seed-admin.ts
 
 ## Recent Changes
 
+### November 6, 2025 - Drizzle ORM Migration (CRITICAL FIX)
+- ✅ **Fixed Supabase PostgREST schema cache bug** - Migrated all artist & artwork methods from Supabase JS client to Drizzle ORM
+- ✅ **Migrated artist methods:** createArtist, getArtistByEmail, getAllArtists, updateArtist
+- ✅ **Migrated artwork methods:** createArtwork, getArtwork, getArtworksByArtist, getAllArtworks, updateArtwork
+- ✅ **End-to-end tested:** Artist registration → admin approval → artist login workflow passing
+- ✅ **Root cause:** Supabase PostgREST caches schema and doesn't recognize new columns (artist_short, etc.) even after schema push
+- ✅ **Solution:** Direct Drizzle ORM queries bypass PostgREST cache, use @neondatabase/serverless driver
+
 ### November 6, 2025 - Order Capture & Royalty System Complete
 - ✅ **Shopify webhook endpoint** with HMAC security verification
 - ✅ **Order processor** extracts artist/artwork from SKU, creates order records

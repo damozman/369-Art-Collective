@@ -230,15 +230,20 @@ npx tsx server/seed-admin.ts
 - ✅ **Solution:** Direct Drizzle ORM queries bypass PostgREST cache, use @neondatabase/serverless driver
 - ✅ **Architect approved:** Production-ready with PASS verdict
 
-### November 6, 2025 - Order Capture & Royalty System Complete
-- ✅ **Shopify webhook endpoint** with HMAC security verification
-- ✅ **Order processor** extracts artist/artwork from SKU, creates order records
-- ✅ **Tiered royalty calculator** (30% → 35% → 40% → 45% based on monthly sales)
-- ✅ **Sale tracking** with artist earnings breakdown
-- ✅ **Security hardening** - HMAC verification prevents order forgery
-- ✅ **Architect-approved** production-ready implementation
-- 📝 **MVP Status**: Core workflow complete (upload → approve → create products → capture orders → calculate royalties)
-- 📝 **Deferred to post-launch**: Printify fulfillment automation, UTM tracking, recruitment bonuses, Stripe Connect, dashboards
+### November 6, 2025 - Order Capture & Royalty System Complete ✅
+- ✅ **Shopify webhook endpoint** with HMAC security verification (timing-safe comparison)
+- ✅ **Order processor** extracts artist/artwork from SKU, creates order records using Drizzle ORM
+- ✅ **Tiered royalty calculator** (30% → 35% → 40% → 45% based on monthly sales AMOUNT)
+  - $0-$999/month: 30% royalty
+  - $1000-$4999/month: 35% royalty
+  - $5000-$9999/month: 40% royalty
+  - $10,000+/month: 45% royalty
+- ✅ **Sale tracking** with artist earnings breakdown (base_royalty, referral_bonus, recruitment_bonus, total_earnings)
+- ✅ **monthlySales column** added to artists table for tier calculation
+- ✅ **End-to-end tested**: Webhook → Order → Sale → Tier calculation all working
+- ✅ **Architect-approved** PASS - production-ready implementation
+- 📝 **MVP Status**: Core revenue workflow complete (upload → approve → create products → capture orders → calculate royalties)
+- 📝 **Deferred to post-launch**: Auto-sync monthlySales, Printify fulfillment automation, UTM tracking, recruitment bonuses, Stripe Connect, artist dashboards
 
 ### November 1, 2025 - Registration Flow Fix
 - ✅ Fixed artist registration to automatically log in users

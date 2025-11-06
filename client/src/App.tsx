@@ -16,6 +16,7 @@ import ArtistReferrals from "@/pages/artist-referrals";
 import ArtistPending from "@/pages/artist-pending";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminArtists from "@/pages/admin-artists";
+import AdminEmpire from "@/pages/admin-empire";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -64,6 +65,12 @@ function Router() {
       <Route path="/admin/artists">
         <ProtectedRoute requiredType="admin">
           <AdminArtists />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/empire">
+        <ProtectedRoute requiredType="admin">
+          <AdminEmpire />
         </ProtectedRoute>
       </Route>
       

@@ -105,6 +105,27 @@ export const loginSchema = z.object({
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
 
+// Password change schema
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(6),
+  confirmPassword: z.string().min(6),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+export type ChangePassword = z.infer<typeof changePasswordSchema>;
+
+// Artist profile update schema
+export const updateArtistProfileSchema = z.object({
+  name: z.string().min(1).optional(),
+  email: z.string().email().optional(),
+  artistShort: z.string().min(1).max(10).regex(/^[A-Z0-9]+$/, "Must be uppercase letters/numbers only").optional(),
+});
+
+export type UpdateArtistProfile = z.infer<typeof updateArtistProfileSchema>;
+
 // Printify Products - Store blueprint/provider mappings
 export const printifyProducts = pgTable("printify_products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

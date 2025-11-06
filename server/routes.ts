@@ -11,6 +11,8 @@ import {
   insertArtworkSchema,
   updateArtworkSchema,
   loginSchema,
+  changePasswordSchema,
+  updateArtistProfileSchema,
 } from "@shared/schema";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured } from "./lib/shopify";
 import { createWallArtProducts } from "./lib/printify-service";
@@ -226,13 +228,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single artist details (admin only)
+  app.get("/api/artists/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const artist = await storage.getArtist(id);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+      const { password, ...artistData } = artist;
+      res.json(artistData);
+    } catch (error: any) {
+      console.error("Get artist error:", error);
+      res.status(500).json({ message: "Failed to fetch artist" });
+    }
+  });
+
+  // Update artist profile (artist updates their own)
+  app.patch("/api/artists/profile", requireArtist, async (req, res) => {
+    try {
+      const data = updateArtistProfileSchema.parse(req.body);
+      const artist = req.user!;
+
+      // Check if email is being changed and if it's already taken
+      if (data.email && data.email !== artist.email) {
+        const existing = await storage.getArtistByEmail(data.email);
+        if (existing) {
+          return res.status(400).json({ message: "Email already in use" });
+        }
+      }
+
+      const updatedArtist = await storage.updateArtist(artist.id, data);
+      
+      // Update session if email or name changed
+      if (data.email || data.name) {
+        req.session.user = {
+          ...req.session.user!,
+          email: updatedArtist.email,
+          name: updatedArtist.name,
+        };
+      }
+
+      const { password, ...artistData } = updatedArtist;
+      res.json(artistData);
+    } catch (error: any) {
+      console.error("Update profile error:", error);
+      res.status(400).json({ message: error.message || "Failed to update profile" });
+    }
+  });
+
+  // Change password (artist changes their own)
+  app.post("/api/artists/change-password", requireArtist, async (req, res) => {
+    try {
+      const data = changePasswordSchema.parse(req.body);
+      const artist = req.user!;
+
+      // Get full artist record with password
+      const fullArtist = await storage.getArtist(artist.id);
+      if (!fullArtist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Verify current password
+      const validPassword = await bcrypt.compare(data.currentPassword, fullArtist.password);
+      if (!validPassword) {
+        return res.status(401).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password and update
+      const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+      await storage.updateArtist(artist.id, { password: hashedPassword });
+
+      res.json({ message: "Password changed successfully" });
+    } catch (error: any) {
+      console.error("Change password error:", error);
+      res.status(400).json({ message: error.message || "Failed to change password" });
+    }
+  });
+
+  // Admin reset artist password (generates temporary password)
+  app.post("/api/artists/:id/reset-password", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const artist = await storage.getArtist(id);
+      
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Generate temporary password
+      const tempPassword = `temp${Math.random().toString(36).slice(2, 10)}`;
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      
+      await storage.updateArtist(id, { password: hashedPassword });
+
+      res.json({ 
+        message: "Password reset successfully",
+        temporaryPassword: tempPassword,
+        artistEmail: artist.email,
+      });
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // ===== STRIPE CONNECT ROUTES =====
 
   // Generate Stripe Connect account link for artist
   app.get("/api/stripe/connect-url", requireArtist, async (req, res) => {
     try {
       const { stripeConnectService } = await import("./lib/stripe-connect");
-      const artist = req.user!;
+      const sessionUser = req.user!;
+      
+      // Get full artist record to access stripeAccountId
+      const artist = await storage.getArtist(sessionUser.id);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
       
       const baseUrl = `${req.protocol}://${req.get('host')}`;
       const refreshUrl = `${baseUrl}/artist/payouts?refresh=true`;
@@ -317,7 +430,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get artist's Stripe account status
   app.get("/api/stripe/account-status", requireArtist, async (req, res) => {
     try {
-      const artist = req.user!;
+      const sessionUser = req.user!;
+      
+      // Get full artist record to access stripeAccountId
+      const artist = await storage.getArtist(sessionUser.id);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
       
       if (!artist.stripeAccountId) {
         return res.json({ connected: false });

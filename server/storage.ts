@@ -17,6 +17,7 @@ import { randomUUID } from "crypto";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { db, isDatabaseConfigured } from "./lib/db";
 import { eq } from "drizzle-orm";
+import { generateReferralCode } from "./lib/referral-code-generator";
 
 // Helper functions to convert between camelCase (TypeScript) and snake_case (Supabase)
 function toSnakeCase(obj: any): any {
@@ -108,10 +109,16 @@ class SupabaseStorage implements IStorage {
   }
 
   async createArtist(insertArtist: InsertArtist): Promise<Artist> {
+    // Generate unique referral code
+    const referralCode = generateReferralCode(insertArtist.name);
+    
     // Use Drizzle ORM to bypass Supabase schema cache issues
     const [artist] = await db
       .insert(artists)
-      .values(insertArtist)
+      .values({
+        ...insertArtist,
+        referralCode,
+      })
       .returning();
     return artist;
   }
@@ -286,9 +293,11 @@ class MemStorage implements IStorage {
 
   async createArtist(insertArtist: InsertArtist): Promise<Artist> {
     const id = randomUUID();
+    const referralCode = generateReferralCode(insertArtist.name);
     const artist: Artist = {
       ...insertArtist,
       id,
+      referralCode,
       approved: false,
       monthlySales: '0',
       stripeAccountId: null,

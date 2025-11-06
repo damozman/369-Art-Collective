@@ -15,39 +15,9 @@ import {
   type ArtworkWithArtist,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import { db, isDatabaseConfigured } from "./lib/db";
 import { eq } from "drizzle-orm";
 import { generateReferralCode } from "./lib/referral-code-generator";
-
-// Helper functions to convert between camelCase (TypeScript) and snake_case (Supabase)
-function toSnakeCase(obj: any): any {
-  if (obj === null || obj === undefined) return obj;
-  if (obj instanceof Date) return obj; // Preserve Date objects
-  if (Array.isArray(obj)) return obj.map(toSnakeCase);
-  if (typeof obj !== 'object') return obj;
-  
-  const result: any = {};
-  for (const key in obj) {
-    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-    result[snakeKey] = toSnakeCase(obj[key]); // Recursively convert nested objects
-  }
-  return result;
-}
-
-function toCamelCase(obj: any): any {
-  if (obj === null || obj === undefined) return obj;
-  if (obj instanceof Date) return obj; // Preserve Date objects
-  if (Array.isArray(obj)) return obj.map(toCamelCase);
-  if (typeof obj !== 'object') return obj;
-  
-  const result: any = {};
-  for (const key in obj) {
-    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-    result[camelKey] = toCamelCase(obj[key]); // Recursively convert nested objects
-  }
-  return result;
-}
 
 export interface IStorage {
   // Artist methods
@@ -86,10 +56,9 @@ export interface IStorage {
   getAllPayouts(): Promise<any[]>;
 }
 
-// Supabase storage implementation
-class SupabaseStorage implements IStorage {
+// PostgreSQL storage implementation using Drizzle ORM
+class PostgresStorage implements IStorage {
   async getArtist(id: string): Promise<Artist | undefined> {
-    // Use Drizzle ORM to bypass Supabase schema cache issues
     const [artist] = await db
       .select()
       .from(artists)
@@ -99,7 +68,6 @@ class SupabaseStorage implements IStorage {
   }
 
   async getArtistByEmail(email: string): Promise<Artist | undefined> {
-    // Use Drizzle ORM to bypass Supabase schema cache issues
     const [artist] = await db
       .select()
       .from(artists)
@@ -109,7 +77,6 @@ class SupabaseStorage implements IStorage {
   }
 
   async getAllArtists(): Promise<Artist[]> {
-    // Use Drizzle ORM to bypass Supabase schema cache issues
     const allArtists = await db
       .select()
       .from(artists)
@@ -118,10 +85,8 @@ class SupabaseStorage implements IStorage {
   }
 
   async createArtist(insertArtist: InsertArtist): Promise<Artist> {
-    // Generate unique referral code
     const referralCode = generateReferralCode(insertArtist.name);
     
-    // Use Drizzle ORM to bypass Supabase schema cache issues
     const [artist] = await db
       .insert(artists)
       .values({
@@ -133,7 +98,6 @@ class SupabaseStorage implements IStorage {
   }
 
   async updateArtist(id: string, updates: Partial<Artist>): Promise<Artist> {
-    // Use Drizzle ORM to bypass Supabase schema cache issues
     const [updatedArtist] = await db
       .update(artists)
       .set(updates)
@@ -144,37 +108,32 @@ class SupabaseStorage implements IStorage {
   }
 
   async getAdmin(id: string): Promise<Admin | undefined> {
-    const { data, error } = await supabase
-      .from("admins")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error) return undefined;
-    return toCamelCase(data) as Admin;
+    const [admin] = await db
+      .select()
+      .from(adminsTable)
+      .where(eq(adminsTable.id, id))
+      .limit(1);
+    return admin;
   }
 
   async getAdminByEmail(email: string): Promise<Admin | undefined> {
-    const { data, error } = await supabase
-      .from("admins")
-      .select("*")
-      .eq("email", email)
-      .single();
-    if (error) return undefined;
-    return toCamelCase(data) as Admin;
+    const [admin] = await db
+      .select()
+      .from(adminsTable)
+      .where(eq(adminsTable.email, email))
+      .limit(1);
+    return admin;
   }
 
   async createAdmin(insertAdmin: InsertAdmin): Promise<Admin> {
-    const { data, error } = await supabase
-      .from("admins")
-      .insert([toSnakeCase(insertAdmin)])
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return toCamelCase(data) as Admin;
+    const [admin] = await db
+      .insert(adminsTable)
+      .values(insertAdmin)
+      .returning();
+    return admin;
   }
 
   async getArtwork(id: string): Promise<Artwork | undefined> {
-    // Use Drizzle ORM to bypass Supabase schema cache issues
     const [artwork] = await db
       .select()
       .from(artworksTable)
@@ -184,7 +143,6 @@ class SupabaseStorage implements IStorage {
   }
 
   async getArtworksByArtist(artistId: string): Promise<Artwork[]> {
-    // Use Drizzle ORM to bypass Supabase schema cache issues
     const artworks = await db
       .select()
       .from(artworksTable)
@@ -194,8 +152,6 @@ class SupabaseStorage implements IStorage {
   }
 
   async getAllArtworks(): Promise<ArtworkWithArtist[]> {
-    // Use Drizzle ORM to bypass Supabase schema cache issues
-    // Note: Drizzle doesn't support nested joins directly, so we fetch and combine manually
     const allArtworks = await db
       .select()
       .from(artworksTable)
@@ -224,7 +180,6 @@ class SupabaseStorage implements IStorage {
   }
 
   async createArtwork(insertArtwork: InsertArtwork): Promise<Artwork> {
-    // Use Drizzle ORM to bypass Supabase schema cache issues
     const [artwork] = await db
       .insert(artworksTable)
       .values(insertArtwork)
@@ -233,7 +188,6 @@ class SupabaseStorage implements IStorage {
   }
 
   async updateArtwork(id: string, updates: Partial<Artwork>): Promise<Artwork> {
-    // Use Drizzle ORM to bypass Supabase schema cache issues
     const [updatedArtwork] = await db
       .update(artworksTable)
       .set({ ...updates, updatedAt: new Date() })
@@ -243,7 +197,7 @@ class SupabaseStorage implements IStorage {
     return updatedArtwork;
   }
 
-  // MVP Order/Sale methods - use Drizzle ORM
+  // Order/Sale/Payout methods
   async createOrder(order: any): Promise<any> {
     const [createdOrder] = await db
       .insert(ordersTable)
@@ -501,4 +455,4 @@ class MemStorage implements IStorage {
   }
 }
 
-export const storage = isSupabaseConfigured() ? new SupabaseStorage() : new MemStorage();
+export const storage = isDatabaseConfigured() ? new PostgresStorage() : new MemStorage();

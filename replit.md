@@ -16,13 +16,13 @@ The platform is built with a clear separation between frontend and backend.
 - **Shopify Integration:** Shopify webhooks capture orders, and the platform integrates with the Shopify Admin API for storefront products.
 - **Royalty System:** A tiered royalty system (30% to 45% based on monthly sales) is implemented, alongside a referral bonus (+5% for UTM-tracked sales) and a recruitment bonus (5% of recruited artist's royalties).
 - **Security:** Features include session-based authentication with HTTP-only cookies, session regeneration, CSRF protection, bcrypt password hashing, and role-based access control.
-- **Database:** Supabase (PostgreSQL) is used for persistent storage, with Drizzle ORM for database interactions. In-memory storage serves as a fallback.
+- **Database:** Replit's built-in PostgreSQL database (Neon-powered) for persistent storage with Drizzle ORM for database interactions. Features include auto-scaling, connection pooling, and 10 GiB storage capacity. In-memory storage serves as a fallback when database is not configured.
 - **File Uploads:** Multer handles image uploads, stored locally.
 - **API Endpoints:** A comprehensive set of RESTful API endpoints manage authentication, artist management, artwork management, and admin analytics.
 
 ## External Dependencies
-- **Supabase:** PostgreSQL database for persistent storage.
-- **Printify API:** For creating POD products and managing fulfillment.
-- **Shopify Admin API:** For storefront product management and order capture via webhooks.
-- **Stripe Connect:** Planned for automated artist payouts.
-- **Node.js:** Runtime environment.
+- **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered) for persistent storage with auto-scaling and connection pooling
+- **Printify API:** For creating POD products and managing fulfillment
+- **Shopify Admin API:** For storefront product management and order capture via webhooks
+- **Stripe Connect:** Planned for automated artist payouts
+- **Node.js:** Runtime environment

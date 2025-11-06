@@ -11,6 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 export interface CreateAccountLinkParams {
   artistId: string;
   artistEmail: string;
+  stripeAccountId?: string; // Use existing account if provided
   refreshUrl: string;
   returnUrl: string;
 }
@@ -42,20 +43,15 @@ export class StripeConnectService {
   /**
    * Create an account link for onboarding
    */
-  async createAccountLink(params: CreateAccountLinkParams): Promise<string> {
+  async createAccountLink(params: CreateAccountLinkParams): Promise<{
+    url: string;
+    accountId: string;
+  }> {
     let accountId: string;
 
-    // Check if account already exists, otherwise create
-    const accounts = await stripe.accounts.list({
-      limit: 1,
-    });
-
-    const existingAccount = accounts.data.find(
-      (acc) => acc.metadata?.artistId === params.artistId
-    );
-
-    if (existingAccount) {
-      accountId = existingAccount.id;
+    // Use existing stripeAccountId if provided, otherwise create new account
+    if (params.stripeAccountId) {
+      accountId = params.stripeAccountId;
     } else {
       accountId = await this.createConnectedAccount(params.artistEmail, {
         artistId: params.artistId,
@@ -69,7 +65,10 @@ export class StripeConnectService {
       type: 'account_onboarding',
     });
 
-    return accountLink.url;
+    return {
+      url: accountLink.url,
+      accountId,
+    };
   }
 
   /**

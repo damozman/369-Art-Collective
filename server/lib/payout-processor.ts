@@ -2,7 +2,7 @@ import { storage } from "../storage";
 import { stripeConnectService } from "./stripe-connect";
 import { db } from "./db";
 import { sales as salesTable } from "@shared/schema";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNull, and } from "drizzle-orm";
 
 interface PayoutResult {
   totalPayouts: number;
@@ -49,12 +49,16 @@ export async function processPayouts(): Promise<PayoutResult> {
       try {
         console.log(`\n💰 Processing payout for ${artist.name} (${artist.email})`);
 
-        // Get unpaid sales for this artist
+        // Get unpaid sales for this artist (combine conditions with and())
         const unpaidSales = await db
           .select()
           .from(salesTable)
-          .where(isNull(salesTable.payoutId))
-          .where(eq(salesTable.artistId, artist.id));
+          .where(
+            and(
+              isNull(salesTable.payoutId),
+              eq(salesTable.artistId, artist.id)
+            )
+          );
 
         if (unpaidSales.length === 0) {
           console.log(`  ℹ️  No unpaid sales for ${artist.name}`);

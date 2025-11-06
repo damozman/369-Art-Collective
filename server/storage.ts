@@ -59,6 +59,13 @@ export interface IStorage {
   getAllArtworks(): Promise<ArtworkWithArtist[]>;
   createArtwork(artwork: InsertArtwork): Promise<Artwork>;
   updateArtwork(id: string, updates: Partial<Artwork>): Promise<Artwork>;
+
+  // Order methods (MVP)
+  createOrder(order: any): Promise<any>;
+  updateOrder(id: string, updates: any): Promise<any>;
+  
+  // Sale methods (MVP)
+  createSale(sale: any): Promise<any>;
 }
 
 // Supabase storage implementation
@@ -197,6 +204,25 @@ class SupabaseStorage implements IStorage {
     if (error) throw new Error(error.message);
     return toCamelCase(data) as Artwork;
   }
+
+  // MVP Order/Sale methods - basic implementations
+  async createOrder(order: any): Promise<any> {
+    const { data, error } = await supabase.from("orders").insert(toSnakeCase(order)).select().single();
+    if (error) throw new Error(error.message);
+    return toCamelCase(data);
+  }
+
+  async updateOrder(id: string, updates: any): Promise<any> {
+    const { data, error } = await supabase.from("orders").update(toSnakeCase(updates)).eq("id", id).select().single();
+    if (error) throw new Error(error.message);
+    return toCamelCase(data);
+  }
+
+  async createSale(sale: any): Promise<any> {
+    const { data, error } = await supabase.from("sales").insert(toSnakeCase(sale)).select().single();
+    if (error) throw new Error(error.message);
+    return toCamelCase(data);
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -307,6 +333,22 @@ class MemStorage implements IStorage {
     const updated = { ...artwork, ...updates, updatedAt: new Date() };
     this.artworks.set(id, updated);
     return updated;
+  }
+
+  // MVP Order/Sale methods - stub implementations (log only)
+  async createOrder(order: any): Promise<any> {
+    console.log("MemStorage: createOrder called (stub)", order);
+    return { id: randomUUID(), ...order };
+  }
+
+  async updateOrder(id: string, updates: any): Promise<any> {
+    console.log("MemStorage: updateOrder called (stub)", id, updates);
+    return { id, ...updates };
+  }
+
+  async createSale(sale: any): Promise<any> {
+    console.log("MemStorage: createSale called (stub)", sale);
+    return { id: randomUUID(), ...sale };
   }
 }
 

@@ -16,6 +16,8 @@ import { createDraftProduct, createArtworkProduct, isShopifyConfigured } from ".
 import { createWallArtProducts } from "./lib/printify-service";
 import { isPrintifyConfigured } from "./lib/printify";
 import { requireAuth, requireArtist, requireAdmin } from "./middleware/auth";
+import { processShopifyOrder } from "./lib/order-processor";
+import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
 
 // Ensure uploads directory exists
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -45,6 +47,44 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Shopify webhook endpoint - SECURED with HMAC verification
+  // Raw body is captured by global express.json verify function in index.ts
+  app.post("/api/webhooks/shopify/orders", async (req: any, res) => {
+    try {
+      const hmac = req.headers['x-shopify-hmac-sha256'] as string;
+      const shop = req.headers['x-shopify-shop-domain'];
+      
+      console.log(`Received Shopify webhook from ${shop}`);
+
+      // CRITICAL: Verify HMAC signature using raw body captured in middleware
+      if (!req.rawBody) {
+        console.error("❌ Raw body not available for HMAC verification");
+        return res.status(500).send('Server configuration error');
+      }
+
+      if (!verifyShopifyWebhook(req.rawBody, hmac)) {
+        console.warn("⚠️ HMAC verification failed - rejecting webhook");
+        return res.status(401).send('Unauthorized');
+      }
+
+      console.log("✅ Webhook HMAC verified");
+
+      // Body is already parsed by express.json middleware
+      const shopifyOrder = req.body;
+      
+      // Process order asynchronously (don't block webhook response)
+      processShopifyOrder(shopifyOrder).catch(error => {
+        console.error("Order processing failed:", error);
+      });
+
+      // Respond immediately to Shopify (must respond within 5 seconds)
+      res.status(200).send('OK');
+    } catch (error: any) {
+      console.error("Webhook error:", error);
+      res.status(500).send('Internal Server Error');
+    }
+  });
+
   // Serve uploaded files
   app.use("/uploads", (req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");

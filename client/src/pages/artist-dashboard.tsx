@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
-import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Artwork } from "@shared/schema";
 
@@ -70,10 +70,16 @@ export default function ArtistDashboard() {
               <h2 className="text-3xl font-bold font-serif mb-2">My Artwork</h2>
               <p className="text-muted-foreground">Manage your submissions and track their status</p>
             </div>
-            <Button onClick={() => setLocation("/artist/upload")} data-testid="button-upload">
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Artwork
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setLocation("/artist/earnings")} data-testid="button-earnings">
+                <DollarSign className="mr-2 h-4 w-4" />
+                View Earnings
+              </Button>
+              <Button onClick={() => setLocation("/artist/upload")} data-testid="button-upload">
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Artwork
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

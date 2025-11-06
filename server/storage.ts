@@ -73,6 +73,7 @@ export interface IStorage {
   
   // Sale methods (MVP)
   createSale(sale: any): Promise<any>;
+  getSalesByArtist(artistId: string): Promise<any[]>;
 }
 
 // Supabase storage implementation
@@ -252,6 +253,15 @@ class SupabaseStorage implements IStorage {
       .returning();
     return createdSale;
   }
+
+  async getSalesByArtist(artistId: string): Promise<any[]> {
+    const artistSales = await db
+      .select()
+      .from(salesTable)
+      .where(eq(salesTable.artistId, artistId))
+      .orderBy(salesTable.createdAt);
+    return artistSales;
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -280,6 +290,9 @@ class MemStorage implements IStorage {
       ...insertArtist,
       id,
       approved: false,
+      monthlySales: '0',
+      stripeAccountId: null,
+      referredBy: null,
       createdAt: new Date(),
     };
     this.artists.set(id, artist);
@@ -349,6 +362,8 @@ class MemStorage implements IStorage {
       status: "pending",
       rejectionReason: null,
       shopifyProductId: null,
+      printifyProductId: null,
+      printifyImageId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -378,6 +393,11 @@ class MemStorage implements IStorage {
   async createSale(sale: any): Promise<any> {
     console.log("MemStorage: createSale called (stub)", sale);
     return { id: randomUUID(), ...sale };
+  }
+
+  async getSalesByArtist(artistId: string): Promise<any[]> {
+    console.log("MemStorage: getSalesByArtist called (stub)", artistId);
+    return [];
   }
 }
 

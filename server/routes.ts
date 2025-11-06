@@ -13,6 +13,8 @@ import {
   loginSchema,
 } from "@shared/schema";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured } from "./lib/shopify";
+import { createWallArtProducts } from "./lib/printify-service";
+import { isPrintifyConfigured } from "./lib/printify";
 import { requireAuth, requireArtist, requireAdmin } from "./middleware/auth";
 
 // Ensure uploads directory exists
@@ -344,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Approve artwork and create Shopify product (admin only)
+  // Approve artwork and create Printify + Shopify products (admin only)
   app.post("/api/artworks/:id/approve", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
@@ -359,19 +361,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Artist not found" });
       }
 
+      // Build absolute image URL
+      const baseUrl = process.env.REPL_SLUG 
+        ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
+        : `http://localhost:${process.env.PORT || 5000}`;
+      
+      const imageUrl = artwork.imageUrl.startsWith("http") 
+        ? artwork.imageUrl 
+        : `${baseUrl}${artwork.imageUrl}`;
+
+      let printifyProductId = null;
+      let printifyImageId = null;
       let shopifyProductId = null;
 
-      // Create Shopify product with variants if configured
+      // Step 1: Create Printify product (PRIORITY - this is the fulfillment source)
+      if (isPrintifyConfigured()) {
+        try {
+          console.log("Creating Printify product for artwork:", id);
+          const printifyResult = await createWallArtProducts(
+            imageUrl,
+            artwork.title,
+            artwork.description || undefined
+          );
+
+          printifyProductId = printifyResult.printifyProductId;
+          printifyImageId = printifyResult.printifyImageId;
+          
+          console.log("Printify product created:", printifyProductId);
+        } catch (error: any) {
+          console.error("Printify product creation failed:", error);
+          return res.status(500).json({ 
+            message: "Failed to create Printify product: " + error.message 
+          });
+        }
+      }
+
+      // Step 2: Create Shopify product (for storefront)
       if (isShopifyConfigured()) {
         try {
-          const baseUrl = process.env.REPL_SLUG 
-            ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
-            : `http://localhost:${process.env.PORT || 5000}`;
-          
-          const imageUrl = artwork.imageUrl.startsWith("http") 
-            ? artwork.imageUrl 
-            : `${baseUrl}${artwork.imageUrl}`;
-
           const shopifyProduct = await createArtworkProduct({
             title: artwork.title,
             description: artwork.description || undefined,
@@ -383,15 +410,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           shopifyProductId = shopifyProduct.product.id.toString();
+          console.log("Shopify product created:", shopifyProductId);
         } catch (error: any) {
           console.error("Shopify product creation failed:", error);
-          // Continue with approval even if Shopify fails
+          // Continue even if Shopify fails - Printify is the critical part
         }
       }
 
       const updated = await storage.updateArtwork(id, {
         status: "approved",
         shopifyProductId,
+        printifyProductId,
+        printifyImageId,
       });
 
       res.json(updated);

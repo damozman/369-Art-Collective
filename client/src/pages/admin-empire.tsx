@@ -1,10 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { ArrowLeft, DollarSign, Users, TrendingUp, Network } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, TrendingUp, Network, Wallet, CheckCircle, XCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
 
 interface EmpireStats {
   totalRevenue: number;
@@ -31,9 +35,33 @@ interface EmpireStats {
 
 export default function AdminEmpire() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [payoutResults, setPayoutResults] = useState<any>(null);
 
   const { data: empireStats, isLoading } = useQuery<EmpireStats>({
     queryKey: ['/api/admin/empire'],
+  });
+
+  const processPayoutsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('/api/admin/process-payouts', 'POST');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setPayoutResults(data);
+      toast({
+        title: "Payouts Processed!",
+        description: `${data.successfulPayouts} payouts completed, ${data.failedPayouts} failed`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/empire'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Processing Failed",
+        description: error.message || "Failed to process payouts",
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading) {
@@ -70,6 +98,77 @@ export default function AdminEmpire() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Payout Processing Card */}
+        <Card className="mb-8 bg-gradient-to-br from-primary/10 to-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" />
+              Monthly Payout Processing
+            </CardTitle>
+            <CardDescription>
+              Process automated payouts for all artists with connected Stripe accounts
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button
+              onClick={() => processPayoutsMutation.mutate()}
+              disabled={processPayoutsMutation.isPending}
+              size="lg"
+              data-testid="button-process-payouts"
+            >
+              <Wallet className="mr-2 h-4 w-4" />
+              {processPayoutsMutation.isPending ? 'Processing...' : 'Process Monthly Payouts'}
+            </Button>
+
+            {payoutResults && (
+              <div className="p-4 bg-background rounded-lg border">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Payouts</p>
+                    <p className="text-2xl font-bold">{payoutResults.totalPayouts}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Successful</p>
+                    <p className="text-2xl font-bold text-green-600">{payoutResults.successfulPayouts}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Failed</p>
+                    <p className="text-2xl font-bold text-red-600">{payoutResults.failedPayouts}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Amount</p>
+                    <p className="text-2xl font-bold">${payoutResults.totalAmount.toFixed(2)}</p>
+                  </div>
+                </div>
+
+                {payoutResults.payouts && payoutResults.payouts.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Payout Details:</p>
+                    {payoutResults.payouts.map((payout: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                        <div className="flex items-center gap-2">
+                          {payout.status === 'completed' ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-500" />
+                          )}
+                          <span className="text-sm">{payout.artistName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">${payout.amount.toFixed(2)}</span>
+                          <Badge variant={payout.status === 'completed' ? 'default' : 'destructive'}>
+                            {payout.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Revenue Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>

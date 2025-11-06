@@ -2,6 +2,8 @@ import {
   artists,
   artworks as artworksTable,
   admins as adminsTable,
+  orders as ordersTable,
+  sales as salesTable,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -224,23 +226,31 @@ class SupabaseStorage implements IStorage {
     return updatedArtwork;
   }
 
-  // MVP Order/Sale methods - basic implementations
+  // MVP Order/Sale methods - use Drizzle ORM
   async createOrder(order: any): Promise<any> {
-    const { data, error } = await supabase.from("orders").insert(toSnakeCase(order)).select().single();
-    if (error) throw new Error(error.message);
-    return toCamelCase(data);
+    const [createdOrder] = await db
+      .insert(ordersTable)
+      .values(order)
+      .returning();
+    return createdOrder;
   }
 
   async updateOrder(id: string, updates: any): Promise<any> {
-    const { data, error } = await supabase.from("orders").update(toSnakeCase(updates)).eq("id", id).select().single();
-    if (error) throw new Error(error.message);
-    return toCamelCase(data);
+    const [updatedOrder] = await db
+      .update(ordersTable)
+      .set(updates)
+      .where(eq(ordersTable.id, id))
+      .returning();
+    if (!updatedOrder) throw new Error("Order not found");
+    return updatedOrder;
   }
 
   async createSale(sale: any): Promise<any> {
-    const { data, error } = await supabase.from("sales").insert(toSnakeCase(sale)).select().single();
-    if (error) throw new Error(error.message);
-    return toCamelCase(data);
+    const [createdSale] = await db
+      .insert(salesTable)
+      .values(sale)
+      .returning();
+    return createdSale;
   }
 }
 

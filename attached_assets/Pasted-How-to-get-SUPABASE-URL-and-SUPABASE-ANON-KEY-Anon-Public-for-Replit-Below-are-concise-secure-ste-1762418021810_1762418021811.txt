@@ -1,0 +1,29 @@
+How to get SUPABASE_URL and SUPABASE_ANON_KEY (Anon/Public) for Replit
+Below are concise, secure steps you can follow in the Supabase Dashboard and in the CLI. I will not display any secret values here — you must copy them yourself.
+
+A. From the Supabase Dashboard (recommended)
+
+Open https://app.supabase.com and sign in with the account that owns the project.
+Select your project from the list.
+In the left sidebar go to Settings → API.
+Copy the value under Project URL.
+Set this in Replit as SUPABASE_URL.
+Copy the value under anon/public (labeled anon or anon/public key).
+Set this in Replit as SUPABASE_KEY or SUPABASE_ANON_KEY (use the name your app expects).
+In Replit, open the Secrets / Environment variables panel and paste the values:
+Key: SUPABASE_URL → Value: (Project URL)
+Key: SUPABASE_KEY (or SUPABASE_ANON_KEY) → Value: (anon key)
+Restart your Replit app so environment variables are loaded.
+B. From the Supabase CLI (if you prefer terminal)
+
+Install supabase CLI if you don’t have it: https://supabase.com/docs/guides/cli (follow OS-specific instructions).
+Log in: supabase login
+Link or select your project: supabase projects list (or supabase link if in a local project)
+Fetch project details (CLI may show the Project URL). For keys, the dashboard is still the recommended source; the CLI does not print service_role or anon keys by default for security reasons.
+Copy the URL and anon key into Replit’s environment variables as above.
+Security notes (important)
+
+Do not expose the Service Role key (SUPABASE_SERVICE_ROLE_KEY) in client code or Replit public projects — it has full database privileges.
+The anon/public key is safe for client use but still should be stored in your Replit secrets rather than committed to repo files.
+If your Replit repository is public, ensure secrets are in the Replit secret manager only.
+If you want, I can give step-by-step instructions tailored to Replit’s UI (exact clicks) — tell me whether you use Replit’s new "Secrets" panel or the ENV file.

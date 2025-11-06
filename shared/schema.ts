@@ -13,6 +13,7 @@ export const artists = pgTable("artists", {
   approved: boolean("approved").notNull().default(false),
   monthlySales: decimal("monthly_sales", { precision: 10, scale: 2 }).notNull().default('0'), // Current month sales for tier calculation
   stripeAccountId: text("stripe_account_id"), // Stripe Connect account ID for payouts
+  referralCode: text("referral_code").notNull().unique(), // Unique code for referral links (e.g., "ARTIST-ABC123")
   referredBy: varchar("referred_by").references((): any => artists.id), // Which artist recruited them
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -47,6 +48,7 @@ export const artworks = pgTable("artworks", {
 export const insertArtistSchema = createInsertSchema(artists).omit({
   id: true,
   createdAt: true,
+  referralCode: true, // Generated automatically
 }).extend({
   email: z.string().email(),
   password: z.string().min(6),
@@ -125,7 +127,10 @@ export const orders = pgTable("orders", {
   printifyCost: decimal("printify_cost", { precision: 10, scale: 2 }).notNull(),
   shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).notNull(),
   profit: decimal("profit", { precision: 10, scale: 2 }).notNull(), // Product price - Printify cost - shipping
-  referralSource: text("referral_source"), // UTM parameter or artist link
+  utmSource: text("utm_source"), // UTM source parameter (e.g., artist referral code)
+  utmMedium: text("utm_medium"), // UTM medium (e.g., social, email)
+  utmCampaign: text("utm_campaign"), // UTM campaign (e.g., spring2025)
+  referralArtistId: varchar("referral_artist_id").references(() => artists.id), // Artist who referred this sale
   referralBonus: boolean("referral_bonus").notNull().default(false), // +5% bonus applied?
   status: text("status").notNull().default("pending"), // pending, fulfilled, cancelled
   createdAt: timestamp("created_at").notNull().defaultNow(),

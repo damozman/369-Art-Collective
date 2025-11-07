@@ -12,13 +12,15 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { changePasswordSchema, updateAdminProfileSchema } from "@shared/schema";
 import type { Admin } from "@shared/schema";
-import { Lock, User, Mail } from "lucide-react";
+import { Lock, User, Mail, ArrowLeft } from "lucide-react";
+import { useLocation } from "wouter";
 
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 type UpdateProfileForm = z.infer<typeof updateAdminProfileSchema>;
 
 export default function AdminSettings() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const { data: user } = useQuery<Admin>({ queryKey: ["/api/auth/me"] });
@@ -104,11 +106,21 @@ export default function AdminSettings() {
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold" data-testid="heading-settings">Admin Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your admin account details and security settings
-          </p>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setLocation("/admin/dashboard")}
+            data-testid="button-back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold" data-testid="heading-settings">Admin Settings</h1>
+            <p className="text-muted-foreground">
+              Manage your admin account details and security settings
+            </p>
+          </div>
         </div>
 
         <Separator />

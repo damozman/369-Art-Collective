@@ -6,15 +6,17 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
-import { ArrowLeft, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Clock, Eye, Settings, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Artist } from "@shared/schema";
+import { useAuth } from "@/lib/auth-context";
 
 export default function AdminArtists() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { logout } = useAuth();
 
   const { data: artists, isLoading } = useQuery<Artist[]>({
     queryKey: ["/api/artists"],
@@ -69,7 +71,15 @@ export default function AdminArtists() {
                 <p className="text-sm text-muted-foreground">Approve and manage artist accounts</p>
               </div>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/settings")} data-testid="button-settings">
+                <Settings className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={logout} data-testid="button-logout">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>

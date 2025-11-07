@@ -52,15 +52,7 @@ export default function AdminSettings() {
 
   const changePasswordMutation = useMutation({
     mutationFn: async (data: ChangePasswordForm) => {
-      const response = await fetch("/api/admins/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to change password");
-      }
+      const response = await apiRequest("POST", "/api/admins/change-password", data);
       return response.json();
     },
     onSuccess: () => {
@@ -82,15 +74,7 @@ export default function AdminSettings() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: UpdateProfileForm) => {
-      const response = await fetch("/api/admins/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update profile");
-      }
+      const response = await apiRequest("PATCH", "/api/admins/profile", data);
       return response.json();
     },
     onSuccess: () => {

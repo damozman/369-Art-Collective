@@ -9,10 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/lib/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { Palette, Loader2 } from "lucide-react";
+import { Shield, Loader2 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-export default function Login() {
+export default function AdminLogin() {
   const [, setLocation] = useLocation();
   const { login } = useAuth();
   const { toast } = useToast();
@@ -26,7 +26,7 @@ export default function Login() {
   async function onSubmit(data: LoginCredentials) {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/artists/login", {
+      const response = await fetch("/api/admins/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -38,7 +38,7 @@ export default function Login() {
       }
 
       const user = await response.json();
-      login({ ...user, type: "artist" });
+      login({ ...user, type: "admin" });
 
       toast({
         title: "Welcome back!",
@@ -46,7 +46,7 @@ export default function Login() {
       });
 
       setTimeout(() => {
-        setLocation("/artist/dashboard");
+        setLocation("/admin/dashboard");
       }, 0);
     } catch (error: any) {
       toast({
@@ -69,19 +69,19 @@ export default function Login() {
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <Palette className="w-6 h-6 text-primary-foreground" />
+              <Shield className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold font-serif">Artist Portal</h1>
-              <p className="text-sm text-muted-foreground">Creative submissions platform</p>
+              <h1 className="text-2xl font-bold font-serif">Admin Portal</h1>
+              <p className="text-sm text-muted-foreground">Secure access</p>
             </div>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <CardDescription>Sign in to your artist account</CardDescription>
+            <CardTitle className="text-2xl">Admin Login</CardTitle>
+            <CardDescription>Sign in to your admin account</CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -97,7 +97,7 @@ export default function Login() {
                         <Input
                           {...field}
                           type="email"
-                          placeholder="you@example.com"
+                          placeholder="admin@example.com"
                           data-testid="input-email"
                         />
                       </FormControl>
@@ -143,24 +143,11 @@ export default function Login() {
                       Signing in...
                     </>
                   ) : (
-                    "Sign in as Artist"
+                    "Sign in as Admin"
                   )}
                 </Button>
               </form>
             </Form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                New artist?{" "}
-                <button
-                  onClick={() => setLocation("/register")}
-                  className="text-primary hover:underline font-medium"
-                  data-testid="link-register"
-                >
-                  Create an account
-                </button>
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

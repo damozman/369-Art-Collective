@@ -5,6 +5,7 @@ import {
   orders as ordersTable,
   sales as salesTable,
   payouts as payoutsTable,
+  passwordResetTokens,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -13,6 +14,7 @@ import {
   type InsertArtwork,
   type UpdateArtwork,
   type ArtworkWithArtist,
+  type PasswordResetToken,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
@@ -31,6 +33,13 @@ export interface IStorage {
   getAdmin(id: string): Promise<Admin | undefined>;
   getAdminByEmail(email: string): Promise<Admin | undefined>;
   createAdmin(admin: InsertAdmin): Promise<Admin>;
+  updateAdmin(id: string, updates: Partial<Admin>): Promise<Admin>;
+
+  // Password Reset Token methods
+  createPasswordResetToken(email: string, hashedToken: string, userType: 'artist' | 'admin', expiresAt: Date): Promise<PasswordResetToken>;
+  getPasswordResetToken(hashedToken: string): Promise<PasswordResetToken | undefined>;
+  markTokenAsUsed(hashedToken: string): Promise<void>;
+  invalidateUserTokens(email: string, userType: 'artist' | 'admin'): Promise<void>;
 
   // Artwork methods
   getArtwork(id: string): Promise<Artwork | undefined>;
@@ -131,6 +140,52 @@ class PostgresStorage implements IStorage {
       .values(insertAdmin)
       .returning();
     return admin;
+  }
+
+  async updateAdmin(id: string, updates: Partial<Admin>): Promise<Admin> {
+    const [updatedAdmin] = await db
+      .update(adminsTable)
+      .set(updates)
+      .where(eq(adminsTable.id, id))
+      .returning();
+    if (!updatedAdmin) throw new Error("Admin not found");
+    return updatedAdmin;
+  }
+
+  async createPasswordResetToken(email: string, hashedToken: string, userType: 'artist' | 'admin', expiresAt: Date): Promise<PasswordResetToken> {
+    const [token] = await db
+      .insert(passwordResetTokens)
+      .values({
+        email,
+        hashedToken,
+        userType,
+        expiresAt,
+      })
+      .returning();
+    return token;
+  }
+
+  async getPasswordResetToken(hashedToken: string): Promise<PasswordResetToken | undefined> {
+    const [token] = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.hashedToken, hashedToken))
+      .limit(1);
+    return token;
+  }
+
+  async markTokenAsUsed(hashedToken: string): Promise<void> {
+    await db
+      .update(passwordResetTokens)
+      .set({ isUsed: true })
+      .where(eq(passwordResetTokens.hashedToken, hashedToken));
+  }
+
+  async invalidateUserTokens(email: string, userType: 'artist' | 'admin'): Promise<void> {
+    await db
+      .update(passwordResetTokens)
+      .set({ isUsed: true })
+      .where(eq(passwordResetTokens.email, email));
   }
 
   async getArtwork(id: string): Promise<Artwork | undefined> {

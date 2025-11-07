@@ -13,7 +13,11 @@ import {
   loginSchema,
   changePasswordSchema,
   updateArtistProfileSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  updateAdminProfileSchema,
 } from "@shared/schema";
+import crypto from "crypto";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured } from "./lib/shopify";
 import { createWallArtProducts } from "./lib/printify-service";
 import { isPrintifyConfigured } from "./lib/printify";
@@ -333,6 +337,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== PASSWORD RESET ROUTES (SECURE SELF-SERVICE) =====
+
+  // Helper: Generate secure token
+  function generateSecureToken(): string {
+    return crypto.randomBytes(64).toString('base64url');
+  }
+
+  // Helper: Hash token for storage
+  function hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  // Forgot password - Artist
+  app.post("/api/auth/forgot-password/artist", async (req, res) => {
+    try {
+      const { email } = forgotPasswordSchema.parse(req.body);
+      
+      // Always return same response to prevent email enumeration
+      const response = { message: "If an account exists, a password reset link has been generated" };
+      
+      const artist = await storage.getArtistByEmail(email);
+      if (!artist) {
+        return res.json(response);
+      }
+
+      // Invalidate any existing tokens for this user
+      await storage.invalidateUserTokens(email, 'artist');
+
+      // Generate secure token
+      const plainToken = generateSecureToken();
+      const hashedToken = hashToken(plainToken);
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 60 minutes
+
+      await storage.createPasswordResetToken(email, hashedToken, 'artist', expiresAt);
+
+      // In production, send email here
+      // For now, return the token for manual distribution
+      console.log(`Password reset token for ${email}: ${plainToken}`);
+      console.log(`Reset link: ${req.protocol}://${req.get('host')}/reset-password?token=${plainToken}&type=artist`);
+
+      res.json(response);
+    } catch (error: any) {
+      console.error("Forgot password error:", error);
+      res.status(400).json({ message: error.message || "Failed to process request" });
+    }
+  });
+
+  // Forgot password - Admin
+  app.post("/api/auth/forgot-password/admin", async (req, res) => {
+    try {
+      const { email } = forgotPasswordSchema.parse(req.body);
+      
+      const response = { message: "If an account exists, a password reset link has been generated" };
+      
+      const admin = await storage.getAdminByEmail(email);
+      if (!admin) {
+        return res.json(response);
+      }
+
+      await storage.invalidateUserTokens(email, 'admin');
+
+      const plainToken = generateSecureToken();
+      const hashedToken = hashToken(plainToken);
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      await storage.createPasswordResetToken(email, hashedToken, 'admin', expiresAt);
+
+      console.log(`Password reset token for admin ${email}: ${plainToken}`);
+      console.log(`Reset link: ${req.protocol}://${req.get('host')}/reset-password?token=${plainToken}&type=admin`);
+
+      res.json(response);
+    } catch (error: any) {
+      console.error("Forgot password error:", error);
+      res.status(400).json({ message: error.message || "Failed to process request" });
+    }
+  });
+
+  // Reset password - Universal (artist or admin)
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, newPassword } = resetPasswordSchema.parse(req.body);
+      
+      const hashedToken = hashToken(token);
+      const resetToken = await storage.getPasswordResetToken(hashedToken);
+
+      if (!resetToken) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+
+      if (resetToken.isUsed) {
+        return res.status(400).json({ message: "This reset token has already been used" });
+      }
+
+      if (new Date() > resetToken.expiresAt) {
+        return res.status(400).json({ message: "Reset token has expired" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password based on user type
+      if (resetToken.userType === 'artist') {
+        const artist = await storage.getArtistByEmail(resetToken.email);
+        if (!artist) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        await storage.updateArtist(artist.id, { password: hashedPassword });
+      } else {
+        const admin = await storage.getAdminByEmail(resetToken.email);
+        if (!admin) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        await storage.updateAdmin(admin.id, { password: hashedPassword });
+      }
+
+      // Mark token as used
+      await storage.markTokenAsUsed(hashedToken);
+
+      res.json({ message: "Password reset successful" });
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      res.status(400).json({ message: error.message || "Failed to reset password" });
+    }
+  });
+
   // ===== STRIPE CONNECT ROUTES =====
 
   // Generate Stripe Connect account link for artist
@@ -484,6 +613,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== ADMIN ROUTES =====
+
+  // Admin profile update
+  app.patch("/api/admins/profile", requireAdmin, async (req, res) => {
+    try {
+      const data = updateAdminProfileSchema.parse(req.body);
+      const admin = req.user!;
+
+      // Check if email is being changed and if it's already taken
+      if (data.email && data.email !== admin.email) {
+        const existing = await storage.getAdminByEmail(data.email);
+        if (existing) {
+          return res.status(400).json({ message: "Email already in use" });
+        }
+      }
+
+      const updatedAdmin = await storage.updateAdmin(admin.id, data);
+      
+      // Update session if email or name changed
+      if (data.email || data.name) {
+        req.session.user = {
+          ...req.session.user!,
+          email: updatedAdmin.email,
+          name: updatedAdmin.name,
+        };
+      }
+
+      const { password, ...adminData } = updatedAdmin;
+      res.json(adminData);
+    } catch (error: any) {
+      console.error("Update admin profile error:", error);
+      res.status(400).json({ message: error.message || "Failed to update profile" });
+    }
+  });
+
+  // Admin change password
+  app.post("/api/admins/change-password", requireAdmin, async (req, res) => {
+    try {
+      const data = changePasswordSchema.parse(req.body);
+      const admin = req.user!;
+
+      // Get full admin record with password
+      const fullAdmin = await storage.getAdmin(admin.id);
+      if (!fullAdmin) {
+        return res.status(404).json({ message: "Admin not found" });
+      }
+
+      // Verify current password
+      const validPassword = await bcrypt.compare(data.currentPassword, fullAdmin.password);
+      if (!validPassword) {
+        return res.status(401).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password and update
+      const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+      await storage.updateAdmin(admin.id, { password: hashedPassword });
+
+      res.json({ message: "Password changed successfully" });
+    } catch (error: any) {
+      console.error("Admin change password error:", error);
+      res.status(400).json({ message: error.message || "Failed to change password" });
+    }
+  });
 
   // Admin login
   app.post("/api/admins/login", async (req, res) => {

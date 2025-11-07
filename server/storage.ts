@@ -405,6 +405,33 @@ class MemStorage implements IStorage {
     return admin;
   }
 
+  async updateAdmin(id: string, updates: Partial<Admin>): Promise<Admin> {
+    const admin = this.admins.get(id);
+    if (!admin) throw new Error("Admin not found");
+    const updated = { ...admin, ...updates };
+    this.admins.set(id, updated);
+    return updated;
+  }
+
+  // Password Reset Token methods (in-memory stub - not functional)
+  async createPasswordResetToken(email: string, hashedToken: string, userType: 'artist' | 'admin', expiresAt: Date): Promise<PasswordResetToken> {
+    console.warn("MemStorage: Password reset not supported in memory mode");
+    throw new Error("Password reset requires database configuration");
+  }
+
+  async getPasswordResetToken(hashedToken: string): Promise<PasswordResetToken | undefined> {
+    console.warn("MemStorage: Password reset not supported in memory mode");
+    return undefined;
+  }
+
+  async markTokenAsUsed(hashedToken: string): Promise<void> {
+    console.warn("MemStorage: Password reset not supported in memory mode");
+  }
+
+  async invalidateUserTokens(email: string, userType: 'artist' | 'admin'): Promise<void> {
+    console.warn("MemStorage: Password reset not supported in memory mode");
+  }
+
   async getArtwork(id: string): Promise<Artwork | undefined> {
     return this.artworks.get(id);
   }

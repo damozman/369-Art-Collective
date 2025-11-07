@@ -128,7 +128,7 @@ export default function AdminLogin() {
                 <div className="flex items-center justify-end mb-2">
                   <button
                     type="button"
-                    onClick={() => setLocation("/forgot-password")}
+                    onClick={() => setLocation("/admin/forgot-password")}
                     className="text-sm text-muted-foreground hover:text-primary"
                     data-testid="link-forgot-password"
                   >

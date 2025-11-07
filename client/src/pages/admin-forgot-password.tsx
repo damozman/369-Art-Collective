@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, Mail, ArrowLeft } from "lucide-react";
+import { CheckCircle2, Mail, ArrowLeft, Shield } from "lucide-react";
 
-export default function ForgotPassword() {
+export default function AdminForgotPassword() {
   const [, navigate] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -27,7 +27,7 @@ export default function ForgotPassword() {
       setIsSubmitting(true);
       setSuccess(false);
 
-      const response = await fetch("/api/auth/forgot-password/artist", {
+      const response = await fetch("/api/auth/forgot-password/admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -55,15 +55,16 @@ export default function ForgotPassword() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/admin")}
               data-testid="button-back-to-login"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="text-2xl">Reset Password</CardTitle>
+            <Shield className="h-5 w-5 text-primary" />
+            <CardTitle className="text-2xl">Admin Password Reset</CardTitle>
           </div>
           <CardDescription>
-            Enter your email address and we'll send you a password reset link
+            Enter your admin email address and we'll send you a password reset link
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -71,7 +72,7 @@ export default function ForgotPassword() {
             <Alert className="border-green-200 bg-green-50 dark:bg-green-950/20" data-testid="alert-success">
               <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
               <AlertDescription className="text-green-800 dark:text-green-200">
-                If an account exists with that email, a password reset link has been generated. Please check your console logs or contact an administrator.
+                If an account exists with that email, a password reset link has been generated. Please check your console logs or contact a system administrator.
               </AlertDescription>
             </Alert>
           ) : (
@@ -82,14 +83,14 @@ export default function ForgotPassword() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>Admin Email Address</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             {...field}
                             type="email"
-                            placeholder="artist@example.com"
+                            placeholder="admin@example.com"
                             className="pl-10"
                             data-testid="input-email"
                           />
@@ -113,11 +114,11 @@ export default function ForgotPassword() {
 
           <div className="mt-6 text-center">
             <button
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/admin")}
               className="text-sm text-primary hover:underline"
               data-testid="link-back-to-login"
             >
-              Back to login
+              Back to admin login
             </button>
           </div>
         </CardContent>

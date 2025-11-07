@@ -11,6 +11,7 @@ import Login from "@/pages/login";
 import AdminLogin from "@/pages/admin-login";
 import Register from "@/pages/register";
 import ForgotPassword from "@/pages/forgot-password";
+import AdminForgotPassword from "@/pages/admin-forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import ArtistDashboard from "@/pages/artist-dashboard";
 import UploadArtwork from "@/pages/upload-artwork";
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/admin" component={AdminLogin} />
       <Route path="/register" component={Register} />
       <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/admin/forgot-password" component={AdminForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       
       <Route path="/artist/pending">

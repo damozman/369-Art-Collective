@@ -17,7 +17,11 @@ The platform is built with a clear separation between frontend and backend.
 - **Royalty System:** A tiered royalty system (30% to 45% based on monthly sales) is implemented, alongside a referral bonus (+5% for UTM-tracked sales) and a recruitment bonus (5% of recruited artist's royalties).
 - **Security:** 
   - Session-based authentication with HTTP-only cookies, session regeneration, CSRF protection, bcrypt password hashing, and role-based access control
-  - **Separated Login Architecture:** Admin login at `/admin` (not publicly linked) prevents password reset spam; artist login at `/login` (public)
+  - **Separated Login Architecture:** 
+    - Admin login at `/admin` (not publicly linked) prevents password reset spam
+    - Artist login at `/login` (public, includes registration link)
+    - Separate password reset pages: `/forgot-password` (artist) and `/admin/forgot-password` (admin)
+    - No cross-exposure between admin and artist authentication flows
   - **Password Reset System (Phase 1 - Completed):** Secure self-service password reset with cryptographically secure tokens (64-byte random), SHA-256 hashing, 60-minute expiration, single-use enforcement, and rate limiting (5 requests per 15 minutes)
   - Rate limiting on critical endpoints: login (10/15min), password reset (5/15min)
   - Audit logging for security events (anonymized, no sensitive data exposure)

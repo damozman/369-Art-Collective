@@ -738,6 +738,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: "admin",
         };
 
+        console.log("Admin logged in - session created:", {
+          sessionID: req.sessionID,
+          userType: req.session.user.type,
+          userId: req.session.user.id,
+        });
+
         const { password: _, ...adminData } = admin;
         res.json(adminData);
       });

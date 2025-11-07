@@ -36,7 +36,20 @@ export function requireArtist(req: Request, res: Response, next: NextFunction) {
 }
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  console.log("requireAdmin middleware:", {
+    path: req.path,
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    hasUser: !!req.session?.user,
+    userType: req.session?.user?.type,
+    cookies: req.headers.cookie ? "present" : "missing",
+  });
+  
   if (!req.session?.user || req.session.user.type !== "admin") {
+    console.error("Admin access denied:", {
+      path: req.path,
+      sessionData: req.session?.user,
+    });
     return res.status(403).json({ message: "Admin access required" });
   }
   req.user = req.session.user;

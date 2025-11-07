@@ -4,6 +4,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import bcrypt from "bcryptjs";
+import rateLimit from "express-rate-limit";
 import { storage } from "./storage";
 import {
   insertArtistSchema,
@@ -50,6 +51,23 @@ const upload = multer({
       cb(new Error("Only image files are allowed"));
     }
   },
+});
+
+// Rate limiters for security-critical endpoints
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 requests per window
+  message: "Too many password reset requests, please try again later",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 login attempts per window
+  message: "Too many login attempts, please try again later",
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -349,8 +367,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  // Forgot password - Artist
-  app.post("/api/auth/forgot-password/artist", async (req, res) => {
+  // Forgot password - Artist (with rate limiting)
+  app.post("/api/auth/forgot-password/artist", passwordResetLimiter, async (req, res) => {
     try {
       const { email } = forgotPasswordSchema.parse(req.body);
       
@@ -372,10 +390,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.createPasswordResetToken(email, hashedToken, 'artist', expiresAt);
 
-      // In production, send email here
-      // For now, return the token for manual distribution
-      console.log(`Password reset token for ${email}: ${plainToken}`);
-      console.log(`Reset link: ${req.protocol}://${req.get('host')}/reset-password?token=${plainToken}&type=artist`);
+      // SECURITY: Log audit trail without exposing token
+      console.log(`[SECURITY] Password reset requested for artist: ${email.substring(0, 3)}***@${email.split('@')[1]}`);
+      
+      // TODO: Integrate email service to send reset link to user's email
+      // For now, admins must manually distribute reset links via secure channel
+      // The reset link should be: /reset-password?token=${plainToken}&type=artist
 
       res.json(response);
     } catch (error: any) {

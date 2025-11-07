@@ -31,9 +31,10 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
-    sameSite: "lax", // CSRF protection
+    sameSite: "lax",
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
   },
+  proxy: true, // Trust proxy headers (needed for Replit deployments)
 }));
 
 app.use(express.json({

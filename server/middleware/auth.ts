@@ -36,7 +36,15 @@ export function requireArtist(req: Request, res: Response, next: NextFunction) {
 }
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  console.log("requireAdmin check:", {
+    hasSession: !!req.session,
+    hasUser: !!req.session?.user,
+    userType: req.session?.user?.type,
+    userId: req.session?.user?.id,
+  });
+  
   if (!req.session?.user || req.session.user.type !== "admin") {
+    console.log("Admin auth failed - session:", req.session?.user);
     return res.status(403).json({ message: "Admin access required" });
   }
   req.user = req.session.user;

@@ -57,17 +57,25 @@ const upload = multer({
 const passwordResetLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 requests per window
-  message: "Too many password reset requests, please try again later",
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: "Too many password reset requests. Please try again later.",
+    });
+  },
 });
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 10, // 10 login attempts per window
-  message: "Too many login attempts, please try again later",
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: "Too many login attempts. Please try again later.",
+    });
+  },
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {

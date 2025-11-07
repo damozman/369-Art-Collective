@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLocation } from "wouter";
-import { LogOut, CheckCircle, XCircle, Users, Eye, Network } from "lucide-react";
+import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -138,6 +138,9 @@ export default function AdminDashboard() {
                 Manage Artists
               </Button>
               <ThemeToggle />
+              <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/settings")} data-testid="button-settings">
+                <Settings className="h-5 w-5" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={logout} data-testid="button-logout">
                 <LogOut className="h-5 w-5" />
               </Button>

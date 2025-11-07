@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
-import { ArrowLeft, DollarSign, Users, TrendingUp, Network, Wallet, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, DollarSign, Users, TrendingUp, Network, Wallet, CheckCircle, XCircle, Settings, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 interface EmpireStats {
   totalRevenue: number;
@@ -36,6 +37,7 @@ interface EmpireStats {
 export default function AdminEmpire() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { logout } = useAuth();
   const [payoutResults, setPayoutResults] = useState<any>(null);
 
   const { data: empireStats, isLoading } = useQuery<EmpireStats>({
@@ -92,7 +94,15 @@ export default function AdminEmpire() {
               </div>
             </div>
 
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/settings")} data-testid="button-settings">
+                <Settings className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={logout} data-testid="button-logout">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>

@@ -9,6 +9,8 @@ import { ProtectedRoute } from "@/components/protected-route";
 
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import ArtistDashboard from "@/pages/artist-dashboard";
 import UploadArtwork from "@/pages/upload-artwork";
 import ArtistEarnings from "@/pages/artist-earnings";
@@ -20,6 +22,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import AdminArtists from "@/pages/admin-artists";
 import AdminArtistDetail from "@/pages/admin-artist-detail";
 import AdminEmpire from "@/pages/admin-empire";
+import AdminSettings from "@/pages/admin-settings";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +31,8 @@ function Router() {
       <Route path="/" component={() => <Redirect to="/login" />} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
       
       <Route path="/artist/pending">
         <ProtectedRoute requiredType="artist">
@@ -92,6 +97,12 @@ function Router() {
       <Route path="/admin/empire">
         <ProtectedRoute requiredType="admin">
           <AdminEmpire />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/settings">
+        <ProtectedRoute requiredType="admin">
+          <AdminSettings />
         </ProtectedRoute>
       </Route>
       

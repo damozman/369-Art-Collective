@@ -185,8 +185,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Artist login
-  app.post("/api/artists/login", async (req, res) => {
+  // Artist login (with rate limiting)
+  app.post("/api/artists/login", loginLimiter, async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
 
@@ -404,8 +404,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Forgot password - Admin
-  app.post("/api/auth/forgot-password/admin", async (req, res) => {
+  // Forgot password - Admin (with rate limiting)
+  app.post("/api/auth/forgot-password/admin", passwordResetLimiter, async (req, res) => {
     try {
       const { email } = forgotPasswordSchema.parse(req.body);
       
@@ -424,8 +424,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.createPasswordResetToken(email, hashedToken, 'admin', expiresAt);
 
-      console.log(`Password reset token for admin ${email}: ${plainToken}`);
-      console.log(`Reset link: ${req.protocol}://${req.get('host')}/reset-password?token=${plainToken}&type=admin`);
+      // SECURITY: Log audit trail without exposing token
+      console.log(`[SECURITY] Password reset requested for admin: ${email.substring(0, 3)}***@${email.split('@')[1]}`);
+      
+      // TODO: Integrate email service to send reset link to user's email
+      // For now, admins must manually distribute reset links via secure channel
+      // The reset link should be: /reset-password?token=${plainToken}&type=admin
 
       res.json(response);
     } catch (error: any) {
@@ -434,8 +438,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Reset password - Universal (artist or admin)
-  app.post("/api/auth/reset-password", async (req, res) => {
+  // Reset password - Universal (artist or admin) with rate limiting
+  app.post("/api/auth/reset-password", passwordResetLimiter, async (req, res) => {
     try {
       const { token, newPassword } = resetPasswordSchema.parse(req.body);
       
@@ -696,8 +700,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin login
-  app.post("/api/admins/login", async (req, res) => {
+  // Admin login (with rate limiting)
+  app.post("/api/admins/login", loginLimiter, async (req, res) => {
     try {
       const { email, password } = loginSchema.parse(req.body);
 

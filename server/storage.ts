@@ -71,6 +71,7 @@ export interface IStorage {
   getAllKits(): Promise<Kit[]>;
   getKit(id: string): Promise<Kit | undefined>;
   createKit(kit: InsertKit): Promise<Kit>;
+  unlockKit(shopifyVariantId: string): Promise<Kit | undefined>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -371,6 +372,15 @@ class PostgresStorage implements IStorage {
       .returning();
     return kit;
   }
+
+  async unlockKit(shopifyVariantId: string): Promise<Kit | undefined> {
+    const [kit] = await db
+      .update(kitsTable)
+      .set({ unlockedAt: new Date() })
+      .where(eq(kitsTable.shopifyVariantId, shopifyVariantId))
+      .returning();
+    return kit;
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -586,10 +596,24 @@ class MemStorage implements IStorage {
       ...insertKit,
       id,
       price: String(insertKit.price),
+      shopifyVariantId: null,
+      unlockedAt: null,
       createdAt: new Date(),
     };
     this.kits.set(id, kit);
     return kit;
+  }
+
+  async unlockKit(shopifyVariantId: string): Promise<Kit | undefined> {
+    const kit = Array.from(this.kits.values()).find(
+      (k) => k.shopifyVariantId === shopifyVariantId
+    );
+    if (kit) {
+      const updatedKit = { ...kit, unlockedAt: new Date() };
+      this.kits.set(kit.id, updatedKit);
+      return updatedKit;
+    }
+    return undefined;
   }
 }
 

@@ -43,4 +43,10 @@ The platform is built with a clear separation between frontend and backend.
 - **Printify API:** For creating POD products and managing fulfillment
 - **Shopify Admin API:** For storefront product management and order capture via webhooks
 - **Stripe Connect:** Planned for automated artist payouts
+- **xAI/Grok API:** Powers AI automation prompt generation with grok-2-1212 (131k context) model
 - **Node.js:** Runtime environment
+
+## Development Environment
+- **Package Manager:** CRITICAL - Replit Nix environment uses `pnpm`, not `npm`. Always use `pnpm install` for package installation to ensure devDependencies install correctly
+- **Environment Variables:** NODE_ENV=development required for devDependencies in Replit Nix
+- **Build System:** Vite for frontend bundling with Express backend serving on port 5000

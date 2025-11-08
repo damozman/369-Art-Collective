@@ -1332,6 +1332,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/shopify-webhook", async (req, res) => {
+    try {
+      const hmacHeader = req.headers['x-shopify-hmac-sha256'] as string;
+      const rawBody = (req as any).rawBody;
+
+      if (!rawBody) {
+        console.warn("Shopify webhook: No raw body available for HMAC verification");
+        return res.status(400).json({ success: false, message: "Invalid request" });
+      }
+
+      if (!verifyShopifyWebhook(rawBody, hmacHeader)) {
+        console.warn("Shopify webhook HMAC verification failed");
+        return res.status(401).json({ success: false, message: "Unauthorized" });
+      }
+
+      const payload = req.body;
+      const lineItems = payload.line_items || [];
+
+      if (lineItems.length === 0) {
+        console.warn("No line items found in webhook payload");
+        return res.status(400).json({ success: false, message: "No line items found" });
+      }
+
+      const unlockedKits: string[] = [];
+      const notFoundVariants: string[] = [];
+
+      for (const item of lineItems) {
+        const shopifyVariantId = item.variant_id?.toString();
+        if (!shopifyVariantId) continue;
+
+        const unlockedKit = await storage.unlockKit(shopifyVariantId);
+        if (unlockedKit) {
+          unlockedKits.push(unlockedKit.name);
+          console.log(`Kit unlocked: ${unlockedKit.name} (variant: ${shopifyVariantId})`);
+        } else {
+          notFoundVariants.push(shopifyVariantId);
+        }
+      }
+
+      if (unlockedKits.length > 0) {
+        console.log(`Successfully unlocked ${unlockedKits.length} kit(s): ${unlockedKits.join(', ')}`);
+      }
+
+      if (notFoundVariants.length > 0) {
+        console.log(`Variants not found in kits table: ${notFoundVariants.join(', ')}`);
+      }
+
+      res.status(200).json({ success: true });
+    } catch (error: any) {
+      console.error("Shopify webhook error:", error);
+      res.status(500).json({ success: false, message: error.message || "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

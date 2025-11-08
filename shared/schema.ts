@@ -262,6 +262,8 @@ export const kits = pgTable("kits", {
   name: text("name").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   promptTemplate: text("prompt_template").notNull(),
+  shopifyVariantId: text("shopify_variant_id"),
+  unlockedAt: timestamp("unlocked_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

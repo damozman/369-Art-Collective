@@ -36,12 +36,12 @@ async function createAdmin() {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json() as { message: string };
       console.error("❌ Failed to create admin:", error.message);
       process.exit(1);
     }
 
-    const result = await response.json();
+    const result = await response.json() as { id: number };
     console.log("✅ Admin account created successfully!");
     console.log("Admin ID:", result.id);
     console.log("\nYou can now log in at /login using the Admin tab.");

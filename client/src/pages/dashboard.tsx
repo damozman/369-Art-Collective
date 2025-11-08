@@ -202,14 +202,15 @@ export default function Dashboard() {
                         Generate Prompt
                       </Button>
                     ) : (
-                      <Button 
-                        className="w-full" 
-                        variant="outline"
-                        data-testid={`button-buy-kit-${kit.id}`}
-                        disabled
-                      >
-                        Buy Now (Stripe Coming Soon)
-                      </Button>
+                      <Link href={`/checkout?kitId=${kit.id}`} className="w-full">
+                        <Button 
+                          className="w-full" 
+                          variant="default"
+                          data-testid={`button-buy-kit-${kit.id}`}
+                        >
+                          Buy Now - ${kit.price}
+                        </Button>
+                      </Link>
                     )}
                   </CardFooter>
                 </Card>

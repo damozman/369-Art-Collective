@@ -1293,6 +1293,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public: Get unlocked kits count (MUST be before /:id route)
+  app.get("/api/kits/unlocked-count", async (_req, res) => {
+    try {
+      const count = await storage.getUnlockedKitsCount();
+      res.json({ count });
+    } catch (error: any) {
+      console.error("Get unlocked kits count error:", error);
+      res.status(500).json({ message: "Failed to fetch unlocked kits count" });
+    }
+  });
+
   // Public: Get single kit by ID
   app.get("/api/kits/:id", async (req, res) => {
     try {
@@ -1305,17 +1316,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Get kit error:", error);
       res.status(500).json({ message: "Failed to fetch kit" });
-    }
-  });
-
-  // Public: Get unlocked kits count
-  app.get("/api/kits/unlocked-count", async (_req, res) => {
-    try {
-      const count = await storage.getUnlockedKitsCount();
-      res.json({ count });
-    } catch (error: any) {
-      console.error("Get unlocked kits count error:", error);
-      res.status(500).json({ message: "Failed to fetch unlocked kits count" });
     }
   });
 

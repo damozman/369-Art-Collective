@@ -29,7 +29,8 @@ export default function Dashboard() {
 
   const generatePromptMutation = useMutation({
     mutationFn: async (data: { kitId: string; userInput: string }) => {
-      return apiRequest<{ prompt: string }>("/api/grok-prompt", "POST", data);
+      const res = await apiRequest("POST", "/api/grok-prompt", data);
+      return await res.json() as { prompt: string };
     },
     onSuccess: (data) => {
       setGeneratedPrompt(data.prompt);

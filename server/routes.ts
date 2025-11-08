@@ -1293,6 +1293,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public: Get single kit by ID
+  app.get("/api/kits/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const kit = await storage.getKit(id);
+      if (!kit) {
+        return res.status(404).json({ message: "Kit not found" });
+      }
+      res.json(kit);
+    } catch (error: any) {
+      console.error("Get kit error:", error);
+      res.status(500).json({ message: "Failed to fetch kit" });
+    }
+  });
+
   // Public: Get unlocked kits count
   app.get("/api/kits/unlocked-count", async (_req, res) => {
     try {
@@ -1358,9 +1373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const Stripe = (await import("stripe")).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-        apiVersion: "2024-11-20.acacia",
-      });
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
       const baseUrl = `${req.protocol}://${req.get('host')}`;
       const session = await stripe.checkout.sessions.create({
@@ -1390,6 +1403,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Stripe checkout error:", error);
       res.status(500).json({ message: error.message || "Failed to create checkout session" });
+    }
+  });
+
+  // Stripe webhook - verify payment completion and unlock kit
+  app.post("/api/stripe-webhook", async (req, res) => {
+    try {
+      console.log("🔔 Stripe webhook received");
+      
+      const signature = req.headers['stripe-signature'] as string;
+      const rawBody = (req as any).rawBody;
+
+      if (!rawBody) {
+        console.warn("Stripe webhook: No raw body available");
+        return res.status(400).send("Invalid request");
+      }
+
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+      
+      let event;
+      try {
+        // Verify webhook signature
+        event = stripe.webhooks.constructEvent(
+          rawBody,
+          signature,
+          process.env.STRIPE_WEBHOOK_SECRET!
+        );
+      } catch (err: any) {
+        console.error("Stripe webhook signature verification failed:", err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+
+      console.log("✅ Stripe webhook verified:", event.type);
+
+      // Handle checkout.session.completed event
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as any;
+        const kitId = session.metadata?.kitId;
+
+        if (!kitId) {
+          console.warn("No kitId in session metadata");
+          return res.status(400).send("Missing kitId");
+        }
+
+        // Unlock the kit
+        const unlockedKit = await storage.unlockKitById(kitId);
+        if (unlockedKit) {
+          console.log(`✅ Kit unlocked via Stripe payment: ${unlockedKit.name} (ID: ${kitId})`);
+        } else {
+          console.warn(`Failed to unlock kit ID: ${kitId}`);
+        }
+      }
+
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error("Stripe webhook error:", error);
+      res.status(500).send("Internal Server Error");
     }
   });
 

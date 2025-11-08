@@ -72,6 +72,7 @@ export interface IStorage {
   getKit(id: string): Promise<Kit | undefined>;
   createKit(kit: InsertKit): Promise<Kit>;
   unlockKit(shopifyVariantId: string): Promise<Kit | undefined>;
+  unlockKitById(kitId: string): Promise<Kit | undefined>;
   getUnlockedKitsCount(): Promise<number>;
 }
 
@@ -383,6 +384,15 @@ class PostgresStorage implements IStorage {
     return kit;
   }
 
+  async unlockKitById(kitId: string): Promise<Kit | undefined> {
+    const [kit] = await db
+      .update(kitsTable)
+      .set({ unlockedAt: new Date() })
+      .where(eq(kitsTable.id, kitId))
+      .returning();
+    return kit;
+  }
+
   async getUnlockedKitsCount(): Promise<number> {
     const { count, isNotNull } = await import("drizzle-orm");
     const [result] = await db
@@ -618,6 +628,16 @@ class MemStorage implements IStorage {
     const kit = Array.from(this.kits.values()).find(
       (k) => k.shopifyVariantId === shopifyVariantId
     );
+    if (kit) {
+      const updatedKit = { ...kit, unlockedAt: new Date() };
+      this.kits.set(kit.id, updatedKit);
+      return updatedKit;
+    }
+    return undefined;
+  }
+
+  async unlockKitById(kitId: string): Promise<Kit | undefined> {
+    const kit = this.kits.get(kitId);
     if (kit) {
       const updatedKit = { ...kit, unlockedAt: new Date() };
       this.kits.set(kit.id, updatedKit);

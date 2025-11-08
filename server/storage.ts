@@ -384,8 +384,7 @@ class PostgresStorage implements IStorage {
   }
 
   async getUnlockedKitsCount(): Promise<number> {
-    const { count } = (await import("drizzle-orm")).count;
-    const { isNotNull } = await import("drizzle-orm");
+    const { count, isNotNull } = await import("drizzle-orm");
     const [result] = await db
       .select({ count: count() })
       .from(kitsTable)

@@ -15,7 +15,6 @@ export default function DesignUpload() {
     setUploading(true);
     setMessage("");
 
-    // Ask user for title and description
     const title = prompt("Design Title (required):");
     if (!title) {
       setMessage("Title is required!");
@@ -24,7 +23,6 @@ export default function DesignUpload() {
     }
     const description = prompt("Description (optional):") || "";
 
-    // Prepare form data
     const formData = new FormData();
     formData.append("design", file);
     formData.append("title", title);
@@ -58,7 +56,7 @@ export default function DesignUpload() {
       "image/svg+xml": [".svg"],
     },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 10 * 1024 * 1024,
   });
 
   return (

@@ -585,6 +585,7 @@ class MemStorage implements IStorage {
     const kit: Kit = {
       ...insertKit,
       id,
+      price: String(insertKit.price),
       createdAt: new Date(),
     };
     this.kits.set(id, kit);

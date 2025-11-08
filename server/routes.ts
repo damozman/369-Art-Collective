@@ -1293,6 +1293,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public: Generate Grok prompt from kit
+  app.post("/api/grok-prompt", async (req, res) => {
+    try {
+      const { kitId, userInput } = req.body;
+
+      if (!kitId || !userInput) {
+        return res.status(400).json({ message: "kitId and userInput are required" });
+      }
+
+      // Fetch kit from database
+      const kit = await storage.getKit(kitId);
+      if (!kit) {
+        return res.status(404).json({ message: "Kit not found" });
+      }
+
+      // Combine prompt template with user input
+      const fullPrompt = `${kit.promptTemplate}\n\nUser Input: ${userInput}`;
+
+      // Call Grok API using OpenAI SDK with xAI base URL
+      const OpenAI = (await import("openai")).default;
+      const openai = new OpenAI({
+        baseURL: "https://api.x.ai/v1",
+        apiKey: process.env.XAI_API_KEY,
+      });
+
+      const response = await openai.chat.completions.create({
+        model: "grok-2-1212",
+        messages: [{ role: "user", content: fullPrompt }],
+      });
+
+      const generatedText = response.choices[0]?.message?.content || "";
+
+      res.json({ prompt: generatedText });
+    } catch (error: any) {
+      console.error("Grok prompt generation error:", error);
+      res.status(500).json({ message: error.message || "Failed to generate prompt" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

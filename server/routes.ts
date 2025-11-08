@@ -1447,13 +1447,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).send("Missing kitId");
         }
 
-        // Unlock the kit
-        const unlockedKit = await storage.unlockKitById(kitId);
-        if (unlockedKit) {
-          console.log(`✅ Kit unlocked via Stripe payment: ${unlockedKit.name} (ID: ${kitId})`);
-        } else {
-          console.warn(`Failed to unlock kit ID: ${kitId}`);
+        // Find kit in DB to get shopify_variant_id
+        const kit = await storage.getKit(kitId);
+        if (!kit) {
+          console.warn(`Kit not found: ${kitId}`);
+          return res.status(404).send("Kit not found");
         }
+
+        if (!kit.shopifyVariantId) {
+          console.warn(`Kit ${kitId} has no shopify_variant_id`);
+          return res.status(400).send("Kit missing shopify_variant_id");
+        }
+
+        // Unlock kit using shopify_variant_id
+        await storage.unlockKit(kit.shopifyVariantId);
+        console.log(`✅ Stripe unlocked kit [${kitId}] via variant ${kit.shopifyVariantId}`);
       }
 
       res.json({ received: true });

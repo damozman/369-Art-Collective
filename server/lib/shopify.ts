@@ -108,7 +108,7 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
       throw new Error(`Shopify API error: ${error}`);
     }
 
-    const result = await response.json();
+    const result = await response.json() as { product?: { id?: string | number } };
     const productId = result?.product?.id;
 
     // Add metafields for tracking

@@ -21,6 +21,7 @@ async function testOrderCapture() {
       name: 'Order Test Artist',
       artistShort: 'OTA99',
       approved: true,
+      referralCode: 'OTA99REF',
     }).returning();
     console.log(`✅ Artist created: ${testArtist.id} (${testArtist.artistShort})`);
 

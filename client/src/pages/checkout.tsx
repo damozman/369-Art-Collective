@@ -26,19 +26,23 @@ export default function Checkout() {
     queryKey: ["/api/kits", kitId],
     queryFn: async () => {
       if (!kitId) throw new Error("Kit ID is required");
-      const res = await fetch(`/api/kits/${kitId}`);
+      const res = await fetch(`/api/kits?kitId=${kitId}`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message || "Failed to fetch kit");
       }
-      return res.json();
+      const kits = await res.json();
+      if (!Array.isArray(kits) || kits.length === 0) {
+        throw new Error("Kit not found");
+      }
+      return kits[0];
     },
     enabled: !!kitId,
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: async (kitId: string) => {
-      const res = await apiRequest("POST", "/api/create-checkout-session", { kitId });
+    mutationFn: async (data: { kitId: string; price: string }) => {
+      const res = await apiRequest("POST", "/api/create-checkout-session", data);
       return await res.json() as { url: string };
     },
     onSuccess: (data) => {
@@ -54,8 +58,11 @@ export default function Checkout() {
   });
 
   const handleCheckout = () => {
-    if (!kitId) return;
-    checkoutMutation.mutate(kitId);
+    if (!kitId || !kit) return;
+    checkoutMutation.mutate({ 
+      kitId, 
+      price: kit.price 
+    });
   };
 
   if (!kitId) {

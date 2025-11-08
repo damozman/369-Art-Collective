@@ -11,8 +11,12 @@ echo ""
 echo "📦 Running build..."
 npm run build
 
+# Wait a moment for all build artifacts to be written
+sleep 1
+
 # Create the required symlink for production deployment
 echo "🔗 Creating production static files symlink..."
+mkdir -p dist/server
 ln -sfn ../public dist/server/public
 
 echo ""

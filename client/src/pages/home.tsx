@@ -1,8 +1,19 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, TrendingUp, Sparkles } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Zap, TrendingUp, Sparkles, CheckCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 export default function Home() {
+  const { data: unlockedData } = useQuery<{ count: number }>({
+    queryKey: ["/api/kits/unlocked-count"],
+  });
+
+  useEffect(() => {
+    document.title = "247 CreatorStack - AI Kits for Creators";
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -12,20 +23,38 @@ export default function Home() {
         
         <div className="container mx-auto px-4 py-20 sm:py-32">
           <div className="max-w-4xl mx-auto text-center space-y-8">
+            {/* Status Badges */}
+            <div className="flex flex-wrap gap-3 justify-center">
+              <Badge 
+                variant="outline" 
+                className="gap-2 px-4 py-2"
+                data-testid="badge-api-status"
+              >
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                API LIVE
+              </Badge>
+              <Badge 
+                variant="outline" 
+                className="px-4 py-2"
+                data-testid="badge-unlocked-count"
+              >
+                Unlocked Kits: {unlockedData?.count ?? 0}
+              </Badge>
+            </div>
+            
             {/* Main headline */}
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight">
               Automate. Create. Grow.
             </h1>
             
             {/* Subheadline */}
-            <p className="text-xl sm:text-2xl text-muted-foreground">
+            <h2 className="text-xl sm:text-2xl text-muted-foreground">
               with <span className="text-primary font-semibold">247 CreatorStack</span>
-            </p>
+            </h2>
             
             {/* Description */}
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Unlock powerful AI automation kits designed for creators. 
-              Streamline your workflow, boost productivity, and focus on what matters most.
+              Unlock $47 AI-powered kits to generate viral social content in seconds.
             </p>
             
             {/* CTA Buttons */}

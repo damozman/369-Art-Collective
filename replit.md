@@ -52,8 +52,17 @@ The platform is built with a clear separation between frontend and backend.
 - **Build System:** Vite for frontend bundling with Express backend serving on port 5000
 
 ## Deployment
-- **Production Build Issue:** There is a mismatch between Vite's build output location (`dist/public`) and the production server's expected location (`dist/server/public`). A symlink is required to resolve this.
-- **Solution:** Before publishing/deploying, run: `sh deploy-build.sh` or `sh build.sh`
-  - Both scripts build the project and create the required symlink: `dist/server/public` → `../public`
+- **Build System:** Production builds use a custom build process via `deploy-build.sh` configured in `.replit`
+  - **Frontend:** Vite builds to `dist/public/` with optimized React bundles
+  - **Backend:** esbuild bundles server code to `dist/server/index.js` (single 105KB file)
+    - Uses `--packages=external` to keep all node_modules external while bundling app code
+    - Handles ESM module resolution correctly (TypeScript's `tsc` had issues with relative imports)
+    - Resolves all `./` imports without requiring `.js` extensions in source files
+  - **Static Assets:** Symlink created at `dist/server/public` → `../public` for production server to access frontend assets
+- **Build Command:** Replit deployment automatically runs `sh deploy-build.sh` (configured in `.replit`)
+- **Start Command:** `npm run start` executes `NODE_ENV=production node dist/server/index.js`
 - **Published URL:** https://247portal.replit.app
-- **Note:** The standard `npm run build` from .replit config doesn't create this symlink, causing the published site to show only the API health check. Always use the custom build scripts before republishing.
+- **Important Notes:**
+  - Never use `npm run build` directly - it uses `tsc` which has ESM module resolution issues
+  - The `deploy-build.sh` script must be used to ensure proper esbuild bundling and symlink creation
+  - Replit deployment cache can sometimes serve old assets - if this happens, shut down the deployment completely and republish fresh

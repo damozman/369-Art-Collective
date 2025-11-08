@@ -7,12 +7,9 @@ set -e
 echo "🔨 Building 247 CreatorStack for production..."
 echo ""
 
-# Run the standard build
-echo "📦 Building frontend with Vite..."
-pnpm vite build
-
-echo "🔧 Building backend with TypeScript..."
-pnpm tsc --project tsconfig.server.json
+# Use npm run build which calls the package.json build script
+echo "📦 Running build..."
+npm run build
 
 # Create the required symlink for production deployment
 echo "🔗 Creating production static files symlink..."

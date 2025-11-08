@@ -56,7 +56,7 @@ export default function DesignUpload() {
       "image/svg+xml": [".svg"],
     },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 10 * 1024 * 1024,
   });
 
   return (

@@ -25,8 +25,12 @@ export default function Checkout() {
   const { data: kit, isLoading, error } = useQuery<Kit>({
     queryKey: ["/api/kits", kitId],
     queryFn: async () => {
+      if (!kitId) throw new Error("Kit ID is required");
       const res = await fetch(`/api/kits/${kitId}`);
-      if (!res.ok) throw new Error("Failed to fetch kit");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to fetch kit");
+      }
       return res.json();
     },
     enabled: !!kitId,

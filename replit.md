@@ -50,3 +50,10 @@ The platform is built with a clear separation between frontend and backend.
 - **Package Manager:** CRITICAL - Replit Nix environment uses `pnpm`, not `npm`. Always use `pnpm install` for package installation to ensure devDependencies install correctly
 - **Environment Variables:** NODE_ENV=development required for devDependencies in Replit Nix
 - **Build System:** Vite for frontend bundling with Express backend serving on port 5000
+
+## Deployment
+- **Production Build Issue:** There is a mismatch between Vite's build output location (`dist/public`) and the production server's expected location (`dist/server/public`). A symlink is required to resolve this.
+- **Solution:** Before publishing/deploying, run: `sh deploy-build.sh` or `sh build.sh`
+  - Both scripts build the project and create the required symlink: `dist/server/public` → `../public`
+- **Published URL:** https://247portal.replit.app
+- **Note:** The standard `npm run build` from .replit config doesn't create this symlink, causing the published site to show only the API health check. Always use the custom build scripts before republishing.

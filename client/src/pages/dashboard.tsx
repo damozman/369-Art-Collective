@@ -1,9 +1,23 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Link } from "wouter";
@@ -12,16 +26,39 @@ import type { Kit } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useLocation } from "wouter"; // ← FIXED
+import { toast } from "sonner";
+import { Toaster } from "sonner"; // ← ADDED
 
 export default function Dashboard() {
-  const { data: kits, isLoading, error } = useQuery<Kit[]>({
+  const {
+    data: kits,
+    isLoading,
+    error,
+  } = useQuery<Kit[]>({
     queryKey: ["/api/kits"],
   });
 
   const [selectedKit, setSelectedKit] = useState<Kit | null>(null);
   const [userInput, setUserInput] = useState("");
   const [generatedPrompt, setGeneratedPrompt] = useState("");
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
+  const [location] = useLocation(); // ← FIXED
+
+  // Toast on success/cancel
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.split("?")[1] || "");
+    const success = urlParams.get("success");
+    const cancel = urlParams.get("cancel");
+
+    if (success === "1") {
+      toast.success("Payment successful! Kit unlocked.");
+      window.history.replaceState({}, "", "/dashboard");
+    } else if (cancel === "1") {
+      toast.error("Payment canceled. Try again when ready.");
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, [location]);
 
   useEffect(() => {
     document.title = "Creator Kits - 247 CreatorStack";
@@ -30,17 +67,17 @@ export default function Dashboard() {
   const generatePromptMutation = useMutation({
     mutationFn: async (data: { kitId: string; userInput: string }) => {
       const res = await apiRequest("POST", "/api/grok-prompt", data);
-      return await res.json() as { prompt: string };
+      return (await res.json()) as { prompt: string };
     },
     onSuccess: (data) => {
       setGeneratedPrompt(data.prompt);
-      toast({
+      uiToast({
         title: "Prompt Generated!",
         description: "Your AI-powered prompt is ready.",
       });
     },
     onError: (error: Error) => {
-      toast({
+      uiToast({
         title: "Generation Failed",
         description: error.message || "Failed to generate prompt",
         variant: "destructive",
@@ -50,14 +87,13 @@ export default function Dashboard() {
 
   const handleGeneratePrompt = () => {
     if (!selectedKit || !userInput.trim()) {
-      toast({
+      uiToast({
         title: "Input Required",
         description: "Please enter your topic or content details",
         variant: "destructive",
       });
       return;
     }
-
     generatePromptMutation.mutate({
       kitId: selectedKit.id,
       userInput: userInput.trim(),
@@ -72,13 +108,15 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Toaster position="top-right" richColors />
+
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Link href="/">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
                 data-testid="button-back-home"
               >
@@ -149,19 +187,21 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {kits.map((kit) => {
               const isUnlocked = kit.unlockedAt !== null;
-              
               return (
-                <Card 
-                  key={kit.id} 
+                <Card
+                  key={kit.id}
                   className="flex flex-col hover-elevate"
                   data-testid={`card-kit-${kit.id}`}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between gap-2">
-                      <CardTitle data-testid={`text-kit-name-${kit.id}`} className="flex-1">
+                      <CardTitle
+                        data-testid={`text-kit-name-${kit.id}`}
+                        className="flex-1"
+                      >
                         {kit.name}
                       </CardTitle>
-                      <Badge 
+                      <Badge
                         variant={isUnlocked ? "default" : "secondary"}
                         className="gap-1"
                         data-testid={`badge-kit-status-${kit.id}`}
@@ -180,20 +220,26 @@ export default function Dashboard() {
                       </Badge>
                     </div>
                     <CardDescription>
-                      <span className="text-lg font-semibold text-foreground" data-testid={`text-kit-price-${kit.id}`}>
+                      <span
+                        className="text-lg font-semibold text-foreground"
+                        data-testid={`text-kit-price-${kit.id}`}
+                      >
                         ${kit.price}
                       </span>
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="flex-1">
-                    <p className="text-sm text-muted-foreground line-clamp-3" data-testid={`text-kit-prompt-${kit.id}`}>
+                    <p
+                      className="text-sm text-muted-foreground line-clamp-3"
+                      data-testid={`text-kit-prompt-${kit.id}`}
+                    >
                       {kit.promptTemplate}
                     </p>
                   </CardContent>
                   <CardFooter>
                     {isUnlocked ? (
-                      <Button 
-                        className="w-full gap-2" 
+                      <Button
+                        className="w-full gap-2"
                         variant="default"
                         onClick={() => setSelectedKit(kit)}
                         data-testid={`button-generate-prompt-${kit.id}`}
@@ -202,9 +248,12 @@ export default function Dashboard() {
                         Generate Prompt
                       </Button>
                     ) : (
-                      <Link href={`/checkout?kitId=${kit.id}`} className="w-full">
-                        <Button 
-                          className="w-full" 
+                      <Link
+                        href={`/checkout?kitId=${kit.id}`}
+                        className="w-full"
+                      >
+                        <Button
+                          className="w-full"
                           variant="default"
                           data-testid={`button-buy-kit-${kit.id}`}
                         >
@@ -221,15 +270,21 @@ export default function Dashboard() {
       </main>
 
       {/* Generate Prompt Dialog */}
-      <Dialog open={selectedKit !== null} onOpenChange={(open) => !open && handleCloseDialog()}>
-        <DialogContent className="sm:max-w-[600px]" data-testid="dialog-generate-prompt">
+      <Dialog
+        open={selectedKit !== null}
+        onOpenChange={(open) => !open && handleCloseDialog()}
+      >
+        <DialogContent
+          className="sm:max-w-[600px]"
+          data-testid="dialog-generate-prompt"
+        >
           <DialogHeader>
             <DialogTitle>Generate Prompt: {selectedKit?.name}</DialogTitle>
             <DialogDescription>
-              Enter your topic or content details to generate an AI-powered prompt
+              Enter your topic or content details to generate an AI-powered
+              prompt
             </DialogDescription>
           </DialogHeader>
-          
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="user-input">Your Topic/Content</Label>
@@ -242,28 +297,29 @@ export default function Dashboard() {
                 data-testid="input-user-topic"
               />
             </div>
-
             {generatedPrompt && (
               <div className="space-y-2">
                 <Label>Generated Content</Label>
                 <div className="p-4 rounded-md bg-muted max-h-[300px] overflow-y-auto">
-                  <p className="text-sm whitespace-pre-wrap" data-testid="text-generated-prompt">
+                  <p
+                    className="text-sm whitespace-pre-wrap"
+                    data-testid="text-generated-prompt"
+                  >
                     {generatedPrompt}
                   </p>
                 </div>
               </div>
             )}
           </div>
-
           <DialogFooter className="gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleCloseDialog}
               data-testid="button-close-dialog"
             >
               Close
             </Button>
-            <Button 
+            <Button
               onClick={handleGeneratePrompt}
               disabled={generatePromptMutation.isPending || !userInput.trim()}
               data-testid="button-submit-generate"

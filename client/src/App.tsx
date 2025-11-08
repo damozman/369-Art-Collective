@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/protected-route";
 
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
+import Checkout from "@/pages/checkout";
 import Login from "@/pages/login";
 import AdminLogin from "@/pages/admin-login";
 import Register from "@/pages/register";
@@ -34,6 +35,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/checkout" component={Checkout} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/register" component={Register} />

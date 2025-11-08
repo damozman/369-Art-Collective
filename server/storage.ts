@@ -6,6 +6,7 @@ import {
   sales as salesTable,
   payouts as payoutsTable,
   passwordResetTokens,
+  kits as kitsTable,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -15,6 +16,8 @@ import {
   type UpdateArtwork,
   type ArtworkWithArtist,
   type PasswordResetToken,
+  type Kit,
+  type InsertKit,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
@@ -63,6 +66,11 @@ export interface IStorage {
   getPayoutsByArtist(artistId: string): Promise<any[]>;
   getPendingPayouts(): Promise<any[]>;
   getAllPayouts(): Promise<any[]>;
+  
+  // Kit methods
+  getAllKits(): Promise<Kit[]>;
+  getKit(id: string): Promise<Kit | undefined>;
+  createKit(kit: InsertKit): Promise<Kit>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -338,6 +346,31 @@ class PostgresStorage implements IStorage {
       .orderBy(payoutsTable.createdAt);
     return allPayouts;
   }
+
+  async getAllKits(): Promise<Kit[]> {
+    const allKits = await db
+      .select()
+      .from(kitsTable)
+      .orderBy(kitsTable.createdAt);
+    return allKits;
+  }
+
+  async getKit(id: string): Promise<Kit | undefined> {
+    const [kit] = await db
+      .select()
+      .from(kitsTable)
+      .where(eq(kitsTable.id, id))
+      .limit(1);
+    return kit;
+  }
+
+  async createKit(insertKit: InsertKit): Promise<Kit> {
+    const [kit] = await db
+      .insert(kitsTable)
+      .values(insertKit)
+      .returning();
+    return kit;
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -345,6 +378,7 @@ class MemStorage implements IStorage {
   private artists: Map<string, Artist> = new Map();
   private admins: Map<string, Admin> = new Map();
   private artworks: Map<string, Artwork> = new Map();
+  private kits: Map<string, Kit> = new Map();
 
   async getArtist(id: string): Promise<Artist | undefined> {
     return this.artists.get(id);
@@ -534,6 +568,27 @@ class MemStorage implements IStorage {
   async getAllPayouts(): Promise<any[]> {
     console.log("MemStorage: getAllPayouts called (stub)");
     return [];
+  }
+
+  async getAllKits(): Promise<Kit[]> {
+    return Array.from(this.kits.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getKit(id: string): Promise<Kit | undefined> {
+    return this.kits.get(id);
+  }
+
+  async createKit(insertKit: InsertKit): Promise<Kit> {
+    const id = randomUUID();
+    const kit: Kit = {
+      ...insertKit,
+      id,
+      createdAt: new Date(),
+    };
+    this.kits.set(id, kit);
+    return kit;
   }
 }
 

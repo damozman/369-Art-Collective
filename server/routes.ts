@@ -1343,6 +1343,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create Stripe Checkout Session
+  app.post("/api/create-checkout-session", async (req, res) => {
+    try {
+      const { kitId } = req.body;
+
+      if (!kitId) {
+        return res.status(400).json({ message: "Kit ID is required" });
+      }
+
+      const kit = await storage.getKit(kitId);
+      if (!kit) {
+        return res.status(404).json({ message: "Kit not found" });
+      }
+
+      const Stripe = (await import("stripe")).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+        apiVersion: "2024-11-20.acacia",
+      });
+
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: kit.name,
+                description: kit.promptTemplate,
+              },
+              unit_amount: Math.round(parseFloat(kit.price) * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${baseUrl}/dashboard?unlocked=1`,
+        cancel_url: `${baseUrl}/checkout?kitId=${kitId}&canceled=1`,
+        metadata: {
+          kitId: kit.id,
+        },
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("Stripe checkout error:", error);
+      res.status(500).json({ message: error.message || "Failed to create checkout session" });
+    }
+  });
+
   app.post("/api/shopify-webhook", async (req, res) => {
     try {
       console.log("🔔 Webhook received");

@@ -11,9 +11,16 @@ echo ""
 echo "📦 Building frontend..."
 npx vite build
 
-# Build backend with TypeScript compiler
-echo "📦 Building backend..."
-npx tsc --project tsconfig.server.json
+# Build backend with esbuild (handles ESM module resolution correctly)
+echo "📦 Building backend with esbuild..."
+npx esbuild server/index.ts \
+  --bundle \
+  --platform=node \
+  --format=esm \
+  --target=node20 \
+  --outfile=dist/server/index.js \
+  --packages=external \
+  --sourcemap
 
 # Create the required symlink for production deployment
 echo "🔗 Creating production static files symlink..."

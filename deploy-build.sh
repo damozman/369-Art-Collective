@@ -11,19 +11,17 @@ echo ""
 echo "📦 Building frontend..."
 npx vite build
 
-# Build backend - copy TypeScript files as-is since we'll use tsx in production
-echo "📦 Preparing backend..."
-mkdir -p dist/server
-cp -r server/* dist/server/
-cp -r shared dist/
+# Build backend with TypeScript compiler
+echo "📦 Building backend..."
+npx tsc --project tsconfig.server.json
 
 # Create the required symlink for production deployment
 echo "🔗 Creating production static files symlink..."
+mkdir -p dist/server
 ln -sfn ../public dist/server/public
 
 echo ""
 echo "✅ Build completed successfully!"
 echo ""
 echo "ℹ️  The production build is ready at dist/"
-echo "ℹ️  Backend will run with tsx (TypeScript runtime)"
 echo "ℹ️  You can now publish/deploy your application"

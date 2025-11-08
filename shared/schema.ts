@@ -271,7 +271,7 @@ export const insertKitSchema = createInsertSchema(kits).omit({
   createdAt: true,
 }).extend({
   name: z.string().min(1),
-  price: z.coerce.number().positive(),
+  price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid price"),
   promptTemplate: z.string().min(1),
 });
 

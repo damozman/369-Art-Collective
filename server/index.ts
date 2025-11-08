@@ -1,49 +1,36 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import path from "path";
+import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { log } from "./vite";
 
 const app = express();
 
-declare module 'express-session' {
-  interface SessionData {
-    user?: {
-      id: string;
-      email: string;
-      name: string;
-      type: "artist" | "admin";
-      approved?: boolean;
-    };
-  }
-}
-
-declare module 'http' {
-  interface IncomingMessage {
-    rawBody: unknown
-  }
-}
+// Fix __dirname in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Session middleware
-app.use(session({
-  secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    sameSite: "lax",
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-  },
-  proxy: true, // Trust proxy headers (needed for Replit deployments)
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    },
+    proxy: true,
+  })
+);
 
-app.use(express.json({
-  verify: (req, _res, buf) => {
-    req.rawBody = buf;
-  }
-}));
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
+// Logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -62,11 +49,9 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
       if (logLine.length > 80) {
         logLine = logLine.slice(0, 79) + "…";
       }
-
       log(logLine);
     }
   });
@@ -74,40 +59,53 @@ app.use((req, res, next) => {
   next();
 });
 
+// Global error handler
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+  res.status(status).json({ message });
+  console.error("ERROR:", err);
+});
+
 (async () => {
-  // Bootstrap default admin account
+  // Bootstrap default admin
   const { bootstrapAdmin } = await import("./bootstrap");
   await bootstrapAdmin();
 
+  // Register API routes
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+  // PRODUCTION: Serve static client from dist/client
+  if (process.env.NODE_ENV === "production") {
+    const clientPath = path.join(__dirname, "../../dist/client");
 
-    res.status(status).json({ message });
-    throw err;
-  });
+    app.use(express.static(clientPath));
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    app.get("*", (req, res) => {
+      if (req.path.startsWith("/api")) return;
+      res.sendFile(path.join(clientPath, "index.html"));
+    });
+
+    log("PRODUCTION MODE: Serving static client from dist/client");
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  // DEVELOPMENT: Let Vite handle frontend (via setupVite)
+  if (process.env.NODE_ENV !== "production") {
+    const { setupVite } = await import("./vite");
+    await setupVite(app, server);
+  }
+
+  // Start server
+  const port = parseInt(process.env.PORT || "3000", 10);
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      log(`247 PRINT NETWORK LIVE on port ${port}`);
+      log(`Visit: https://247portal.replit.app`);
+    }
+  );
 })();

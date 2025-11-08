@@ -41,8 +41,8 @@ export default function Checkout() {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: async (data: { kitId: string; price: string }) => {
-      const res = await apiRequest("POST", "/api/create-checkout-session", data);
+    mutationFn: async (kitId: string) => {
+      const res = await apiRequest("POST", "/api/create-checkout-session", { kitId });
       return await res.json() as { url: string };
     },
     onSuccess: (data) => {
@@ -58,11 +58,8 @@ export default function Checkout() {
   });
 
   const handleCheckout = () => {
-    if (!kitId || !kit) return;
-    checkoutMutation.mutate({ 
-      kitId, 
-      price: kit.price 
-    });
+    if (!kitId) return;
+    checkoutMutation.mutate(kitId);
   };
 
   if (!kitId) {

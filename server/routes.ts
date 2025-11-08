@@ -1282,6 +1282,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public: Get all kits
+  app.get("/api/kits", async (_req, res) => {
+    try {
+      const kits = await storage.getAllKits();
+      res.json(kits);
+    } catch (error: any) {
+      console.error("Get kits error:", error);
+      res.status(500).json({ message: "Failed to fetch kits" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

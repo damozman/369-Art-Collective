@@ -72,6 +72,7 @@ export interface IStorage {
   getKit(id: string): Promise<Kit | undefined>;
   createKit(kit: InsertKit): Promise<Kit>;
   unlockKit(shopifyVariantId: string): Promise<Kit | undefined>;
+  getUnlockedKitsCount(): Promise<number>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -381,6 +382,16 @@ class PostgresStorage implements IStorage {
       .returning();
     return kit;
   }
+
+  async getUnlockedKitsCount(): Promise<number> {
+    const { count } = (await import("drizzle-orm")).count;
+    const { isNotNull } = await import("drizzle-orm");
+    const [result] = await db
+      .select({ count: count() })
+      .from(kitsTable)
+      .where(isNotNull(kitsTable.unlockedAt));
+    return Number(result.count) || 0;
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -614,6 +625,10 @@ class MemStorage implements IStorage {
       return updatedKit;
     }
     return undefined;
+  }
+
+  async getUnlockedKitsCount(): Promise<number> {
+    return Array.from(this.kits.values()).filter((k) => k.unlockedAt !== null).length;
   }
 }
 

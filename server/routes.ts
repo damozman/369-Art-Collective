@@ -1345,6 +1345,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/shopify-webhook", async (req, res) => {
     try {
+      console.log("🔔 Webhook received");
+      
       const hmacHeader = req.headers['x-shopify-hmac-sha256'] as string;
       const rawBody = (req as any).rawBody;
 
@@ -1358,6 +1360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ success: false, message: "Unauthorized" });
       }
 
+      console.log("✅ Webhook HMAC verified");
       const payload = req.body;
       const lineItems = payload.line_items || [];
 

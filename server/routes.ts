@@ -1282,9 +1282,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public: Get all kits
-  app.get("/api/kits", async (_req, res) => {
+  // Public: Get all kits (or filter by kitId query param)
+  app.get("/api/kits", async (req, res) => {
     try {
+      const { kitId } = req.query;
+      
+      if (kitId && typeof kitId === 'string') {
+        const kit = await storage.getKit(kitId);
+        return res.json(kit ? [kit] : []);
+      }
+      
       const kits = await storage.getAllKits();
       res.json(kits);
     } catch (error: any) {
@@ -1361,7 +1368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create Stripe Checkout Session
   app.post("/api/create-checkout-session", async (req, res) => {
     try {
-      const { kitId } = req.body;
+      const { kitId, price } = req.body;
 
       if (!kitId) {
         return res.status(400).json({ message: "Kit ID is required" });
@@ -1376,6 +1383,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
       const baseUrl = `${req.protocol}://${req.get('host')}`;
+      
+      // Use price from database for security (ignore frontend price)
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [

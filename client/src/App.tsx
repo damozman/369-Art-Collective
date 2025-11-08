@@ -7,6 +7,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/components/protected-route";
 
+import Home from "@/pages/home";
+import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
 import AdminLogin from "@/pages/admin-login";
 import Register from "@/pages/register";
@@ -30,7 +32,8 @@ import NotFound from "@/pages/not-found";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={() => <Redirect to="/login" />} />
+      <Route path="/" component={Home} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/register" component={Register} />

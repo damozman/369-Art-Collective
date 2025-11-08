@@ -7,20 +7,23 @@ set -e
 echo "🔨 Building 247 CreatorStack for production..."
 echo ""
 
-# Use npm run build which calls the package.json build script
-echo "📦 Running build..."
-npm run build
+# Build frontend with Vite
+echo "📦 Building frontend..."
+npx vite build
 
-# Wait a moment for all build artifacts to be written
-sleep 1
+# Build backend - copy TypeScript files as-is since we'll use tsx in production
+echo "📦 Preparing backend..."
+mkdir -p dist/server
+cp -r server/* dist/server/
+cp -r shared dist/
 
 # Create the required symlink for production deployment
 echo "🔗 Creating production static files symlink..."
-mkdir -p dist/server
 ln -sfn ../public dist/server/public
 
 echo ""
 echo "✅ Build completed successfully!"
 echo ""
 echo "ℹ️  The production build is ready at dist/"
+echo "ℹ️  Backend will run with tsx (TypeScript runtime)"
 echo "ℹ️  You can now publish/deploy your application"

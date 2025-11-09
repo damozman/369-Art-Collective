@@ -13,18 +13,31 @@ import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { changePasswordSchema, updateArtistProfileSchema } from "@shared/schema";
+import { changePasswordSchema, updateArtistProfileSchema, deleteAccountSchema } from "@shared/schema";
 import type { Artist } from "@shared/schema";
-import { Lock, User, Mail, Type, ArrowLeft, LogOut, Image as ImageIcon, Settings as SettingsIcon } from "lucide-react";
+import { Lock, User, Mail, Type, ArrowLeft, LogOut, Image as ImageIcon, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 type UpdateProfileForm = z.infer<typeof updateArtistProfileSchema>;
+type DeleteAccountForm = z.infer<typeof deleteAccountSchema>;
 
 export default function ArtistSettings() {
   const { toast } = useToast();
   const { user: authUser, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
 
   const { data: user } = useQuery<Artist>({ queryKey: ["/api/auth/me"] });
 
@@ -98,12 +111,49 @@ export default function ArtistSettings() {
     },
   });
 
+  const deleteAccountMutation = useMutation({
+    mutationFn: async (data: DeleteAccountForm) => {
+      return apiRequest("POST", "/api/artists/delete-account", data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account deleted",
+        description: "Your account has been permanently disabled.",
+      });
+      setShowDeleteDialog(false);
+      setDeletePassword("");
+      // Redirect to login page after a brief delay
+      setTimeout(() => {
+        setLocation("/login");
+      }, 1500);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete account",
+        description: error.message || "Please check your password and try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   function onPasswordSubmit(data: ChangePasswordForm) {
     changePasswordMutation.mutate(data);
   }
 
   function onProfileSubmit(data: UpdateProfileForm) {
     updateProfileMutation.mutate(data);
+  }
+
+  function handleDeleteAccount() {
+    if (!deletePassword) {
+      toast({
+        title: "Password required",
+        description: "Please enter your password to confirm account deletion.",
+        variant: "destructive",
+      });
+      return;
+    }
+    deleteAccountMutation.mutate({ password: deletePassword });
   }
 
   return (
@@ -151,18 +201,18 @@ export default function ArtistSettings() {
           <Separator />
 
           <Card data-testid="card-profile">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Profile Information
-            </CardTitle>
-            <CardDescription>
-              Update your profile details. Artist initials are used in product SKUs.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...profileForm}>
-              <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Profile Information
+              </CardTitle>
+              <CardDescription>
+                Update your profile details. Artist initials are used in product SKUs.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...profileForm}>
+                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
                 <FormField
                   control={profileForm.control}
                   name="name"
@@ -226,30 +276,30 @@ export default function ArtistSettings() {
                   )}
                 />
 
-                <Button
-                  type="submit"
-                  disabled={updateProfileMutation.isPending}
-                  data-testid="button-update-profile"
-                >
-                  {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
+                  <Button
+                    type="submit"
+                    disabled={updateProfileMutation.isPending}
+                    data-testid="button-update-profile"
+                  >
+                    {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
 
-        <Card data-testid="card-password">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="w-5 h-5" />
-              Password
-            </CardTitle>
-            <CardDescription>
-              Change your password to keep your account secure
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!isChangingPassword ? (
+          <Card data-testid="card-password">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="w-5 h-5" />
+                Password
+              </CardTitle>
+              <CardDescription>
+                Change your password to keep your account secure
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!isChangingPassword ? (
               <Button
                 variant="outline"
                 onClick={() => setIsChangingPassword(true)}
@@ -258,9 +308,9 @@ export default function ArtistSettings() {
                 Change Password
               </Button>
             ) : (
-              <Form {...passwordForm}>
-                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                  <FormField
+                <Form {...passwordForm}>
+                  <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                    <FormField
                     control={passwordForm.control}
                     name="currentPassword"
                     render={({ field }) => (
@@ -317,33 +367,106 @@ export default function ArtistSettings() {
                     )}
                   />
 
-                  <div className="flex gap-2">
-                    <Button
-                      type="submit"
-                      disabled={changePasswordMutation.isPending}
-                      data-testid="button-submit-password"
-                    >
-                      {changePasswordMutation.isPending ? "Changing..." : "Change Password"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setIsChangingPassword(false);
-                        passwordForm.reset();
-                      }}
-                      data-testid="button-cancel-password"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            )}
-          </CardContent>
-        </Card>
+                    <div className="flex gap-2">
+                      <Button
+                        type="submit"
+                        disabled={changePasswordMutation.isPending}
+                        data-testid="button-submit-password"
+                      >
+                        {changePasswordMutation.isPending ? "Changing..." : "Change Password"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setIsChangingPassword(false);
+                          passwordForm.reset();
+                        }}
+                        data-testid="button-cancel-password"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card data-testid="card-delete-account" className="border-destructive">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="w-5 h-5" />
+                Delete Account
+              </CardTitle>
+              <CardDescription>
+                Permanently disable your artist account
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-lg bg-destructive/10 p-4 space-y-2" data-testid="text-delete-warning">
+                <p className="text-sm font-medium text-destructive">
+                  Warning: This action cannot be undone
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>Your account will be permanently disabled</li>
+                  <li>You will no longer be able to log in or upload artwork</li>
+                  <li>Your products in Shopify will remain available for purchase</li>
+                  <li>Existing orders and earnings will continue to be processed</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="delete-password" className="text-sm font-medium">
+                  Confirm your password to delete your account
+                </label>
+                <Input
+                  id="delete-password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  data-testid="input-delete-password"
+                />
+              </div>
+
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={!deletePassword || deleteAccountMutation.isPending}
+                data-testid="button-delete-account"
+              >
+                {deleteAccountMutation.isPending ? "Deleting..." : "Delete My Account"}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </main>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent data-testid="dialog-delete-confirm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently disable your artist account. Your products will remain in 
+              the store, but you will no longer be able to log in or manage your account.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              Yes, delete my account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

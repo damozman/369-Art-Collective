@@ -17,6 +17,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   updateAdminProfileSchema,
+  deleteAccountSchema,
 } from "@shared/schema";
 import crypto from "crypto";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured } from "./lib/shopify";
@@ -294,6 +295,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete artist (admin only)
+  app.post("/api/admin/artists/:id/delete", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const artist = await storage.getArtist(id);
+      
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Soft delete the artist account
+      await storage.deleteArtist(id);
+
+      res.json({ message: "Artist account deleted successfully" });
+    } catch (error: any) {
+      console.error("Delete artist error:", error);
+      res.status(500).json({ message: "Failed to delete artist" });
+    }
+  });
+
   // Get single artist details (admin only)
   app.get("/api/artists/:id", requireAdmin, async (req, res) => {
     try {
@@ -369,6 +390,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Change password error:", error);
       res.status(400).json({ message: error.message || "Failed to change password" });
+    }
+  });
+
+  // Delete account (artist deletes their own account)
+  app.post("/api/artists/delete-account", requireArtist, async (req, res) => {
+    try {
+      const data = deleteAccountSchema.parse(req.body);
+      const artist = req.user!;
+
+      // Get full artist record with password
+      const fullArtist = await storage.getArtist(artist.id);
+      if (!fullArtist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Verify password
+      const validPassword = await bcrypt.compare(data.password, fullArtist.password);
+      if (!validPassword) {
+        return res.status(401).json({ message: "Incorrect password" });
+      }
+
+      // Soft delete the artist account
+      await storage.deleteArtist(artist.id);
+
+      // Destroy session and log out
+      req.session.destroy((err) => {
+        if (err) {
+          console.error("Session destroy error:", err);
+          return res.status(500).json({ message: "Account deleted but logout failed" });
+        }
+        res.json({ message: "Account deleted successfully" });
+      });
+    } catch (error: any) {
+      console.error("Delete account error:", error);
+      res.status(400).json({ message: error.message || "Failed to delete account" });
     }
   });
 

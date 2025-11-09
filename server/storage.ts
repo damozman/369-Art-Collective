@@ -18,7 +18,7 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { generateReferralCode } from "./lib/referral-code-generator";
 
 export interface IStorage {
@@ -28,6 +28,7 @@ export interface IStorage {
   getAllArtists(): Promise<Artist[]>;
   createArtist(artist: InsertArtist): Promise<Artist>;
   updateArtist(id: string, updates: Partial<Artist>): Promise<Artist>;
+  deleteArtist(id: string): Promise<Artist>;
 
   // Admin methods
   getAdmin(id: string): Promise<Admin | undefined>;
@@ -73,6 +74,11 @@ class PostgresStorage implements IStorage {
       .from(artists)
       .where(eq(artists.id, id))
       .limit(1);
+    
+    // Filter out deleted artists
+    if (artist?.deletedAt) {
+      return undefined;
+    }
     return artist;
   }
 
@@ -82,6 +88,11 @@ class PostgresStorage implements IStorage {
       .from(artists)
       .where(eq(artists.email, email))
       .limit(1);
+    
+    // Filter out deleted artists
+    if (artist?.deletedAt) {
+      return undefined;
+    }
     return artist;
   }
 
@@ -89,6 +100,7 @@ class PostgresStorage implements IStorage {
     const allArtists = await db
       .select()
       .from(artists)
+      .where(isNull(artists.deletedAt))
       .orderBy(artists.createdAt);
     return allArtists;
   }
@@ -114,6 +126,16 @@ class PostgresStorage implements IStorage {
       .returning();
     if (!updatedArtist) throw new Error("Artist not found");
     return updatedArtist;
+  }
+
+  async deleteArtist(id: string): Promise<Artist> {
+    const [deletedArtist] = await db
+      .update(artists)
+      .set({ deletedAt: new Date() })
+      .where(eq(artists.id, id))
+      .returning();
+    if (!deletedArtist) throw new Error("Artist not found");
+    return deletedArtist;
   }
 
   async getAdmin(id: string): Promise<Admin | undefined> {
@@ -347,17 +369,29 @@ class MemStorage implements IStorage {
   private artworks: Map<string, Artwork> = new Map();
 
   async getArtist(id: string): Promise<Artist | undefined> {
-    return this.artists.get(id);
+    const artist = this.artists.get(id);
+    // Filter out deleted artists
+    if (artist?.deletedAt) {
+      return undefined;
+    }
+    return artist;
   }
 
   async getArtistByEmail(email: string): Promise<Artist | undefined> {
-    return Array.from(this.artists.values()).find((a) => a.email === email);
+    const artist = Array.from(this.artists.values()).find((a) => a.email === email);
+    // Filter out deleted artists
+    if (artist?.deletedAt) {
+      return undefined;
+    }
+    return artist;
   }
 
   async getAllArtists(): Promise<Artist[]> {
-    return Array.from(this.artists.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    return Array.from(this.artists.values())
+      .filter((a) => !a.deletedAt)
+      .sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
   }
 
   async createArtist(insertArtist: InsertArtist): Promise<Artist> {
@@ -372,6 +406,7 @@ class MemStorage implements IStorage {
       stripeAccountId: null,
       stripeAccountStatus: null,
       referredBy: null,
+      deletedAt: null,
       createdAt: new Date(),
     };
     this.artists.set(id, artist);
@@ -384,6 +419,14 @@ class MemStorage implements IStorage {
     const updated = { ...artist, ...updates };
     this.artists.set(id, updated);
     return updated;
+  }
+
+  async deleteArtist(id: string): Promise<Artist> {
+    const artist = this.artists.get(id);
+    if (!artist) throw new Error("Artist not found");
+    const deleted = { ...artist, deletedAt: new Date() };
+    this.artists.set(id, deleted);
+    return deleted;
   }
 
   async getAdmin(id: string): Promise<Admin | undefined> {

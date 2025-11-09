@@ -12,7 +12,7 @@ import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings } from "luc
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { ArtworkWithArtist } from "@shared/schema";
+import type { ArtworkWithArtist, Artist } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminDashboard() {
@@ -26,6 +26,13 @@ export default function AdminDashboard() {
   const { data: artworks, isLoading } = useQuery<ArtworkWithArtist[]>({
     queryKey: ["/api/artworks/all"],
   });
+
+  // Query for pending artists count
+  const { data: artists } = useQuery<Artist[]>({
+    queryKey: ["/api/artists/all"],
+  });
+
+  const pendingArtistsCount = artists?.filter(a => !a.approved).length || 0;
 
   const filteredArtworks = artworks?.filter(a => 
     statusFilter === "all" ? true : a.status === statusFilter
@@ -129,14 +136,25 @@ export default function AdminDashboard() {
                 <Network className="mr-2 h-4 w-4" />
                 Empire Dashboard
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/admin/artists")}
-                data-testid="button-manage-artists"
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Manage Artists
-              </Button>
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  onClick={() => setLocation("/admin/artists")}
+                  data-testid="button-manage-artists"
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  Manage Artists
+                </Button>
+                {pendingArtistsCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    data-testid="badge-pending-artists"
+                  >
+                    {pendingArtistsCount}
+                  </Badge>
+                )}
+              </div>
               <ThemeToggle />
               <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/settings")} data-testid="button-settings">
                 <Settings className="h-5 w-5" />

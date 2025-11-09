@@ -3,22 +3,27 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useLocation } from "wouter";
+import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { changePasswordSchema, updateArtistProfileSchema } from "@shared/schema";
 import type { Artist } from "@shared/schema";
-import { Lock, User, Mail, Type } from "lucide-react";
+import { Lock, User, Mail, Type, ArrowLeft, LogOut, Image as ImageIcon, Settings as SettingsIcon } from "lucide-react";
 
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 type UpdateProfileForm = z.infer<typeof updateArtistProfileSchema>;
 
 export default function ArtistSettings() {
   const { toast } = useToast();
+  const { user: authUser, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const { data: user } = useQuery<Artist>({ queryKey: ["/api/auth/me"] });
@@ -102,18 +107,50 @@ export default function ArtistSettings() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold" data-testid="heading-settings">Account Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your account details and security settings
-          </p>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                <ImageIcon className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold font-serif">Artist Portal</h1>
+                <p className="text-sm text-muted-foreground">Welcome back, {authUser?.name}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => setLocation("/artist/settings")} data-testid="button-settings">
+                <SettingsIcon className="h-5 w-5" />
+              </Button>
+              <ThemeToggle />
+              <Button variant="ghost" size="icon" onClick={logout} data-testid="button-logout">
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
         </div>
+      </header>
 
-        <Separator />
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/artist/dashboard")} data-testid="button-back">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold" data-testid="heading-settings">Account Settings</h1>
+              <p className="text-muted-foreground">
+                Manage your account details and security settings
+              </p>
+            </div>
+          </div>
 
-        <Card data-testid="card-profile">
+          <Separator />
+
+          <Card data-testid="card-profile">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="w-5 h-5" />
@@ -305,7 +342,8 @@ export default function ArtistSettings() {
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

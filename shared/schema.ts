@@ -16,6 +16,7 @@ export const artists = pgTable("artists", {
   stripeAccountStatus: text("stripe_account_status"), // pending, active, restricted
   referralCode: text("referral_code").notNull().unique(), // Unique code for referral links (e.g., "ARTIST-ABC123")
   referredBy: varchar("referred_by").references((): any => artists.id), // Which artist recruited them
+  deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

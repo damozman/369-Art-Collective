@@ -20,7 +20,7 @@ import {
   deleteAccountSchema,
 } from "@shared/schema";
 import crypto from "crypto";
-import { createDraftProduct, createArtworkProduct, isShopifyConfigured } from "./lib/shopify";
+import { createDraftProduct, createArtworkProduct, isShopifyConfigured, updateProductStatus } from "./lib/shopify";
 import { createWallArtProducts } from "./lib/printify-service";
 import { isPrintifyConfigured } from "./lib/printify";
 import { requireAuth, requireArtist, requireAdmin } from "./middleware/auth";
@@ -1070,6 +1070,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Reject artwork error:", error);
       res.status(500).json({ message: error.message || "Failed to reject artwork" });
+    }
+  });
+
+  // Deactivate product (artist can deactivate their own products)
+  app.post("/api/artworks/:id/deactivate", requireArtist, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const artwork = await storage.getArtwork(id);
+      
+      if (!artwork) {
+        return res.status(404).json({ message: "Artwork not found" });
+      }
+
+      // Verify artwork belongs to authenticated artist
+      if (artwork.artistId !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized to deactivate this artwork" });
+      }
+
+      // Only approved artwork with Shopify products can be deactivated
+      if (artwork.status !== "approved" || !artwork.shopifyProductId) {
+        return res.status(400).json({ message: "Only approved products with Shopify integration can be deactivated" });
+      }
+
+      // Update Shopify product status to draft
+      if (isShopifyConfigured()) {
+        try {
+          await updateProductStatus(artwork.shopifyProductId, "draft");
+        } catch (error: any) {
+          console.error("Failed to update Shopify product status:", error);
+          return res.status(500).json({ message: "Failed to deactivate product in Shopify" });
+        }
+      }
+
+      // Update database
+      const updated = await storage.updateArtwork(id, {
+        shopifyProductStatus: "draft",
+      });
+
+      res.json(normalizeArtwork(updated, req));
+    } catch (error: any) {
+      console.error("Deactivate artwork error:", error);
+      res.status(500).json({ message: error.message || "Failed to deactivate artwork" });
+    }
+  });
+
+  // Activate product (artist can activate their own products)
+  app.post("/api/artworks/:id/activate", requireArtist, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const artwork = await storage.getArtwork(id);
+      
+      if (!artwork) {
+        return res.status(404).json({ message: "Artwork not found" });
+      }
+
+      // Verify artwork belongs to authenticated artist
+      if (artwork.artistId !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized to activate this artwork" });
+      }
+
+      // Only approved artwork with Shopify products can be activated
+      if (artwork.status !== "approved" || !artwork.shopifyProductId) {
+        return res.status(400).json({ message: "Only approved products with Shopify integration can be activated" });
+      }
+
+      // Update Shopify product status to active
+      if (isShopifyConfigured()) {
+        try {
+          await updateProductStatus(artwork.shopifyProductId, "active");
+        } catch (error: any) {
+          console.error("Failed to update Shopify product status:", error);
+          return res.status(500).json({ message: "Failed to activate product in Shopify" });
+        }
+      }
+
+      // Update database
+      const updated = await storage.updateArtwork(id, {
+        shopifyProductStatus: "active",
+      });
+
+      res.json(normalizeArtwork(updated, req));
+    } catch (error: any) {
+      console.error("Activate artwork error:", error);
+      res.status(500).json({ message: error.message || "Failed to activate artwork" });
     }
   });
 

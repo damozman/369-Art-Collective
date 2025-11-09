@@ -4,6 +4,22 @@
 The 247 Print Network is an artist-powered print-on-demand (POD) marketplace. Its core purpose is to enable artists to upload their artwork, which, upon administrative approval, is automatically transformed into POD products via Printify integration. The platform handles automated fulfillment and a tiered royalty payout system. The vision is to build a creator-powered marketplace where artists drive product creation, marketing through referrals, and recruitment, all supported by automated royalties and a zero-inventory POD model.
 
 ## Recent Changes (November 2025)
+**Critical Fix: Artwork Image URL Normalization**
+- **Problem**: Artwork images failed to load in artist/admin portals when accessed through custom domains because database stored relative URLs (`/uploads/...`)
+- **Solution**: Implemented API-level URL normalization in `server/routes.ts`
+  - Added `toAbsoluteUrl()` helper that converts relative URLs to absolute using REPLIT_DOMAINS or request host
+  - Added `normalizeArtwork()` wrapper that applies URL conversion to artwork objects
+  - Updated all 6 artwork API endpoints to return normalized URLs:
+    - POST /api/artworks (create)
+    - GET /api/artworks/my-artworks (artist's artworks)
+    - GET /api/artworks/all (admin view)
+    - PATCH /api/artworks/:id (update)
+    - POST /api/artworks/:id/approve
+    - POST /api/artworks/:id/reject
+  - Includes null guard to prevent runtime errors
+- **Impact**: All artwork images now load correctly across all domains. Database continues to store relative paths; normalization happens at API response time.
+- **Tested**: End-to-end verification confirmed images render correctly in both artist and admin dashboards with absolute URLs
+
 **Critical Bug Fix: Shopify Image URL Construction**
 - **Problem**: Shopify product creation was failing because image URLs were constructed using non-existent environment variables (`REPL_SLUG`, `REPL_OWNER`)
 - **Solution**: Updated `server/lib/shopify.ts` to use `REPLIT_DOMAINS` environment variable for production deployment URLs

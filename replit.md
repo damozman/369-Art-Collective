@@ -28,6 +28,28 @@ The 247 Print Network is an artist-powered print-on-demand (POD) marketplace. It
   - Added comprehensive logging to track image URL construction
 - **Impact**: Artwork approvals now correctly send hosted image URLs to Shopify (e.g., `https://247portal.replit.app/uploads/...`)
 
+**Account Deletion System (November 2025)**
+- **Implementation**: Comprehensive soft-delete system for artist accounts
+  - Artist self-deletion with password confirmation requirement
+  - Admin-initiated deletion capability for account management
+  - Soft delete approach sets `deletedAt` timestamp, preserving all historical data
+  - All queries filter `WHERE deletedAt IS NULL` to exclude deleted accounts
+  - Deleted artists cannot log in (treated as non-existent in authentication)
+  - Session destruction on self-deletion with frontend cache invalidation
+- **User Experience**:
+  - Artist settings page includes Delete Account card with clear warnings
+  - Password confirmation required for artist self-deletion (security measure)
+  - Admin artist detail page includes Delete Artist Account card
+  - Both flows use confirmation dialogs with explicit consequences
+  - Proper success/error feedback via toast notifications
+  - Correct redirects: `/login` for artist deletion, `/admin/artists` for admin deletion
+- **Data Preservation**:
+  - Shopify products remain active and available for purchase after artist deletion
+  - Historical data preserved: artworks, sales records, royalty calculations
+  - Foreign key relationships remain intact for reporting and analytics
+- **Security**: Password verification using bcrypt for artist self-deletion, session cleanup prevents zombie sessions
+- **Testing**: End-to-end tests verify both deletion flows, login prevention, and proper UI redirects
+
 **Development Environment Fixes**
 - Moved runtime-required packages from `devDependencies` to `dependencies` for Replit workflow compatibility
 - Removed unused `@tailwindcss/typography` plugin that was causing esbuild deadlock errors

@@ -116,6 +116,10 @@ export default function ArtistSettings() {
       return apiRequest("POST", "/api/artists/delete-account", data);
     },
     onSuccess: () => {
+      // Invalidate auth cache immediately to prevent redirect loops
+      queryClient.setQueryData(["/api/auth/me"], null);
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      
       toast({
         title: "Account deleted",
         description: "Your account has been permanently disabled.",
@@ -124,7 +128,7 @@ export default function ArtistSettings() {
       setDeletePassword("");
       // Redirect to login page after a brief delay
       setTimeout(() => {
-        setLocation("/login");
+        window.location.href = "/login";
       }, 1500);
     },
     onError: (error: any) => {

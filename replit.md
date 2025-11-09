@@ -3,6 +3,20 @@
 ## Overview
 The 247 Print Network is an artist-powered print-on-demand (POD) marketplace. Its core purpose is to enable artists to upload their artwork, which, upon administrative approval, is automatically transformed into POD products via Printify integration. The platform handles automated fulfillment and a tiered royalty payout system. The vision is to build a creator-powered marketplace where artists drive product creation, marketing through referrals, and recruitment, all supported by automated royalties and a zero-inventory POD model.
 
+## Recent Changes (November 2025)
+**Critical Bug Fix: Shopify Image URL Construction**
+- **Problem**: Shopify product creation was failing because image URLs were constructed using non-existent environment variables (`REPL_SLUG`, `REPL_OWNER`)
+- **Solution**: Updated `server/lib/shopify.ts` to use `REPLIT_DOMAINS` environment variable for production deployment URLs
+  - Parses `REPLIT_DOMAINS` and prefers canonical domain (without hash)
+  - Falls back to `localhost:5000` for local development
+  - Added comprehensive logging to track image URL construction
+- **Impact**: Artwork approvals now correctly send hosted image URLs to Shopify (e.g., `https://247portal.replit.app/uploads/...`)
+
+**Development Environment Fixes**
+- Moved runtime-required packages from `devDependencies` to `dependencies` for Replit workflow compatibility
+- Removed unused `@tailwindcss/typography` plugin that was causing esbuild deadlock errors
+- Created dynamic import pattern for Vite to prevent eager loading in production
+
 ## User Preferences
 I want the agent to adopt an iterative development approach, focusing on delivering functional components incrementally. When making significant changes or architectural decisions, please ask for my approval first. I prefer clear, concise explanations and expect the agent to maintain a high standard of code quality, adhering to the established tech stack and design patterns.
 

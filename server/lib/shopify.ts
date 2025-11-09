@@ -91,6 +91,8 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
       },
     };
 
+    console.log(`[Shopify] Creating product "${artwork.title}" with image URL: ${artwork.imageUrl}`);
+
     const apiVersion = "2024-10";
     const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/products.json`;
 

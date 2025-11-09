@@ -887,14 +887,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Artist not found" });
       }
 
-      // Build absolute image URL
-      const baseUrl = process.env.REPL_SLUG 
-        ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
+      // Build absolute image URL for Shopify/Printify
+      // REPLIT_DOMAINS format: "247portal-hash.replit.app,247portal.replit.app"
+      const replitDomain = process.env.REPLIT_DOMAINS 
+        ? process.env.REPLIT_DOMAINS.split(',').map(d => d.trim()).find(d => !d.includes('-')) || process.env.REPLIT_DOMAINS.split(',')[0].trim()
+        : null;
+      
+      const baseUrl = replitDomain
+        ? `https://${replitDomain}`
         : `http://localhost:${process.env.PORT || 5000}`;
       
       const imageUrl = artwork.imageUrl.startsWith("http") 
         ? artwork.imageUrl 
         : `${baseUrl}${artwork.imageUrl}`;
+      
+      console.log(`[Artwork Approval] Constructed image URL: ${imageUrl}`);
 
       let printifyProductId = null;
       let printifyImageId = null;

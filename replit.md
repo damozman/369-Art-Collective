@@ -73,6 +73,26 @@ The 247 Print Network is an artist-powered print-on-demand (POD) marketplace. It
   - Reversible operations: artists can activate/deactivate products anytime
 - **Testing**: End-to-end tests verified activation/deactivation flow, confirmation dialogs, and Shopify API integration
 
+**Image Quality Validation (November 2025)**
+- **Implementation**: Enforces minimum image resolution requirements to ensure professional print quality
+  - Created custom image dimension reader in `server/lib/image-validator.ts`
+  - Reads PNG and JPEG headers directly without external dependencies
+  - Validates minimum 2400×3000 pixels (Printify's 300 DPI standard for 8"×10" prints)
+  - Supports both portrait (2400×3000) and landscape (3000×2400) orientations
+  - Automatic file cleanup for rejected uploads (prevents orphaned files)
+- **User Experience**:
+  - Upload page displays clear requirements before file selection
+  - Blue info box lists: minimum resolution, DPI recommendation, supported formats, file size limit
+  - Helpful error messages show actual vs required dimensions when validation fails
+  - Only PNG and JPG formats accepted (GIF excluded due to 256-color limitation)
+- **Technical Details**:
+  - Multer fileFilter whitelists only `image/png`, `image/jpeg`, `image/jpg`
+  - Custom header parsing for PNG (IHDR chunk) and JPEG (SOF0/SOF2 markers)
+  - Server-side validation runs after file upload, before database entry
+  - Failed uploads return detailed error with min/actual dimensions
+  - 10MB file size limit enforced by Multer
+- **Testing**: End-to-end tests verified low-res rejection, high-res acceptance, error messaging, and successful artwork submission
+
 **Development Environment Fixes**
 - Moved runtime-required packages from `devDependencies` to `dependencies` for Replit workflow compatibility
 - Removed unused `@tailwindcss/typography` plugin that was causing esbuild deadlock errors

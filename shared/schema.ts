@@ -256,31 +256,6 @@ export const payouts = pgTable("payouts", {
   completedAt: timestamp("completed_at"),
 });
 
-// Kits table - AI automation kits for creators
-export const kits = pgTable("kits", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull(),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  promptTemplate: text("prompt_template").notNull(),
-  shopifyVariantId: text("shopify_variant_id"),
-  unlockedAt: timestamp("unlocked_at"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-// Insert schemas
-export const insertKitSchema = createInsertSchema(kits).omit({
-  id: true,
-  createdAt: true,
-}).extend({
-  name: z.string().min(1),
-  price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Must be a valid price"),
-  promptTemplate: z.string().min(1),
-});
-
-// Types
-export type InsertKit = z.infer<typeof insertKitSchema>;
-export type Kit = typeof kits.$inferSelect;
-
 // Artwork with artist info
 export type ArtworkWithArtist = Artwork & {
   artist: Pick<Artist, 'id' | 'name' | 'email'>;

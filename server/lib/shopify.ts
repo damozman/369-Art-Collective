@@ -1,0 +1,203 @@
+import fs from "fs";
+import path from "path";
+
+const shopifyShopUrl = process.env.SHOPIFY_SHOP_URL || "";
+const shopifyAccessToken = process.env.SHOPIFY_ACCESS_TOKEN || "";
+
+export function isShopifyConfigured(): boolean {
+  return Boolean(shopifyShopUrl && shopifyAccessToken);
+}
+
+export interface ShopifyProduct {
+  title: string;
+  body_html?: string;
+  vendor?: string;
+  product_type?: string;
+  tags?: string;
+  status: "draft" | "active";
+  images?: Array<{ src: string }>;
+}
+
+interface ArtworkData {
+  title: string;
+  description?: string;
+  artistName: string;
+  artistShort: string;
+  artworkId: string;
+  imageUrl: string;
+  tags?: string[];
+}
+
+function loadConfig<T>(filename: string): T {
+  const configPath = path.join(process.cwd(), "config", filename);
+  return JSON.parse(fs.readFileSync(configPath, "utf-8"));
+}
+
+export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
+  if (!isShopifyConfigured()) {
+    throw new Error("Shopify is not configured");
+  }
+
+  try {
+    // Load configuration files
+    const providerConfig = loadConfig<any>("provider_config.json");
+    const pricingMatrix = loadConfig<any>("pricing_matrix.json");
+    const weights = loadConfig<any>("weights_lb.json");
+
+    // Phase 1: Paper and Canvas only
+    const finishes = ["Paper", "Canvas"];
+    const sizes = providerConfig.sizes;
+
+    // Build variants for Size × Finish combinations
+    const variants = [];
+    for (const finish of finishes) {
+      for (const size of sizes) {
+        variants.push({
+          option1: size,
+          option2: finish,
+          price: String(pricingMatrix[finish][size].toFixed(2)),
+          sku: `ART-${artwork.artistShort}-${artwork.artworkId}-${size}-${finish}`,
+          inventory_management: null,
+          inventory_policy: "continue",
+          weight: weights[finish][size],
+          weight_unit: "lb",
+        });
+      }
+    }
+
+    const tags = [
+      "New",
+      ...finishes.map(f => `Finish:${f}`),
+      `Artist:${artwork.artistName}`,
+      ...(artwork.tags || []),
+    ];
+
+    const productPayload = {
+      product: {
+        title: artwork.title,
+        body_html: artwork.description 
+          ? `<p>${artwork.description}</p><p>by ${artwork.artistName}</p>`
+          : `<p>${artwork.title} by ${artwork.artistName}</p>`,
+        vendor: artwork.artistName,
+        product_type: "Art Print",
+        status: "draft",
+        tags: tags.join(", "),
+        options: [
+          { name: "Size", values: sizes },
+          { name: "Finish", values: finishes },
+        ],
+        images: [{ src: artwork.imageUrl, alt: artwork.title }],
+        variants,
+      },
+    };
+
+    const apiVersion = "2024-10";
+    const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/products.json`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": shopifyAccessToken,
+      },
+      body: JSON.stringify(productPayload),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Shopify API error: ${error}`);
+    }
+
+    const result = await response.json();
+    const productId = result?.product?.id;
+
+    // Add metafields for tracking
+    if (productId) {
+      const metafieldUrl = `https://${shopifyShopUrl}/admin/api/${apiVersion}/products/${productId}/metafields.json`;
+      
+      await Promise.all([
+        fetch(metafieldUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": shopifyAccessToken,
+          },
+          body: JSON.stringify({
+            metafield: {
+              namespace: "247pn",
+              key: "artist_id",
+              type: "single_line_text_field",
+              value: artwork.artistShort,
+            },
+          }),
+        }),
+        fetch(metafieldUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": shopifyAccessToken,
+          },
+          body: JSON.stringify({
+            metafield: {
+              namespace: "247pn",
+              key: "artwork_id",
+              type: "single_line_text_field",
+              value: String(artwork.artworkId),
+            },
+          }),
+        }),
+        fetch(metafieldUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Shopify-Access-Token": shopifyAccessToken,
+          },
+          body: JSON.stringify({
+            metafield: {
+              namespace: "247pn",
+              key: "provider",
+              type: "single_line_text_field",
+              value: "manual",
+            },
+          }),
+        }),
+      ]);
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error("Shopify API error:", error);
+    throw new Error(`Failed to create Shopify product: ${error.message}`);
+  }
+}
+
+// Legacy function for backward compatibility
+export async function createDraftProduct(product: ShopifyProduct): Promise<any> {
+  if (!isShopifyConfigured()) {
+    throw new Error("Shopify is not configured");
+  }
+
+  try {
+    const apiVersion = "2024-01";
+    const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/products.json`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": shopifyAccessToken,
+      },
+      body: JSON.stringify({ product }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Shopify API error: ${error}`);
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error("Shopify API error:", error);
+    throw new Error(`Failed to create Shopify product: ${error.message}`);
+  }
+}

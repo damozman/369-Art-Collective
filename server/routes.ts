@@ -26,6 +26,7 @@ import { isPrintifyConfigured } from "./lib/printify";
 import { requireAuth, requireArtist, requireAdmin } from "./middleware/auth";
 import { processShopifyOrder } from "./lib/order-processor";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
+import { validateImageQuality, MIN_WIDTH, MIN_HEIGHT } from "./lib/image-validator";
 
 // Ensure uploads directory exists
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -46,10 +47,11 @@ const upload = multer({
   storage: multerStorage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
+    if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Only image files are allowed"));
+      cb(new Error("Only PNG and JPG files are allowed"));
     }
   },
 });
@@ -893,10 +895,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
+      
+      // Validate image quality for Printify requirements
+      const filePath = path.join(uploadDir, req.file.filename);
+      const validation = validateImageQuality(filePath);
+      
+      if (!validation.valid) {
+        // Delete the uploaded file if it doesn't meet quality requirements
+        fs.unlinkSync(filePath);
+        return res.status(400).json({ 
+          error: validation.message || "Image quality check failed",
+          minWidth: MIN_WIDTH,
+          minHeight: MIN_HEIGHT,
+          actualDimensions: validation.dimensions
+        });
+      }
+      
+      console.log(`[Upload] Image validated: ${validation.dimensions?.width}×${validation.dimensions?.height} pixels`);
       const imageUrl = `/uploads/${req.file.filename}`;
       res.status(201).json({ imageUrl });
     } catch (error: any) {
       console.error("Upload error:", error);
+      // Clean up file if there was an error
+      if (req.file) {
+        const filePath = path.join(uploadDir, req.file.filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
       res.status(500).json({ error: error.message || "Upload failed" });
     }
   });

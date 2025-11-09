@@ -99,7 +99,10 @@ export default function UploadArtwork() {
         credentials: "include", // Important for session cookies
       });
 
-      if (!uploadResponse.ok) throw new Error("File upload failed");
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.error || "File upload failed");
+      }
 
       const { imageUrl } = await uploadResponse.json();
 
@@ -149,9 +152,24 @@ export default function UploadArtwork() {
             <Card>
               <CardHeader>
                 <CardTitle>Upload Image</CardTitle>
-                <CardDescription>Select an image file to upload (JPG, PNG, GIF, etc.)</CardDescription>
+                <CardDescription>
+                  High-quality images required for professional prints
+                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Image Quality Requirements</h4>
+                  <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                    <li>• Minimum resolution: <strong>2400×3000 pixels</strong> (or 3000×2400 for landscape)</li>
+                    <li>• Recommended: <strong>300 DPI</strong> for professional quality prints</li>
+                    <li>• Supported formats: <strong>PNG, JPG</strong> only</li>
+                    <li>• Maximum file size: 10MB</li>
+                  </ul>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-2 italic">
+                    Low-resolution images will be rejected to ensure quality prints for customers
+                  </p>
+                </div>
+
                 {!previewUrl ? (
                   <label
                     htmlFor="file-upload"
@@ -164,7 +182,7 @@ export default function UploadArtwork() {
                         Click to upload or drag and drop
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        PNG, JPG, GIF up to 10MB
+                        High-resolution PNG or JPG (min. 2400×3000 px)
                       </p>
                     </div>
                     <input

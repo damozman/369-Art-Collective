@@ -173,6 +173,49 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
   }
 }
 
+// Update product status (active/draft) in Shopify
+export async function updateProductStatus(
+  shopifyProductId: string,
+  status: "active" | "draft"
+): Promise<any> {
+  if (!isShopifyConfigured()) {
+    throw new Error("Shopify is not configured");
+  }
+
+  try {
+    const apiVersion = "2024-10";
+    const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/products/${shopifyProductId}.json`;
+
+    console.log(`[Shopify] Updating product ${shopifyProductId} status to: ${status}`);
+
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": shopifyAccessToken,
+      },
+      body: JSON.stringify({
+        product: {
+          id: shopifyProductId,
+          status: status,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Shopify API error: ${error}`);
+    }
+
+    const result = await response.json();
+    console.log(`[Shopify] Product ${shopifyProductId} status updated to: ${status}`);
+    return result;
+  } catch (error: any) {
+    console.error("Shopify update status error:", error);
+    throw new Error(`Failed to update Shopify product status: ${error.message}`);
+  }
+}
+
 // Delete all products from Shopify store
 export async function deleteAllProducts(): Promise<{ deleted: number; errors: string[] }> {
   if (!isShopifyConfigured()) {

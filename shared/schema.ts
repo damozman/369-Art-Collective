@@ -51,6 +51,7 @@ export const artworks = pgTable("artworks", {
   status: text("status").notNull().default("pending"), // pending, approved, rejected
   rejectionReason: text("rejection_reason"),
   shopifyProductId: text("shopify_product_id"),
+  shopifyProductStatus: text("shopify_product_status").default("draft"), // draft, active - tracks Shopify product visibility
   printifyProductId: text("printify_product_id"), // Printify product ID
   printifyImageId: text("printify_image_id"), // Uploaded image ID in Printify
   createdAt: timestamp("created_at").notNull().defaultNow(),

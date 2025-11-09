@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { Artist } from "@shared/schema";
-import { ArrowLeft, Mail, User, Hash, Calendar, DollarSign, KeyRound, CheckCircle, XCircle, Copy } from "lucide-react";
+import { ArrowLeft, Mail, User, Hash, Calendar, DollarSign, KeyRound, CheckCircle, XCircle, Copy, Trash2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 
 export default function AdminArtistDetail() {
@@ -17,6 +17,7 @@ export default function AdminArtistDetail() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
 
   const artistId = params?.id;
@@ -41,6 +42,28 @@ export default function AdminArtistDetail() {
     onError: (error: any) => {
       toast({
         title: "Failed to reset password",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteArtistMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/admin/artists/${artistId}/delete`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/artists/all"] });
+      toast({
+        title: "Artist deleted",
+        description: "The artist account has been disabled successfully",
+      });
+      setTimeout(() => setLocation("/admin/artists"), 1500);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete artist",
         description: error.message || "Please try again.",
         variant: "destructive",
       });
@@ -237,6 +260,45 @@ export default function AdminArtistDetail() {
             )}
           </CardContent>
         </Card>
+
+        <Card className="border-destructive" data-testid="card-delete-account">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" />
+              Delete Artist Account
+            </CardTitle>
+            <CardDescription>
+              Permanently disable this artist account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20" data-testid="text-delete-warning">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                <div className="space-y-2 text-sm">
+                  <p className="font-semibold text-destructive">Warning: This action will:</p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>Permanently disable the artist account</li>
+                    <li>Prevent the artist from logging in or uploading artwork</li>
+                    <li>Keep Shopify products available for purchase</li>
+                    <li>Continue processing orders and earnings</li>
+                  </ul>
+                  <p className="text-destructive font-semibold">This action cannot be undone.</p>
+                </div>
+              </div>
+            </div>
+
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteDialog(true)}
+              disabled={deleteArtistMutation.isPending}
+              data-testid="button-delete-artist"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {deleteArtistMutation.isPending ? "Deleting..." : "Delete Artist Account"}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
@@ -259,6 +321,36 @@ export default function AdminArtistDetail() {
               data-testid="button-confirm-reset"
             >
               Reset Password
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent data-testid="dialog-delete-confirm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Delete Artist Account?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to permanently disable the account for <strong>{artist.name}</strong> ({artist.email}).
+              <br /><br />
+              This action cannot be undone. The artist will no longer be able to log in or upload artwork,
+              but their Shopify products will remain available for purchase.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                deleteArtistMutation.mutate();
+                setShowDeleteDialog(false);
+              }}
+              className="bg-destructive hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              Delete Account
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

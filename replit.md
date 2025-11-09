@@ -50,6 +50,29 @@ The 247 Print Network is an artist-powered print-on-demand (POD) marketplace. It
 - **Security**: Password verification using bcrypt for artist self-deletion, session cleanup prevents zombie sessions
 - **Testing**: End-to-end tests verify both deletion flows, login prevention, and proper UI redirects
 
+**Product Deactivation/Activation Feature (November 2025)**
+- **Implementation**: Artists can now control the visibility of their approved products on the Shopify storefront
+  - Added `shopifyProductStatus` field to artworks schema (database column: `shopify_product_status`)
+  - Created Shopify integration function `updateProductStatus()` using REST Admin API 2024-10
+  - Implemented API endpoints:
+    - POST `/api/artworks/:id/deactivate` - Sets product to "draft" (hidden from customers)
+    - POST `/api/artworks/:id/activate` - Sets product to "active" (visible to customers)
+  - Both endpoints require artist authentication and verify artwork ownership
+- **User Experience**:
+  - Artist dashboard shows "Store Visibility" section for approved products with Shopify integration
+  - Status badges: "Active" (blue) for visible products, "Hidden" (secondary) for draft products
+  - Action buttons: "Show in Store" and "Hide from Store" with clear labeling
+  - Confirmation dialogs prevent accidental changes (AlertDialog component)
+  - Real-time UI updates with optimistic cache invalidation
+  - Toast notifications for success/error feedback
+- **Technical Details**:
+  - Shopify API updates product status between "draft" and "active" states
+  - Database syncs with Shopify status for offline tracking
+  - Default status is "draft" for new products (artists must explicitly activate)
+  - Soft delete approach: products remain in Shopify, just hidden from customers
+  - Reversible operations: artists can activate/deactivate products anytime
+- **Testing**: End-to-end tests verified activation/deactivation flow, confirmation dialogs, and Shopify API integration
+
 **Development Environment Fixes**
 - Moved runtime-required packages from `devDependencies` to `dependencies` for Replit workflow compatibility
 - Removed unused `@tailwindcss/typography` plugin that was causing esbuild deadlock errors

@@ -78,6 +78,42 @@ const loginLimiter = rateLimit({
   },
 });
 
+// Helper function to convert relative image URLs to absolute URLs
+function toAbsoluteUrl(imageUrl: string, req?: Request): string {
+  // Guard against null/undefined
+  if (!imageUrl) {
+    return imageUrl;
+  }
+  
+  // If already absolute, return as-is
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+    return imageUrl;
+  }
+
+  // Get base URL from REPLIT_DOMAINS or request host
+  const replitDomain = process.env.REPLIT_DOMAINS 
+    ? process.env.REPLIT_DOMAINS.split(',').map(d => d.trim()).find(d => !d.includes('-')) || process.env.REPLIT_DOMAINS.split(',')[0].trim()
+    : null;
+  
+  const baseUrl = replitDomain
+    ? `https://${replitDomain}`
+    : req 
+      ? `${req.protocol}://${req.get('host')}`
+      : `http://localhost:${process.env.PORT || 5000}`;
+  
+  // Ensure imageUrl starts with /
+  const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+  return `${baseUrl}${cleanPath}`;
+}
+
+// Helper to normalize artwork object with absolute image URL
+function normalizeArtwork(artwork: any, req?: Request): any {
+  return {
+    ...artwork,
+    imageUrl: toAbsoluteUrl(artwork.imageUrl, req),
+  };
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Shopify webhook endpoint - SECURED with HMAC verification
   // Raw body is captured by global express.json verify function in index.ts
@@ -818,7 +854,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         artistId: req.user!.id,
       });
       const artwork = await storage.createArtwork(data);
-      res.status(201).json(artwork);
+      res.status(201).json(normalizeArtwork(artwork, req));
     } catch (error: any) {
       console.error("Create artwork error:", error);
       res.status(400).json({ message: error.message || "Failed to create artwork" });
@@ -830,7 +866,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use authenticated user's ID from session
       const artworks = await storage.getArtworksByArtist(req.user!.id);
-      res.json(artworks);
+      res.json(artworks.map(a => normalizeArtwork(a, req)));
     } catch (error: any) {
       console.error("Get my artworks error:", error);
       res.status(500).json({ message: "Failed to fetch artworks" });
@@ -838,10 +874,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all artworks (admin only)
-  app.get("/api/artworks/all", requireAdmin, async (_req, res) => {
+  app.get("/api/artworks/all", requireAdmin, async (req, res) => {
     try {
       const artworks = await storage.getAllArtworks();
-      res.json(artworks);
+      res.json(artworks.map(a => normalizeArtwork(a, req)));
     } catch (error: any) {
       console.error("Get all artworks error:", error);
       res.status(500).json({ message: "Failed to fetch artworks" });
@@ -865,7 +901,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updates = updateArtworkSchema.parse(req.body);
       const updated = await storage.updateArtwork(id, updates);
-      res.json(updated);
+      res.json(normalizeArtwork(updated, req));
     } catch (error: any) {
       console.error("Update artwork error:", error);
       res.status(400).json({ message: error.message || "Failed to update artwork" });
@@ -956,7 +992,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         printifyImageId,
       });
 
-      res.json(updated);
+      res.json(normalizeArtwork(updated, req));
     } catch (error: any) {
       console.error("Approve artwork error:", error);
       res.status(500).json({ message: error.message || "Failed to approve artwork" });
@@ -974,7 +1010,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rejectionReason: reason || "No reason provided",
       });
 
-      res.json(updated);
+      res.json(normalizeArtwork(updated, req));
     } catch (error: any) {
       console.error("Reject artwork error:", error);
       res.status(500).json({ message: error.message || "Failed to reject artwork" });

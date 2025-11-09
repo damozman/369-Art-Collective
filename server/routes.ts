@@ -927,6 +927,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Portfolio upload during registration (2-3 images required)
+  // Note: Allows unapproved artists (they just registered)
+  app.post("/api/artists/portfolio", requireAuth, upload.array("files", 3), async (req, res) => {
+    // Verify artist type (but allow unapproved artists)
+    if (req.session?.user?.type !== "artist") {
+      return res.status(403).json({ message: "Artist access required" });
+    }
+    try {
+      const files = req.files as Express.Multer.File[];
+      
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: "No files uploaded" });
+      }
+      
+      // Enforce 2-3 image requirement
+      if (files.length < 2) {
+        // Clean up uploaded files
+        files.forEach(file => {
+          const filePath = path.join(uploadDir, file.filename);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        });
+        return res.status(400).json({ error: "Please upload at least 2 portfolio images" });
+      }
+      
+      if (files.length > 3) {
+        // Clean up uploaded files
+        files.forEach(file => {
+          const filePath = path.join(uploadDir, file.filename);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        });
+        return res.status(400).json({ error: "Maximum 3 portfolio images allowed" });
+      }
+      
+      // Validate each image's quality
+      const validatedFiles = [];
+      for (const file of files) {
+        const filePath = path.join(uploadDir, file.filename);
+        const validation = validateImageQuality(filePath);
+        
+        if (!validation.valid) {
+          // Clean up all uploaded files on any failure
+          files.forEach(f => {
+            const fPath = path.join(uploadDir, f.filename);
+            if (fs.existsSync(fPath)) fs.unlinkSync(fPath);
+          });
+          return res.status(400).json({ 
+            error: `Image "${file.originalname}" ${validation.message || "does not meet quality requirements"}`,
+            minWidth: MIN_WIDTH,
+            minHeight: MIN_HEIGHT,
+            actualDimensions: validation.dimensions
+          });
+        }
+        
+        validatedFiles.push({
+          filename: file.filename,
+          dimensions: validation.dimensions
+        });
+      }
+      
+      console.log(`[Portfolio Upload] ${files.length} images validated for artist ${req.user!.id}`);
+      
+      // Create portfolio submission records
+      const portfolioSubmissions = [];
+      for (const file of files) {
+        const imageUrl = `/uploads/${file.filename}`;
+        const submission = await storage.createPortfolioSubmission({
+          artistId: req.user!.id,
+          imageUrl,
+        });
+        portfolioSubmissions.push(submission);
+      }
+      
+      res.status(201).json({ 
+        message: "Portfolio uploaded successfully",
+        count: portfolioSubmissions.length,
+        submissions: portfolioSubmissions
+      });
+    } catch (error: any) {
+      console.error("Portfolio upload error:", error);
+      // Clean up files if there was an error
+      if (req.files) {
+        const files = req.files as Express.Multer.File[];
+        files.forEach(file => {
+          const filePath = path.join(uploadDir, file.filename);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        });
+      }
+      res.status(500).json({ error: error.message || "Portfolio upload failed" });
+    }
+  });
+
   // Create artwork (requires artist auth)
   app.post("/api/artworks", requireArtist, async (req, res) => {
     try {

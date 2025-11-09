@@ -333,6 +333,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get artist's portfolio submissions (admin only)
+  app.get("/api/artists/:id/portfolio", requireAdmin, async (req, res) => {
+    try {
+      const artistId = req.params.id;
+      const portfolioSubmissions = await storage.getPortfolioSubmissionsByArtist(artistId);
+      
+      // Convert relative URLs to absolute URLs
+      const normalizedSubmissions = portfolioSubmissions.map(submission => ({
+        ...submission,
+        imageUrl: toAbsoluteUrl(submission.imageUrl, req),
+      }));
+      
+      res.json(normalizedSubmissions);
+    } catch (error: any) {
+      console.error("Get portfolio error:", error);
+      res.status(500).json({ message: "Failed to fetch portfolio submissions" });
+    }
+  });
+
   // Update artist profile (artist updates their own)
   app.patch("/api/artists/profile", requireArtist, async (req, res) => {
     try {

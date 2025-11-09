@@ -8,8 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import type { Artist } from "@shared/schema";
-import { ArrowLeft, Mail, User, Hash, Calendar, DollarSign, KeyRound, CheckCircle, XCircle, Copy, Trash2, AlertTriangle } from "lucide-react";
+import type { Artist, PortfolioSubmission } from "@shared/schema";
+import { ArrowLeft, Mail, User, Hash, Calendar, DollarSign, KeyRound, CheckCircle, XCircle, Copy, Trash2, AlertTriangle, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 
 export default function AdminArtistDetail() {
@@ -24,6 +24,11 @@ export default function AdminArtistDetail() {
 
   const { data: artist, isLoading } = useQuery<Artist>({
     queryKey: [`/api/artists/${artistId}`],
+    enabled: Boolean(artistId),
+  });
+
+  const { data: portfolioSubmissions = [] } = useQuery<PortfolioSubmission[]>({
+    queryKey: [`/api/artists/${artistId}/portfolio`],
     enabled: Boolean(artistId),
   });
 
@@ -205,6 +210,46 @@ export default function AdminArtistDetail() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Portfolio Submissions Card */}
+        <Card data-testid="card-portfolio">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="w-5 h-5" />
+              Portfolio Submissions
+            </CardTitle>
+            <CardDescription>
+              {portfolioSubmissions.length > 0 
+                ? `${portfolioSubmissions.length} portfolio sample${portfolioSubmissions.length !== 1 ? 's' : ''} submitted during registration`
+                : "No portfolio samples submitted yet"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {portfolioSubmissions.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {portfolioSubmissions.map((submission, index) => (
+                  <div key={submission.id} className="relative group">
+                    <img
+                      src={submission.imageUrl}
+                      alt={`Portfolio ${index + 1}`}
+                      className="w-full h-64 object-cover rounded-lg border"
+                      data-testid={`img-portfolio-${index}`}
+                    />
+                    <div className="absolute bottom-2 left-2 text-xs bg-background/90 px-2 py-1 rounded">
+                      Sample {index + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No portfolio samples submitted</p>
+                <p className="text-xs mt-1">This artist registered before portfolio requirements were added</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card data-testid="card-security">
           <CardHeader>

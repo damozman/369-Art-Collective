@@ -165,6 +165,13 @@ export const updateAdminProfileSchema = z.object({
 
 export type UpdateAdminProfile = z.infer<typeof updateAdminProfileSchema>;
 
+// Delete account schema (for artist self-deletion)
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1),
+});
+
+export type DeleteAccount = z.infer<typeof deleteAccountSchema>;
+
 // Password Reset Token types
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 

@@ -1,17 +1,33 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
-import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings } from "lucide-react";
+import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings, Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Artwork } from "@shared/schema";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function ArtistDashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
   // No longer passing artistId in query - session handles it server-side
   const { data: artworks, isLoading } = useQuery<Artwork[]>({
@@ -25,6 +41,50 @@ export default function ArtistDashboard() {
     rejected: artworks?.filter(a => a.status === "rejected").length || 0,
   };
 
+  const deactivateMutation = useMutation({
+    mutationFn: async (artworkId: string) => {
+      return await apiRequest("POST", `/api/artworks/${artworkId}/deactivate`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/artworks/my-artworks"] });
+      toast({
+        title: "Product deactivated",
+        description: "Your product has been hidden from the storefront",
+      });
+      setActionInProgress(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Deactivation failed",
+        description: error.message || "Failed to deactivate product",
+        variant: "destructive",
+      });
+      setActionInProgress(null);
+    },
+  });
+
+  const activateMutation = useMutation({
+    mutationFn: async (artworkId: string) => {
+      return await apiRequest("POST", `/api/artworks/${artworkId}/activate`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/artworks/my-artworks"] });
+      toast({
+        title: "Product activated",
+        description: "Your product is now visible on the storefront",
+      });
+      setActionInProgress(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Activation failed",
+        description: error.message || "Failed to activate product",
+        variant: "destructive",
+      });
+      setActionInProgress(null);
+    },
+  });
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
@@ -36,6 +96,15 @@ export default function ArtistDashboard() {
       default:
         return <Badge variant="outline" data-testid={`badge-status-${status}`}>{status}</Badge>;
     }
+  };
+
+  const getProductStatusBadge = (shopifyProductStatus?: string | null) => {
+    if (shopifyProductStatus === "active") {
+      return <Badge variant="default" className="bg-blue-600 hover:bg-blue-700" data-testid="badge-product-active"><Eye className="w-3 h-3 mr-1" />Active</Badge>;
+    } else if (shopifyProductStatus === "draft") {
+      return <Badge variant="secondary" data-testid="badge-product-draft"><EyeOff className="w-3 h-3 mr-1" />Hidden</Badge>;
+    }
+    return null;
   };
 
   return (
@@ -173,6 +242,87 @@ export default function ArtistDashboard() {
                         {new Date(artwork.createdAt).toLocaleDateString()}
                       </p>
                     </div>
+
+                    {artwork.status === "approved" && artwork.shopifyProductId && (
+                      <div className="mt-3 pt-3 border-t space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Store Visibility:</span>
+                          {getProductStatusBadge(artwork.shopifyProductStatus)}
+                        </div>
+
+                        {artwork.shopifyProductStatus === "active" ? (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="w-full"
+                                disabled={actionInProgress === artwork.id}
+                                data-testid={`button-deactivate-${artwork.id}`}
+                              >
+                                <EyeOff className="mr-2 h-4 w-4" />
+                                Hide from Store
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Hide product from store?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will hide "{artwork.title}" from your storefront. Customers won't be able to see or purchase it. You can reactivate it anytime.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel data-testid="button-cancel-deactivate">Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => {
+                                    setActionInProgress(artwork.id);
+                                    deactivateMutation.mutate(artwork.id);
+                                  }}
+                                  data-testid="button-confirm-deactivate"
+                                >
+                                  Hide Product
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        ) : (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="default" 
+                                size="sm" 
+                                className="w-full"
+                                disabled={actionInProgress === artwork.id}
+                                data-testid={`button-activate-${artwork.id}`}
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                Show in Store
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Show product in store?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will make "{artwork.title}" visible on your storefront. Customers will be able to see and purchase it.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel data-testid="button-cancel-activate">Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => {
+                                    setActionInProgress(artwork.id);
+                                    activateMutation.mutate(artwork.id);
+                                  }}
+                                  data-testid="button-confirm-activate"
+                                >
+                                  Show Product
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
+                    )}
 
                     {artwork.status === "rejected" && artwork.rejectionReason && (
                       <div className="mt-3 p-3 bg-destructive/10 rounded-lg border border-destructive/20">

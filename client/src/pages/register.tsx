@@ -11,6 +11,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { Palette, Loader2 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { z } from "zod";
+
+const registrationSchema = insertArtistSchema.extend({
+  confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type RegistrationForm = z.infer<typeof registrationSchema>;
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -18,18 +28,19 @@ export default function Register() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<InsertArtist>({
-    resolver: zodResolver(insertArtistSchema),
-    defaultValues: { email: "", password: "", name: "", artistShort: "" },
+  const form = useForm<RegistrationForm>({
+    resolver: zodResolver(registrationSchema),
+    defaultValues: { email: "", password: "", confirmPassword: "", name: "", artistShort: "" },
   });
 
-  async function onSubmit(data: InsertArtist) {
+  async function onSubmit(data: RegistrationForm) {
+    const { confirmPassword, ...artistData } = data;
     setIsLoading(true);
     try {
       const response = await fetch("/api/artists/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(artistData),
       });
 
       if (!response.ok) {
@@ -164,6 +175,25 @@ export default function Register() {
                           type="password"
                           placeholder="••••••••"
                           data-testid="input-password"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="password"
+                          placeholder="••••••••"
+                          data-testid="input-confirm-password"
                         />
                       </FormControl>
                       <FormMessage />

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>247 Print Network</title>
+    <script type="module" src="/src/main.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: sans-serif;
+        background: #f0f0f0;
+        padding: 2rem;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+      input,
+      button {
+        width: 100%;
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+      }
+      button {
+        background: #2563eb;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #1d4ed8;
+      }
+      .toast {
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        background: #10b981;
+        color: white;
+        padding: 1rem;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Upload Artwork</h1>
+      <form id="uploadForm">
+        <input type="text" id="title" placeholder="Title" required />
+        <input type="number" id="price" placeholder="Price (USD)" required />
+        <input type="file" id="file" accept="image/*" required />
+        <button type="submit">Upload</button>
+      </form>
+    </div>
+
+    <script type="module">
+      const form = document.getElementById("uploadForm");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.textContent = "Uploading...";
+        document.body.appendChild(toast);
+
+        const formData = new FormData();
+        formData.append("title", document.getElementById("title").value);
+        formData.append("price", document.getElementById("price").value);
+        formData.append("file", document.getElementById("file").files[0]);
+
+        try {
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          toast.textContent = data.message || "Uploaded!";
+          toast.style.background = "#10b981";
+        } catch (err) {
+          toast.textContent = "Failed";
+          toast.style.background = "#ef4444";
+        }
+
+        setTimeout(() => toast.remove(), 3000);
+      });
+    </script>
+  </body>
+</html>

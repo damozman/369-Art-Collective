@@ -40,6 +40,14 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Portfolio Submissions - images submitted during artist registration
+export const portfolioSubmissions = pgTable("portfolio_submissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artistId: varchar("artist_id").notNull().references(() => artists.id),
+  imageUrl: text("image_url").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Artworks table - submitted artwork
 export const artworks = pgTable("artworks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -79,6 +87,14 @@ export const insertAdminSchema = createInsertSchema(admins).omit({
   name: z.string().min(1),
 });
 
+export const insertPortfolioSubmissionSchema = createInsertSchema(portfolioSubmissions).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  artistId: z.string().min(1),
+  imageUrl: z.string().min(1),
+});
+
 export const insertArtworkSchema = createInsertSchema(artworks).omit({
   id: true,
   createdAt: true,
@@ -105,6 +121,9 @@ export type Artist = typeof artists.$inferSelect;
 
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
 export type Admin = typeof admins.$inferSelect;
+
+export type InsertPortfolioSubmission = z.infer<typeof insertPortfolioSubmissionSchema>;
+export type PortfolioSubmission = typeof portfolioSubmissions.$inferSelect;
 
 export type InsertArtwork = z.infer<typeof insertArtworkSchema>;
 export type UpdateArtwork = z.infer<typeof updateArtworkSchema>;

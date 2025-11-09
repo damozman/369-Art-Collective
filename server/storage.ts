@@ -6,6 +6,7 @@ import {
   sales as salesTable,
   payouts as payoutsTable,
   passwordResetTokens,
+  portfolioSubmissions,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -15,6 +16,8 @@ import {
   type UpdateArtwork,
   type ArtworkWithArtist,
   type PasswordResetToken,
+  type PortfolioSubmission,
+  type InsertPortfolioSubmission,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
@@ -41,6 +44,10 @@ export interface IStorage {
   getPasswordResetToken(hashedToken: string): Promise<PasswordResetToken | undefined>;
   markTokenAsUsed(hashedToken: string): Promise<void>;
   invalidateUserTokens(email: string, userType: 'artist' | 'admin'): Promise<void>;
+
+  // Portfolio Submission methods
+  createPortfolioSubmission(submission: InsertPortfolioSubmission): Promise<PortfolioSubmission>;
+  getPortfolioSubmissionsByArtist(artistId: string): Promise<PortfolioSubmission[]>;
 
   // Artwork methods
   getArtwork(id: string): Promise<Artwork | undefined>;
@@ -210,6 +217,23 @@ class PostgresStorage implements IStorage {
       .where(eq(passwordResetTokens.email, email));
   }
 
+  async createPortfolioSubmission(submission: InsertPortfolioSubmission): Promise<PortfolioSubmission> {
+    const [portfolioSubmission] = await db
+      .insert(portfolioSubmissions)
+      .values(submission)
+      .returning();
+    return portfolioSubmission;
+  }
+
+  async getPortfolioSubmissionsByArtist(artistId: string): Promise<PortfolioSubmission[]> {
+    const submissions = await db
+      .select()
+      .from(portfolioSubmissions)
+      .where(eq(portfolioSubmissions.artistId, artistId))
+      .orderBy(portfolioSubmissions.createdAt);
+    return submissions;
+  }
+
   async getArtwork(id: string): Promise<Artwork | undefined> {
     const [artwork] = await db
       .select()
@@ -366,6 +390,7 @@ class PostgresStorage implements IStorage {
 class MemStorage implements IStorage {
   private artists: Map<string, Artist> = new Map();
   private admins: Map<string, Admin> = new Map();
+  private portfolioSubmissions: Map<string, PortfolioSubmission> = new Map();
   private artworks: Map<string, Artwork> = new Map();
 
   async getArtist(id: string): Promise<Artist | undefined> {
@@ -473,6 +498,23 @@ class MemStorage implements IStorage {
 
   async invalidateUserTokens(email: string, userType: 'artist' | 'admin'): Promise<void> {
     console.warn("MemStorage: Password reset not supported in memory mode");
+  }
+
+  async createPortfolioSubmission(submission: InsertPortfolioSubmission): Promise<PortfolioSubmission> {
+    const id = randomUUID();
+    const portfolioSubmission: PortfolioSubmission = {
+      ...submission,
+      id,
+      createdAt: new Date(),
+    };
+    this.portfolioSubmissions.set(id, portfolioSubmission);
+    return portfolioSubmission;
+  }
+
+  async getPortfolioSubmissionsByArtist(artistId: string): Promise<PortfolioSubmission[]> {
+    return Array.from(this.portfolioSubmissions.values())
+      .filter((s) => s.artistId === artistId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }
 
   async getArtwork(id: string): Promise<Artwork | undefined> {

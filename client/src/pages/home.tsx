@@ -20,14 +20,19 @@ import {
 } from "lucide-react";
 import type { Testimonial } from "@shared/schema";
 
+type FeaturedTestimonial = Testimonial & {
+  artistName: string;
+  featuredTier: "admin_override" | "premium" | "merit";
+};
+
 export default function Home() {
   const [, setLocation] = useLocation();
   
-  const { data: allTestimonials = [] } = useQuery<Testimonial[]>({
-    queryKey: ["/api/testimonials"],
+  const { data: featuredTestimonials = [], isLoading: featuredLoading } = useQuery<FeaturedTestimonial[]>({
+    queryKey: ["/api/featured-testimonials"],
   });
   
-  const testimonials = allTestimonials.slice(0, 3);
+  const testimonials = featuredTestimonials.slice(0, 7);
 
   const features = [
     {
@@ -252,11 +257,15 @@ export default function Home() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
                         </svg>
                       </div>
-                      {testimonial.featured && (
-                        <Badge variant="default" className="absolute top-3 right-3">
+                      {testimonial.featuredTier === "premium" ? (
+                        <Badge variant="default" className="absolute top-3 right-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0" data-testid="badge-sponsored">
+                          Sponsored
+                        </Badge>
+                      ) : testimonial.featuredTier === "admin_override" ? (
+                        <Badge variant="default" className="absolute top-3 right-3" data-testid="badge-featured">
                           Featured
                         </Badge>
-                      )}
+                      ) : null}
                     </div>
                     <div className="p-6 space-y-3">
                       <div className="flex items-center gap-3">

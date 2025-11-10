@@ -25,6 +25,9 @@ export const artists = pgTable("artists", {
   referralCode: text("referral_code").notNull().unique(), // Unique code for referral links (e.g., "ARTIST-ABC123")
   referredBy: varchar("referred_by").references((): any => artists.id), // Which artist recruited them
   referralSource: text("referral_source"), // Source of referral: "testimonial" or "general" (captured from utm_medium)
+  bio: text("bio"), // Artist bio for product pages and profile
+  profilePhoto: text("profile_photo"), // URL to artist profile photo
+  socialLinks: jsonb("social_links"), // { instagram, twitter, website, etc. }
   tosAcceptedAt: timestamp("tos_accepted_at"), // Terms of Service acceptance timestamp for legal compliance
   tosIpAddress: text("tos_ip_address"), // IP address when TOS was accepted for audit trail
   tosVersion: text("tos_version"), // Version/hash of TOS accepted (e.g., "v1.0-2025-11" or hash)
@@ -85,6 +88,10 @@ export const artworks = pgTable("artworks", {
   rejectionReason: text("rejection_reason"),
   ipDeclarationAccepted: boolean("ip_declaration_accepted").notNull().default(false), // Artist confirms original work/proper rights
   ipDeclarationText: text("ip_declaration_text"), // Snapshot of declaration text at time of upload
+  artworkStory: text("artwork_story"), // Artist's story/inspiration behind the piece
+  styleTags: text("style_tags").array().default(sql`ARRAY[]::text[]`), // Style descriptors (modern, abstract, nature, etc.)
+  suggestedUse: text("suggested_use"), // How customers might use this (living room, office, gift, etc.)
+  seoSlug: text("seo_slug"), // URL-friendly version of title for product pages
   shopifyProductId: text("shopify_product_id"),
   shopifyProductStatus: text("shopify_product_status").default("draft"), // draft, active - tracks Shopify product visibility
   printifyProductId: text("printify_product_id"), // Printify product ID
@@ -133,6 +140,7 @@ export const insertArtworkSchema = createInsertSchema(artworks).omit({
   shopifyProductId: true,
   rejectionReason: true,
   ipDeclarationText: true, // Server sets this
+  seoSlug: true, // Server generates this from title
 }).extend({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -141,6 +149,9 @@ export const insertArtworkSchema = createInsertSchema(artworks).omit({
   ipDeclarationAccepted: z.boolean().refine((val) => val === true, {
     message: "You must confirm you have rights to this artwork",
   }),
+  artworkStory: z.string().optional(),
+  styleTags: z.array(z.string()).optional().default([]),
+  suggestedUse: z.string().optional(),
 });
 
 export const updateArtworkSchema = z.object({
@@ -454,6 +465,42 @@ export type FeaturedSubscription = typeof featuredSubscriptions.$inferSelect;
 export type InsertFeaturedSubscription = z.infer<typeof insertFeaturedSubscriptionSchema>;
 
 export type FeaturedRotationLog = typeof featuredRotationLog.$inferSelect;
+
+// Email Logs - Track all outbound email communications
+export const emailLogs = pgTable("email_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  recipientEmail: text("recipient_email").notNull(),
+  recipientType: text("recipient_type").notNull(), // "artist" or "admin"
+  recipientId: varchar("recipient_id"), // Artist or Admin ID
+  emailType: text("email_type").notNull(), // "welcome", "password_reset", "portfolio_decision", "artwork_decision", etc.
+  subject: text("subject").notNull(),
+  resendId: text("resend_id"), // Resend's email ID for tracking
+  status: text("status").notNull().default("pending"), // pending, sent, delivered, failed, bounced
+  errorMessage: text("error_message"),
+  metadata: jsonb("metadata"), // Additional context (artwork title, decision reason, etc.)
+  sentAt: timestamp("sent_at"),
+  deliveredAt: timestamp("delivered_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Artwork Approval Log - Track all admin decisions with timestamps and notes
+export const artworkApprovalLog = pgTable("artwork_approval_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artworkId: varchar("artwork_id").notNull().references(() => artworks.id),
+  adminId: varchar("admin_id").notNull().references(() => admins.id),
+  previousStatus: text("previous_status").notNull(), // pending, approved, rejected
+  newStatus: text("new_status").notNull(), // pending, approved, rejected
+  rejectionReason: text("rejection_reason"),
+  adminNotes: text("admin_notes"), // Private notes for admin team
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Types for new tables
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type InsertEmailLog = typeof emailLogs.$inferInsert;
+
+export type ArtworkApprovalLog = typeof artworkApprovalLog.$inferSelect;
+export type InsertArtworkApprovalLog = typeof artworkApprovalLog.$inferInsert;
 
 // Testimonial with artist referral info for affiliate links
 export type TestimonialWithArtist = Testimonial & {

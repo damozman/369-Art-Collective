@@ -38,8 +38,11 @@ export default function Register() {
 
   const form = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
+    mode: "onChange",
     defaultValues: { email: "", password: "", confirmPassword: "", name: "", artistShort: "", acceptTerms: false },
   });
+
+  const acceptTerms = form.watch("acceptTerms");
 
   async function onSubmitAccount(data: RegistrationForm) {
     const { confirmPassword, ...registrationData } = data;
@@ -345,7 +348,12 @@ export default function Register() {
                     )}
                   />
 
-                  <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-submit">
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isLoading || !acceptTerms || !form.formState.isValid} 
+                    data-testid="button-submit"
+                  >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

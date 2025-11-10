@@ -15,6 +15,14 @@ The platform is built with a clear separation between frontend and backend.
 - **Printify Integration:** Approved artwork automatically creates Printify POD products.
 - **Shopify Integration:** Shopify webhooks capture orders, and the platform integrates with the Shopify Admin API for storefront product management.
 - **Royalty System:** A tiered royalty system (30% to 45% based on monthly sales) is implemented, alongside a referral bonus (+5% for UTM-tracked sales) and a recruitment bonus (5% of recruited artist's royalties).
+- **Stripe Connect Payouts:**
+  - Artists onboard via Stripe Connect Express for automated payout capabilities
+  - Artist settings page displays Stripe account status, bank details, and onboarding resume flow
+  - Admin payout management UI displays all artists with unpaid earnings, Stripe connection status, and last payout details
+  - Admins can trigger individual or batch payouts with $10 minimum threshold
+  - Webhook system automatically syncs Stripe account status (account.updated events)
+  - Payout status automatically updated via webhooks (transfer.created/updated/failed, payout.paid/payout.failed)
+  - All webhook events use signature verification for security (STRIPE_WEBHOOK_SECRET)
 - **Security:**
   - Session-based authentication with HTTP-only cookies, session regeneration, CSRF protection, bcrypt password hashing, and role-based access control.
   - Separated login architecture for artists and admins, preventing cross-exposure and ensuring distinct password reset flows.

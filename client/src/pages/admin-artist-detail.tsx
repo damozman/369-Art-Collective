@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { Artist, PortfolioSubmission } from "@shared/schema";
-import { ArrowLeft, Mail, User, Hash, Calendar, DollarSign, KeyRound, CheckCircle, XCircle, Copy, Trash2, AlertTriangle, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Mail, User, Hash, Calendar, DollarSign, KeyRound, CheckCircle, XCircle, Copy, Trash2, AlertTriangle, Image as ImageIcon, FileText } from "lucide-react";
 import { format } from "date-fns";
 
 export default function AdminArtistDetail() {
@@ -19,6 +20,8 @@ export default function AdminArtistDetail() {
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [adminNotes, setAdminNotes] = useState("");
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
 
   const artistId = params?.id;
 
@@ -74,6 +77,37 @@ export default function AdminArtistDetail() {
       });
     },
   });
+
+  const updateNotesMutation = useMutation({
+    mutationFn: async (notes: string) => {
+      const response = await apiRequest("PATCH", `/api/admin/artists/${artistId}/notes`, {
+        adminNotes: notes,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/artists/${artistId}`] });
+      toast({
+        title: "Notes saved",
+        description: "Admin notes updated successfully",
+      });
+      setIsEditingNotes(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to save notes",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Sync adminNotes state when artist data is loaded
+  useEffect(() => {
+    if (artist) {
+      setAdminNotes(artist.adminNotes ?? "");
+    }
+  }, [artist?.adminNotes]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -302,6 +336,53 @@ export default function AdminArtistDetail() {
               >
                 {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
               </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-admin-notes">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Private Admin Notes
+            </CardTitle>
+            <CardDescription>
+              Internal notes for CRM and relationship tracking (visible only to admins)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Textarea
+              placeholder="Add notes about calls, conversations, preferences, follow-ups, etc."
+              value={adminNotes}
+              onChange={(e) => {
+                setAdminNotes(e.target.value);
+                setIsEditingNotes(true);
+              }}
+              rows={6}
+              className="resize-none"
+              data-testid="textarea-admin-notes"
+            />
+            {isEditingNotes && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => updateNotesMutation.mutate(adminNotes)}
+                  disabled={updateNotesMutation.isPending}
+                  data-testid="button-save-notes"
+                >
+                  {updateNotesMutation.isPending ? "Saving..." : "Save Notes"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setAdminNotes(artist.adminNotes || "");
+                    setIsEditingNotes(false);
+                  }}
+                  disabled={updateNotesMutation.isPending}
+                  data-testid="button-cancel-notes"
+                >
+                  Cancel
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>

@@ -20,18 +20,20 @@ import {
   deleteAccountSchema,
   insertViolationReportSchema,
   insertTestimonialSchema,
+  insertInfluencerSchema,
 } from "@shared/schema";
 import crypto from "crypto";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured, updateProductStatus } from "./lib/shopify";
 import { createWallArtProducts } from "./lib/printify-service";
 import { isPrintifyConfigured } from "./lib/printify";
-import { requireAuth, requireArtist, requireAdmin } from "./middleware/auth";
+import { requireAuth, requireArtist, requireAdmin, requireInfluencer } from "./middleware/auth";
 import { processShopifyOrder } from "./lib/order-processor";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
 import { validateImageQuality, MIN_WIDTH, MIN_HEIGHT } from "./lib/image-validator";
 import { stripeConnectService } from "./lib/stripe-connect";
 import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from "./lib/payout-service";
 import { emailService } from "./lib/email-service";
+import { generateReferralCode } from "./lib/referral-code-generator";
 
 // Ensure uploads directory exists
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -1486,6 +1488,191 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Admin creation error:", error);
       res.status(400).json({ message: error.message || "Admin creation failed" });
+    }
+  });
+
+  // ===== INFLUENCER AFFILIATE PROGRAM ROUTES =====
+
+  // Public: Influencer application
+  app.post("/api/influencers/apply", async (req, res) => {
+    try {
+      const data = insertInfluencerSchema.parse(req.body);
+
+      // Check for existing email
+      const existing = await storage.getInfluencerByEmail(data.email);
+      if (existing) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+
+      // Generate unique affiliate code with INF- prefix
+      const affiliateCode = await generateReferralCode('INF-');
+
+      // Create influencer with pending status
+      const influencer = await storage.createInfluencer({
+        ...data,
+        password: hashedPassword,
+        affiliateCode,
+        status: "pending",
+        currentTier: "bronze",
+      });
+
+      // Send welcome/pending email (non-blocking)
+      // TODO: Add email notification
+
+      const { password: _, ...influencerData } = influencer;
+      res.status(201).json(influencerData);
+    } catch (error: any) {
+      console.error("Influencer application error:", error);
+      res.status(400).json({ message: error.message || "Application failed" });
+    }
+  });
+
+  // Public: Influencer login
+  app.post("/api/influencers/login", loginLimiter, async (req, res) => {
+    try {
+      const { email, password } = loginSchema.parse(req.body);
+
+      const influencer = await storage.getInfluencerByEmail(email);
+      if (!influencer) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const validPassword = await bcrypt.compare(password, influencer.password);
+      if (!validPassword) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Regenerate session to prevent session fixation
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error("Session regeneration error:", err);
+          return res.status(500).json({ message: "Login failed" });
+        }
+
+        // Set session with influencer type
+        req.session.user = {
+          id: influencer.id,
+          email: influencer.email,
+          name: influencer.name,
+          type: "influencer",
+          status: influencer.status,
+        };
+
+        console.log("Influencer logged in - session created:", {
+          sessionID: req.sessionID,
+          userType: req.session.user.type,
+          userId: req.session.user.id,
+          status: influencer.status,
+        });
+
+        const { password: _, ...influencerData } = influencer;
+        res.json(influencerData);
+      });
+    } catch (error: any) {
+      console.error("Influencer login error:", error);
+      res.status(400).json({ message: error.message || "Login failed" });
+    }
+  });
+
+  // Protected: Get influencer profile
+  app.get("/api/influencers/me", requireInfluencer, async (req, res) => {
+    try {
+      const influencer = await storage.getInfluencer(req.user!.id);
+      if (!influencer) {
+        return res.status(404).json({ message: "Influencer not found" });
+      }
+
+      const { password: _, ...influencerData } = influencer;
+      res.json(influencerData);
+    } catch (error: any) {
+      console.error("Get influencer profile error:", error);
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  // Protected: Get influencer performance stats
+  app.get("/api/influencers/performance", requireInfluencer, async (req, res) => {
+    try {
+      const stats = await storage.getInfluencerPerformanceSummary(req.user!.id);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Get influencer performance error:", error);
+      res.status(500).json({ message: "Failed to fetch performance stats" });
+    }
+  });
+
+  // Admin: Get all influencers
+  app.get("/api/admin/influencers", requireAdmin, async (req, res) => {
+    try {
+      const { status, search } = req.query as { status?: string; search?: string };
+      const influencers = await storage.getAllInfluencers({ status, search });
+      
+      // Remove passwords from response
+      const sanitized = influencers.map(({ password, ...data }) => data);
+      res.json(sanitized);
+    } catch (error: any) {
+      console.error("Get all influencers error:", error);
+      res.status(500).json({ message: "Failed to fetch influencers" });
+    }
+  });
+
+  // Admin: Get specific influencer with performance stats
+  app.get("/api/admin/influencers/:id", requireAdmin, async (req, res) => {
+    try {
+      const influencer = await storage.getInfluencer(req.params.id);
+      if (!influencer) {
+        return res.status(404).json({ message: "Influencer not found" });
+      }
+
+      // Get performance stats
+      const stats = await storage.getInfluencerPerformanceSummary(req.params.id);
+
+      const { password: _, ...influencerData } = influencer;
+      res.json({ ...influencerData, stats });
+    } catch (error: any) {
+      console.error("Get influencer details error:", error);
+      res.status(500).json({ message: "Failed to fetch influencer details" });
+    }
+  });
+
+  // Admin: Approve influencer
+  app.patch("/api/admin/influencers/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const influencer = await storage.approveInfluencer(req.params.id);
+      
+      // Send approval email (non-blocking)
+      // TODO: Add email notification
+
+      const { password: _, ...influencerData } = influencer;
+      res.json(influencerData);
+    } catch (error: any) {
+      console.error("Approve influencer error:", error);
+      res.status(400).json({ message: error.message || "Failed to approve influencer" });
+    }
+  });
+
+  // Admin: Update influencer (for admin notes, custom rates, etc.)
+  app.patch("/api/admin/influencers/:id", requireAdmin, async (req, res) => {
+    try {
+      // Allow admins to update specific fields
+      const allowedUpdates = ['adminNotes', 'commissionRate', 'status'];
+      const updates: any = {};
+      
+      for (const field of allowedUpdates) {
+        if (req.body[field] !== undefined) {
+          updates[field] = req.body[field];
+        }
+      }
+
+      const influencer = await storage.updateInfluencer(req.params.id, updates);
+      const { password: _, ...influencerData } = influencer;
+      res.json(influencerData);
+    } catch (error: any) {
+      console.error("Update influencer error:", error);
+      res.status(400).json({ message: error.message || "Failed to update influencer" });
     }
   });
 

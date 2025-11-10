@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredType?: "artist" | "admin";
+  requiredType?: "artist" | "admin" | "influencer";
 }
 
 export function ProtectedRoute({ children, requiredType }: ProtectedRouteProps) {
@@ -13,13 +13,23 @@ export function ProtectedRoute({ children, requiredType }: ProtectedRouteProps) 
 
   useEffect(() => {
     if (!isLoading && !user) {
-      setLocation("/login");
+      // Redirect to appropriate login based on current path
+      if (window.location.pathname.startsWith("/influencer")) {
+        setLocation("/influencer/login");
+      } else {
+        setLocation("/login");
+      }
     } else if (!isLoading && user && requiredType && user.type !== requiredType) {
       setLocation("/login");
     } else if (!isLoading && user?.type === "artist" && !user.approved) {
       // Artist not approved yet
       if (window.location.pathname !== "/artist/pending") {
         setLocation("/artist/pending");
+      }
+    } else if (!isLoading && user?.type === "influencer" && user.status !== "active") {
+      // Influencer not active yet
+      if (window.location.pathname !== "/influencer/pending") {
+        setLocation("/influencer/pending");
       }
     }
   }, [user, isLoading, requiredType, setLocation]);
@@ -37,6 +47,10 @@ export function ProtectedRoute({ children, requiredType }: ProtectedRouteProps) 
   }
 
   if (user.type === "artist" && !user.approved && window.location.pathname !== "/artist/pending") {
+    return null;
+  }
+
+  if (user.type === "influencer" && user.status !== "active" && window.location.pathname !== "/influencer/pending") {
     return null;
   }
 

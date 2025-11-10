@@ -1489,11 +1489,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Generate SEO-friendly slug from title if not provided
+      const seoSlug = data.seoSlug || data.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
       // Capture IP declaration text snapshot for legal evidence
       const ipDeclarationText = "I confirm that I own the rights to this artwork and it does not violate any trademarks, copyrights, or other intellectual property rights. I understand that uploading artwork containing brand logos, copyrighted characters, or other protected content will result in immediate removal and forfeiture of any pending earnings.";
 
       const artwork = await storage.createArtwork({
         ...data,
+        seoSlug,
         ipDeclarationText,
       } as any);
       

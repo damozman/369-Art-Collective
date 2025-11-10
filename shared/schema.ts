@@ -141,7 +141,6 @@ export const insertArtworkSchema = createInsertSchema(artworks).omit({
   shopifyProductId: true,
   rejectionReason: true,
   ipDeclarationText: true, // Server sets this
-  seoSlug: true, // Server generates this from title
 }).extend({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -153,6 +152,7 @@ export const insertArtworkSchema = createInsertSchema(artworks).omit({
   artworkStory: z.string().optional(),
   styleTags: z.array(z.string()).optional().default([]),
   suggestedUse: z.string().optional(),
+  seoSlug: z.string().optional(), // Optional - server generates from title if not provided
 });
 
 export const updateArtworkSchema = z.object({

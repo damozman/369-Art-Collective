@@ -1730,6 +1730,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk artwork operations (admin only)
+  app.post("/api/artworks/bulk", requireAdmin, async (req, res) => {
+    try {
+      const { artworkIds, action, reason } = req.body;
+
+      if (!artworkIds || !Array.isArray(artworkIds) || artworkIds.length === 0) {
+        return res.status(400).json({ message: "artworkIds array is required" });
+      }
+
+      if (!action || !["approve", "reject"].includes(action)) {
+        return res.status(400).json({ message: "action must be 'approve' or 'reject'" });
+      }
+
+      if (action === "reject" && !reason) {
+        return res.status(400).json({ message: "reason is required for rejection" });
+      }
+
+      let successCount = 0;
+      let failureCount = 0;
+      const results: Array<{ artworkId: string; success: boolean; error?: string }> = [];
+
+      // Process each artwork
+      for (const artworkId of artworkIds) {
+        try {
+          const artwork = await storage.getArtwork(artworkId);
+          if (!artwork) {
+            results.push({ artworkId, success: false, error: "Artwork not found" });
+            failureCount++;
+            continue;
+          }
+
+          const artist = await storage.getArtist(artwork.artistId);
+          if (!artist) {
+            results.push({ artworkId, success: false, error: "Artist not found" });
+            failureCount++;
+            continue;
+          }
+
+          if (action === "approve") {
+            // Build absolute image URL
+            const replitDomain = process.env.REPLIT_DOMAINS 
+              ? process.env.REPLIT_DOMAINS.split(',').map(d => d.trim()).find(d => !d.includes('-')) || process.env.REPLIT_DOMAINS.split(',')[0].trim()
+              : null;
+            
+            const baseUrl = replitDomain
+              ? `https://${replitDomain}`
+              : `http://localhost:${process.env.PORT || 5000}`;
+            
+            const imageUrl = artwork.imageUrl.startsWith("http") 
+              ? artwork.imageUrl 
+              : `${baseUrl}${artwork.imageUrl}`;
+
+            // Update artwork status
+            await storage.updateArtwork(artworkId, {
+              status: "approved",
+            });
+
+            // Create Shopify product (non-blocking)
+            if (isShopifyConfigured()) {
+              createShopifyProduct({
+                title: artwork.title,
+                description: artwork.description || "",
+                artworkStory: artwork.artworkStory,
+                suggestedUse: artwork.suggestedUse,
+                styleTags: artwork.styleTags || [],
+                tags: artwork.tags || [],
+                imageUrl,
+                artistName: artist.name,
+                seoSlug: artwork.seoSlug || artwork.title.toLowerCase().replace(/\s+/g, '-'),
+              })
+                .then(shopifyProduct => {
+                  storage.updateArtwork(artworkId, {
+                    shopifyProductId: shopifyProduct.id,
+                    shopifyProductStatus: shopifyProduct.status,
+                  });
+                })
+                .catch(err => console.error(`Failed to create Shopify product for artwork ${artworkId}:`, err));
+            }
+
+            // Send approval email (non-blocking)
+            emailService.sendArtworkDecisionEmail(
+              artist.email,
+              artist.name,
+              artist.id,
+              artwork.title,
+              true
+            ).catch(err => console.error(`Failed to send approval email for artwork ${artworkId}:`, err));
+
+            results.push({ artworkId, success: true });
+            successCount++;
+          } else {
+            // Reject
+            await storage.updateArtwork(artworkId, {
+              status: "rejected",
+              rejectionReason: reason || "No reason provided",
+            });
+
+            // Send rejection email (non-blocking)
+            emailService.sendArtworkDecisionEmail(
+              artist.email,
+              artist.name,
+              artist.id,
+              artwork.title,
+              false,
+              reason
+            ).catch(err => console.error(`Failed to send rejection email for artwork ${artworkId}:`, err));
+
+            results.push({ artworkId, success: true });
+            successCount++;
+          }
+        } catch (error: any) {
+          console.error(`Bulk operation failed for artwork ${artworkId}:`, error);
+          results.push({ artworkId, success: false, error: error.message });
+          failureCount++;
+        }
+      }
+
+      res.json({
+        totalProcessed: artworkIds.length,
+        successCount,
+        failureCount,
+        results,
+      });
+    } catch (error: any) {
+      console.error("Bulk artwork operation error:", error);
+      res.status(500).json({ message: error.message || "Failed to process bulk operation" });
+    }
+  });
+
   // Deactivate product (artist can deactivate their own products)
   app.post("/api/artworks/:id/deactivate", requireArtist, async (req, res) => {
     try {

@@ -512,3 +512,232 @@ export type TestimonialWithArtist = Testimonial & {
 export type ArtworkWithArtist = Artwork & {
   artist: Pick<Artist, 'id' | 'name' | 'email'>;
 };
+
+// ===================================
+// INFLUENCER AFFILIATE PROGRAM SCHEMA
+// ===================================
+
+// Influencers table - Non-artist promoters who earn commissions
+export const influencers = pgTable("influencers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  affiliateCode: text("affiliate_code").notNull().unique(), // Unique code for tracking (e.g., "SARAH_INFLUENCER")
+  status: text("status").notNull().default("pending"), // pending, active, suspended
+  
+  // Commission settings
+  commissionType: text("commission_type").notNull().default("percentage"), // "percentage" or "flat_fee"
+  commissionRate: decimal("commission_rate", { precision: 10, scale: 2 }).notNull().default('10.00'), // 10.00 = 10% or $10 flat
+  
+  // Tier system
+  currentTier: text("current_tier").notNull().default("bronze"), // bronze, silver, gold, platinum, elite
+  // Note: Sales counts and earnings are calculated via queries, not stored to prevent drift
+  
+  // Application info
+  socialLinks: jsonb("social_links"), // { instagram, tiktok, youtube, twitter, etc. }
+  audienceSize: integer("audience_size"), // Self-reported follower count
+  applicationNotes: text("application_notes"), // Why they want to join
+  adminNotes: text("admin_notes"), // Private admin notes
+  
+  // Stripe payout info (reuse Connect infrastructure)
+  stripeAccountId: text("stripe_account_id"),
+  stripeAccountStatus: text("stripe_account_status"),
+  stripeOnboardingComplete: boolean("stripe_onboarding_complete").notNull().default(false),
+  
+  // Referral system (influencers recruit other influencers)
+  referredBy: varchar("referred_by").references((): any => influencers.id),
+  // Note: Referral bonuses calculated via queries from affiliate_conversions, not stored
+  
+  // Timestamps
+  approvedAt: timestamp("approved_at"),
+  lastActiveAt: timestamp("last_active_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Affiliate Conversions - Track actual sales/commissions
+export const affiliateConversions = pgTable("affiliate_conversions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  influencerId: varchar("influencer_id").notNull().references(() => influencers.id),
+  clickId: varchar("click_id").references(() => affiliateClicks.id),
+  
+  // Order details
+  shopifyOrderId: text("shopify_order_id").notNull(), // From Shopify webhook
+  orderTotal: decimal("order_total", { precision: 10, scale: 2 }).notNull(),
+  customerEmail: text("customer_email"), // For deduplication
+  
+  // Commission calculation
+  commissionType: text("commission_type").notNull(), // percentage or flat_fee
+  commissionRate: decimal("commission_rate", { precision: 10, scale: 2 }).notNull(), // Rate at time of sale
+  commissionEarned: decimal("commission_earned", { precision: 10, scale: 2 }).notNull(),
+  tierBonus: decimal("tier_bonus", { precision: 10, scale: 2 }).notNull().default('0'), // Extra from tier
+  challengeBonus: decimal("challenge_bonus", { precision: 10, scale: 2 }).notNull().default('0'), // Challenge winnings
+  totalPayout: decimal("total_payout", { precision: 10, scale: 2 }).notNull(), // Sum of all bonuses
+  
+  // Payout tracking
+  payoutStatus: text("payout_status").notNull().default("pending"), // pending, paid, failed
+  paidAt: timestamp("paid_at"),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Affiliate Clicks - Track every click on affiliate links (MOVED AFTER affiliateConversions to fix forward reference)
+export const affiliateClicks = pgTable("affiliate_clicks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  influencerId: varchar("influencer_id").notNull().references(() => influencers.id),
+  affiliateCode: text("affiliate_code").notNull().unique(), // Indexed for fast lookups
+  
+  // Request metadata
+  ipAddress: text("ip_address"), // Store for fraud detection; ensure GDPR/CCPA compliance with retention policy
+  userAgent: text("user_agent"),
+  referrer: text("referrer"), // Where they came from (Instagram, TikTok, etc.)
+  utmSource: text("utm_source"),
+  utmMedium: text("utm_medium"),
+  utmCampaign: text("utm_campaign"),
+  
+  // Conversion tracking (no FK to conversions to avoid circular dependency; join via conversions.clickId instead)
+  convertedToSale: boolean("converted_to_sale").notNull().default(false),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Achievements - Badge system for gamification
+export const achievements = pgTable("achievements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(), // "quick_start", "century_club", "hot_streak", etc.
+  name: text("name").notNull(), // "Quick Start"
+  description: text("description").notNull(), // "First sale within 24 hours"
+  icon: text("icon").notNull(), // Emoji or icon name (⚡, 💯, 🔥, etc.)
+  category: text("category").notNull(), // "milestone", "performance", "streak", "earnings"
+  
+  // Unlock criteria (stored as JSON for flexibility)
+  criteria: jsonb("criteria").notNull(), // { type: "first_sale_hours", value: 24 }
+  
+  // Rarity/prestige
+  rarity: text("rarity").notNull().default("common"), // common, rare, epic, legendary
+  points: integer("points").notNull().default(10), // Leaderboard points
+  
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Influencer Achievements - Track unlocked badges
+export const influencerAchievements = pgTable("influencer_achievements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  influencerId: varchar("influencer_id").notNull().references(() => influencers.id),
+  achievementId: varchar("achievement_id").notNull().references(() => achievements.id),
+  
+  // Social sharing
+  shared: boolean("shared").notNull().default(false), // Did they share on social media?
+  sharedAt: timestamp("shared_at"),
+  
+  unlockedAt: timestamp("unlocked_at").notNull().defaultNow(),
+});
+
+// Challenges - Monthly/weekly competitions
+export const challenges = pgTable("challenges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(), // "Flash 48", "First to 100", "Social Blitz"
+  description: text("description").notNull(),
+  
+  // Challenge type and criteria
+  challengeType: text("challenge_type").notNull(), // "most_sales", "fastest_to_x", "highest_conversion", "team_battle"
+  metric: text("metric").notNull(), // "conversions", "earnings", "clicks", "conversion_rate"
+  goal: decimal("goal", { precision: 10, scale: 2 }), // Target value (optional)
+  
+  // Time window
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  
+  // Prizes
+  firstPlacePrize: decimal("first_place_prize", { precision: 10, scale: 2 }).notNull(), // Cash bonus
+  secondPlacePrize: decimal("second_place_prize", { precision: 10, scale: 2 }),
+  thirdPlacePrize: decimal("third_place_prize", { precision: 10, scale: 2 }),
+  prizeDescription: text("prize_description"), // "Featured homepage spot", "Exclusive merch", etc.
+  
+  // Status
+  status: text("status").notNull().default("upcoming"), // upcoming, active, completed, cancelled
+  winnerId: varchar("winner_id").references(() => influencers.id),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Challenge Participants - Track who joined each challenge
+export const challengeParticipants = pgTable("challenge_participants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  challengeId: varchar("challenge_id").notNull().references(() => challenges.id),
+  influencerId: varchar("influencer_id").notNull().references(() => influencers.id),
+  
+  // Performance in this challenge
+  currentScore: decimal("current_score", { precision: 10, scale: 2 }).notNull().default('0'),
+  rank: integer("rank"), // Current ranking
+  prizeWon: decimal("prize_won", { precision: 10, scale: 2 }), // If they won
+  
+  joinedAt: timestamp("joined_at").notNull().defaultNow(),
+});
+
+// Activity Feed Events - Real-time competition feed
+export const activityFeedEvents = pgTable("activity_feed_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  influencerId: varchar("influencer_id").notNull().references(() => influencers.id),
+  
+  eventType: text("event_type").notNull(), // "tier_upgrade", "achievement_unlocked", "big_sale", "challenge_win", "new_rank"
+  eventData: jsonb("event_data").notNull(), // { tier: "gold", achievement: "Century Club", earnings: 127, etc. }
+  
+  // Display
+  message: text("message").notNull(), // "🔥 @sarahinfluencer just hit Gold tier!"
+  isPublic: boolean("is_public").notNull().default(true), // Show in public feed?
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Insert schemas for influencer program
+export const insertInfluencerSchema = createInsertSchema(influencers).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAffiliateClickSchema = createInsertSchema(affiliateClicks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAffiliateConversionSchema = createInsertSchema(affiliateConversions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAchievementSchema = createInsertSchema(achievements).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertChallengeSchema = createInsertSchema(challenges).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for influencer program
+export type Influencer = typeof influencers.$inferSelect;
+export type InsertInfluencer = z.infer<typeof insertInfluencerSchema>;
+
+export type AffiliateClick = typeof affiliateClicks.$inferSelect;
+export type InsertAffiliateClick = z.infer<typeof insertAffiliateClickSchema>;
+
+export type AffiliateConversion = typeof affiliateConversions.$inferSelect;
+export type InsertAffiliateConversion = z.infer<typeof insertAffiliateConversionSchema>;
+
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+
+export type InfluencerAchievement = typeof influencerAchievements.$inferSelect;
+export type InsertInfluencerAchievement = typeof influencerAchievements.$inferInsert;
+
+export type Challenge = typeof challenges.$inferSelect;
+export type InsertChallenge = z.infer<typeof insertChallengeSchema>;
+
+export type ChallengeParticipant = typeof challengeParticipants.$inferSelect;
+export type InsertChallengeParticipant = typeof challengeParticipants.$inferInsert;
+
+export type ActivityFeedEvent = typeof activityFeedEvents.$inferSelect;
+export type InsertActivityFeedEvent = typeof activityFeedEvents.$inferInsert;

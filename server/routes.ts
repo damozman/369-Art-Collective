@@ -27,6 +27,7 @@ import { createDraftProduct, createArtworkProduct, isShopifyConfigured, updatePr
 import { createWallArtProducts } from "./lib/printify-service";
 import { isPrintifyConfigured } from "./lib/printify";
 import { requireAuth, requireArtist, requireAdmin, requireInfluencer } from "./middleware/auth";
+import { getAffiliateCodeFromCookie } from "./middleware/affiliate-tracking";
 import { processShopifyOrder } from "./lib/order-processor";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
 import { validateImageQuality, MIN_WIDTH, MIN_HEIGHT } from "./lib/image-validator";
@@ -525,6 +526,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tosIpAddress: ipAddress,
         tosVersion: "v1.0-2025-11", // Track TOS version for legal compliance
       } as any);
+
+      // Check for affiliate attribution from influencer program
+      const affiliateCode = getAffiliateCodeFromCookie(req);
+      if (affiliateCode) {
+        try {
+          const influencer = await storage.getInfluencerByAffiliateCode(affiliateCode);
+          if (influencer && influencer.status === "active") {
+            // Create affiliate conversion record for artist signup
+            await storage.createAffiliateConversion({
+              influencerId: influencer.id,
+              artistId: artist.id,
+              conversionType: "artist_signup",
+              payoutStatus: "pending", // Not paid yet
+              // Commission fields null for artist signups (calculated when they make sales)
+              commissionRate: null,
+              commissionEarned: null,
+              tierBonus: "0",
+              challengeBonus: "0",
+              totalPayout: null,
+            });
+            console.log(`Affiliate conversion tracked: Artist ${artist.id} via influencer ${influencer.id}`);
+          }
+        } catch (err) {
+          // Don't fail registration if conversion tracking fails
+          console.error('Failed to track affiliate conversion:', err);
+        }
+      }
 
       // Send welcome email (non-blocking)
       emailService.sendWelcomeEmail(artist.email, artist.name, artist.id)

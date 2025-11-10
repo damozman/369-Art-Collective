@@ -102,8 +102,9 @@ export default function ArtistAnalytics() {
   const recruitmentEarnings = referralData?.stats.totalRecruitmentEarnings || 0;
 
   // Prepare earnings breakdown data for pie chart
+  const baseRoyalties = Math.max(0, totalEarnings - referralEarnings - recruitmentEarnings);
   const earningsBreakdown = [
-    { name: 'Base Royalties', value: totalEarnings - referralEarnings - recruitmentEarnings, color: '#3b82f6' },
+    { name: 'Base Royalties', value: baseRoyalties, color: '#3b82f6' },
     { name: 'Referral Bonuses', value: referralEarnings, color: '#10b981' },
     { name: 'Recruitment Bonuses', value: recruitmentEarnings, color: '#8b5cf6' },
   ].filter(item => item.value > 0);
@@ -118,6 +119,7 @@ export default function ArtistAnalytics() {
   // Prepare top artworks data for bar chart (top 5)
   const topArtworks = (artworkData?.artworks || [])
     .filter(a => a.totalEarnings > 0)
+    .sort((a, b) => b.totalEarnings - a.totalEarnings)
     .slice(0, 5)
     .map(a => ({
       name: a.title.length > 20 ? a.title.substring(0, 20) + '...' : a.title,

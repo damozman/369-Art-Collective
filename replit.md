@@ -81,6 +81,20 @@ The platform is built with a clear separation between frontend and backend.
   - Email delivery logging via emailLogs table
   - Non-blocking sends with error handling
   - Integrated into 6 endpoints: registration, portfolio approval, artwork approval/rejection, password resets (artist & admin)
+- **Analytics & Reporting:**
+  - **Artist Analytics Dashboard:** Comprehensive performance tracking with Recharts visualizations
+    - KPI cards: Total earnings, monthly sales, tier progress, artwork submitted
+    - Earnings breakdown pie chart (base royalties vs referral/recruitment bonuses) with negative value protection
+    - Top 5 artworks bar chart (sorted by earnings) showing sales count and revenue per artwork
+    - Artwork status distribution pie chart (approved/pending/rejected)
+    - Tier progress indicator with next milestone calculation
+    - Per-artwork performance endpoint (`/api/artists/:id/artwork-performance`) aggregates sales/earnings data
+  - **Admin Empire Dashboard:** High-level network analytics
+    - Revenue metrics: Total revenue, referral bonuses, recruitment bonuses
+    - Network growth: Total artists, recruited artists count
+    - Top performers tables: Highest earning artists with tier indicators
+    - Top recruiters leaderboard: Recruitment count and earnings breakdown
+    - Batch payout processing with status tracking
 
 ## External Dependencies
 - **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered) for persistent storage.

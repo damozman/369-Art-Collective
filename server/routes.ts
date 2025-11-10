@@ -159,6 +159,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Stripe webhook endpoint - SECURED with signature verification
+  // Raw body is captured by global express.json verify function in index.ts
+  app.post("/api/webhooks/stripe", async (req: any, res) => {
+    try {
+      const signature = req.headers['stripe-signature'];
+      
+      // Verify webhook signature using raw body
+      if (!req.rawBody) {
+        console.error("❌ Raw body not available for Stripe signature verification");
+        return res.status(500).send('Server configuration error');
+      }
+
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        console.error("❌ STRIPE_WEBHOOK_SECRET not configured");
+        return res.status(500).send('Webhook secret not configured');
+      }
+
+      let event;
+      try {
+        event = stripeConnectService.verifyWebhookSignature(
+          req.rawBody,
+          signature as string,
+          webhookSecret
+        );
+        console.log(`✅ Stripe webhook verified: ${event.type}`);
+      } catch (err: any) {
+        console.warn(`⚠️ Stripe webhook signature verification failed: ${err.message}`);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+
+      // Handle different event types
+      const eventType: string = event.type;
+      
+      if (eventType === 'account.updated') {
+        const account = event.data.object as any;
+        const artistId = account.metadata?.artistId;
+        
+        if (!artistId) {
+          console.warn('Account updated webhook received without artistId in metadata');
+        } else {
+          console.log(`Syncing Stripe account status for artist ${artistId}`);
+          
+          // Update artist with latest Stripe account status
+          await storage.updateArtist(artistId, {
+            stripeChargesEnabled: account.charges_enabled || false,
+            stripePayoutsEnabled: account.payouts_enabled || false,
+            stripeDetailsSubmitted: account.details_submitted || false,
+            stripeOnboardingComplete: 
+              (account.details_submitted && account.charges_enabled && account.payouts_enabled) || false,
+          });
+          
+          console.log(`✅ Updated Stripe status for artist ${artistId}`);
+        }
+      } else if (eventType === 'transfer.created') {
+        const transfer = event.data.object as any;
+        const payoutId = transfer.metadata?.payoutId;
+        
+        if (!payoutId) {
+          console.warn('Transfer created event received without payoutId in metadata');
+        } else {
+          console.log(`Transfer created for payout ${payoutId}, transfer ID: ${transfer.id}`);
+        }
+      } else if (eventType === 'transfer.updated') {
+        const transfer = event.data.object as any;
+        const payoutId = transfer.metadata?.payoutId;
+        
+        if (!payoutId) {
+          console.warn('Transfer updated event received without payoutId in metadata');
+        } else {
+          console.log(`Transfer updated for payout ${payoutId}, status: ${transfer.status}`);
+          
+          // Mark as paid when transfer is complete
+          if (transfer.status === 'paid') {
+            await storage.updatePayout(payoutId, { status: 'paid' });
+            console.log(`✅ Marked payout ${payoutId} as paid`);
+          }
+        }
+      } else if (eventType === 'transfer.failed') {
+        const transfer = event.data.object as any;
+        const payoutId = transfer.metadata?.payoutId;
+        
+        if (!payoutId) {
+          console.warn('Transfer failed event received without payoutId in metadata');
+        } else {
+          console.log(`Transfer failed for payout ${payoutId}`);
+          await storage.updatePayout(payoutId, { status: 'failed' });
+          console.log(`✅ Marked payout ${payoutId} as failed`);
+        }
+      } else if (eventType === 'payout.paid') {
+        // Handle Stripe payout completion (different from transfer - this is for platform balance payouts)
+        const payout = event.data.object as any;
+        const payoutId = payout.metadata?.payoutId;
+        
+        if (!payoutId) {
+          console.warn('Payout paid event received without payoutId in metadata');
+        } else {
+          console.log(`Payout paid event for payout ${payoutId}`);
+          await storage.updatePayout(payoutId, { status: 'paid' });
+          console.log(`✅ Marked payout ${payoutId} as paid (via payout.paid event)`);
+        }
+      } else if (eventType === 'payout.failed') {
+        // Handle Stripe payout failure
+        const payout = event.data.object as any;
+        const payoutId = payout.metadata?.payoutId;
+        
+        if (!payoutId) {
+          console.warn('Payout failed event received without payoutId in metadata');
+        } else {
+          console.log(`Payout failed event for payout ${payoutId}`);
+          await storage.updatePayout(payoutId, { status: 'failed' });
+          console.log(`✅ Marked payout ${payoutId} as failed (via payout.failed event)`);
+        }
+      } else {
+        console.log(`Unhandled Stripe webhook event type: ${eventType}`);
+      }
+
+      // Respond to Stripe immediately
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error("Stripe webhook error:", error);
+      res.status(500).send('Internal Server Error');
+    }
+  });
+
   // Serve uploaded files
   app.use("/uploads", (req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -1789,6 +1914,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Get all payouts error:", error);
       res.status(500).json({ message: "Failed to fetch payouts" });
+    }
+  });
+
+  // Admin: Get all artists with their unpaid earnings
+  app.get("/api/admin/artists/earnings", requireAdmin, async (_req, res) => {
+    try {
+      const allArtists = await storage.getAllArtists();
+      const artists = allArtists.filter(a => a.approved);
+      
+      // Calculate unpaid earnings for each artist
+      const artistsWithEarnings = await Promise.all(
+        artists.map(async (artist) => {
+          const calculation = await calculateArtistPayout(artist.id);
+          const payouts = await storage.getPayoutsByArtist(artist.id);
+          const lastPayout = payouts.length > 0 ? payouts[0] : null;
+          
+          return {
+            ...artist,
+            unpaidEarnings: calculation ? calculation.totalEarnings : 0,
+            unpaidSalesCount: calculation ? calculation.salesCount : 0,
+            lastPayoutDate: lastPayout?.createdAt,
+            lastPayoutAmount: lastPayout?.amount,
+          };
+        })
+      );
+      
+      res.json(artistsWithEarnings);
+    } catch (error: any) {
+      console.error("Get artists earnings error:", error);
+      res.status(500).json({ message: "Failed to fetch artist earnings" });
+    }
+  });
+
+  // Admin: Get payout history with artist details
+  app.get("/api/admin/payouts/history", requireAdmin, async (_req, res) => {
+    try {
+      const payouts = await storage.getAllPayouts();
+      
+      // Join with artist data
+      const payoutsWithArtists = await Promise.all(
+        payouts.map(async (payout) => {
+          const artist = await storage.getArtist(payout.artistId);
+          return {
+            ...payout,
+            artistName: artist?.name || "Unknown Artist",
+            artistEmail: artist?.email || "",
+          };
+        })
+      );
+      
+      res.json(payoutsWithArtists);
+    } catch (error: any) {
+      console.error("Get payouts history error:", error);
+      res.status(500).json({ message: "Failed to fetch payout history" });
     }
   });
 

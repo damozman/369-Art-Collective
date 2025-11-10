@@ -23,6 +23,7 @@ import ArtistSettings from "@/pages/artist-settings";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminArtists from "@/pages/admin-artists";
 import AdminArtistDetail from "@/pages/admin-artist-detail";
+import AdminPayouts from "@/pages/admin-payouts";
 import AdminEmpire from "@/pages/admin-empire";
 import AdminSettings from "@/pages/admin-settings";
 import NotFound from "@/pages/not-found";
@@ -95,6 +96,12 @@ function Router() {
       <Route path="/admin/artists/:id">
         <ProtectedRoute requiredType="admin">
           <AdminArtistDetail />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/payouts">
+        <ProtectedRoute requiredType="admin">
+          <AdminPayouts />
         </ProtectedRoute>
       </Route>
       

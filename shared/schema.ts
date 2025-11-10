@@ -366,6 +366,9 @@ export const testimonials = pgTable("testimonials", {
   shareImageUrl: text("share_image_url"), // Optional custom image for social sharing Open Graph
   allowEmbed: boolean("allow_embed").notNull().default(false), // Allow embedding on external sites
   artistConsent: boolean("artist_consent").notNull().default(false), // Artist has explicitly consented to public testimonial
+  consentTimestamp: timestamp("consent_timestamp"), // When consent was granted
+  consentVersion: text("consent_version"), // Version/hash of consent agreement text for audit trail
+  approvedByAdminId: varchar("approved_by_admin_id"), // Admin who approved the testimonial
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -375,6 +378,9 @@ export const insertTestimonialSchema = createInsertSchema(testimonials).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  consentTimestamp: true, // Set server-side when consent is given
+  consentVersion: true, // Set server-side based on current consent language
+  approvedByAdminId: true, // Set server-side from session
 }).extend({
   artistName: z.string().min(1, "Artist name is required"),
   title: z.string().min(1, "Title is required"),

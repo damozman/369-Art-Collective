@@ -48,6 +48,12 @@ The platform is built with a clear separation between frontend and backend.
     - Frontend captures UTM params from URL and includes in registration POST body
     - Backend looks up referring artist by referral code and sets referredBy relationship
     - Each artist gets their own unique referral code (auto-generated) regardless of how they were recruited
+  - **Legal Consent & Audit System:**
+    - Required artistConsent boolean field with Zod validation (must be true before testimonial creation)
+    - Consent metadata tracking: consentTimestamp (when granted), consentVersion (v1.0-2025), approvedByAdminId
+    - Admin form displays prominent legal warning requiring explicit consent confirmation
+    - Public success story pages display consent disclaimer confirming artist authorization
+    - Complete audit trail protects platform from liability regarding testimonial usage rights
 
 ## External Dependencies
 - **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered) for persistent storage.

@@ -2083,7 +2083,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validatedData.shareSlug = `${slugBase}-${Date.now()}`;
       }
       
-      const testimonial = await storage.createTestimonial(validatedData);
+      // Capture consent metadata for legal audit trail
+      const testimonialData = {
+        ...validatedData,
+        consentTimestamp: validatedData.artistConsent ? new Date() : null,
+        consentVersion: validatedData.artistConsent ? "v1.0-2025" : null, // Version of consent language
+        approvedByAdminId: req.session.adminId, // Track which admin approved this
+      };
+      
+      const testimonial = await storage.createTestimonial(testimonialData);
       res.status(201).json(testimonial);
     } catch (error: any) {
       console.error("Create testimonial error:", error);

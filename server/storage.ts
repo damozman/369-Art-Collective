@@ -12,6 +12,9 @@ import {
   testimonials,
   featuredSubscriptions,
   featuredRotationLog,
+  influencers,
+  affiliateClicks,
+  affiliateConversions,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -34,6 +37,12 @@ import {
   type InsertFeaturedSubscription,
   type FeaturedRotationLog,
   type FeaturedTier,
+  type Influencer,
+  type InsertInfluencer,
+  type AffiliateClick,
+  type InsertAffiliateClick,
+  type AffiliateConversion,
+  type InsertAffiliateConversion,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
@@ -178,6 +187,34 @@ export interface IStorage {
     totalEarnings: string;
     rank: number;
   }>>;
+  
+  // ===================================
+  // INFLUENCER AFFILIATE PROGRAM METHODS
+  // ===================================
+  
+  // Influencer CRUD
+  getInfluencer(id: string): Promise<Influencer | undefined>;
+  getInfluencerByEmail(email: string): Promise<Influencer | undefined>;
+  getInfluencerByAffiliateCode(affiliateCode: string): Promise<Influencer | undefined>;
+  getAllInfluencers(filters?: { status?: string; search?: string }): Promise<Influencer[]>;
+  createInfluencer(influencer: InsertInfluencer): Promise<Influencer>;
+  updateInfluencer(id: string, updates: Partial<Influencer>): Promise<Influencer>;
+  approveInfluencer(id: string): Promise<Influencer>;
+  
+  // Affiliate tracking
+  createAffiliateClick(click: InsertAffiliateClick): Promise<AffiliateClick>;
+  createAffiliateConversion(conversion: InsertAffiliateConversion): Promise<AffiliateConversion>;
+  
+  // Performance stats (calculated on-demand)
+  getInfluencerPerformanceSummary(influencerId: string): Promise<{
+    totalClicks: number;
+    totalConversions: number;
+    conversionRate: number;
+    totalEarnings: string;
+    pendingEarnings: string;
+    monthlySalesCount: number; // For tier calculation
+    currentTier: string;
+  }>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -1104,6 +1141,160 @@ class PostgresStorage implements IStorage {
 
     return eligibleArtists;
   }
+
+  // ===================================
+  // INFLUENCER AFFILIATE PROGRAM IMPLEMENTATION
+  // ===================================
+
+  async getInfluencer(id: string): Promise<Influencer | undefined> {
+    const [influencer] = await db
+      .select()
+      .from(influencers)
+      .where(eq(influencers.id, id))
+      .limit(1);
+    return influencer;
+  }
+
+  async getInfluencerByEmail(email: string): Promise<Influencer | undefined> {
+    const [influencer] = await db
+      .select()
+      .from(influencers)
+      .where(eq(influencers.email, email))
+      .limit(1);
+    return influencer;
+  }
+
+  async getInfluencerByAffiliateCode(affiliateCode: string): Promise<Influencer | undefined> {
+    const [influencer] = await db
+      .select()
+      .from(influencers)
+      .where(eq(influencers.affiliateCode, affiliateCode))
+      .limit(1);
+    return influencer;
+  }
+
+  async getAllInfluencers(filters?: { status?: string; search?: string }): Promise<Influencer[]> {
+    let query = db.select().from(influencers);
+
+    const conditions = [];
+    if (filters?.status) {
+      conditions.push(eq(influencers.status, filters.status));
+    }
+    if (filters?.search) {
+      // Search by name or email (case-insensitive)
+      const searchPattern = `%${filters.search}%`;
+      conditions.push(
+        drizzleSql`${influencers.name} ILIKE ${searchPattern} OR ${influencers.email} ILIKE ${searchPattern}`
+      );
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    const results = await query.orderBy(desc(influencers.createdAt));
+    return results;
+  }
+
+  async createInfluencer(influencer: InsertInfluencer): Promise<Influencer> {
+    const [created] = await db.insert(influencers).values([influencer]).returning();
+    return created;
+  }
+
+  async updateInfluencer(id: string, updates: Partial<Influencer>): Promise<Influencer> {
+    const [updated] = await db
+      .update(influencers)
+      .set(updates)
+      .where(eq(influencers.id, id))
+      .returning();
+    return updated;
+  }
+
+  async approveInfluencer(id: string): Promise<Influencer> {
+    const [approved] = await db
+      .update(influencers)
+      .set({ 
+        status: "active",
+        approvedAt: new Date()
+      })
+      .where(eq(influencers.id, id))
+      .returning();
+    return approved;
+  }
+
+  async createAffiliateClick(click: InsertAffiliateClick): Promise<AffiliateClick> {
+    const [created] = await db.insert(affiliateClicks).values([click]).returning();
+    return created;
+  }
+
+  async createAffiliateConversion(conversion: InsertAffiliateConversion): Promise<AffiliateConversion> {
+    const [created] = await db.insert(affiliateConversions).values([conversion]).returning();
+    return created;
+  }
+
+  async getInfluencerPerformanceSummary(influencerId: string): Promise<{
+    totalClicks: number;
+    totalConversions: number;
+    conversionRate: number;
+    totalEarnings: string;
+    pendingEarnings: string;
+    monthlySalesCount: number;
+    currentTier: string;
+  }> {
+    // Get influencer for tier info
+    const influencer = await this.getInfluencer(influencerId);
+    if (!influencer) {
+      throw new Error("Influencer not found");
+    }
+
+    // Count total clicks
+    const clicksResult = await db
+      .select({ count: drizzleSql<number>`count(*)::int` })
+      .from(affiliateClicks)
+      .where(eq(affiliateClicks.influencerId, influencerId));
+    const totalClicks = clicksResult[0]?.count || 0;
+
+    // Count total conversions and earnings
+    const conversionsResult = await db
+      .select({ 
+        count: drizzleSql<number>`count(*)::int`,
+        totalEarnings: sum(affiliateConversions.totalPayout),
+        pendingEarnings: sum(drizzleSql`CASE WHEN ${affiliateConversions.payoutStatus} = 'pending' THEN ${affiliateConversions.totalPayout} ELSE 0 END`)
+      })
+      .from(affiliateConversions)
+      .where(eq(affiliateConversions.influencerId, influencerId));
+    
+    const totalConversions = conversionsResult[0]?.count || 0;
+    const totalEarnings = conversionsResult[0]?.totalEarnings || '0';
+    const pendingEarnings = conversionsResult[0]?.pendingEarnings || '0';
+
+    // Count monthly sales (for tier calculation)
+    const firstOfMonth = new Date();
+    firstOfMonth.setDate(1);
+    firstOfMonth.setHours(0, 0, 0, 0);
+
+    const monthlySalesResult = await db
+      .select({ count: drizzleSql<number>`count(*)::int` })
+      .from(affiliateConversions)
+      .where(and(
+        eq(affiliateConversions.influencerId, influencerId),
+        gte(affiliateConversions.createdAt, firstOfMonth)
+      ));
+    const monthlySalesCount = monthlySalesResult[0]?.count || 0;
+
+    // Calculate conversion rate
+    const conversionRate = totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
+
+    return {
+      totalClicks,
+      totalConversions,
+      conversionRate: Math.round(conversionRate * 100) / 100, // Round to 2 decimals
+      totalEarnings: totalEarnings.toString(),
+      pendingEarnings: pendingEarnings.toString(),
+      monthlySalesCount,
+      currentTier: influencer.currentTier,
+    };
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -1633,6 +1824,86 @@ class MemStorage implements IStorage {
   }>> {
     console.log("MemStorage: getTopEarningArtistsForRotation called (stub)", limit, minEarnings);
     return [];
+  }
+
+  // ===================================
+  // INFLUENCER AFFILIATE PROGRAM STUBS
+  // ===================================
+
+  async getInfluencer(id: string): Promise<Influencer | undefined> {
+    console.log("MemStorage: getInfluencer called (stub)", id);
+    return undefined;
+  }
+
+  async getInfluencerByEmail(email: string): Promise<Influencer | undefined> {
+    console.log("MemStorage: getInfluencerByEmail called (stub)", email);
+    return undefined;
+  }
+
+  async getInfluencerByAffiliateCode(affiliateCode: string): Promise<Influencer | undefined> {
+    console.log("MemStorage: getInfluencerByAffiliateCode called (stub)", affiliateCode);
+    return undefined;
+  }
+
+  async getAllInfluencers(filters?: { status?: string; search?: string }): Promise<Influencer[]> {
+    console.log("MemStorage: getAllInfluencers called (stub)", filters);
+    return [];
+  }
+
+  async createInfluencer(influencer: InsertInfluencer): Promise<Influencer> {
+    console.log("MemStorage: createInfluencer called (stub)", influencer);
+    return { 
+      id: randomUUID(), 
+      ...influencer,
+      currentTier: "bronze",
+      status: influencer.status || "pending",
+      createdAt: new Date()
+    } as Influencer;
+  }
+
+  async updateInfluencer(id: string, updates: Partial<Influencer>): Promise<Influencer> {
+    console.log("MemStorage: updateInfluencer called (stub)", id, updates);
+    return { id, ...updates } as Influencer;
+  }
+
+  async approveInfluencer(id: string): Promise<Influencer> {
+    console.log("MemStorage: approveInfluencer called (stub)", id);
+    return { 
+      id, 
+      status: "active",
+      approvedAt: new Date()
+    } as Influencer;
+  }
+
+  async createAffiliateClick(click: InsertAffiliateClick): Promise<AffiliateClick> {
+    console.log("MemStorage: createAffiliateClick called (stub)", click);
+    return { id: randomUUID(), ...click, createdAt: new Date() } as AffiliateClick;
+  }
+
+  async createAffiliateConversion(conversion: InsertAffiliateConversion): Promise<AffiliateConversion> {
+    console.log("MemStorage: createAffiliateConversion called (stub)", conversion);
+    return { id: randomUUID(), ...conversion, createdAt: new Date() } as AffiliateConversion;
+  }
+
+  async getInfluencerPerformanceSummary(influencerId: string): Promise<{
+    totalClicks: number;
+    totalConversions: number;
+    conversionRate: number;
+    totalEarnings: string;
+    pendingEarnings: string;
+    monthlySalesCount: number;
+    currentTier: string;
+  }> {
+    console.log("MemStorage: getInfluencerPerformanceSummary called (stub)", influencerId);
+    return {
+      totalClicks: 0,
+      totalConversions: 0,
+      conversionRate: 0,
+      totalEarnings: '0',
+      pendingEarnings: '0',
+      monthlySalesCount: 0,
+      currentTier: 'bronze',
+    };
   }
 }
 

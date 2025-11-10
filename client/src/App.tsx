@@ -31,6 +31,11 @@ import AdminPayouts from "@/pages/admin-payouts";
 import AdminTestimonials from "@/pages/admin-testimonials";
 import AdminEmpire from "@/pages/admin-empire";
 import AdminSettings from "@/pages/admin-settings";
+import AdminInfluencers from "@/pages/admin-influencers";
+import InfluencerApply from "@/pages/influencer-apply";
+import InfluencerLogin from "@/pages/influencer-login";
+import InfluencerPending from "@/pages/influencer-pending";
+import InfluencerDashboard from "@/pages/influencer-dashboard";
 import SuccessStory from "@/pages/success-story";
 import NotFound from "@/pages/not-found";
 
@@ -164,6 +169,29 @@ function Router() {
           <AdminLayout>
             <AdminSettings />
           </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/influencers">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminInfluencers />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/influencer/apply" component={InfluencerApply} />
+      <Route path="/influencer/login" component={InfluencerLogin} />
+      
+      <Route path="/influencer/pending">
+        <ProtectedRoute requiredType="influencer">
+          <InfluencerPending />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/influencer/dashboard">
+        <ProtectedRoute requiredType="influencer">
+          <InfluencerDashboard />
         </ProtectedRoute>
       </Route>
       

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, Loader2, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -18,6 +19,9 @@ const uploadFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   tags: z.string().optional(),
+  ipDeclarationAccepted: z.boolean().refine((val) => val === true, {
+    message: "You must confirm you have rights to this artwork",
+  }),
 });
 
 type UploadFormData = z.infer<typeof uploadFormSchema>;
@@ -31,11 +35,11 @@ export default function UploadArtwork() {
 
   const form = useForm<UploadFormData>({
     resolver: zodResolver(uploadFormSchema),
-    defaultValues: { title: "", description: "", tags: "" },
+    defaultValues: { title: "", description: "", tags: "", ipDeclarationAccepted: false },
   });
 
   const createArtworkMutation = useMutation({
-    mutationFn: async (data: { title: string; description?: string; tags: string[]; imageUrl: string }) => {
+    mutationFn: async (data: { title: string; description?: string; tags: string[]; imageUrl: string; ipDeclarationAccepted: boolean }) => {
       // No longer passing artistId - session handles it server-side
       return apiRequest("POST", "/api/artworks", data);
     },
@@ -115,6 +119,7 @@ export default function UploadArtwork() {
         description: data.description,
         tags,
         imageUrl,
+        ipDeclarationAccepted: data.ipDeclarationAccepted,
       });
     } catch (error: any) {
       toast({
@@ -280,6 +285,38 @@ export default function UploadArtwork() {
                         Separate tags with commas to help categorize your work
                       </FormDescription>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <FormField
+                  control={form.control}
+                  name="ipDeclarationAccepted"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-ip-declaration"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-medium">
+                          Intellectual Property Declaration
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          I confirm that I own the rights to this artwork and it does not violate any trademarks, copyrights, 
+                          or other intellectual property rights. I understand that uploading artwork containing brand logos, 
+                          copyrighted characters, or other protected content will result in immediate removal and forfeiture 
+                          of any pending earnings.
+                        </p>
+                        <FormMessage />
+                      </div>
                     </FormItem>
                   )}
                 />

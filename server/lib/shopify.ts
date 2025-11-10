@@ -4,6 +4,16 @@ import path from "path";
 const shopifyShopUrl = process.env.SHOPIFY_SHOP_URL || "";
 const shopifyAccessToken = process.env.SHOPIFY_ACCESS_TOKEN || "";
 
+// HTML escape function to prevent XSS/injection attacks
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export function isShopifyConfigured(): boolean {
   return Boolean(shopifyShopUrl && shopifyAccessToken);
 }
@@ -79,18 +89,19 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
     ];
 
     // Build rich HTML product description with marketing content
+    // SECURITY: All user-supplied content is HTML-escaped to prevent XSS/injection attacks
     let bodyHtml = "";
     
     // Main description
     if (artwork.description) {
-      bodyHtml += `<p>${artwork.description}</p>`;
+      bodyHtml += `<p>${escapeHtml(artwork.description)}</p>`;
     }
     
     // Artwork story section
     if (artwork.artworkStory) {
       bodyHtml += `<div style="margin-top: 1.5rem;">`;
       bodyHtml += `<h3 style="font-weight: 600; margin-bottom: 0.5rem;">The Story Behind This Artwork</h3>`;
-      bodyHtml += `<p style="color: #555;">${artwork.artworkStory}</p>`;
+      bodyHtml += `<p style="color: #555;">${escapeHtml(artwork.artworkStory)}</p>`;
       bodyHtml += `</div>`;
     }
     
@@ -98,18 +109,18 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
     if (artwork.suggestedUse) {
       bodyHtml += `<div style="margin-top: 1.5rem;">`;
       bodyHtml += `<h3 style="font-weight: 600; margin-bottom: 0.5rem;">Perfect For</h3>`;
-      bodyHtml += `<p style="color: #555;">${artwork.suggestedUse}</p>`;
+      bodyHtml += `<p style="color: #555;">${escapeHtml(artwork.suggestedUse)}</p>`;
       bodyHtml += `</div>`;
     }
     
-    // Artist attribution
+    // Artist attribution (artist name also escaped for safety)
     bodyHtml += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e5e5;">`;
-    bodyHtml += `<p style="font-style: italic;">Created by <strong>${artwork.artistName}</strong></p>`;
+    bodyHtml += `<p style="font-style: italic;">Created by <strong>${escapeHtml(artwork.artistName)}</strong></p>`;
     bodyHtml += `</div>`;
     
     // Fallback if no content
     if (!bodyHtml) {
-      bodyHtml = `<p>${artwork.title} by ${artwork.artistName}</p>`;
+      bodyHtml = `<p>${escapeHtml(artwork.title)} by ${escapeHtml(artwork.artistName)}</p>`;
     }
 
     const productPayload: any = {

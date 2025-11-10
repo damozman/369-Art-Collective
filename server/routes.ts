@@ -28,6 +28,7 @@ import { requireAuth, requireArtist, requireAdmin } from "./middleware/auth";
 import { processShopifyOrder } from "./lib/order-processor";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
 import { validateImageQuality, MIN_WIDTH, MIN_HEIGHT } from "./lib/image-validator";
+import { stripeConnectService } from "./lib/stripe-connect";
 
 // Ensure uploads directory exists
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -399,6 +400,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Update profile error:", error);
       res.status(400).json({ message: error.message || "Failed to update profile" });
+    }
+  });
+
+  // Stripe Connect: Create or get onboarding link (artist only)
+  app.post("/api/artists/stripe/onboarding-link", requireArtist, async (req, res) => {
+    try {
+      const user = req.user!;
+      
+      // Fetch full artist record to access Stripe fields
+      const artist = await storage.getArtist(user.id);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Determine return/refresh URLs using request host
+      const protocol = req.protocol;
+      const host = req.get('host');
+      const baseUrl = `${protocol}://${host}`;
+      const returnUrl = `${baseUrl}/artist/settings?stripe=success`;
+      const refreshUrl = `${baseUrl}/artist/settings?stripe=refresh`;
+
+      // Create or regenerate account link
+      const result = await stripeConnectService.createAccountLink({
+        artistId: artist.id,
+        artistEmail: artist.email,
+        stripeAccountId: artist.stripeAccountId || undefined,
+        returnUrl,
+        refreshUrl,
+      });
+
+      // Update artist with new Stripe account ID and link expiration
+      const linkExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+      await storage.updateArtist(artist.id, {
+        stripeAccountId: result.accountId,
+        stripeAccountLinkExpiresAt: linkExpiresAt,
+      });
+
+      res.json({ url: result.url, expiresAt: linkExpiresAt.toISOString() });
+    } catch (error: any) {
+      console.error("Stripe onboarding link error:", error);
+      res.status(500).json({ message: "Failed to create Stripe onboarding link" });
+    }
+  });
+
+  // Stripe Connect: Refresh account status (artist only)
+  app.post("/api/artists/stripe/refresh-status", requireArtist, async (req, res) => {
+    try {
+      const user = req.user!;
+      
+      // Fetch full artist record to access Stripe fields
+      const artist = await storage.getArtist(user.id);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      if (!artist.stripeAccountId) {
+        return res.status(400).json({ message: "No Stripe account linked" });
+      }
+
+      // Fetch current status from Stripe
+      const status = await stripeConnectService.getAccountStatus(artist.stripeAccountId);
+
+      // Update artist record with latest status
+      await storage.updateArtist(artist.id, {
+        stripeChargesEnabled: status.charges_enabled,
+        stripePayoutsEnabled: status.payouts_enabled,
+        stripeDetailsSubmitted: status.details_submitted,
+        stripeRequirements: status.requirements,
+        stripeDefaultCurrency: status.default_currency,
+        externalAccountLast4: status.external_account_last4,
+        stripeOnboardingComplete: status.details_submitted && status.charges_enabled && status.payouts_enabled,
+      });
+
+      res.json({
+        onboardingComplete: status.details_submitted && status.charges_enabled && status.payouts_enabled,
+        chargesEnabled: status.charges_enabled,
+        payoutsEnabled: status.payouts_enabled,
+        detailsSubmitted: status.details_submitted,
+        requirements: status.requirements,
+        defaultCurrency: status.default_currency,
+        externalAccountLast4: status.external_account_last4,
+      });
+    } catch (error: any) {
+      console.error("Stripe refresh status error:", error);
+      res.status(500).json({ message: "Failed to refresh Stripe status" });
     }
   });
 

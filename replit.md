@@ -56,6 +56,7 @@ The platform is built with a clear separation between frontend and backend.
   - Secure self-service password reset with cryptographically secure, single-use, time-limited tokens and rate limiting.
   - Rate limiting on critical endpoints (login, password reset).
   - Audit logging for security events.
+  - **Deployment Configuration:** Proxy trust enabled (`app.set('trust proxy', 1)`) for Replit's reverse proxy, ensuring secure cookies work correctly on published sites with automatic HTTPS.
 - **Database:** Replit's built-in PostgreSQL database (Neon-powered) for persistent storage with Drizzle ORM.
 - **File Uploads:** Multer handles image uploads, stored locally. Image quality validation enforces minimum resolution (2400x3000px) and supported formats (PNG, JPG) for print quality, with server-side validation and automatic cleanup of rejected files.
 - **API Endpoints:** A comprehensive set of RESTful API endpoints manage authentication, artist management, artwork management, and admin analytics, including image URL normalization for consistent display across domains.

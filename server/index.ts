@@ -23,6 +23,10 @@ declare module 'http' {
   }
 }
 
+// Trust proxy - REQUIRED for Replit deployments behind reverse proxy
+// This allows Express to recognize HTTPS connections and set secure cookies properly
+app.set('trust proxy', 1);
+
 // Session middleware
 app.use(session({
   secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",

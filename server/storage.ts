@@ -8,6 +8,7 @@ import {
   passwordResetTokens,
   portfolioSubmissions,
   violationReports,
+  stripeWebhookEvents,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -21,6 +22,8 @@ import {
   type InsertPortfolioSubmission,
   type ViolationReport,
   type InsertViolationReport,
+  type StripeWebhookEvent,
+  type InsertStripeWebhookEvent,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
@@ -79,6 +82,11 @@ export interface IStorage {
   getPayoutsByArtist(artistId: string): Promise<any[]>;
   getPendingPayouts(): Promise<any[]>;
   getAllPayouts(): Promise<any[]>;
+
+  // Stripe Webhook Event methods
+  createStripeWebhookEvent(event: InsertStripeWebhookEvent): Promise<StripeWebhookEvent>;
+  getStripeWebhookEvent(eventId: string): Promise<StripeWebhookEvent | undefined>;
+  updateStripeWebhookEvent(id: string, updates: Partial<StripeWebhookEvent>): Promise<StripeWebhookEvent>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -417,6 +425,33 @@ class PostgresStorage implements IStorage {
       .orderBy(payoutsTable.createdAt);
     return allPayouts;
   }
+
+  async createStripeWebhookEvent(event: InsertStripeWebhookEvent): Promise<StripeWebhookEvent> {
+    const [webhookEvent] = await db
+      .insert(stripeWebhookEvents)
+      .values(event)
+      .returning();
+    return webhookEvent;
+  }
+
+  async getStripeWebhookEvent(eventId: string): Promise<StripeWebhookEvent | undefined> {
+    const [event] = await db
+      .select()
+      .from(stripeWebhookEvents)
+      .where(eq(stripeWebhookEvents.eventId, eventId))
+      .limit(1);
+    return event;
+  }
+
+  async updateStripeWebhookEvent(id: string, updates: Partial<StripeWebhookEvent>): Promise<StripeWebhookEvent> {
+    const [updatedEvent] = await db
+      .update(stripeWebhookEvents)
+      .set(updates)
+      .where(eq(stripeWebhookEvents.id, id))
+      .returning();
+    if (!updatedEvent) throw new Error("Webhook event not found");
+    return updatedEvent;
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -464,7 +499,18 @@ class MemStorage implements IStorage {
       monthlySales: '0',
       stripeAccountId: null,
       stripeAccountStatus: null,
+      stripeOnboardingComplete: false,
+      stripeDetailsSubmitted: false,
+      stripeChargesEnabled: false,
+      stripePayoutsEnabled: false,
+      stripeRequirements: null,
+      stripeAccountLinkExpiresAt: null,
+      stripeDefaultCurrency: null,
+      externalAccountLast4: null,
       referredBy: null,
+      tosAcceptedAt: null,
+      tosIpAddress: null,
+      tosVersion: null,
       deletedAt: null,
       createdAt: new Date(),
     };
@@ -556,6 +602,7 @@ class MemStorage implements IStorage {
     const violationReport: ViolationReport = {
       ...report,
       id,
+      notes: report.notes || null,
       status: report.status || "pending",
       resolvedAt: null,
       resolutionNotes: null,
@@ -611,7 +658,9 @@ class MemStorage implements IStorage {
       description: insertArtwork.description ?? null,
       status: "pending",
       rejectionReason: null,
+      ipDeclarationText: null,
       shopifyProductId: null,
+      shopifyProductStatus: "draft",
       printifyProductId: null,
       printifyImageId: null,
       createdAt: new Date(),
@@ -678,6 +727,41 @@ class MemStorage implements IStorage {
   async getAllPayouts(): Promise<any[]> {
     console.log("MemStorage: getAllPayouts called (stub)");
     return [];
+  }
+
+  async createStripeWebhookEvent(event: InsertStripeWebhookEvent): Promise<StripeWebhookEvent> {
+    console.log("MemStorage: createStripeWebhookEvent called (stub)", event);
+    return {
+      id: randomUUID(),
+      ...event,
+      eventId: event.eventId,
+      eventType: event.eventType,
+      status: event.status || "pending",
+      payload: event.payload || null,
+      errorMessage: event.errorMessage || null,
+      processedAt: event.processedAt || null,
+      createdAt: new Date(),
+    };
+  }
+
+  async getStripeWebhookEvent(eventId: string): Promise<StripeWebhookEvent | undefined> {
+    console.log("MemStorage: getStripeWebhookEvent called (stub)", eventId);
+    return undefined;
+  }
+
+  async updateStripeWebhookEvent(id: string, updates: Partial<StripeWebhookEvent>): Promise<StripeWebhookEvent> {
+    console.log("MemStorage: updateStripeWebhookEvent called (stub)", id, updates);
+    return {
+      id,
+      eventId: "evt_test",
+      eventType: "account.updated",
+      status: "processed",
+      payload: null,
+      errorMessage: null,
+      processedAt: new Date(),
+      createdAt: new Date(),
+      ...updates,
+    };
   }
 }
 

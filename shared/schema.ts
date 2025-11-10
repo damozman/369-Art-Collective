@@ -13,7 +13,15 @@ export const artists = pgTable("artists", {
   approved: boolean("approved").notNull().default(false),
   monthlySales: decimal("monthly_sales", { precision: 10, scale: 2 }).notNull().default('0'), // Current month sales for tier calculation
   stripeAccountId: text("stripe_account_id"), // Stripe Connect account ID for payouts
-  stripeAccountStatus: text("stripe_account_status"), // pending, active, restricted
+  stripeAccountStatus: text("stripe_account_status"), // pending, active, restricted, complete
+  stripeOnboardingComplete: boolean("stripe_onboarding_complete").notNull().default(false), // Has completed Stripe onboarding
+  stripeDetailsSubmitted: boolean("stripe_details_submitted").notNull().default(false), // Has submitted required details
+  stripeChargesEnabled: boolean("stripe_charges_enabled").notNull().default(false), // Can accept charges
+  stripePayoutsEnabled: boolean("stripe_payouts_enabled").notNull().default(false), // Can receive payouts
+  stripeRequirements: jsonb("stripe_requirements"), // Stores currently_due/past_due requirements from Stripe
+  stripeAccountLinkExpiresAt: timestamp("stripe_account_link_expires_at"), // When the onboarding link expires
+  stripeDefaultCurrency: text("stripe_default_currency"), // Default payout currency (e.g., "usd")
+  externalAccountLast4: text("external_account_last4"), // Last 4 digits of bank account for UI display
   referralCode: text("referral_code").notNull().unique(), // Unique code for referral links (e.g., "ARTIST-ABC123")
   referredBy: varchar("referred_by").references((): any => artists.id), // Which artist recruited them
   tosAcceptedAt: timestamp("tos_accepted_at"), // Terms of Service acceptance timestamp for legal compliance
@@ -310,7 +318,7 @@ export const payouts = pgTable("payouts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   artistId: varchar("artist_id").notNull().references(() => artists.id),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  stripeTransferId: text("stripe_transfer_id"), // Stripe payout ID
+  stripeTransferId: text("stripe_transfer_id"), // Stripe transfer ID
   status: text("status").notNull().default("pending"), // pending, processing, completed, failed
   periodStart: timestamp("period_start").notNull(),
   periodEnd: timestamp("period_end").notNull(),
@@ -319,9 +327,29 @@ export const payouts = pgTable("payouts", {
   referralBonuses: decimal("referral_bonuses", { precision: 10, scale: 2 }).notNull().default('0'),
   recruitmentBonuses: decimal("recruitment_bonuses", { precision: 10, scale: 2 }).notNull().default('0'),
   failureReason: text("failure_reason"),
+  lastSyncedAt: timestamp("last_synced_at"), // Last time we synced with Stripe
   createdAt: timestamp("created_at").notNull().defaultNow(),
   completedAt: timestamp("completed_at"),
 });
+
+// Stripe Webhook Events - Track processed webhooks for idempotency
+export const stripeWebhookEvents = pgTable("stripe_webhook_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventId: text("event_id").notNull().unique(), // Stripe event ID for deduplication
+  eventType: text("event_type").notNull(), // e.g., account.updated, payout.paid
+  status: text("status").notNull().default("pending"), // pending, processed, failed
+  payload: jsonb("payload"), // Full webhook payload for debugging
+  errorMessage: text("error_message"), // Error details if processing failed
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Types for new tables
+export type Payout = typeof payouts.$inferSelect;
+export type InsertPayout = typeof payouts.$inferInsert;
+
+export type StripeWebhookEvent = typeof stripeWebhookEvents.$inferSelect;
+export type InsertStripeWebhookEvent = typeof stripeWebhookEvents.$inferInsert;
 
 // Artwork with artist info
 export type ArtworkWithArtist = Artwork & {

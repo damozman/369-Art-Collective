@@ -79,14 +79,37 @@ export class StripeConnectService {
     charges_enabled: boolean;
     payouts_enabled: boolean;
     details_submitted: boolean;
+    requirements: {
+      currently_due: string[];
+      past_due: string[];
+      eventually_due: string[];
+    };
+    default_currency?: string;
+    external_account_last4?: string;
   }> {
     const account = await stripe.accounts.retrieve(accountId);
+
+    // Extract external account details (bank account)
+    let externalAccountLast4: string | undefined;
+    if (account.external_accounts?.data.length) {
+      const bankAccount = account.external_accounts.data[0];
+      if ('last4' in bankAccount) {
+        externalAccountLast4 = bankAccount.last4;
+      }
+    }
 
     return {
       id: account.id,
       charges_enabled: account.charges_enabled || false,
       payouts_enabled: account.payouts_enabled || false,
       details_submitted: account.details_submitted || false,
+      requirements: {
+        currently_due: account.requirements?.currently_due || [],
+        past_due: account.requirements?.past_due || [],
+        eventually_due: account.requirements?.eventually_due || [],
+      },
+      default_currency: account.default_currency,
+      external_account_last4: externalAccountLast4,
     };
   }
 
@@ -116,6 +139,18 @@ export class StripeConnectService {
     const account = accounts.data.find((acc) => acc.metadata?.artistId === artistId);
     return account?.id || null;
   }
+
+  /**
+   * Verify webhook signature for security
+   */
+  verifyWebhookSignature(
+    payload: string,
+    signature: string,
+    webhookSecret: string
+  ): Stripe.Event {
+    return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+  }
 }
 
 export const stripeConnectService = new StripeConnectService();
+export { stripe };

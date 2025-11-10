@@ -12,17 +12,21 @@ import { useToast } from "@/hooks/use-toast";
 interface ReferralData {
   referralCode: string;
   referralLink: string;
+  testimonialShareUrl: string | null;
   stats: {
     totalReferralSales: number;
     totalReferralEarnings: number;
     totalArtistsRecruited: number;
     totalRecruitmentEarnings: number;
+    testimonialRecruits: number;
+    generalRecruits: number;
   };
   recruitedArtists: Array<{
     id: string;
     name: string;
     email: string;
     joinedAt: string;
+    source: string;
     totalSales: number;
     totalEarnings: number;
   }>;
@@ -33,6 +37,7 @@ export default function ArtistReferrals() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [testimonialCopied, setTestimonialCopied] = useState(false);
 
   const { data: referrals, isLoading } = useQuery<ReferralData>({
     queryKey: [`/api/artists/${user?.id}/referrals`],
@@ -48,6 +53,18 @@ export default function ArtistReferrals() {
         description: "Your referral link has been copied to clipboard",
       });
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const copyTestimonialLink = () => {
+    if (referrals?.testimonialShareUrl) {
+      navigator.clipboard.writeText(referrals.testimonialShareUrl);
+      setTestimonialCopied(true);
+      toast({
+        title: "Success Story Link Copied!",
+        description: "Your testimonial share link has been copied to clipboard",
+      });
+      setTimeout(() => setTestimonialCopied(false), 2000);
     }
   };
 
@@ -127,6 +144,48 @@ export default function ArtistReferrals() {
           </CardContent>
         </Card>
 
+        {/* Testimonial Share Link - Only shown if artist has active testimonial */}
+        {referrals?.testimonialShareUrl && (
+          <Card className="mb-8 bg-gradient-to-br from-green-500/10 to-emerald-500/5 border-green-500/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+                Your Success Story Share Link
+              </CardTitle>
+              <CardDescription>
+                Share your testimonial to inspire others! Track which recruits came from your success story.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={referrals.testimonialShareUrl}
+                  readOnly
+                  className="flex-1 px-4 py-2 border rounded-md bg-background text-sm"
+                  data-testid="input-testimonial-link"
+                />
+                <Button onClick={copyTestimonialLink} data-testid="button-copy-testimonial-link">
+                  {testimonialCopied ? (
+                    <>
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy Link
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Recruits from this link are tagged as "Testimonial" referrals
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
@@ -162,6 +221,9 @@ export default function ArtistReferrals() {
               <CardTitle className="text-3xl text-blue-600" data-testid="text-artists-recruited">
                 {referrals?.stats.totalArtistsRecruited || 0}
               </CardTitle>
+              <p className="text-xs text-muted-foreground mt-2">
+                {referrals?.stats.testimonialRecruits || 0} from testimonial • {referrals?.stats.generalRecruits || 0} general
+              </p>
             </CardHeader>
           </Card>
 
@@ -193,6 +255,7 @@ export default function ArtistReferrals() {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left p-3 font-semibold">Artist</th>
+                      <th className="text-left p-3 font-semibold">Source</th>
                       <th className="text-left p-3 font-semibold">Joined</th>
                       <th className="text-right p-3 font-semibold">Sales</th>
                       <th className="text-right p-3 font-semibold">Their Earnings</th>
@@ -207,6 +270,15 @@ export default function ArtistReferrals() {
                             <p className="font-semibold">{artist.name}</p>
                             <p className="text-sm text-muted-foreground">{artist.email}</p>
                           </div>
+                        </td>
+                        <td className="p-3">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            artist.source === 'testimonial' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' 
+                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                          }`} data-testid={`badge-source-${artist.id}`}>
+                            {artist.source === 'testimonial' ? 'Testimonial' : 'General'}
+                          </span>
                         </td>
                         <td className="p-3 text-muted-foreground">
                           {new Date(artist.joinedAt).toLocaleDateString()}

@@ -36,6 +36,13 @@ export default function Register() {
   const [portfolioPreviews, setPortfolioPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Capture UTM parameters from URL query string
+  const urlParams = new URLSearchParams(window.location.search);
+  const utmSource = urlParams.get('utm_source');
+  const utmMedium = urlParams.get('utm_medium');
+  const utmCampaign = urlParams.get('utm_campaign');
+  const refCode = urlParams.get('ref');
+
   const form = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
     mode: "onChange",
@@ -46,12 +53,22 @@ export default function Register() {
 
   async function onSubmitAccount(data: RegistrationForm) {
     const { confirmPassword, ...registrationData } = data;
+    
+    // Include UTM params and referral info in registration data
+    const registrationPayload = {
+      ...registrationData,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      referralCode: refCode,
+    };
+
     setIsLoading(true);
     try {
       const response = await fetch("/api/artists/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(registrationData),
+        body: JSON.stringify(registrationPayload),
       });
 
       if (!response.ok) {

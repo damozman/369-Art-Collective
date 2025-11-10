@@ -338,6 +338,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email already registered" });
       }
 
+      // Capture referral attribution from UTM parameters (sent in POST body from frontend)
+      const referrerCode = req.body.referralCode as string | undefined;
+      const utmMedium = req.body.utmMedium as string | undefined;
+      let referralSource: string | null = null;
+      let referredBy: string | null = null;
+      
+      // Determine referral source based on UTM medium
+      if (utmMedium === 'testimonial') {
+        referralSource = 'testimonial';
+      } else if (referrerCode || utmMedium === 'referral') {
+        referralSource = 'general';
+      }
+      
+      // Look up the referring artist by their referral code
+      if (referrerCode) {
+        const referringArtist = await storage.getArtistByReferralCode(referrerCode);
+        if (referringArtist) {
+          referredBy = referringArtist.id;
+        }
+      }
+
       // Capture IP address for TOS audit trail
       const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() 
         || req.socket.remoteAddress 
@@ -347,6 +368,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const artist = await storage.createArtist({
         ...data,
         password: hashedPassword,
+        referredBy, // ID of the artist who referred them
+        referralSource, // How they were referred (testimonial/general)
         tosAcceptedAt: new Date(),
         tosIpAddress: ipAddress,
         tosVersion: "v1.0-2025-11", // Track TOS version for legal compliance
@@ -1694,24 +1717,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
             name: recruited.name,
             email: recruited.email,
             joinedAt: recruited.createdAt,
+            source: recruited.referralSource || 'unknown',
             totalSales,
             totalEarnings,
           };
         })
       );
 
+      // Calculate breakdown by source
+      const testimonialRecruits = recruitedArtists.filter(a => a.referralSource === 'testimonial');
+      const generalRecruits = recruitedArtists.filter(a => a.referralSource === 'general' || !a.referralSource);
+
       // Generate referral link
       const shopifyUrl = process.env.SHOPIFY_SHOP_URL || 'your-store.myshopify.com';
       const referralLink = `https://${shopifyUrl}?utm_source=${artist.referralCode}&utm_medium=referral&utm_campaign=artist_network`;
 
+      // Find artist's testimonial if they have one
+      const allTestimonials = await storage.getAllTestimonials();
+      const artistTestimonial = allTestimonials.find(t => t.artistId === id && t.isActive);
+      const testimonialShareUrl = artistTestimonial 
+        ? `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/success-stories/${artistTestimonial.shareSlug}?utm_source=artist-referral&utm_medium=testimonial&utm_campaign=${artist.referralCode}&ref=${artist.referralCode}`
+        : null;
+
       res.json({
         referralCode: artist.referralCode,
         referralLink,
+        testimonialShareUrl,
         stats: {
           totalReferralSales: referralSales.length,
           totalReferralEarnings,
           totalArtistsRecruited: recruitedArtists.length,
           totalRecruitmentEarnings,
+          testimonialRecruits: testimonialRecruits.length,
+          generalRecruits: generalRecruits.length,
         },
         recruitedArtists: recruitedArtistStats,
       });

@@ -2296,7 +2296,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ===== FEATURED SUBSCRIPTIONS - STRIPE CHECKOUT =====
+  // ===== FEATURED SUBSCRIPTIONS - STRIPE CHECKOUT & ROTATION =====
+
+  // Admin: Trigger monthly merit-based rotation
+  app.post("/api/admin/featured/rotate", requireAdmin, async (_req, res) => {
+    try {
+      const { performMonthlyRotation } = await import("./lib/featured-rotation-service");
+      
+      console.log('🔄 Admin triggered merit-based rotation');
+      const result = await performMonthlyRotation();
+      
+      res.json({
+        success: result.success,
+        message: result.message,
+        details: {
+          rotatedIn: result.rotatedIn.length,
+          rotatedOut: result.rotatedOut.length,
+          keptActive: result.keptActive.length,
+        },
+        data: result,
+      });
+    } catch (error: any) {
+      console.error("Featured rotation error:", error);
+      res.status(500).json({ message: "Rotation failed", error: error.message });
+    }
+  });
+
+  // Admin: Get current rotation status
+  app.get("/api/admin/featured/status", requireAdmin, async (_req, res) => {
+    try {
+      const { getRotationStatus } = await import("./lib/featured-rotation-service");
+      
+      const status = await getRotationStatus();
+      res.json(status);
+    } catch (error: any) {
+      console.error("Get rotation status error:", error);
+      res.status(500).json({ message: "Failed to get rotation status" });
+    }
+  });
 
   // Artist: Create Stripe Checkout session for premium featured subscription
   app.post("/api/featured/checkout", requireArtist, async (req, res) => {

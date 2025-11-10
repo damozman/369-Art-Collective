@@ -216,6 +216,144 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Success Stories / Testimonials */}
+      <section className="py-20 bg-muted/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold font-serif mb-4">
+              Artist Success Stories
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Real artists building real empires with 247 Print Network
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {/* Placeholder Testimonial 1 */}
+            <Card className="overflow-hidden hover-elevate" data-testid="testimonial-card-0">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="h-16 w-16 text-primary/30" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
+                    </svg>
+                  </div>
+                  <Badge variant="secondary" className="absolute top-3 right-3">
+                    Coming Soon
+                  </Badge>
+                </div>
+                <div className="p-6 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">Featured Artist</div>
+                      <div className="text-sm text-muted-foreground">Artist Profile</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground italic leading-relaxed">
+                    "Artist video testimonials coming soon. Share your success story and inspire the next generation of creators."
+                  </p>
+                  <div className="flex gap-4 pt-2 text-sm">
+                    <div>
+                      <div className="font-semibold text-primary">$0</div>
+                      <div className="text-muted-foreground text-xs">Monthly Earnings</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-primary">0</div>
+                      <div className="text-muted-foreground text-xs">Products</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Placeholder Testimonial 2 */}
+            <Card className="overflow-hidden hover-elevate" data-testid="testimonial-card-1">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="h-16 w-16 text-primary/30" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
+                    </svg>
+                  </div>
+                  <Badge variant="secondary" className="absolute top-3 right-3">
+                    Coming Soon
+                  </Badge>
+                </div>
+                <div className="p-6 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">Featured Artist</div>
+                      <div className="text-sm text-muted-foreground">Artist Profile</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground italic leading-relaxed">
+                    "Your story could be featured here. Join the network and share your journey from artist to entrepreneur."
+                  </p>
+                  <div className="flex gap-4 pt-2 text-sm">
+                    <div>
+                      <div className="font-semibold text-primary">$0</div>
+                      <div className="text-muted-foreground text-xs">Monthly Earnings</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-primary">0</div>
+                      <div className="text-muted-foreground text-xs">Products</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Placeholder Testimonial 3 */}
+            <Card className="overflow-hidden hover-elevate" data-testid="testimonial-card-2">
+              <CardContent className="p-0">
+                <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="h-16 w-16 text-primary/30" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
+                    </svg>
+                  </div>
+                  <Badge variant="secondary" className="absolute top-3 right-3">
+                    Coming Soon
+                  </Badge>
+                </div>
+                <div className="p-6 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <div className="font-semibold">Featured Artist</div>
+                      <div className="text-sm text-muted-foreground">Artist Profile</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground italic leading-relaxed">
+                    "Be part of the movement. Upload your art, earn royalties, and inspire others with your creative empire."
+                  </p>
+                  <div className="flex gap-4 pt-2 text-sm">
+                    <div>
+                      <div className="font-semibold text-primary">$0</div>
+                      <div className="text-muted-foreground text-xs">Monthly Earnings</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-primary">0</div>
+                      <div className="text-muted-foreground text-xs">Products</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Earnings Potential */}
       <section className="py-20">
         <div className="container mx-auto px-4">

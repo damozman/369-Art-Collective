@@ -14,6 +14,15 @@ The platform is built with a clear separation between frontend and backend.
   - **Multi-Step Artwork Upload Wizard:** 5-step guided upload flow (Image Upload → Basic Details → Marketing Content → IP Declaration → Review) with progress tracking, real-time validation, and enhanced marketing fields (artworkStory, styleTags, suggestedUse) for richer Shopify product pages. Server auto-generates SEO-friendly slugs from artwork titles.
 - **Admin Workflow:** Admins manage artist accounts, approve/reject artists, and review/approve artwork submissions, which triggers Shopify product creation.
   - **Admin CRM Notes:** Private notes field on each artist's detail page for tracking calls, conversations, preferences, and relationship management (personal CRM functionality).
+  - **Enhanced Artwork Management Dashboard:**
+    - **Advanced Search & Filtering:** Real-time search by artwork title, artist name, or email with instant results
+    - **Multi-Sort Options:** Sort artworks by newest/oldest, artist name A-Z/Z-A
+    - **Bulk Selection System:** Individual checkboxes per artwork card, "Select All" for filtered results
+    - **Bulk Operations:** Approve or reject multiple artworks simultaneously with shared rejection reasons
+    - **Selection Safety:** Automatic selection clearing when filters, search, or sort changes to prevent accidental operations on hidden artworks
+    - **Sequential Processing:** Backend processes bulk operations one-by-one to avoid Shopify API rate limits
+    - **Success Tracking:** Detailed toast notifications showing success/failure counts for bulk operations
+    - **Fixed Action Bar:** Bottom-anchored controls appear when items selected, showing count and bulk action buttons
 - **Printify Integration:** Approved artwork automatically creates Printify POD products.
 - **Shopify Integration:** Shopify webhooks capture orders, and the platform integrates with the Shopify Admin API for storefront product management.
   - **Enhanced Product Creation:** When artwork is approved, Shopify products are enriched with marketing content:

@@ -167,7 +167,8 @@ export default function AdminDashboard() {
   // Bulk operations mutations
   const bulkApproveMutation = useMutation({
     mutationFn: async (artworkIds: string[]) => {
-      return apiRequest("POST", "/api/artworks/bulk", { artworkIds, action: "approve" });
+      const res = await apiRequest("POST", "/api/artworks/bulk", { artworkIds, action: "approve" });
+      return res.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/artworks/all"] });
@@ -188,7 +189,8 @@ export default function AdminDashboard() {
 
   const bulkRejectMutation = useMutation({
     mutationFn: async ({ artworkIds, reason }: { artworkIds: string[]; reason: string }) => {
-      return apiRequest("POST", "/api/artworks/bulk", { artworkIds, action: "reject", reason });
+      const res = await apiRequest("POST", "/api/artworks/bulk", { artworkIds, action: "reject", reason });
+      return res.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/artworks/all"] });

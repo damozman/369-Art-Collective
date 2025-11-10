@@ -93,11 +93,11 @@ export class EmailService {
         text: data.textBody,
       });
 
-      if ('id' in result.data!) {
+      if (result.data && 'id' in result.data) {
         await this.logEmail(data, result.data.id, 'sent');
         return { success: true };
       } else {
-        const errorMsg = 'error' in result ? result.error.message : 'Unknown error';
+        const errorMsg = result.error?.message || 'Unknown error';
         await this.logEmail(data, undefined, 'failed', errorMsg);
         return { success: false, error: errorMsg };
       }

@@ -1,7 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./vite-utils";
+import { affiliateTrackingMiddleware } from "./middleware/affiliate-tracking";
 
 const app = express();
 
@@ -47,6 +49,10 @@ app.use(express.json({
   }
 }));
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+// Affiliate tracking middleware - captures ?ref= parameter and sets cookies
+app.use(affiliateTrackingMiddleware);
 
 app.use((req, res, next) => {
   const start = Date.now();

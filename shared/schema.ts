@@ -555,24 +555,26 @@ export const influencers = pgTable("influencers", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Affiliate Conversions - Track actual sales/commissions
+// Affiliate Conversions - Track sales/commissions AND artist signups
 export const affiliateConversions = pgTable("affiliate_conversions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   influencerId: varchar("influencer_id").notNull().references(() => influencers.id),
   clickId: varchar("click_id").references(() => affiliateClicks.id),
+  artistId: varchar("artist_id").references(() => artists.id), // For artist signup conversions
+  conversionType: text("conversion_type").notNull().default("sale"), // sale or artist_signup
   
-  // Order details
-  shopifyOrderId: text("shopify_order_id").notNull(), // From Shopify webhook
-  orderTotal: decimal("order_total", { precision: 10, scale: 2 }).notNull(),
+  // Order details (nullable for artist signup conversions)
+  shopifyOrderId: text("shopify_order_id"), // From Shopify webhook
+  orderTotal: decimal("order_total", { precision: 10, scale: 2 }),
   customerEmail: text("customer_email"), // For deduplication
   
-  // Commission calculation
-  commissionType: text("commission_type").notNull(), // percentage or flat_fee
-  commissionRate: decimal("commission_rate", { precision: 10, scale: 2 }).notNull(), // Rate at time of sale
-  commissionEarned: decimal("commission_earned", { precision: 10, scale: 2 }).notNull(),
-  tierBonus: decimal("tier_bonus", { precision: 10, scale: 2 }).notNull().default('0'), // Extra from tier
-  challengeBonus: decimal("challenge_bonus", { precision: 10, scale: 2 }).notNull().default('0'), // Challenge winnings
-  totalPayout: decimal("total_payout", { precision: 10, scale: 2 }).notNull(), // Sum of all bonuses
+  // Commission calculation (nullable for artist signup conversions)
+  commissionType: text("commission_type"), // percentage or flat_fee
+  commissionRate: decimal("commission_rate", { precision: 10, scale: 2 }), // Rate at time of sale
+  commissionEarned: decimal("commission_earned", { precision: 10, scale: 2 }),
+  tierBonus: decimal("tier_bonus", { precision: 10, scale: 2 }).default('0'), // Extra from tier
+  challengeBonus: decimal("challenge_bonus", { precision: 10, scale: 2 }).default('0'), // Challenge winnings
+  totalPayout: decimal("total_payout", { precision: 10, scale: 2 }), // Sum of all bonuses
   
   // Payout tracking
   payoutStatus: text("payout_status").notNull().default("pending"), // pending, paid, failed

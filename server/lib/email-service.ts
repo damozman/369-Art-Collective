@@ -2,10 +2,44 @@ import { Resend } from 'resend';
 import { db } from '../db';
 import { emailLogs } from '@shared/schema';
 
-const resendApiKey = process.env.RESEND_API_KEY;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
+let connectionSettings: any;
 
-const FROM_EMAIL = 'noreply@247printnetwork.com';
+async function getCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY 
+    ? 'repl ' + process.env.REPL_IDENTITY 
+    : process.env.WEB_REPL_RENEWAL 
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+    : null;
+
+  if (!xReplitToken) {
+    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+  }
+
+  connectionSettings = await fetch(
+    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
+    {
+      headers: {
+        'Accept': 'application/json',
+        'X_REPLIT_TOKEN': xReplitToken
+      }
+    }
+  ).then(res => res.json()).then(data => data.items?.[0]);
+
+  if (!connectionSettings || (!connectionSettings.settings.api_key)) {
+    throw new Error('Resend not connected');
+  }
+  return {apiKey: connectionSettings.settings.api_key, fromEmail: connectionSettings.settings.from_email};
+}
+
+async function getUncachableResendClient() {
+  const credentials = await getCredentials();
+  return {
+    client: new Resend(credentials.apiKey),
+    fromEmail: connectionSettings.settings.from_email
+  };
+}
+
 const FROM_NAME = '247 Print Network Team';
 
 export type EmailType = 
@@ -48,19 +82,11 @@ export class EmailService {
   }
 
   async sendEmail(data: EmailData): Promise<{ success: boolean; error?: string }> {
-    if (!resend) {
-      console.warn('Resend not configured. Email would have been sent:', {
-        to: data.recipientEmail,
-        subject: data.subject,
-        type: data.emailType,
-      });
-      await this.logEmail(data, undefined, 'failed', 'Resend API key not configured');
-      return { success: false, error: 'Email service not configured' };
-    }
-
     try {
-      const result = await resend.emails.send({
-        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      const { client, fromEmail } = await getUncachableResendClient();
+
+      const result = await client.emails.send({
+        from: `${FROM_NAME} <${fromEmail}>`,
         to: data.recipientEmail,
         subject: data.subject,
         html: data.htmlBody,
@@ -77,6 +103,17 @@ export class EmailService {
       }
     } catch (error: any) {
       console.error('Failed to send email:', error);
+      
+      if (error.message.includes('Resend not connected')) {
+        console.warn('Resend not configured. Email would have been sent:', {
+          to: data.recipientEmail,
+          subject: data.subject,
+          type: data.emailType,
+        });
+        await this.logEmail(data, undefined, 'failed', 'Resend not configured');
+        return { success: false, error: 'Email service not configured' };
+      }
+
       await this.logEmail(data, undefined, 'failed', error.message);
       return { success: false, error: error.message };
     }

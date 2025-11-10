@@ -25,14 +25,17 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import AdminArtists from "@/pages/admin-artists";
 import AdminArtistDetail from "@/pages/admin-artist-detail";
 import AdminPayouts from "@/pages/admin-payouts";
+import AdminTestimonials from "@/pages/admin-testimonials";
 import AdminEmpire from "@/pages/admin-empire";
 import AdminSettings from "@/pages/admin-settings";
+import SuccessStory from "@/pages/success-story";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/success-stories/:slug" component={SuccessStory} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/register" component={Register} />
@@ -103,6 +106,12 @@ function Router() {
       <Route path="/admin/payouts">
         <ProtectedRoute requiredType="admin">
           <AdminPayouts />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/testimonials">
+        <ProtectedRoute requiredType="admin">
+          <AdminTestimonials />
         </ProtectedRoute>
       </Route>
       

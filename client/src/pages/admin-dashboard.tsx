@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useLocation } from "wouter";
-import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings, Flag } from "lucide-react";
+import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings, Flag, MessageSquare } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -216,6 +216,14 @@ export default function AdminDashboard() {
                   <line x1="2" y1="10" x2="22" y2="10"/>
                 </svg>
                 Payouts
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/admin/testimonials")}
+                data-testid="button-testimonials"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Testimonials
               </Button>
               <ThemeToggle />
               <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/settings")} data-testid="button-settings">

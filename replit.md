@@ -23,6 +23,17 @@ The platform is built with a clear separation between frontend and backend.
     - **Sequential Processing:** Backend processes bulk operations one-by-one to avoid Shopify API rate limits
     - **Success Tracking:** Detailed toast notifications showing success/failure counts for bulk operations
     - **Fixed Action Bar:** Bottom-anchored controls appear when items selected, showing count and bulk action buttons
+  - **Enhanced Artist Management Dashboard:**
+    - **Advanced Search & Filtering:** Real-time search by artist name or email with instant results
+    - **Status Filtering:** Filter artists by approval status (all, approved, pending)
+    - **Multi-Sort Options:** Sort artists by newest/oldest, name A-Z/Z-A
+    - **Bulk Selection System:** Individual checkboxes per artist, "Select All" for filtered results
+    - **Bulk Operations:** Approve or reject multiple artists simultaneously with automated email notifications
+    - **Batch Communications:** Send custom emails to multiple selected artists with subject and message composer
+    - **CSV Export:** Download filtered artist data with proper quote escaping (Name, Email, Status, Joined Date, Referral Code)
+    - **Selection Safety:** Automatic selection clearing when filters, search, or sort changes to prevent accidental operations on hidden artists
+    - **Sequential Processing:** Backend processes bulk operations one-by-one to avoid email service rate limits
+    - **Fixed Action Bar:** Bottom-anchored controls appear when artists selected, showing count and bulk action buttons (approve, reject, send email)
 - **Printify Integration:** Approved artwork automatically creates Printify POD products.
 - **Shopify Integration:** Shopify webhooks capture orders, and the platform integrates with the Shopify Admin API for storefront product management.
   - **Enhanced Product Creation:** When artwork is approved, Shopify products are enriched with marketing content:

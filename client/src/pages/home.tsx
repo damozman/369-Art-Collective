@@ -1,0 +1,325 @@
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { 
+  Palette, 
+  TrendingUp, 
+  Globe, 
+  Zap, 
+  DollarSign, 
+  Users, 
+  Rocket,
+  ShoppingBag,
+  Award,
+  ArrowRight,
+  CheckCircle2,
+  Sparkles
+} from "lucide-react";
+
+export default function Home() {
+  const [, setLocation] = useLocation();
+
+  const features = [
+    {
+      icon: Palette,
+      title: "Your Art, Your Empire",
+      description: "Upload your designs and we handle everything else. No inventory, no shipping, no hassle."
+    },
+    {
+      icon: TrendingUp,
+      title: "Tiered Royalties Up to 45%",
+      description: "Earn 30-45% on every sale. The more you sell, the more you earn. Your success is our success."
+    },
+    {
+      icon: Globe,
+      title: "Global Print Network",
+      description: "Automatic product creation on premium POD platforms. Your art reaches customers worldwide."
+    },
+    {
+      icon: Zap,
+      title: "Automated Everything",
+      description: "From product creation to fulfillment to payouts. Focus on creating, we handle the business."
+    },
+    {
+      icon: Users,
+      title: "Referral Bonuses",
+      description: "Earn +5% on referred sales and 5% of recruited artists' royalties. Build your creative empire."
+    },
+    {
+      icon: ShoppingBag,
+      title: "Zero Inventory Risk",
+      description: "Print-on-demand model means no upfront costs, no storage fees, no unsold inventory."
+    }
+  ];
+
+  const stats = [
+    { value: "30-45%", label: "Artist Royalties" },
+    { value: "100+", label: "Product Types" },
+    { value: "24/7", label: "Automated Sales" },
+    { value: "$0", label: "Upfront Costs" }
+  ];
+
+  const howItWorks = [
+    {
+      step: "1",
+      title: "Apply & Get Approved",
+      description: "Submit your portfolio. We're building a network of quality artists who share our vision."
+    },
+    {
+      step: "2",
+      title: "Upload Your Art",
+      description: "Submit your designs with our quality requirements (2400x3000px minimum for print perfection)."
+    },
+    {
+      step: "3",
+      title: "We Create Products",
+      description: "Your approved art automatically becomes products on our marketplace via Printify integration."
+    },
+    {
+      step: "4",
+      title: "Earn Automatically",
+      description: "Get paid via Stripe Connect. Track earnings, manage payouts, and watch your empire grow."
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <span className="font-bold text-xl font-serif">247 Print Network</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" onClick={() => setLocation("/login")} data-testid="button-login">
+              Sign In
+            </Button>
+            <Button onClick={() => setLocation("/register")} data-testid="button-get-started">
+              Get Started
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative py-20 md:py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
+        <div className="container mx-auto px-4 relative">
+          <div className="max-w-4xl mx-auto text-center space-y-6">
+            <Badge className="mb-4" variant="secondary" data-testid="badge-status">
+              <Rocket className="h-3 w-3 mr-1" />
+              Now Accepting Artist Applications
+            </Badge>
+            <h1 className="text-4xl md:text-6xl font-bold font-serif leading-tight">
+              Turn Your Art Into
+              <br />
+              <span className="text-primary">Passive Income</span>
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Join the artist-powered marketplace where your creativity becomes a sustainable business. 
+              Upload once, earn forever. Zero inventory, infinite possibilities.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button 
+                size="lg" 
+                onClick={() => setLocation("/register")}
+                className="text-lg"
+                data-testid="button-join-network"
+              >
+                Join the Network
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => setLocation("/login")}
+                data-testid="button-artist-login"
+              >
+                Artist Login
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-12 border-y bg-muted/50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center" data-testid={`stat-${index}`}>
+                <div className="text-3xl md:text-4xl font-bold text-primary">{stat.value}</div>
+                <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold font-serif mb-4">
+              Why Artists Choose 247 Print Network
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Built by creators, for creators. We've removed every barrier between your art and your income.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {features.map((feature, index) => (
+              <Card key={index} className="hover-elevate" data-testid={`feature-card-${index}`}>
+                <CardContent className="p-6 space-y-3">
+                  <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center">
+                    <feature.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {feature.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-20 bg-muted/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold font-serif mb-4">
+              From Artist to Empire Builder
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Four simple steps to start earning from your creativity
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+            {howItWorks.map((item, index) => (
+              <div key={index} className="text-center space-y-3" data-testid={`step-${index}`}>
+                <div className="mx-auto h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold">
+                  {item.step}
+                </div>
+                <h3 className="font-semibold text-lg">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Earnings Potential */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <Card className="overflow-hidden">
+              <div className="p-8 md:p-12 space-y-6">
+                <div className="flex items-center gap-3">
+                  <DollarSign className="h-8 w-8 text-primary" />
+                  <h2 className="text-3xl font-bold font-serif">Maximize Your Earnings</h2>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="font-semibold">Tiered Royalty System</div>
+                      <div className="text-sm text-muted-foreground">
+                        30% base royalty, scaling up to 45% as your monthly sales grow
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="font-semibold">Referral Bonuses</div>
+                      <div className="text-sm text-muted-foreground">
+                        +5% on every sale from your referral links
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="font-semibold">Recruitment Rewards</div>
+                      <div className="text-sm text-muted-foreground">
+                        Earn 5% of royalties from artists you recruit to the network
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="font-semibold">Automated Payouts</div>
+                      <div className="text-sm text-muted-foreground">
+                        Direct deposits via Stripe Connect. Your money, your control.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center space-y-6">
+            <h2 className="text-3xl md:text-4xl font-bold font-serif">
+              Ready to Build Your Creative Empire?
+            </h2>
+            <p className="text-lg opacity-90">
+              Join the network of artists turning their passion into sustainable income. 
+              The future of creative commerce starts now.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button 
+                size="lg" 
+                variant="secondary"
+                onClick={() => setLocation("/register")}
+                className="text-lg"
+                data-testid="button-apply-now"
+              >
+                <Award className="mr-2 h-5 w-5" />
+                Apply as an Artist
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => setLocation("/login")}
+                className="border-primary-foreground/20 hover:bg-primary-foreground/10"
+                data-testid="button-login-footer"
+              >
+                Already a Member?
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 border-t">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <span className="font-semibold font-serif">247 Print Network</span>
+            </div>
+            <p className="text-sm text-muted-foreground text-center md:text-left">
+              Empowering artists with automated print-on-demand commerce
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

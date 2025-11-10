@@ -34,6 +34,12 @@ The platform is built with a clear separation between frontend and backend.
 - **API Endpoints:** A comprehensive set of RESTful API endpoints manage authentication, artist management, artwork management, and admin analytics, including image URL normalization for consistent display across domains.
 - **Account Deletion:** Soft-delete system for artist accounts, preserving historical data while preventing login for deleted accounts.
 - **Product Deactivation/Activation:** Artists can control Shopify product visibility (draft/active) for their approved artworks via the platform.
+- **Testimonials & Affiliate Tracking:**
+  - Full CRUD system for managing artist success stories with video testimonials and social sharing
+  - Affiliate link feature generates shareable URLs with UTM tracking (utm_source, utm_medium, utm_campaign, ref)
+  - Success story pages capture referral parameters and preserve them through "Join as Artist" CTAs
+  - Efficient LEFT JOIN implementation enriches testimonials with artist referral codes without data duplication
+  - Complete attribution chain: share link → success story → registration → referral bonus tracking
 
 ## External Dependencies
 - **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered) for persistent storage.

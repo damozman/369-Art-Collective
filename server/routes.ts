@@ -29,6 +29,7 @@ import { processShopifyOrder } from "./lib/order-processor";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
 import { validateImageQuality, MIN_WIDTH, MIN_HEIGHT } from "./lib/image-validator";
 import { stripeConnectService } from "./lib/stripe-connect";
+import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from "./lib/payout-service";
 
 // Ensure uploads directory exists
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -1733,19 +1734,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Process monthly payouts for all artists
-  app.post("/api/admin/process-payouts", requireAdmin, async (req, res) => {
+  app.post("/api/admin/payouts/execute", requireAdmin, async (req, res) => {
     try {
-      const { processPayouts } = await import("./lib/payout-processor");
+      const { periodStart, periodEnd } = req.body;
       
-      const result = await processPayouts();
+      const start = periodStart ? new Date(periodStart) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const end = periodEnd ? new Date(periodEnd) : new Date();
+
+      const result = await processAllPayouts(start, end);
 
       res.json({
-        message: "Payouts processed successfully",
-        ...result,
+        message: "Payouts processed",
+        successful: result.successful,
+        failed: result.failed,
+        skipped: result.skipped,
+        results: result.results,
       });
     } catch (error: any) {
       console.error("Process payouts error:", error);
       res.status(500).json({ message: error.message || "Failed to process payouts" });
+    }
+  });
+
+  // Admin: Execute payout for specific artist
+  app.post("/api/admin/payouts/execute/:artistId", requireAdmin, async (req, res) => {
+    try {
+      const { artistId } = req.params;
+      const { periodStart, periodEnd } = req.body;
+      
+      const start = periodStart ? new Date(periodStart) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const end = periodEnd ? new Date(periodEnd) : new Date();
+
+      const result = await executeArtistPayout(artistId, start, end);
+
+      if (result.success) {
+        res.json({
+          message: "Payout executed successfully",
+          payoutId: result.payoutId,
+        });
+      } else {
+        res.status(400).json({ message: result.error });
+      }
+    } catch (error: any) {
+      console.error("Execute artist payout error:", error);
+      res.status(500).json({ message: error.message || "Failed to execute payout" });
     }
   });
 
@@ -1756,6 +1788,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(payouts);
     } catch (error: any) {
       console.error("Get all payouts error:", error);
+      res.status(500).json({ message: "Failed to fetch payouts" });
+    }
+  });
+
+  // Artist: Get payout history for current artist
+  app.get("/api/artists/payouts", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      const payouts = await storage.getPayoutsByArtist(artist.id);
+      
+      // Also get current unpaid earnings
+      const calculation = await calculateArtistPayout(artist.id);
+      
+      res.json({
+        payouts,
+        unpaidEarnings: calculation ? calculation.totalEarnings : 0,
+        unpaidSalesCount: calculation ? calculation.salesCount : 0,
+      });
+    } catch (error: any) {
+      console.error("Get artist payouts error:", error);
       res.status(500).json({ message: "Failed to fetch payouts" });
     }
   });

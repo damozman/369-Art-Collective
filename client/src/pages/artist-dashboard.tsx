@@ -34,6 +34,10 @@ export default function ArtistDashboard() {
     queryKey: ["/api/artworks/my-artworks"],
   });
 
+  const { data: payoutData, isLoading: payoutLoading, isError: payoutError } = useQuery<{ payouts: any[]; unpaidEarnings: number; unpaidSalesCount: number }>({
+    queryKey: ["/api/artists/payouts"],
+  });
+
   const stats = {
     total: artworks?.length || 0,
     pending: artworks?.filter(a => a.status === "pending").length || 0,
@@ -162,7 +166,7 @@ export default function ArtistDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <Card>
               <CardHeader className="p-4">
                 <CardDescription>Total Submissions</CardDescription>
@@ -185,6 +189,27 @@ export default function ArtistDashboard() {
               <CardHeader className="p-4">
                 <CardDescription>Rejected</CardDescription>
                 <CardTitle className="text-3xl text-red-600" data-testid="text-rejected">{stats.rejected}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="p-4">
+                <CardDescription>Unpaid Earnings</CardDescription>
+                {payoutLoading ? (
+                  <Skeleton className="h-9 w-24" />
+                ) : payoutError ? (
+                  <CardTitle className="text-3xl text-destructive" data-testid="text-unpaid-earnings">
+                    $0.00
+                  </CardTitle>
+                ) : (
+                  <>
+                    <CardTitle className="text-3xl text-primary" data-testid="text-unpaid-earnings">
+                      ${payoutData?.unpaidEarnings?.toFixed(2) || '0.00'}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {payoutData?.unpaidSalesCount || 0} unpaid sales
+                    </p>
+                  </>
+                )}
               </CardHeader>
             </Card>
           </div>
@@ -357,6 +382,58 @@ export default function ArtistDashboard() {
               </div>
             </div>
           </Card>
+        )}
+
+        {payoutData && payoutData.payouts && payoutData.payouts.length > 0 && (
+          <div className="mt-12">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-bold font-serif">Recent Payouts</h3>
+                <p className="text-muted-foreground">Your latest royalty payments</p>
+              </div>
+              <Button variant="outline" onClick={() => setLocation("/artist/payouts")} data-testid="button-view-all-payouts">
+                View All
+              </Button>
+            </div>
+            <Card>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {payoutData.payouts.slice(0, 3).map((payout: any) => (
+                    <div key={payout.id} className="flex items-center justify-between p-4 rounded-lg border" data-testid={`payout-${payout.id}`}>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">${parseFloat(payout.amount).toFixed(2)}</p>
+                          {payout.status === "completed" && (
+                            <Badge variant="default" className="bg-green-600 hover:bg-green-700" data-testid={`badge-payout-completed-${payout.id}`}>
+                              <CheckCircle className="w-3 h-3 mr-1" />Paid
+                            </Badge>
+                          )}
+                          {payout.status === "processing" && (
+                            <Badge variant="secondary" data-testid={`badge-payout-processing-${payout.id}`}>
+                              <Clock className="w-3 h-3 mr-1" />Processing
+                            </Badge>
+                          )}
+                          {payout.status === "failed" && (
+                            <Badge variant="destructive" data-testid={`badge-payout-failed-${payout.id}`}>
+                              <XCircle className="w-3 h-3 mr-1" />Failed
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {payout.salesCount} sales • {new Date(payout.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      {payout.stripeTransferId && (
+                        <p className="text-xs text-muted-foreground font-mono" data-testid={`text-transfer-id-${payout.id}`}>
+                          {payout.stripeTransferId.substring(0, 20)}...
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </main>
     </div>

@@ -140,6 +140,43 @@ export default function ArtistSettings() {
     },
   });
 
+  const createStripeOnboardingLinkMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/artists/stripe/onboarding-link", {});
+    },
+    onSuccess: (data: any) => {
+      // Redirect to Stripe onboarding
+      window.location.href = data.url;
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create onboarding link",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const refreshStripeStatusMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/artists/stripe/refresh-status", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      toast({
+        title: "Stripe status refreshed",
+        description: "Your Stripe account status has been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to refresh Stripe status",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   function onPasswordSubmit(data: ChangePasswordForm) {
     changePasswordMutation.mutate(data);
   }
@@ -393,6 +430,98 @@ export default function ArtistSettings() {
                     </div>
                   </form>
                 </Form>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card data-testid="card-stripe-connect">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="5" width="20" height="14" rx="2"/>
+                  <line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+                Stripe Connect - Payment Setup
+              </CardTitle>
+              <CardDescription>
+                Connect your bank account to receive automated royalty payouts
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!user?.stripeOnboardingComplete ? (
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-muted p-4 space-y-2">
+                    <p className="text-sm font-medium">
+                      Set up your Stripe account to receive payments
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      You'll need to provide:
+                    </p>
+                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                      <li>Business details (individual or business)</li>
+                      <li>Bank account information for payouts</li>
+                      <li>Identity verification</li>
+                    </ul>
+                  </div>
+                  <Button
+                    onClick={() => createStripeOnboardingLinkMutation.mutate()}
+                    disabled={createStripeOnboardingLinkMutation.isPending}
+                    data-testid="button-setup-stripe"
+                  >
+                    {createStripeOnboardingLinkMutation.isPending ? "Creating link..." : "Set Up Stripe Account"}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-4 space-y-2">
+                    <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                      ✓ Stripe Account Connected
+                    </p>
+                    <div className="text-sm space-y-1">
+                      <p className="text-muted-foreground">
+                        <span className="font-medium">Status:</span> {user.stripePayoutsEnabled ? "Payouts enabled" : "Pending verification"}
+                      </p>
+                      {user.externalAccountLast4 && (
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">Bank Account:</span> ****{user.externalAccountLast4}
+                        </p>
+                      )}
+                      {user.stripeDefaultCurrency && (
+                        <p className="text-muted-foreground">
+                          <span className="font-medium">Currency:</span> {user.stripeDefaultCurrency.toUpperCase()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {!user.stripePayoutsEnabled && (
+                    <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-4">
+                      <p className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                        Action Required
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Complete your Stripe onboarding to enable payouts
+                      </p>
+                      <Button
+                        onClick={() => createStripeOnboardingLinkMutation.mutate()}
+                        disabled={createStripeOnboardingLinkMutation.isPending}
+                        className="mt-2"
+                        data-testid="button-resume-stripe"
+                      >
+                        {createStripeOnboardingLinkMutation.isPending ? "Creating link..." : "Resume Onboarding"}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => refreshStripeStatusMutation.mutate()}
+                    disabled={refreshStripeStatusMutation.isPending}
+                    data-testid="button-refresh-stripe"
+                  >
+                    {refreshStripeStatusMutation.isPending ? "Refreshing..." : "Refresh Status"}
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>

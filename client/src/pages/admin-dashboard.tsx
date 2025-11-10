@@ -7,12 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useLocation } from "wouter";
-import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings } from "lucide-react";
+import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings, Flag } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { ArtworkWithArtist, Artist } from "@shared/schema";
+import type { ArtworkWithArtist, Artist, ViolationReport } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminDashboard() {
@@ -22,6 +24,9 @@ export default function AdminDashboard() {
   const [selectedArtwork, setSelectedArtwork] = useState<ArtworkWithArtist | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
+  const [showFlagDialog, setShowFlagDialog] = useState(false);
+  const [reason, setReason] = useState<"trademark" | "copyright" | "inappropriate" | "other">("trademark");
+  const [notes, setNotes] = useState("");
 
   const { data: artworks, isLoading } = useQuery<ArtworkWithArtist[]>({
     queryKey: ["/api/artworks/all"],
@@ -30,6 +35,12 @@ export default function AdminDashboard() {
   // Query for pending artists count
   const { data: artists } = useQuery<Artist[]>({
     queryKey: ["/api/artists/all"],
+  });
+
+  // Query for violation reports of selected artwork
+  const { data: violationReports } = useQuery<ViolationReport[]>({
+    queryKey: ["/api/artworks", selectedArtwork?.id, "violations"],
+    enabled: !!selectedArtwork,
   });
 
   const pendingArtistsCount = artists?.filter(a => !a.approved).length || 0;
@@ -88,6 +99,29 @@ export default function AdminDashboard() {
     },
   });
 
+  const flagMutation = useMutation({
+    mutationFn: async ({ artworkId, reason, notes }: { artworkId: string; reason: string; notes: string }) => {
+      return apiRequest("POST", `/api/artworks/${artworkId}/flag`, { reason, notes });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/artworks", selectedArtwork?.id, "violations"] });
+      toast({
+        title: "Artwork flagged",
+        description: "IP violation report created",
+      });
+      setShowFlagDialog(false);
+      setNotes("");
+      setReason("trademark");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Flagging failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleApprove = (artwork: ArtworkWithArtist) => {
     approveMutation.mutate(artwork.id);
   };
@@ -102,6 +136,23 @@ export default function AdminDashboard() {
       return;
     }
     rejectMutation.mutate({ artworkId: artwork.id, reason: rejectionReason });
+  };
+
+  const handleFlag = () => {
+    if (!notes.trim()) {
+      toast({
+        title: "Description required",
+        description: "Please describe the suspected violation",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!selectedArtwork) return;
+    flagMutation.mutate({
+      artworkId: selectedArtwork.id,
+      reason,
+      notes,
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -333,6 +384,42 @@ export default function AdminDashboard() {
                   </div>
                 )}
 
+                {selectedArtwork.ipDeclarationAccepted && (
+                  <div className="bg-muted/50 p-3 rounded-md">
+                    <h4 className="font-medium mb-1 text-sm">IP Declaration</h4>
+                    <p className="text-xs text-muted-foreground">{selectedArtwork.ipDeclarationText}</p>
+                  </div>
+                )}
+
+                {violationReports && violationReports.length > 0 && (
+                  <div className="border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20 p-4 rounded-md">
+                    <h4 className="font-medium mb-2 text-red-800 dark:text-red-200 flex items-center gap-2">
+                      <Flag className="w-4 h-4" />
+                      Violation Reports ({violationReports.length})
+                    </h4>
+                    <div className="space-y-3">
+                      {violationReports.map((report, idx) => (
+                        <div key={idx} className="bg-background p-3 rounded border border-border">
+                          <div className="flex justify-between items-start mb-2">
+                            <Badge variant={report.status === "resolved" ? "outline" : "destructive"}>
+                              {report.reason.charAt(0).toUpperCase() + report.reason.slice(1)}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(report.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          {report.notes && <p className="text-sm text-muted-foreground">{report.notes}</p>}
+                          {report.status === "resolved" && report.resolvedAt && (
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                              Resolved on {new Date(report.resolvedAt).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {selectedArtwork.status === "pending" && (
                   <div>
                     <h4 className="font-medium mb-2">Rejection Reason (if rejecting)</h4>
@@ -348,33 +435,96 @@ export default function AdminDashboard() {
               </div>
 
               <DialogFooter className="flex gap-2">
-                {selectedArtwork.status === "pending" && (
-                  <>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleReject(selectedArtwork)}
-                      disabled={rejectMutation.isPending}
-                      data-testid="button-reject"
-                    >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Reject
-                    </Button>
-                    <Button
-                      onClick={() => handleApprove(selectedArtwork)}
-                      disabled={approveMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700"
-                      data-testid="button-approve"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Approve & Create Shopify Product
-                    </Button>
-                  </>
-                )}
+                <div className="flex justify-between w-full">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowFlagDialog(true)}
+                    data-testid="button-flag-violation"
+                  >
+                    <Flag className="w-4 h-4 mr-2" />
+                    Flag for IP Violation
+                  </Button>
+                  {selectedArtwork.status === "pending" && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleReject(selectedArtwork)}
+                        disabled={rejectMutation.isPending}
+                        data-testid="button-reject"
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Reject
+                      </Button>
+                      <Button
+                        onClick={() => handleApprove(selectedArtwork)}
+                        disabled={approveMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700"
+                        data-testid="button-approve"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Approve & Create Shopify Product
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </DialogFooter>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showFlagDialog} onOpenChange={setShowFlagDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Flag Artwork for IP Violation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Report a suspected trademark, copyright, or other intellectual property violation.
+              This creates an internal record for investigation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Violation Type</label>
+              <Select value={reason} onValueChange={(value: any) => setReason(value)}>
+                <SelectTrigger data-testid="select-violation-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="trademark">Trademark Violation</SelectItem>
+                  <SelectItem value="copyright">Copyright Violation</SelectItem>
+                  <SelectItem value="inappropriate">Inappropriate Content</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Textarea
+                placeholder="Describe the suspected violation (e.g., 'Contains Nike swoosh logo', 'Unauthorized use of Disney character')..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="min-h-32"
+                data-testid="input-violation-description"
+              />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-flag">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleFlag}
+              disabled={flagMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="button-submit-flag"
+            >
+              <Flag className="w-4 h-4 mr-2" />
+              Submit Report
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

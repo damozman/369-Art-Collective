@@ -147,7 +147,7 @@ export default function AdminTestimonials() {
       artistName: testimonial.artistName,
       title: testimonial.title,
       quote: testimonial.quote,
-      videoProvider: testimonial.videoProvider,
+      videoProvider: (testimonial.videoProvider || "youtube") as "youtube" | "vimeo" | "direct",
       videoUrl: testimonial.videoUrl,
       videoThumbnailUrl: testimonial.videoThumbnailUrl,
       localVideoPath: testimonial.localVideoPath,

@@ -4,6 +4,40 @@
 The 247 Print Network is an artist-powered print-on-demand (POD) marketplace. Its core purpose is to enable artists to upload their artwork, which, upon administrative approval, is automatically transformed into POD products via Printify integration. The platform handles automated fulfillment and a tiered royalty payout system. The vision is to build a creator-powered marketplace where artists drive product creation, marketing through referrals, and recruitment, all supported by automated royalties and a zero-inventory POD model.
 
 ## Recent Changes (November 2025)
+**Portfolio Submission System (November 2025)**
+- **Implementation**: Two-phase registration wizard requiring artists to submit 2-3 portfolio samples during signup to create exclusivity and filter non-serious artists
+  - Added `portfolio_submissions` table with (id, artistId, imageUrl, createdAt) schema
+  - Created POST `/api/artists/portfolio` endpoint for authenticated portfolio uploads (allows unapproved artists)
+  - Created GET `/api/artists/:id/portfolio` admin endpoint to view submissions during approval
+  - Storage layer methods added to both PostgresStorage and MemStorage for portfolio CRUD operations
+- **Registration Flow**:
+  - **Step 1**: Account creation (email, name, artistShort, password) → auto-login → advance to Step 2
+  - **Step 2**: Portfolio upload with 2-3 high-quality images (minimum 2400×3000px) → redirect to pending approval
+  - Progress indicator shows current step (1: Account Details, 2: Portfolio Samples)
+  - File preview grid with remove functionality using refs for proper state management
+  - Clear requirements displayed: min resolution, DPI recommendation, supported formats, file size limit
+- **Image Quality Validation**:
+  - Same validation as artwork uploads: 2400×3000px minimum (or 3000×2400 landscape)
+  - Custom dimension reader (server/lib/image-validator.ts) parses PNG/JPEG headers without external dependencies
+  - Automatic file cleanup for rejected uploads prevents orphaned files
+  - Only PNG and JPG formats accepted (GIF excluded due to 256-color limitation)
+- **Admin Portfolio Viewing**:
+  - Artist detail page displays "Portfolio Submissions" card before approval review
+  - Grid layout showing portfolio images with "Sample N" labels
+  - Empty state handling for artists registered before portfolio requirements
+  - Images normalized to absolute URLs for cross-domain support
+- **User Experience**:
+  - Blue info box lists requirements before file selection
+  - Live image previews with remove buttons
+  - Helpful error messages show actual vs required dimensions when validation fails
+  - Submit button disabled until 2 images uploaded, enabled when 2-3 present
+- **Technical Details**:
+  - Server validates after file upload, before database entry
+  - Failed uploads return detailed error with min/actual dimensions
+  - Database stores relative paths (/uploads/portfolio-...), API normalizes to absolute URLs
+  - Enforced both client-side (wizard UI) and server-side (endpoint validation)
+- **Testing**: End-to-end test verified: registration → portfolio upload → admin viewing flow. Created high-resolution test image generator script (scripts/generate-test-images.js) to produce 2400×3000px PNG files for testing.
+
 **Critical Fix: Artwork Image URL Normalization**
 - **Problem**: Artwork images failed to load in artist/admin portals when accessed through custom domains because database stored relative URLs (`/uploads/...`)
 - **Solution**: Implemented API-level URL normalization in `server/routes.ts`

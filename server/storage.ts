@@ -37,7 +37,7 @@ import {
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
-import { eq, isNull, and, desc, asc, gte, sql as drizzleSql, sum } from "drizzle-orm";
+import { eq, isNull, isNotNull, and, desc, asc, gte, sql as drizzleSql, sum } from "drizzle-orm";
 import { generateReferralCode } from "./lib/referral-code-generator";
 
 export interface IStorage {
@@ -685,17 +685,17 @@ class PostgresStorage implements IStorage {
       .leftJoin(artists, eq(testimonials.artistId, artists.id))
       .where(and(
         eq(testimonials.isActive, true),
-        drizzleSql`${testimonials.featuredTier} IS NOT NULL` // Only featured testimonials
+        isNotNull(testimonials.featuredTier) // Only featured testimonials
       ))
       .orderBy(
-        drizzleSql`CASE ${testimonials.featuredTier}
-          WHEN 'admin_override' THEN 1
-          WHEN 'premium' THEN 2
-          WHEN 'merit' THEN 3
+        drizzleSql`CASE
+          WHEN ${testimonials.featuredTier} = 'admin_override' THEN 1
+          WHEN ${testimonials.featuredTier} = 'premium' THEN 2
+          WHEN ${testimonials.featuredTier} = 'merit' THEN 3
           ELSE 4
         END`,
-        testimonials.displayOrder,
-        testimonials.createdAt
+        asc(testimonials.displayOrder),
+        asc(testimonials.createdAt)
       );
     
     return results.map(row => ({

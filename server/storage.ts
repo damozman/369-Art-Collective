@@ -113,6 +113,7 @@ export interface IStorage {
   // Testimonial methods with artist data (for affiliate links)
   getAllTestimonialsWithArtist(): Promise<TestimonialWithArtist[]>;
   getTestimonialBySlugWithArtist(slug: string): Promise<TestimonialWithArtist | undefined>;
+  getFeaturedTestimonialsWithArtist(): Promise<TestimonialWithArtist[]>;
 
   // Featured Subscription methods
   createFeaturedSubscription(subscription: InsertFeaturedSubscription): Promise<FeaturedSubscription>;
@@ -649,6 +650,35 @@ class PostgresStorage implements IStorage {
       ...result.testimonial,
       artistReferralCode: result.artistReferralCode,
     };
+  }
+
+  async getFeaturedTestimonialsWithArtist(): Promise<TestimonialWithArtist[]> {
+    const results = await db
+      .select({
+        testimonial: testimonials,
+        artistReferralCode: artists.referralCode,
+      })
+      .from(testimonials)
+      .leftJoin(artists, eq(testimonials.artistId, artists.id))
+      .where(and(
+        eq(testimonials.isActive, true),
+        drizzleSql`${testimonials.featuredTier} IS NOT NULL` // Only featured testimonials
+      ))
+      .orderBy(
+        drizzleSql`CASE ${testimonials.featuredTier}
+          WHEN 'admin_override' THEN 1
+          WHEN 'premium' THEN 2
+          WHEN 'merit' THEN 3
+          ELSE 4
+        END`,
+        testimonials.displayOrder,
+        testimonials.createdAt
+      );
+    
+    return results.map(row => ({
+      ...row.testimonial,
+      artistReferralCode: row.artistReferralCode,
+    }));
   }
 
   // Featured Subscription methods
@@ -1240,6 +1270,11 @@ class MemStorage implements IStorage {
   async getTestimonialBySlugWithArtist(slug: string): Promise<TestimonialWithArtist | undefined> {
     console.log("MemStorage: getTestimonialBySlugWithArtist called (stub)", slug);
     return undefined;
+  }
+
+  async getFeaturedTestimonialsWithArtist(): Promise<TestimonialWithArtist[]> {
+    console.log("MemStorage: getFeaturedTestimonialsWithArtist called (stub)");
+    return [];
   }
 
   async getArtistByReferralCode(referralCode: string): Promise<Artist | undefined> {

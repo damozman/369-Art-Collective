@@ -2209,6 +2209,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public: Get featured testimonials with tier-based sorting for homepage
+  app.get("/api/featured-testimonials", async (_req, res) => {
+    try {
+      const testimonials = await storage.getFeaturedTestimonialsWithArtist();
+      res.json(testimonials);
+    } catch (error: any) {
+      console.error("Get featured testimonials error:", error);
+      res.status(500).json({ message: "Failed to fetch featured testimonials" });
+    }
+  });
+
   // Admin: Get all testimonials (including inactive) with artist referral codes
   app.get("/api/admin/testimonials", requireAdmin, async (_req, res) => {
     try {

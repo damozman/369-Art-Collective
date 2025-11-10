@@ -273,6 +273,154 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updatePayout(payoutId, { status: 'failed' });
           console.log(`✅ Marked payout ${payoutId} as failed (via payout.failed event)`);
         }
+      } else if (eventType === 'checkout.session.completed') {
+        // Handle successful Stripe Checkout session for featured subscriptions
+        const session = event.data.object as any;
+        const subscriptionType = session.metadata?.subscriptionType;
+        
+        if (subscriptionType === 'premium_featured') {
+          const { artistId, testimonialId } = session.metadata;
+          const stripeSubscriptionId = session.subscription as string;
+          
+          if (!artistId || !testimonialId || !stripeSubscriptionId) {
+            console.warn('Checkout session completed without required metadata');
+          } else {
+            // Idempotency: Check if subscription already exists
+            const existingSubs = await storage.getFeaturedSlotsByTier('premium');
+            const existingSubscription = existingSubs.find(
+              (sub) => sub.stripeSubscriptionId === stripeSubscriptionId
+            );
+            
+            if (existingSubscription) {
+              console.log(`⚠️ Subscription ${stripeSubscriptionId} already exists (webhook retry), skipping creation`);
+            } else {
+              console.log(`Creating premium featured subscription for artist ${artistId}, testimonial ${testimonialId}`);
+              
+              // Calculate subscription period (30 days from now)
+              const now = new Date();
+              const expiresAt = new Date(now);
+              expiresAt.setDate(expiresAt.getDate() + 30);
+              
+              // Create featured subscription record
+              await storage.createFeaturedSubscription({
+                artistId,
+                testimonialId,
+                featuredTier: 'premium',
+                startDate: now,
+                expiresAt,
+                tierPriority: 2, // Premium tier
+                stripeSubscriptionId,
+                subscriptionStatus: 'active',
+                currentPeriodEnd: expiresAt,
+              });
+              
+              // Update testimonial to mark as featured
+              await storage.updateTestimonial(testimonialId, { featured: true });
+              
+              console.log(`✅ Created premium featured subscription for testimonial ${testimonialId}`);
+            }
+          }
+        }
+      } else if (eventType === 'invoice.paid') {
+        // Handle successful subscription renewal and payment recovery
+        const invoice = event.data.object as any;
+        const stripeSubscriptionId = invoice.subscription as string;
+        
+        if (stripeSubscriptionId) {
+          // Find subscription by Stripe ID
+          const subscriptions = await storage.getFeaturedSlotsByTier('premium');
+          const subscription = subscriptions.find(
+            (sub) => sub.stripeSubscriptionId === stripeSubscriptionId && !sub.endDate
+          );
+          
+          if (subscription) {
+            console.log(`Renewing subscription ${subscription.id} for 30 days`);
+            
+            // Extend subscription by 30 days
+            const newExpiresAt = new Date();
+            newExpiresAt.setDate(newExpiresAt.getDate() + 30);
+            
+            await storage.updateFeaturedSubscription(subscription.id, {
+              expiresAt: newExpiresAt,
+              currentPeriodEnd: newExpiresAt,
+              subscriptionStatus: 'active',
+            });
+            
+            // Re-feature testimonial (in case it was unfeatured due to payment failure)
+            await storage.updateTestimonial(subscription.testimonialId, { featured: true });
+            
+            console.log(`✅ Renewed subscription ${subscription.id} until ${newExpiresAt.toISOString()} and re-featured testimonial`);
+          }
+        }
+      } else if (eventType === 'customer.subscription.updated') {
+        // Handle subscription status changes
+        const subscription = event.data.object as any;
+        const stripeSubscriptionId = subscription.id;
+        const newStatus = subscription.status; // active, past_due, canceled, etc.
+        
+        // Find our subscription record
+        const subscriptions = await storage.getFeaturedSlotsByTier('premium');
+        const ourSubscription = subscriptions.find(
+          (sub) => sub.stripeSubscriptionId === stripeSubscriptionId && !sub.endDate
+        );
+        
+        if (ourSubscription) {
+          console.log(`Updating subscription ${ourSubscription.id} status to ${newStatus}`);
+          
+          await storage.updateFeaturedSubscription(ourSubscription.id, {
+            subscriptionStatus: newStatus,
+          });
+          
+          // Update featured status based on subscription status
+          if (newStatus === 'active') {
+            // Re-feature testimonial when subscription returns to active
+            await storage.updateTestimonial(ourSubscription.testimonialId, { featured: true });
+            console.log(`✅ Re-featured testimonial ${ourSubscription.testimonialId} - subscription now active`);
+          } else if (newStatus === 'canceled' || newStatus === 'unpaid') {
+            // Unfeature testimonial for canceled or unpaid subscriptions
+            await storage.updateTestimonial(ourSubscription.testimonialId, { featured: false });
+            console.log(`⚠️ Unfeatured testimonial ${ourSubscription.testimonialId} due to subscription status: ${newStatus}`);
+          }
+          
+          console.log(`✅ Updated subscription ${ourSubscription.id} status to ${newStatus}`);
+        }
+      } else if (eventType === 'customer.subscription.deleted') {
+        // Handle subscription cancellation/deletion
+        const subscription = event.data.object as any;
+        const stripeSubscriptionId = subscription.id;
+        
+        // Find and end the subscription
+        const subscriptions = await storage.getFeaturedSlotsByTier('premium');
+        const ourSubscription = subscriptions.find(
+          (sub) => sub.stripeSubscriptionId === stripeSubscriptionId && !sub.endDate
+        );
+        
+        if (ourSubscription) {
+          console.log(`Ending subscription ${ourSubscription.id}`);
+          
+          const now = new Date();
+          await storage.updateFeaturedSubscription(ourSubscription.id, {
+            endDate: now,
+            subscriptionStatus: 'canceled',
+            endReason: 'customer_canceled',
+          });
+          
+          // Unfeature the testimonial
+          await storage.updateTestimonial(ourSubscription.testimonialId, { featured: false });
+          
+          // Log the change
+          await storage.logFeaturedRotation({
+            rotationDate: now,
+            testimonialId: ourSubscription.testimonialId,
+            artistId: ourSubscription.artistId,
+            featuredTier: 'premium',
+            artistEarnings: '0',
+            action: 'removed',
+            reason: 'Subscription canceled by customer',
+          });
+          
+          console.log(`✅ Ended subscription ${ourSubscription.id} and unfeatured testimonial ${ourSubscription.testimonialId}`);
+        }
       } else {
         console.log(`Unhandled Stripe webhook event type: ${eventType}`);
       }
@@ -2145,6 +2293,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Reorder testimonials error:", error);
       res.status(500).json({ message: "Failed to reorder testimonials" });
+    }
+  });
+
+  // ===== FEATURED SUBSCRIPTIONS - STRIPE CHECKOUT =====
+
+  // Artist: Create Stripe Checkout session for premium featured subscription
+  app.post("/api/featured/checkout", requireArtist, async (req, res) => {
+    try {
+      const artistId = (req as any).session.userId;
+      const { testimonialId } = req.body;
+
+      if (!testimonialId) {
+        return res.status(400).json({ message: "Testimonial ID is required" });
+      }
+
+      // Verify testimonial exists and belongs to this artist
+      const testimonial = await storage.getTestimonial(testimonialId);
+      if (!testimonial) {
+        return res.status(404).json({ message: "Testimonial not found" });
+      }
+      if (testimonial.artistId !== artistId) {
+        return res.status(403).json({ message: "This testimonial does not belong to you" });
+      }
+      if (!testimonial.isActive) {
+        return res.status(400).json({ message: "Only active testimonials can be featured" });
+      }
+
+      // Check for existing active premium subscription for this testimonial
+      const existingSubs = await storage.getFeaturedSlotsByTier("premium");
+      const hasActiveSubscription = existingSubs.some(
+        (sub) => sub.testimonialId === testimonialId && !sub.endDate
+      );
+
+      if (hasActiveSubscription) {
+        return res.status(400).json({ 
+          message: "This testimonial already has an active premium featured subscription" 
+        });
+      }
+
+      // Validate Stripe configuration
+      const priceId = process.env.STRIPE_FEATURED_PRICE_ID;
+      if (!priceId) {
+        console.error("❌ STRIPE_FEATURED_PRICE_ID not configured");
+        return res.status(500).json({ 
+          message: "Featured subscriptions are not configured. Please contact support." 
+        });
+      }
+
+      // Import stripe client
+      const { stripe } = await import("./lib/stripe-connect");
+
+      // Get base URL for success/cancel redirect
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+        : `http://localhost:${process.env.PORT || 5000}`;
+
+      // Create Stripe Checkout session
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        success_url: `${baseUrl}/artist/referrals?featured=success`,
+        cancel_url: `${baseUrl}/artist/referrals?featured=cancelled`,
+        metadata: {
+          artistId,
+          testimonialId,
+          subscriptionType: 'premium_featured',
+        },
+        subscription_data: {
+          metadata: {
+            artistId,
+            testimonialId,
+            subscriptionType: 'premium_featured',
+          },
+        },
+      });
+
+      console.log(`✅ Created Stripe Checkout session for artist ${artistId}, testimonial ${testimonialId}`);
+      
+      res.json({ 
+        checkoutUrl: session.url,
+        sessionId: session.id,
+      });
+    } catch (error: any) {
+      console.error("Featured checkout error:", error);
+      res.status(500).json({ message: "Failed to create checkout session" });
     }
   });
 

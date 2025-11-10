@@ -1977,6 +1977,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get artist artwork performance analytics
+  app.get("/api/artists/:id/artwork-performance", requireArtist, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Verify artist can only access their own data
+      if (req.session.user?.id !== id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const artist = await storage.getArtist(id);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Get all artworks by this artist
+      const allArtworks = await storage.getAllArtworks();
+      const artistArtworks = allArtworks.filter(a => a.artistId === id);
+
+      // Get all sales for this artist
+      const sales = await storage.getSalesByArtist(id);
+
+      // Build performance map for each artwork
+      const artworkPerformanceMap = new Map<string, {
+        title: string;
+        imageUrl: string;
+        status: string;
+        salesCount: number;
+        totalEarnings: number;
+        shopifyProductStatus: string | null;
+        createdAt: Date | null;
+      }>();
+
+      // Initialize map with all artworks
+      artistArtworks.forEach(artwork => {
+        artworkPerformanceMap.set(artwork.id, {
+          title: artwork.title,
+          imageUrl: artwork.imageUrl,
+          status: artwork.status,
+          salesCount: 0,
+          totalEarnings: 0,
+          shopifyProductStatus: artwork.shopifyProductStatus || null,
+          createdAt: artwork.createdAt,
+        });
+      });
+
+      // Calculate sales and earnings per artwork
+      sales.forEach(sale => {
+        const performance = artworkPerformanceMap.get(sale.artworkId);
+        if (performance) {
+          performance.salesCount += 1;
+          performance.totalEarnings += parseFloat(sale.totalEarnings || '0');
+        }
+      });
+
+      // Convert map to sorted array (top performers first)
+      const artworkPerformance = Array.from(artworkPerformanceMap.entries())
+        .map(([id, data]) => ({
+          id,
+          ...data,
+        }))
+        .sort((a, b) => b.totalEarnings - a.totalEarnings);
+
+      // Calculate summary stats
+      const approvedArtworks = artistArtworks.filter(a => a.status === 'approved').length;
+      const pendingArtworks = artistArtworks.filter(a => a.status === 'pending').length;
+      const rejectedArtworks = artistArtworks.filter(a => a.status === 'rejected').length;
+      const activeProducts = artistArtworks.filter(a => a.shopifyProductStatus === 'active').length;
+
+      res.json({
+        summary: {
+          totalArtworks: artistArtworks.length,
+          approvedArtworks,
+          pendingArtworks,
+          rejectedArtworks,
+          activeProducts,
+        },
+        artworks: artworkPerformance,
+      });
+    } catch (error: any) {
+      console.error("Get artwork performance error:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch artwork performance" });
+    }
+  });
+
   // Admin Empire Dashboard - Network growth & revenue analytics
   app.get("/api/admin/empire", requireAdmin, async (req, res) => {
     try {

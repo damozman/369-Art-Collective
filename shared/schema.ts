@@ -344,12 +344,55 @@ export const stripeWebhookEvents = pgTable("stripe_webhook_events", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Testimonials - Success stories from artists
+export const testimonials = pgTable("testimonials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artistId: varchar("artist_id").references(() => artists.id), // Optional: link to artist account
+  artistName: text("artist_name").notNull(), // Display name (can differ from account name)
+  title: text("title").notNull(), // Testimonial title
+  quote: text("quote").notNull(), // Testimonial text/quote
+  videoProvider: text("video_provider").notNull().default("youtube"), // youtube, vimeo, upload, other
+  videoUrl: text("video_url"), // External video URL (YouTube, Vimeo, etc.)
+  videoThumbnailUrl: text("video_thumbnail_url"), // Thumbnail image URL
+  localVideoPath: text("local_video_path"), // Local video file path if uploaded directly
+  earningsUsd: decimal("earnings_usd", { precision: 10, scale: 2 }).notNull().default('0'), // Monthly earnings to display
+  productsCount: integer("products_count").notNull().default(0), // Number of products
+  featured: boolean("featured").notNull().default(false), // Highlight this testimonial
+  isActive: boolean("is_active").notNull().default(true), // Show on public pages
+  displayOrder: integer("display_order").notNull().default(0), // Order for display (lower = first)
+  shareSlug: text("share_slug").notNull().unique(), // URL-friendly slug for sharing (e.g., "jane-doe-artist")
+  shareExcerpt: text("share_excerpt"), // Optional short description for social sharing
+  shareImageUrl: text("share_image_url"), // Optional custom image for social sharing Open Graph
+  allowEmbed: boolean("allow_embed").notNull().default(false), // Allow embedding on external sites
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Insert schema for testimonials
+export const insertTestimonialSchema = createInsertSchema(testimonials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  artistName: z.string().min(1, "Artist name is required"),
+  title: z.string().min(1, "Title is required"),
+  quote: z.string().min(10, "Quote must be at least 10 characters"),
+  videoProvider: z.enum(["youtube", "vimeo", "upload", "other"]),
+  videoUrl: z.string().url().optional().or(z.literal("")),
+  shareSlug: z.string().min(1).regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens only"),
+  earningsUsd: z.string().optional(),
+  productsCount: z.number().int().min(0).optional(),
+});
+
 // Types for new tables
 export type Payout = typeof payouts.$inferSelect;
 export type InsertPayout = typeof payouts.$inferInsert;
 
 export type StripeWebhookEvent = typeof stripeWebhookEvents.$inferSelect;
 export type InsertStripeWebhookEvent = typeof stripeWebhookEvents.$inferInsert;
+
+export type Testimonial = typeof testimonials.$inferSelect;
+export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
 
 // Artwork with artist info
 export type ArtworkWithArtist = Artwork & {

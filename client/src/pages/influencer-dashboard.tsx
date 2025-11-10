@@ -21,12 +21,12 @@ export default function InfluencerDashboard() {
   const [copied, setCopied] = useState(false);
 
   // Fetch influencer profile
-  const { data: influencer, isLoading: profileLoading } = useQuery<Influencer>({
+  const { data: influencer, isLoading: profileLoading, isError: profileError } = useQuery<Influencer>({
     queryKey: ["/api/influencers/me"],
   });
 
   // Fetch performance stats
-  const { data: stats, isLoading: statsLoading } = useQuery<{
+  const { data: stats, isLoading: statsLoading, isError: statsError } = useQuery<{
     totalClicks: number;
     totalConversions: number;
     conversionRate: number;
@@ -79,6 +79,26 @@ export default function InfluencerDashboard() {
             <Skeleton className="h-32" />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (profileError || statsError) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Error Loading Dashboard</CardTitle>
+            <CardDescription>
+              Unable to load dashboard data. Please try refreshing the page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => window.location.reload()}>
+              Refresh Page
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -152,7 +172,7 @@ export default function InfluencerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-clicks">
-              {stats?.totalClicks.toLocaleString() || 0}
+              {stats?.totalClicks?.toLocaleString() ?? "0"}
             </div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
@@ -165,10 +185,10 @@ export default function InfluencerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-conversions">
-              {stats?.totalConversions || 0}
+              {stats?.totalConversions ?? 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              {stats?.conversionRate.toFixed(2)}% conversion rate
+              {stats?.conversionRate?.toFixed(2) ?? "0.00"}% conversion rate
             </p>
           </CardContent>
         </Card>
@@ -180,7 +200,7 @@ export default function InfluencerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-earnings">
-              ${parseFloat(stats?.totalEarnings || "0").toFixed(2)}
+              ${stats?.totalEarnings ? parseFloat(stats.totalEarnings).toFixed(2) : "0.00"}
             </div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
@@ -193,7 +213,7 @@ export default function InfluencerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="text-pending">
-              ${parseFloat(stats?.pendingEarnings || "0").toFixed(2)}
+              ${stats?.pendingEarnings ? parseFloat(stats.pendingEarnings).toFixed(2) : "0.00"}
             </div>
             <p className="text-xs text-muted-foreground">Awaiting payout</p>
           </CardContent>
@@ -211,7 +231,7 @@ export default function InfluencerDashboard() {
         <CardContent>
           <div className="space-y-4">
             <div className="flex justify-between text-sm">
-              <span>Monthly Sales: {stats?.monthlySalesCount || 0}</span>
+              <span>Monthly Sales: {stats?.monthlySalesCount ?? 0}</span>
               <span>Current: {tierInfo.label} ({tierInfo.commission})</span>
             </div>
 
@@ -219,7 +239,7 @@ export default function InfluencerDashboard() {
             <div className="space-y-2">
               {Object.entries(tierConfig).map(([key, config]) => {
                 const isActive = key === currentTier;
-                const isPassed = stats && stats.monthlySalesCount >= config.threshold;
+                const isPassed = stats && stats.monthlySalesCount !== undefined && stats.monthlySalesCount >= config.threshold;
                 
                 return (
                   <div

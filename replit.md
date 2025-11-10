@@ -14,7 +14,14 @@ The platform features a clear separation between frontend and backend.
 - **Artist Workflow:** Multi-step artwork upload wizard, product deactivation/activation.
 - **Admin Workflow:** Enhanced dashboards for artwork and artist management with advanced search, filtering, sorting, bulk operations (approve/reject artists/artworks, send emails), and CSV export for artist data. Admin CRM notes for artist relationship management.
 - **Featured Testimonials:** A hybrid system for homepage placement combining manual overrides, premium paid placements via Stripe Checkout, and merit-based rotation. Includes legal consent tracking and audit trails.
-- **Influencer Affiliate Program:** Public application, admin approval, tiered commission structure, cookie-based attribution, unique affiliate links, and an influencer dashboard for performance tracking.
+- **Influencer Affiliate Program:** 
+    - **Application & Approval:** Public application form, admin review/approval workflow
+    - **Tiered Commissions:** Bronze/Silver/Gold/Platinum/Elite tier structure
+    - **Affiliate Link Tracking:** Global middleware captures `?ref=` parameters, validates influencer status, logs clicks with UTM data
+    - **Cookie Attribution:** 30-day HTTP-only secure cookie (247pn_affiliate) for cross-session tracking
+    - **Conversion Tracking:** Dual conversion types (artist_signup + sale) with nullable order fields for flexibility
+    - **Registration Attribution:** Artist signups automatically linked to referring influencer via cookie
+    - **Dashboard:** Influencer performance tracking with metrics and analytics
 
 **Technical Implementations:**
 - **Artist & Admin Management:** Role-based access control, secure self-service password reset, rate limiting on critical endpoints, and audit logging. Soft-delete system for artist accounts.

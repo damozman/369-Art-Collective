@@ -125,6 +125,29 @@ export interface IStorage {
   getFeaturedSubscriptionByStripeId(stripeSubscriptionId: string): Promise<FeaturedSubscription | undefined>;
   endFeaturedSubscription(id: string, endDate: Date, endReason: string): Promise<FeaturedSubscription>;
   
+  // Admin override management
+  createAdminOverride(testimonialId: string, adminId: string): Promise<{ subscription: FeaturedSubscription; totalSlots: number }>;
+  removeAdminOverride(subscriptionId: string, adminId: string, reason?: string): Promise<void>;
+  getFeaturedPlacementsOverview(): Promise<{
+    totalSlots: number;
+    slotsByTier: { admin_override: number; premium: number; merit: number };
+    placements: Array<{
+      id: string;
+      testimonialId: string;
+      artistId: string;
+      artistName: string;
+      testimonialTitle: string;
+      featuredTier: string;
+      startDate: Date;
+      endDate: Date | null;
+      stripeSubscriptionId?: string;
+      stripeSubscriptionStatus?: string;
+      rank?: number;
+      monthlyEarnings?: string;
+    }>;
+    nextRotationDate?: Date;
+  }>;
+  
   // Featured testimonials display with tier info
   getFeaturedTestimonials(): Promise<Array<{
     testimonial: Testimonial;
@@ -750,6 +773,198 @@ class PostgresStorage implements IStorage {
     return updated;
   }
 
+  async createAdminOverride(testimonialId: string, adminId: string): Promise<{ subscription: FeaturedSubscription; totalSlots: number }> {
+    // 1. Check if testimonial exists and get artist ID
+    const [testimonial] = await db
+      .select()
+      .from(testimonials)
+      .where(eq(testimonials.id, testimonialId))
+      .limit(1);
+    
+    if (!testimonial) {
+      throw new Error("Testimonial not found");
+    }
+    
+    if (!testimonial.artistId) {
+      throw new Error("Testimonial must be linked to an artist account");
+    }
+    
+    // 2. Check for existing active subscription (conflict check)
+    const existingSubscription = await this.getActiveFeaturedSubscriptionByArtist(testimonial.artistId);
+    if (existingSubscription) {
+      throw new Error(`Artist already has active ${existingSubscription.featuredTier} subscription`);
+    }
+    
+    // 3. Count current active slots
+    const activeSlots = await db
+      .select()
+      .from(featuredSubscriptions)
+      .where(isNull(featuredSubscriptions.endDate));
+    
+    const totalSlots = activeSlots.length;
+    
+    // 4. Enforce 7-slot cap (warn but allow admin override priority)
+    if (totalSlots >= 7) {
+      console.warn(`[Admin Override] Creating admin override with ${totalSlots}/7 slots already filled`);
+    }
+    
+    // 5. Create featured subscription
+    const [subscription] = await db
+      .insert(featuredSubscriptions)
+      .values({
+        id: randomUUID(),
+        testimonialId,
+        artistId: testimonial.artistId,
+        featuredTier: "admin_override",
+        startDate: new Date(),
+        endDate: null,
+        endReason: null,
+        stripeSubscriptionId: null,
+        stripeSubscriptionStatus: null,
+        rank: null,
+        artistEarnings: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    
+    // 6. Update testimonial featuredTier
+    await db
+      .update(testimonials)
+      .set({ featuredTier: "admin_override" })
+      .where(eq(testimonials.id, testimonialId));
+    
+    // 7. Log action
+    await this.logFeaturedRotation({
+      rotationDate: new Date(),
+      testimonialId,
+      artistId: testimonial.artistId,
+      featuredTier: "admin_override",
+      artistEarnings: "0",
+      rank: undefined,
+      action: "override_add",
+      reason: `Admin override by admin ${adminId}`,
+    });
+    
+    return { subscription, totalSlots: totalSlots + 1 };
+  }
+
+  async removeAdminOverride(subscriptionId: string, adminId: string, reason?: string): Promise<void> {
+    // 1. Get subscription to ensure it's admin_override
+    const [subscription] = await db
+      .select()
+      .from(featuredSubscriptions)
+      .where(eq(featuredSubscriptions.id, subscriptionId))
+      .limit(1);
+    
+    if (!subscription) {
+      throw new Error("Subscription not found");
+    }
+    
+    if (subscription.featuredTier !== "admin_override") {
+      throw new Error("Can only remove admin_override subscriptions through this endpoint");
+    }
+    
+    // 2. End subscription
+    await this.endFeaturedSubscription(
+      subscriptionId,
+      new Date(),
+      reason || `Removed by admin ${adminId}`
+    );
+    
+    // 3. Clear testimonial featuredTier
+    await db
+      .update(testimonials)
+      .set({ featuredTier: null })
+      .where(eq(testimonials.id, subscription.testimonialId));
+    
+    // 4. Log action
+    await this.logFeaturedRotation({
+      rotationDate: new Date(),
+      testimonialId: subscription.testimonialId,
+      artistId: subscription.artistId,
+      featuredTier: "admin_override",
+      artistEarnings: "0",
+      rank: undefined,
+      action: "override_remove",
+      reason: reason || `Removed by admin ${adminId}`,
+    });
+  }
+
+  async getFeaturedPlacementsOverview(): Promise<{
+    totalSlots: number;
+    slotsByTier: { admin_override: number; premium: number; merit: number };
+    placements: Array<{
+      id: string;
+      testimonialId: string;
+      artistId: string;
+      artistName: string;
+      testimonialTitle: string;
+      featuredTier: string;
+      startDate: Date;
+      endDate: Date | null;
+      stripeSubscriptionId?: string;
+      stripeSubscriptionStatus?: string;
+      rank?: number;
+      monthlyEarnings?: string;
+    }>;
+    nextRotationDate?: Date;
+  }> {
+    // 1. Get all active featured subscriptions with testimonial and artist data
+    const results = await db
+      .select({
+        subscription: featuredSubscriptions,
+        testimonialTitle: testimonials.title,
+        artistName: artists.name,
+      })
+      .from(featuredSubscriptions)
+      .leftJoin(testimonials, eq(featuredSubscriptions.testimonialId, testimonials.id))
+      .leftJoin(artists, eq(featuredSubscriptions.artistId, artists.id))
+      .where(isNull(featuredSubscriptions.endDate))
+      .orderBy(
+        drizzleSql`CASE ${featuredSubscriptions.featuredTier}
+          WHEN 'admin_override' THEN 1
+          WHEN 'premium' THEN 2
+          WHEN 'merit' THEN 3
+          ELSE 4
+        END`,
+        featuredSubscriptions.startDate
+      );
+    
+    // 2. Transform and count slots by tier
+    const placements = results.map(r => ({
+      id: r.subscription.id,
+      testimonialId: r.subscription.testimonialId,
+      artistId: r.subscription.artistId,
+      artistName: r.artistName || "Unknown",
+      testimonialTitle: r.testimonialTitle || "Untitled",
+      featuredTier: r.subscription.featuredTier,
+      startDate: r.subscription.startDate,
+      endDate: r.subscription.endDate,
+      stripeSubscriptionId: r.subscription.stripeSubscriptionId || undefined,
+      stripeSubscriptionStatus: r.subscription.stripeSubscriptionStatus || undefined,
+      rank: r.subscription.rank || undefined,
+      monthlyEarnings: r.subscription.artistEarnings || undefined,
+    }));
+    
+    const slotsByTier = {
+      admin_override: placements.filter(p => p.featuredTier === "admin_override").length,
+      premium: placements.filter(p => p.featuredTier === "premium").length,
+      merit: placements.filter(p => p.featuredTier === "merit").length,
+    };
+    
+    // 3. Calculate next rotation date (first day of next month)
+    const now = new Date();
+    const nextRotation = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    
+    return {
+      totalSlots: placements.length,
+      slotsByTier,
+      placements,
+      nextRotationDate: nextRotation,
+    };
+  }
+
   async getFeaturedTestimonials(): Promise<Array<{
     testimonial: Testimonial;
     tier: string;
@@ -1329,6 +1544,30 @@ class MemStorage implements IStorage {
   async endFeaturedSubscription(id: string, endDate: Date, endReason: string): Promise<FeaturedSubscription> {
     console.log("MemStorage: endFeaturedSubscription called (stub)", id, endDate, endReason);
     return { id, endDate, endReason } as FeaturedSubscription;
+  }
+
+  async createAdminOverride(testimonialId: string, adminId: string): Promise<{ subscription: FeaturedSubscription; totalSlots: number }> {
+    console.log("MemStorage: createAdminOverride called (stub)", testimonialId, adminId);
+    return { subscription: {} as FeaturedSubscription, totalSlots: 1 };
+  }
+
+  async removeAdminOverride(subscriptionId: string, adminId: string, reason?: string): Promise<void> {
+    console.log("MemStorage: removeAdminOverride called (stub)", subscriptionId, adminId, reason);
+  }
+
+  async getFeaturedPlacementsOverview(): Promise<{
+    totalSlots: number;
+    slotsByTier: { admin_override: number; premium: number; merit: number };
+    placements: Array<any>;
+    nextRotationDate?: Date;
+  }> {
+    console.log("MemStorage: getFeaturedPlacementsOverview called (stub)");
+    return {
+      totalSlots: 0,
+      slotsByTier: { admin_override: 0, premium: 0, merit: 0 },
+      placements: [],
+      nextRotationDate: new Date(),
+    };
   }
 
   async getFeaturedTestimonials(): Promise<Array<{

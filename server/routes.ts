@@ -2323,6 +2323,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== ADMIN FEATURED PLACEMENT MANAGEMENT =====
+
+  // Admin: Get featured placements overview
+  app.get("/api/admin/featured-placements", requireAdmin, async (_req, res) => {
+    try {
+      const overview = await storage.getFeaturedPlacementsOverview();
+      res.json(overview);
+    } catch (error: any) {
+      console.error("Get featured placements error:", error);
+      res.status(500).json({ message: "Failed to fetch featured placements" });
+    }
+  });
+
+  // Admin: Create admin override for a testimonial
+  app.post("/api/admin/featured-overrides", requireAdmin, async (req, res) => {
+    try {
+      const { testimonialId } = req.body;
+      
+      if (!testimonialId) {
+        return res.status(400).json({ message: "testimonialId is required" });
+      }
+      
+      const adminId = req.session.adminId!;
+      const result = await storage.createAdminOverride(testimonialId, adminId);
+      
+      res.status(201).json({
+        message: "Admin override created successfully",
+        subscription: result.subscription,
+        totalSlots: result.totalSlots,
+      });
+    } catch (error: any) {
+      console.error("Create admin override error:", error);
+      res.status(400).json({ message: error.message || "Failed to create admin override" });
+    }
+  });
+
+  // Admin: Remove admin override
+  app.delete("/api/admin/featured-overrides/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      const adminId = req.session.adminId!;
+      await storage.removeAdminOverride(id, adminId, reason);
+      
+      res.json({ message: "Admin override removed successfully" });
+    } catch (error: any) {
+      console.error("Remove admin override error:", error);
+      res.status(400).json({ message: error.message || "Failed to remove admin override" });
+    }
+  });
+
   // ===== FEATURED SUBSCRIPTIONS - STRIPE CHECKOUT & ROTATION =====
 
   // Admin: Trigger monthly merit-based rotation

@@ -14,7 +14,9 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, ExternalLink, Share2, Copy, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, ExternalLink, Share2, Copy, Check, Crown, AlertTriangle, Sparkles } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SiFacebook, SiX, SiLinkedin } from "react-icons/si";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { Testimonial, TestimonialWithArtist } from "@shared/schema";
@@ -50,9 +52,43 @@ export default function AdminTestimonials() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [shareDialogTestimonial, setShareDialogTestimonial] = useState<TestimonialWithArtist | null>(null);
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [addOverrideDialogOpen, setAddOverrideDialogOpen] = useState(false);
+  const [selectedTestimonialId, setSelectedTestimonialId] = useState<string>("");
 
   const { data: testimonials = [], isLoading } = useQuery<TestimonialWithArtist[]>({
     queryKey: ["/api/admin/testimonials"],
+  });
+
+  const { data: featuredData, isLoading: featuredLoading } = useQuery<any>({
+    queryKey: ["/api/admin/featured-placements"],
+  });
+
+  const addOverrideMutation = useMutation({
+    mutationFn: async (testimonialId: string) => {
+      return await apiRequest("POST", "/api/admin/featured-overrides", { testimonialId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/featured-placements"] });
+      toast({ title: "Success", description: "Admin override added successfully" });
+      setAddOverrideDialogOpen(false);
+      setSelectedTestimonialId("");
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to add override", variant: "destructive" });
+    },
+  });
+
+  const removeOverrideMutation = useMutation({
+    mutationFn: async (subscriptionId: string) => {
+      return await apiRequest("DELETE", `/api/admin/featured-overrides/${subscriptionId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/featured-placements"] });
+      toast({ title: "Success", description: "Admin override removed successfully" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message || "Failed to remove override", variant: "destructive" });
+    },
   });
 
   const form = useForm<TestimonialFormData>({
@@ -500,6 +536,213 @@ export default function AdminTestimonials() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Featured Placements Panel */}
+      <Card className="border-primary/20" data-testid="card-featured-placements">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-primary" />
+              <CardTitle>Featured Placements</CardTitle>
+            </div>
+            {featuredData && featuredData.totalSlots >= 7 && (
+              <Badge variant="destructive" data-testid="badge-slots-warning">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                {featuredData.totalSlots}/7 Slots Full
+              </Badge>
+            )}
+          </div>
+          <CardDescription>
+            Manage homepage featured testimonials ({featuredData?.totalSlots || 0}/7 slots used)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {featuredLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+            </div>
+          ) : !featuredData ? (
+            <Alert variant="destructive">
+              <AlertDescription>Failed to load featured placements</AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              {/* Overview */}
+              <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
+                <div>
+                  <p className="text-xs text-muted-foreground">Admin Overrides</p>
+                  <p className="text-2xl font-bold">{featuredData.slotsByTier.admin_override}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Premium</p>
+                  <p className="text-2xl font-bold">{featuredData.slotsByTier.premium}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Merit-Based</p>
+                  <p className="text-2xl font-bold">{featuredData.slotsByTier.merit}</p>
+                </div>
+              </div>
+
+              {featuredData.totalSlots >= 7 && (
+                <Alert variant="destructive" data-testid="alert-slots-warning">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    All 7 featured slots are filled. Adding more overrides may impact visibility.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Admin Overrides Section */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Admin Overrides
+                  </h3>
+                  <Dialog open={addOverrideDialogOpen} onOpenChange={setAddOverrideDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" data-testid="button-add-override">
+                        <Plus className="w-3 h-3 mr-1" />
+                        Add Override
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Admin Override</DialogTitle>
+                        <DialogDescription>
+                          Manually feature a testimonial on the homepage
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium">Select Testimonial</label>
+                          <Select value={selectedTestimonialId} onValueChange={setSelectedTestimonialId}>
+                            <SelectTrigger data-testid="select-testimonial">
+                              <SelectValue placeholder="Choose a testimonial" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {testimonials
+                                .filter(t => t.isActive && !t.featuredTier && t.artistId)
+                                .map(t => (
+                                  <SelectItem key={t.id} value={t.id}>
+                                    {t.artistName} - {t.title}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setAddOverrideDialogOpen(false)}
+                            className="flex-1"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={() => selectedTestimonialId && addOverrideMutation.mutate(selectedTestimonialId)}
+                            disabled={!selectedTestimonialId || addOverrideMutation.isPending}
+                            className="flex-1"
+                            data-testid="button-confirm-override"
+                          >
+                            {addOverrideMutation.isPending ? "Adding..." : "Add Override"}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                
+                {featuredData.placements.filter((p: any) => p.featuredTier === "admin_override").length === 0 ? (
+                  <p className="text-sm text-muted-foreground p-4 text-center border rounded">
+                    No admin overrides. Click "Add Override" to manually feature a testimonial.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {featuredData.placements
+                      .filter((p: any) => p.featuredTier === "admin_override")
+                      .map((placement: any) => (
+                        <div key={placement.id} className="flex items-center justify-between p-3 border rounded" data-testid={`placement-${placement.id}`}>
+                          <div className="flex-1">
+                            <p className="font-medium">{placement.testimonialTitle}</p>
+                            <p className="text-sm text-muted-foreground">{placement.artistName}</p>
+                          </div>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="destructive" data-testid={`button-remove-${placement.id}`}>
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Remove
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Remove Admin Override?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will remove "{placement.testimonialTitle}" from featured placements.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => removeOverrideMutation.mutate(placement.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  data-testid={`confirm-remove-${placement.id}`}
+                                >
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Premium & Merit Sections */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">Premium Subscriptions</h3>
+                  {featuredData.placements.filter((p: any) => p.featuredTier === "premium").length === 0 ? (
+                    <p className="text-xs text-muted-foreground p-2 border rounded">No premium subscriptions</p>
+                  ) : (
+                    featuredData.placements
+                      .filter((p: any) => p.featuredTier === "premium")
+                      .map((p: any) => (
+                        <div key={p.id} className="p-2 border rounded text-sm">
+                          <p className="font-medium">{p.artistName}</p>
+                          <Badge className="text-xs">{p.stripeSubscriptionStatus}</Badge>
+                        </div>
+                      ))
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">Merit-Based (Auto-Rotation)</h3>
+                  {featuredData.placements.filter((p: any) => p.featuredTier === "merit").length === 0 ? (
+                    <p className="text-xs text-muted-foreground p-2 border rounded">No merit placements</p>
+                  ) : (
+                    featuredData.placements
+                      .filter((p: any) => p.featuredTier === "merit")
+                      .map((p: any) => (
+                        <div key={p.id} className="p-2 border rounded text-sm">
+                          <p className="font-medium">{p.artistName}</p>
+                          <p className="text-xs text-muted-foreground">Rank #{p.rank} • ${p.monthlyEarnings}/mo</p>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+
+              {featuredData.nextRotationDate && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Next merit rotation: {new Date(featuredData.nextRotationDate).toLocaleDateString()}
+                </p>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

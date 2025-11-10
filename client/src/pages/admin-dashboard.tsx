@@ -206,6 +206,17 @@ export default function AdminDashboard() {
                   </Badge>
                 )}
               </div>
+              <Button
+                variant="outline"
+                onClick={() => setLocation("/admin/payouts")}
+                data-testid="button-payouts"
+              >
+                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <rect x="2" y="5" width="20" height="14" rx="2"/>
+                  <line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+                Payouts
+              </Button>
               <ThemeToggle />
               <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/settings")} data-testid="button-settings">
                 <Settings className="h-5 w-5" />

@@ -9,6 +9,7 @@ import {
   portfolioSubmissions,
   violationReports,
   stripeWebhookEvents,
+  testimonials,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -24,6 +25,8 @@ import {
   type InsertViolationReport,
   type StripeWebhookEvent,
   type InsertStripeWebhookEvent,
+  type Testimonial,
+  type InsertTestimonial,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
@@ -88,6 +91,16 @@ export interface IStorage {
   createStripeWebhookEvent(event: InsertStripeWebhookEvent): Promise<StripeWebhookEvent>;
   getStripeWebhookEvent(eventId: string): Promise<StripeWebhookEvent | undefined>;
   updateStripeWebhookEvent(id: string, updates: Partial<StripeWebhookEvent>): Promise<StripeWebhookEvent>;
+
+  // Testimonial methods
+  createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
+  updateTestimonial(id: string, updates: Partial<Testimonial>): Promise<Testimonial>;
+  deleteTestimonial(id: string): Promise<void>;
+  getTestimonial(id: string): Promise<Testimonial | undefined>;
+  getTestimonialBySlug(slug: string): Promise<Testimonial | undefined>;
+  getAllTestimonials(): Promise<Testimonial[]>;
+  getActiveTestimonials(limit?: number): Promise<Testimonial[]>;
+  reorderTestimonials(reorderedItems: Array<{ id: string; displayOrder: number }>): Promise<void>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -462,6 +475,78 @@ class PostgresStorage implements IStorage {
     if (!updatedEvent) throw new Error("Webhook event not found");
     return updatedEvent;
   }
+
+  async createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial> {
+    const [newTestimonial] = await db
+      .insert(testimonials)
+      .values(testimonial)
+      .returning();
+    return newTestimonial;
+  }
+
+  async updateTestimonial(id: string, updates: Partial<Testimonial>): Promise<Testimonial> {
+    const [updated] = await db
+      .update(testimonials)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(testimonials.id, id))
+      .returning();
+    if (!updated) throw new Error("Testimonial not found");
+    return updated;
+  }
+
+  async deleteTestimonial(id: string): Promise<void> {
+    await db.delete(testimonials).where(eq(testimonials.id, id));
+  }
+
+  async getTestimonial(id: string): Promise<Testimonial | undefined> {
+    const [testimonial] = await db
+      .select()
+      .from(testimonials)
+      .where(eq(testimonials.id, id))
+      .limit(1);
+    return testimonial;
+  }
+
+  async getTestimonialBySlug(slug: string): Promise<Testimonial | undefined> {
+    const [testimonial] = await db
+      .select()
+      .from(testimonials)
+      .where(eq(testimonials.shareSlug, slug))
+      .limit(1);
+    return testimonial;
+  }
+
+  async getAllTestimonials(): Promise<Testimonial[]> {
+    const allTestimonials = await db
+      .select()
+      .from(testimonials)
+      .orderBy(testimonials.displayOrder, testimonials.createdAt);
+    return allTestimonials;
+  }
+
+  async getActiveTestimonials(limit?: number): Promise<Testimonial[]> {
+    let query = db
+      .select()
+      .from(testimonials)
+      .where(eq(testimonials.isActive, true))
+      .orderBy(testimonials.displayOrder, testimonials.createdAt);
+    
+    if (limit) {
+      query = query.limit(limit) as any;
+    }
+    
+    return await query;
+  }
+
+  async reorderTestimonials(reorderedItems: Array<{ id: string; displayOrder: number }>): Promise<void> {
+    // Update display order for each testimonial
+    for (const item of reorderedItems) {
+      await db
+        .update(testimonials)
+        .set({ displayOrder: item.displayOrder, updatedAt: new Date() })
+        .where(eq(testimonials.id, item.id));
+    }
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -777,6 +862,77 @@ class MemStorage implements IStorage {
       createdAt: new Date(),
       ...updates,
     };
+  }
+
+  async createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial> {
+    console.log("MemStorage: createTestimonial called (stub)", testimonial);
+    return {
+      id: randomUUID(),
+      ...testimonial,
+      earningsUsd: testimonial.earningsUsd || "0",
+      productsCount: testimonial.productsCount || 0,
+      featured: testimonial.featured || false,
+      isActive: testimonial.isActive !== undefined ? testimonial.isActive : true,
+      displayOrder: testimonial.displayOrder || 0,
+      allowEmbed: testimonial.allowEmbed || false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as Testimonial;
+  }
+
+  async updateTestimonial(id: string, updates: Partial<Testimonial>): Promise<Testimonial> {
+    console.log("MemStorage: updateTestimonial called (stub)", id, updates);
+    return {
+      id,
+      artistId: null,
+      artistName: "Test Artist",
+      title: "Test Testimonial",
+      quote: "This is a test quote",
+      videoProvider: "youtube",
+      videoUrl: null,
+      videoThumbnailUrl: null,
+      localVideoPath: null,
+      earningsUsd: "0",
+      productsCount: 0,
+      featured: false,
+      isActive: true,
+      displayOrder: 0,
+      shareSlug: "test-slug",
+      shareExcerpt: null,
+      shareImageUrl: null,
+      allowEmbed: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...updates,
+    };
+  }
+
+  async deleteTestimonial(id: string): Promise<void> {
+    console.log("MemStorage: deleteTestimonial called (stub)", id);
+  }
+
+  async getTestimonial(id: string): Promise<Testimonial | undefined> {
+    console.log("MemStorage: getTestimonial called (stub)", id);
+    return undefined;
+  }
+
+  async getTestimonialBySlug(slug: string): Promise<Testimonial | undefined> {
+    console.log("MemStorage: getTestimonialBySlug called (stub)", slug);
+    return undefined;
+  }
+
+  async getAllTestimonials(): Promise<Testimonial[]> {
+    console.log("MemStorage: getAllTestimonials called (stub)");
+    return [];
+  }
+
+  async getActiveTestimonials(limit?: number): Promise<Testimonial[]> {
+    console.log("MemStorage: getActiveTestimonials called (stub)", limit);
+    return [];
+  }
+
+  async reorderTestimonials(reorderedItems: Array<{ id: string; displayOrder: number }>): Promise<void> {
+    console.log("MemStorage: reorderTestimonials called (stub)", reorderedItems);
   }
 }
 

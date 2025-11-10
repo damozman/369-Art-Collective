@@ -11,6 +11,7 @@ The platform is built with a clear separation between frontend and backend.
 **UI/UX:** The frontend utilizes React with TypeScript, Wouter for routing, TanStack Query for data fetching, React Hook Form for forms, and Tailwind CSS with Shadcn UI components for styling, ensuring a responsive and modern user experience.
 **Technical Implementations:**
 - **Artist Workflow:** Artists register, submit a portfolio for admin approval, then upload artwork, track its status, and manage product visibility.
+  - **Multi-Step Artwork Upload Wizard:** 5-step guided upload flow (Image Upload → Basic Details → Marketing Content → IP Declaration → Review) with progress tracking, real-time validation, and enhanced marketing fields (artworkStory, styleTags, suggestedUse) for richer Shopify product pages. Server auto-generates SEO-friendly slugs from artwork titles.
 - **Admin Workflow:** Admins manage artist accounts, approve/reject artists, and review/approve artwork submissions, which triggers Shopify product creation.
   - **Admin CRM Notes:** Private notes field on each artist's detail page for tracking calls, conversations, preferences, and relationship management (personal CRM functionality).
 - **Printify Integration:** Approved artwork automatically creates Printify POD products.

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, ExternalLink, CheckCircle2, XCircle, Lightbulb, Share2, TrendingUp } from "lucide-react";
 import { SiFacebook, SiX, SiLinkedin } from "react-icons/si";
 import type { TestimonialWithArtist } from "@shared/schema";
 
@@ -260,6 +261,147 @@ export default function SuccessStory() {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Artist Success Tips Section */}
+        <div className="space-y-6 pt-8 border-t" data-testid="section-success-tips">
+          <div className="text-center space-y-2">
+            <h2 className="text-3xl font-bold">Want Results Like {testimonial.artistName}?</h2>
+            <p className="text-muted-foreground">Follow these proven strategies to maximize your success</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* How to Get Noticed */}
+            <Card data-testid="card-get-noticed">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold">Get Noticed</h3>
+                </div>
+                <Separator />
+                <ul className="space-y-3 text-sm">
+                  <li className="flex gap-2">
+                    <Lightbulb className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>Upload <strong>high-quality</strong> artwork (min 2400x3000px)</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <Lightbulb className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>Write <strong>compelling stories</strong> about your artwork</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <Lightbulb className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>Add <strong>relevant style tags</strong> for better discovery</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <Lightbulb className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>Upload <strong>consistently</strong> (aim for 5-10 pieces monthly)</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <Lightbulb className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>Study <strong>top sellers</strong> in your style category</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* Dos and Don'ts */}
+            <Card data-testid="card-dos-donts">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-500" />
+                  </div>
+                  <h3 className="font-semibold">Dos & Don'ts</h3>
+                </div>
+                <Separator />
+                <div className="space-y-3 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                      <span><strong>DO</strong> create original artwork</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                      <span><strong>DO</strong> optimize for print quality</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-500 shrink-0 mt-0.5" />
+                      <span><strong>DO</strong> diversify your portfolio</span>
+                    </div>
+                  </div>
+                  <Separator className="my-2" />
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                      <span><strong>DON'T</strong> use copyrighted images</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                      <span><strong>DON'T</strong> upload low-resolution files</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                      <span><strong>DON'T</strong> neglect marketing content</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Promote & Earn */}
+            <Card data-testid="card-promote-earn">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Share2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="font-semibold">Promote & Earn More</h3>
+                </div>
+                <Separator />
+                <ul className="space-y-3 text-sm">
+                  <li className="flex gap-2">
+                    <Share2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>Get a <strong>+5% bonus</strong> on referred sales</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <Share2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>Earn <strong>5% of recruits' royalties</strong> forever</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <Share2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>Share your <strong>unique referral link</strong> on social media</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <Share2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>Promote <strong>success stories</strong> to attract new artists</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <Share2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>Build a <strong>passive income stream</strong> through your network</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Pro Tip Callout */}
+          <Card className="bg-gradient-to-r from-primary/5 to-background border-primary/20" data-testid="card-pro-tip">
+            <CardContent className="p-6">
+              <div className="flex gap-4">
+                <div className="p-3 rounded-lg bg-primary/10 h-fit">
+                  <Lightbulb className="w-6 h-6 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Pro Tip from {testimonial.artistName}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    "The artists who succeed are the ones who treat this like a real business. Upload regularly, study what sells, and actively promote your referral link. My recruitment bonuses now cover my monthly expenses!"
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20">

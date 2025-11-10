@@ -40,6 +40,14 @@ The platform is built with a clear separation between frontend and backend.
   - Success story pages capture referral parameters and preserve them through "Join as Artist" CTAs
   - Efficient LEFT JOIN implementation enriches testimonials with artist referral codes without data duplication
   - Complete attribution chain: share link → success story → registration → referral bonus tracking
+  - **Referral Source Tracking:**
+    - Registration captures utm_medium parameter to differentiate testimonial vs general referrals
+    - Database stores referralSource field ("testimonial" or "general") for each recruited artist
+    - Artist referral dashboard displays source breakdown stats (X from testimonial • Y general)
+    - Recruited artists table shows color-coded source badges (green for testimonial, blue for general)
+    - Frontend captures UTM params from URL and includes in registration POST body
+    - Backend looks up referring artist by referral code and sets referredBy relationship
+    - Each artist gets their own unique referral code (auto-generated) regardless of how they were recruited
 
 ## External Dependencies
 - **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered) for persistent storage.

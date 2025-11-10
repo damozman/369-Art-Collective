@@ -23,11 +23,29 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 export function requireArtist(req: Request, res: Response, next: NextFunction) {
+  console.log("requireArtist middleware:", {
+    path: req.path,
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    hasUser: !!req.session?.user,
+    userType: req.session?.user?.type,
+    approved: req.session?.user?.approved,
+    cookies: req.headers.cookie ? "present" : "missing",
+  });
+  
   if (!req.session?.user || req.session.user.type !== "artist") {
+    console.error("Artist access denied:", {
+      path: req.path,
+      sessionData: req.session?.user,
+    });
     return res.status(403).json({ message: "Artist access required" });
   }
   
   if (!req.session.user.approved) {
+    console.error("Artist not approved:", {
+      path: req.path,
+      approved: req.session.user.approved,
+    });
     return res.status(403).json({ message: "Account pending approval" });
   }
   

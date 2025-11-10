@@ -2006,10 +2006,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Public: Get testimonial by slug
+  // Public: Get testimonial by slug with artist referral code for affiliate links
   app.get("/api/testimonials/:slug", async (req, res) => {
     try {
-      const testimonial = await storage.getTestimonialBySlug(req.params.slug);
+      const testimonial = await storage.getTestimonialBySlugWithArtist(req.params.slug);
       if (!testimonial) {
         return res.status(404).json({ message: "Testimonial not found" });
       }
@@ -2023,10 +2023,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin: Get all testimonials (including inactive)
+  // Admin: Get all testimonials (including inactive) with artist referral codes
   app.get("/api/admin/testimonials", requireAdmin, async (_req, res) => {
     try {
-      const testimonials = await storage.getAllTestimonials();
+      const testimonials = await storage.getAllTestimonialsWithArtist();
       res.json(testimonials);
     } catch (error: any) {
       console.error("Get all testimonials error:", error);

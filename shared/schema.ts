@@ -394,6 +394,11 @@ export type InsertStripeWebhookEvent = typeof stripeWebhookEvents.$inferInsert;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
 
+// Testimonial with artist referral info for affiliate links
+export type TestimonialWithArtist = Testimonial & {
+  artistReferralCode?: string | null; // Referral code from linked artist account
+};
+
 // Artwork with artist info
 export type ArtworkWithArtist = Artwork & {
   artist: Pick<Artist, 'id' | 'name' | 'email'>;

@@ -365,6 +365,7 @@ export const testimonials = pgTable("testimonials", {
   shareExcerpt: text("share_excerpt"), // Optional short description for social sharing
   shareImageUrl: text("share_image_url"), // Optional custom image for social sharing Open Graph
   allowEmbed: boolean("allow_embed").notNull().default(false), // Allow embedding on external sites
+  artistConsent: boolean("artist_consent").notNull().default(false), // Artist has explicitly consented to public testimonial
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -383,6 +384,9 @@ export const insertTestimonialSchema = createInsertSchema(testimonials).omit({
   shareSlug: z.string().min(1).regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens only"),
   earningsUsd: z.string().optional(),
   productsCount: z.number().int().min(0).optional(),
+  artistConsent: z.boolean().refine((val) => val === true, {
+    message: "Artist must consent to public testimonial sharing for legal protection",
+  }),
 });
 
 // Types for new tables

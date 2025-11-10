@@ -36,6 +36,9 @@ const testimonialFormSchema = z.object({
   shareExcerpt: z.string().nullable().optional(),
   shareImageUrl: z.string().url("Must be a valid URL").nullable().optional(),
   allowEmbed: z.boolean().default(false),
+  artistConsent: z.boolean().refine((val) => val === true, {
+    message: "Artist must consent to public testimonial sharing for legal protection",
+  }),
 });
 
 type TestimonialFormData = z.infer<typeof testimonialFormSchema>;
@@ -71,6 +74,7 @@ export default function AdminTestimonials() {
       shareExcerpt: null,
       shareImageUrl: null,
       allowEmbed: false,
+      artistConsent: false,
     },
   });
 
@@ -446,6 +450,32 @@ export default function AdminTestimonials() {
                     )}
                   />
                 </div>
+
+                {/* Artist Consent - Required for legal protection */}
+                <FormField
+                  control={form.control}
+                  name="artistConsent"
+                  render={({ field }) => (
+                    <FormItem className="border-2 border-orange-200 dark:border-orange-900 bg-orange-50 dark:bg-orange-950/30 p-4 rounded-md">
+                      <div className="flex items-start gap-3">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="switch-artist-consent"
+                          />
+                        </FormControl>
+                        <div className="flex-1">
+                          <FormLabel className="text-base font-semibold">Artist Consent Required</FormLabel>
+                          <FormDescription className="mt-1">
+                            ⚠️ <strong>Legal Protection:</strong> Confirm that the artist has explicitly consented to having their testimonial, name, and story publicly shared on the platform and in marketing materials. This protects 247 Print Network from any liability regarding unauthorized use of the artist's likeness, story, or intellectual property.
+                          </FormDescription>
+                          <FormMessage />
+                        </div>
+                      </div>
+                    </FormItem>
+                  )}
+                />
                 
                 <div className="flex justify-end gap-2 pt-4">
                   <Button

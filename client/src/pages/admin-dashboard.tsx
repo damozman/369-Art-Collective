@@ -402,6 +402,46 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
+        {/* Search and Sort Toolbar */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by artwork title, artist name, or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              data-testid="input-search-artworks"
+            />
+          </div>
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+            <SelectTrigger className="w-full sm:w-48" data-testid="select-sort">
+              <ArrowUpDown className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest" data-testid="sort-newest">Newest First</SelectItem>
+              <SelectItem value="oldest" data-testid="sort-oldest">Oldest First</SelectItem>
+              <SelectItem value="artist-az" data-testid="sort-artist-az">Artist A-Z</SelectItem>
+              <SelectItem value="artist-za" data-testid="sort-artist-za">Artist Z-A</SelectItem>
+            </SelectContent>
+          </Select>
+          {filteredArtworks && filteredArtworks.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="select-all"
+                checked={selectedArtworkIds.size === filteredArtworks.length && filteredArtworks.length > 0}
+                onCheckedChange={toggleSelectAll}
+                data-testid="checkbox-select-all"
+              />
+              <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
+                Select All ({filteredArtworks.length})
+              </label>
+            </div>
+          )}
+        </div>
+
         <Tabs value={statusFilter} onValueChange={(v) => handleFilterChange(v as any)} className="mb-6">
           <TabsList>
             <TabsTrigger value="all" data-testid="tab-all">All</TabsTrigger>
@@ -427,7 +467,16 @@ export default function AdminDashboard() {
         ) : filteredArtworks && filteredArtworks.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredArtworks.map((artwork) => (
-              <Card key={artwork.id} className="overflow-hidden" data-testid={`card-artwork-${artwork.id}`}>
+              <Card key={artwork.id} className="overflow-hidden relative" data-testid={`card-artwork-${artwork.id}`}>
+                {/* Selection checkbox */}
+                <div className="absolute top-2 left-2 z-10">
+                  <Checkbox
+                    checked={selectedArtworkIds.has(artwork.id)}
+                    onCheckedChange={() => toggleSelectArtwork(artwork.id)}
+                    className="bg-white border-2"
+                    data-testid={`checkbox-artwork-${artwork.id}`}
+                  />
+                </div>
                 <div className="aspect-square relative bg-muted">
                   <img
                     src={artwork.imageUrl}
@@ -500,6 +549,50 @@ export default function AdminDashboard() {
               <p className="text-muted-foreground">No {statusFilter !== "all" ? statusFilter : ""} artworks found</p>
             </div>
           </Card>
+        )}
+
+        {/* Bulk Action Bar - Fixed at bottom when items selected */}
+        {selectedArtworkIds.size > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg z-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <p className="font-medium" data-testid="text-selected-count">
+                    {selectedArtworkIds.size} artwork{selectedArtworkIds.size !== 1 ? 's' : ''} selected
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedArtworkIds(new Set())}
+                    data-testid="button-clear-selection"
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="default"
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={handleBulkApprove}
+                    disabled={bulkApproveMutation.isPending}
+                    data-testid="button-bulk-approve"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Approve Selected ({selectedArtworkIds.size})
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowBulkRejectDialog(true)}
+                    disabled={bulkRejectMutation.isPending}
+                    data-testid="button-bulk-reject"
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Reject Selected ({selectedArtworkIds.size})
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </main>
 
@@ -721,6 +814,49 @@ export default function AdminDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Rejection Confirmation Dialog */}
+      <Dialog open={showBulkRejectDialog} onOpenChange={setShowBulkRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Selected Artworks</DialogTitle>
+            <DialogDescription>
+              You are about to reject {selectedArtworkIds.size} artwork{selectedArtworkIds.size !== 1 ? 's' : ''}.
+              Please provide a reason that will be sent to the artists.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Rejection Reason</label>
+              <Textarea
+                placeholder="Explain why these artworks are being rejected..."
+                value={bulkRejectionReason}
+                onChange={(e) => setBulkRejectionReason(e.target.value)}
+                className="min-h-32"
+                data-testid="input-bulk-rejection-reason"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowBulkRejectDialog(false)}
+              data-testid="button-cancel-bulk-reject"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBulkReject}
+              disabled={bulkRejectMutation.isPending || !bulkRejectionReason.trim()}
+              data-testid="button-confirm-bulk-reject"
+            >
+              <XCircle className="w-4 h-4 mr-2" />
+              Reject {selectedArtworkIds.size} Artwork{selectedArtworkIds.size !== 1 ? 's' : ''}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

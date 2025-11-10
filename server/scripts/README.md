@@ -4,6 +4,12 @@ Complete workflow to populate your Shopify store with products and organize them
 
 ## 📋 Complete Workflow
 
+### Step 0: Clean Up Old Data (Optional)
+```bash
+npx tsx server/scripts/cleanup-shopify.ts
+```
+Removes ALL existing collections and orphaned products from Shopify. Use this to start fresh!
+
 ### Step 1: Check Readiness
 ```bash
 npx tsx server/scripts/check-shopify-readiness.ts

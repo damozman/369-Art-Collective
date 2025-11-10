@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, ExternalLink, Share2, Copy, Check } from "lucide-react";
-import { SiFacebook, SiTwitter, SiLinkedin } from "react-icons/si";
+import { SiFacebook, SiX, SiLinkedin } from "react-icons/si";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { Testimonial } from "@shared/schema";
 
@@ -76,10 +76,7 @@ export default function AdminTestimonials() {
 
   const createMutation = useMutation({
     mutationFn: async (data: TestimonialFormData) => {
-      return await apiRequest("/api/admin/testimonials", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", "/api/admin/testimonials", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/testimonials"] });
@@ -94,10 +91,7 @@ export default function AdminTestimonials() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Testimonial> }) => {
-      return await apiRequest(`/api/admin/testimonials/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("PATCH", `/api/admin/testimonials/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/testimonials"] });
@@ -113,9 +107,7 @@ export default function AdminTestimonials() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/admin/testimonials/${id}`, {
-        method: "DELETE",
-      });
+      return await apiRequest("DELETE", `/api/admin/testimonials/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/testimonials"] });
@@ -129,10 +121,7 @@ export default function AdminTestimonials() {
 
   const reorderMutation = useMutation({
     mutationFn: async (reorderedItems: Array<{ id: string; displayOrder: number }>) => {
-      return await apiRequest("/api/admin/testimonials/reorder", {
-        method: "POST",
-        body: JSON.stringify({ reorderedItems }),
-      });
+      return await apiRequest("POST", "/api/admin/testimonials/reorder", { reorderedItems });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/testimonials"] });
@@ -636,8 +625,8 @@ export default function AdminTestimonials() {
                     className="flex-1"
                     data-testid="button-share-twitter"
                   >
-                    <SiTwitter className="w-4 h-4 mr-2" />
-                    Twitter
+                    <SiX className="w-4 h-4 mr-2" />
+                    X / Twitter
                   </Button>
                   <Button
                     variant="outline"

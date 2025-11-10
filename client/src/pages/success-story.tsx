@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { SiFacebook, SiTwitter, SiLinkedin } from "react-icons/si";
+import { SiFacebook, SiX, SiLinkedin } from "react-icons/si";
 import type { Testimonial } from "@shared/schema";
 
 export default function SuccessStory() {
@@ -223,7 +223,7 @@ export default function SuccessStory() {
                 onClick={() => handleSocialShare("twitter")}
                 data-testid="button-share-twitter"
               >
-                <SiTwitter className="w-4 h-4" />
+                <SiX className="w-4 h-4" />
               </Button>
               <Button
                 variant="outline"

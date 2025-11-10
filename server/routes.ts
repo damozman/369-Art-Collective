@@ -1789,13 +1789,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             // Create Shopify product (non-blocking)
             if (isShopifyConfigured()) {
-              createShopifyProduct({
+              createArtworkProduct({
                 title: artwork.title,
                 description: artwork.description || "",
                 artworkStory: artwork.artworkStory,
                 suggestedUse: artwork.suggestedUse,
                 styleTags: artwork.styleTags || [],
-                tags: artwork.tags || [],
                 imageUrl,
                 artistName: artist.name,
                 seoSlug: artwork.seoSlug || artwork.title.toLowerCase().replace(/\s+/g, '-'),

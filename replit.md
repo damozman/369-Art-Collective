@@ -54,6 +54,20 @@ The platform is built with a clear separation between frontend and backend.
     - Admin form displays prominent legal warning requiring explicit consent confirmation
     - Public success story pages display consent disclaimer confirming artist authorization
     - Complete audit trail protects platform from liability regarding testimonial usage rights
+  - **Featured Placement Monetization System:**
+    - Hybrid system with 7 total homepage slots combining manual overrides, premium paid placements, and merit-based rotation
+    - Three-tier priority system: admin_override (tier 1) > premium (tier 2) > merit (tier 3)
+    - Premium tier: Artists purchase featured placement via Stripe Checkout ($99/month subscription) with "Sponsored" badge
+    - Admin override tier: Admins manually feature testimonials with "Featured" badge for editorial control
+    - Merit tier: Top 5 artists by monthly earnings automatically featured (no badge, organic placement)
+    - Database schema: featuredSubscriptions table tracks tier, Stripe subscription, status, and dates
+    - Stripe webhook integration handles subscription lifecycle (checkout.session.completed, invoice.paid, subscription updates/cancellations)
+    - Monthly auto-rotation cron job refreshes merit-based placements on 1st of each month
+    - Artist dashboard displays current featured status with upgrade CTA for premium tier
+    - Admin panel provides slot overview, tier-grouped placement lists, add/remove override controls, and warning alerts when ≥7 slots occupied
+    - Homepage GET /api/featured-testimonials endpoint returns tier-sorted testimonials with proper badge display
+    - Audit logging via featuredRotationLog table tracks all rotation events and manual overrides
+    - Raw SQL implementation for featured testimonials query (bypasses Drizzle query builder to avoid SQL generation issues)
 
 ## External Dependencies
 - **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered) for persistent storage.

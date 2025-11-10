@@ -676,31 +676,35 @@ class PostgresStorage implements IStorage {
   }
 
   async getFeaturedTestimonialsWithArtist(): Promise<TestimonialWithArtist[]> {
-    const results = await db
-      .select({
-        testimonial: testimonials,
-        artistReferralCode: artists.referralCode,
-      })
-      .from(testimonials)
-      .leftJoin(artists, eq(testimonials.artistId, artists.id))
-      .where(and(
-        eq(testimonials.isActive, true),
-        isNotNull(testimonials.featuredTier) // Only featured testimonials
-      ))
-      .orderBy(
-        drizzleSql`CASE
-          WHEN ${testimonials.featuredTier} = 'admin_override' THEN 1
-          WHEN ${testimonials.featuredTier} = 'premium' THEN 2
-          WHEN ${testimonials.featuredTier} = 'merit' THEN 3
+    // Use raw SQL to avoid Drizzle query builder SQL generation issues
+    const query = drizzleSql`
+      SELECT 
+        t.*,
+        a.referral_code as "artistReferralCode",
+        fs.featured_tier as "featuredTier"
+      FROM testimonials t
+      LEFT JOIN artists a ON t.artist_id = a.id
+      INNER JOIN featured_subscriptions fs ON t.id = fs.testimonial_id
+      WHERE t.is_active = true
+        AND (fs.end_date IS NULL OR fs.end_date > NOW())
+        AND (fs.subscription_status IS NULL OR fs.subscription_status = 'active')
+      ORDER BY 
+        CASE fs.featured_tier
+          WHEN 'admin_override' THEN 1
+          WHEN 'premium' THEN 2
+          WHEN 'merit' THEN 3
           ELSE 4
-        END`,
-        asc(testimonials.displayOrder),
-        asc(testimonials.createdAt)
-      );
+        END,
+        t.display_order ASC,
+        t.created_at ASC
+    `;
     
-    return results.map(row => ({
-      ...row.testimonial,
+    const results = await db.execute(query);
+    
+    return results.rows.map((row: any) => ({
+      ...row,
       artistReferralCode: row.artistReferralCode,
+      featuredTier: row.featuredTier,
     }));
   }
 

@@ -17,7 +17,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, ExternalLink, Share2, Copy, Check } from "lucide-react";
 import { SiFacebook, SiX, SiLinkedin } from "react-icons/si";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import type { Testimonial } from "@shared/schema";
+import type { Testimonial, TestimonialWithArtist } from "@shared/schema";
 
 const testimonialFormSchema = z.object({
   artistId: z.string().nullable().optional(),
@@ -45,10 +45,10 @@ export default function AdminTestimonials() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [shareDialogTestimonial, setShareDialogTestimonial] = useState<Testimonial | null>(null);
+  const [shareDialogTestimonial, setShareDialogTestimonial] = useState<TestimonialWithArtist | null>(null);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
-  const { data: testimonials = [], isLoading } = useQuery<Testimonial[]>({
+  const { data: testimonials = [], isLoading } = useQuery<TestimonialWithArtist[]>({
     queryKey: ["/api/admin/testimonials"],
   });
 
@@ -186,8 +186,18 @@ export default function AdminTestimonials() {
     reorderMutation.mutate(reorderedItems);
   };
 
-  const generateShareUrl = (slug: string) => {
-    return `${window.location.origin}/success-stories/${slug}`;
+  const generateShareUrl = (slug: string, artistReferralCode?: string | null) => {
+    const baseUrl = `${window.location.origin}/success-stories/${slug}`;
+    if (!artistReferralCode) return baseUrl;
+    
+    const params = new URLSearchParams({
+      utm_source: 'artist-referral',
+      utm_medium: 'testimonial',
+      utm_campaign: artistReferralCode,
+      ref: artistReferralCode
+    });
+    
+    return `${baseUrl}?${params.toString()}`;
   };
 
   const handleCopyUrl = async (url: string) => {
@@ -201,8 +211,8 @@ export default function AdminTestimonials() {
     }
   };
 
-  const handleSocialShare = (platform: "facebook" | "twitter" | "linkedin", testimonial: Testimonial) => {
-    const url = generateShareUrl(testimonial.shareSlug);
+  const handleSocialShare = (platform: "facebook" | "twitter" | "linkedin", testimonial: TestimonialWithArtist) => {
+    const url = generateShareUrl(testimonial.shareSlug, testimonial.artistReferralCode);
     const text = `${testimonial.title} - ${testimonial.artistName} | 247 Print Network`;
     
     let shareUrl = "";
@@ -588,10 +598,10 @@ export default function AdminTestimonials() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">Shareable URL</label>
+                <label className="text-sm font-medium">Shareable URL (with affiliate tracking)</label>
                 <div className="flex gap-2">
                   <Input
-                    value={generateShareUrl(shareDialogTestimonial.shareSlug)}
+                    value={generateShareUrl(shareDialogTestimonial.shareSlug, shareDialogTestimonial.artistReferralCode)}
                     readOnly
                     className="flex-1"
                     data-testid="input-share-url"
@@ -599,12 +609,17 @@ export default function AdminTestimonials() {
                   <Button
                     size="icon"
                     variant="outline"
-                    onClick={() => handleCopyUrl(generateShareUrl(shareDialogTestimonial.shareSlug))}
+                    onClick={() => handleCopyUrl(generateShareUrl(shareDialogTestimonial.shareSlug, shareDialogTestimonial.artistReferralCode))}
                     data-testid="button-copy-url"
                   >
                     {copiedUrl ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
+                {shareDialogTestimonial.artistReferralCode && (
+                  <p className="text-xs text-muted-foreground">
+                    Includes artist referral code: {shareDialogTestimonial.artistReferralCode}
+                  </p>
+                )}
               </div>
               
               <div className="space-y-2">

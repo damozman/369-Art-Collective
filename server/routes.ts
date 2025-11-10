@@ -1563,13 +1563,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = loginSchema.parse(req.body);
 
+      console.log(`[Influencer Login] Attempt for email: ${email}`);
+
       const influencer = await storage.getInfluencerByEmail(email);
       if (!influencer) {
+        console.log(`[Influencer Login] No influencer found for email: ${email}`);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
+      console.log(`[Influencer Login] Influencer found: ${influencer.id}, status: ${influencer.status}`);
+      console.log(`[Influencer Login] Password hash exists: ${!!influencer.password}, hash length: ${influencer.password?.length}`);
+
       const validPassword = await bcrypt.compare(password, influencer.password);
+      console.log(`[Influencer Login] Password validation result: ${validPassword}`);
+      
       if (!validPassword) {
+        console.log(`[Influencer Login] Invalid password for: ${email}`);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 

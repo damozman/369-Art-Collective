@@ -405,6 +405,48 @@ export type InsertStripeWebhookEvent = typeof stripeWebhookEvents.$inferInsert;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
 
+// Featured Subscriptions - Track premium featured placement subscriptions
+export const featuredSubscriptions = pgTable("featured_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artistId: varchar("artist_id").notNull().references(() => artists.id),
+  testimonialId: varchar("testimonial_id").notNull().references(() => testimonials.id),
+  featuredTier: text("featured_tier").notNull(), // "merit", "premium", "admin_override"
+  stripeSubscriptionId: text("stripe_subscription_id"), // Null for merit/admin, populated for premium
+  subscriptionStatus: text("subscription_status"), // active, cancelled, past_due, unpaid (for premium tier)
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"), // Null = ongoing, set when subscription ends
+  minEarningsThreshold: decimal("min_earnings_threshold", { precision: 10, scale: 2 }), // Minimum earnings to qualify (for merit tier)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// Featured Rotation Log - Audit trail for monthly rotation changes
+export const featuredRotationLog = pgTable("featured_rotation_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  rotationDate: timestamp("rotation_date").notNull(), // When this rotation was executed
+  testimonialId: varchar("testimonial_id").notNull().references(() => testimonials.id),
+  artistId: varchar("artist_id").notNull().references(() => artists.id),
+  featuredTier: text("featured_tier").notNull(), // "merit", "premium", "admin_override"
+  artistEarnings: decimal("artist_earnings", { precision: 10, scale: 2 }).notNull(), // Earnings at time of rotation
+  rank: integer("rank"), // Rank within merit tier (1-5 for top 5)
+  action: text("action").notNull(), // "added", "removed", "kept"
+  reason: text("reason"), // Why this change happened
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Insert schemas
+export const insertFeaturedSubscriptionSchema = createInsertSchema(featuredSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for featured subscriptions
+export type FeaturedSubscription = typeof featuredSubscriptions.$inferSelect;
+export type InsertFeaturedSubscription = z.infer<typeof insertFeaturedSubscriptionSchema>;
+
+export type FeaturedRotationLog = typeof featuredRotationLog.$inferSelect;
+
 // Testimonial with artist referral info for affiliate links
 export type TestimonialWithArtist = Testimonial & {
   artistReferralCode?: string | null; // Referral code from linked artist account

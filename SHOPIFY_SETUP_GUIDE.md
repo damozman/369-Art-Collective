@@ -7,13 +7,36 @@
 - ✅ Products assigned to collections
 - ✅ SEO-friendly URLs and rich product descriptions
 
+## 🔒 Password Protection (For Testing)
+
+**IMPORTANT:** While testing, enable password protection to prevent random visitors from accessing your store.
+
+**📍 Location:** Shopify Admin → **Online Store → Preferences**
+
+**Steps to Enable:**
+1. Navigate to **Online Store → Preferences**
+2. Scroll to the **"Store access"** or **"Password protection"** section
+3. Check the box **"Restrict access to visitors with the password"**
+4. Enter a strong password (don't reuse your admin password)
+5. Optionally add a custom message like "Store launching soon - stay tuned!"
+6. Click **Save**
+
+**To Remove Password Protection:**
+1. Go back to **Online Store → Preferences**
+2. Uncheck **"Restrict access to visitors with the password"**
+3. Click **Save**
+
+Note: You need an active paid Shopify plan to remove password protection.
+
+---
+
 ## 🔧 What You Need to Configure Manually in Shopify Admin
 
 The following items **cannot be configured via API** and must be set up in your Shopify Admin panel:
 
 ### 1. **Navigation Menus** (⚠️ Critical - Most links are broken because menus aren't set up)
 
-**📍 Location:** Shopify Admin → Online Store → Navigation
+**📍 Location:** Shopify Admin → **Content → Menus** (Updated for 2025 UI)
 
 #### **Main Menu** (Header)
 Create these menu items:
@@ -52,11 +75,12 @@ Create these menu items:
 ```
 
 **How to add:**
-1. Go to **Online Store → Navigation**
+1. Go to **Content → Menus** (updated location in 2025 Shopify UI)
 2. Click **Main menu**
 3. Click **Add menu item**
 4. Add items one by one
-5. For dropdown items, drag and indent child items under parent
+5. For dropdown items, drag menu items **slightly to the right** under a parent item
+6. **Important:** You can make up to 200 changes before being forced to save - save frequently!
 
 ---
 

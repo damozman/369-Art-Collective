@@ -679,7 +679,30 @@ class PostgresStorage implements IStorage {
     // Use raw SQL to avoid Drizzle query builder SQL generation issues
     const query = drizzleSql`
       SELECT 
-        t.*,
+        t.id,
+        t.artist_id as "artistId",
+        t.artist_name as "artistName",
+        t.title,
+        t.quote,
+        t.video_provider as "videoProvider",
+        t.video_url as "videoUrl",
+        t.video_thumbnail_url as "videoThumbnailUrl",
+        t.local_video_path as "localVideoPath",
+        t.earnings_usd as "earningsUsd",
+        t.products_count as "productsCount",
+        t.featured,
+        t.is_active as "isActive",
+        t.display_order as "displayOrder",
+        t.share_slug as "shareSlug",
+        t.share_excerpt as "shareExcerpt",
+        t.share_image_url as "shareImageUrl",
+        t.allow_embed as "allowEmbed",
+        t.artist_consent as "artistConsent",
+        t.consent_timestamp as "consentTimestamp",
+        t.consent_version as "consentVersion",
+        t.approved_by_admin_id as "approvedByAdminId",
+        t.created_at as "createdAt",
+        t.updated_at as "updatedAt",
         a.referral_code as "artistReferralCode",
         fs.featured_tier as "featuredTier"
       FROM testimonials t
@@ -701,11 +724,8 @@ class PostgresStorage implements IStorage {
     
     const results = await db.execute(query);
     
-    return results.rows.map((row: any) => ({
-      ...row,
-      artistReferralCode: row.artistReferralCode,
-      featuredTier: row.featuredTier,
-    }));
+    // Results now have properly camelCased column names from the SQL aliases
+    return results.rows as any[];
   }
 
   // Featured Subscription methods

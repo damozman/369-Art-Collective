@@ -18,6 +18,7 @@ import {
   resetPasswordSchema,
   updateAdminProfileSchema,
   deleteAccountSchema,
+  insertViolationReportSchema,
 } from "@shared/schema";
 import crypto from "crypto";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured, updateProductStatus } from "./lib/shopify";
@@ -194,6 +195,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register new artist
   app.post("/api/artists/register", async (req, res) => {
     try {
+      // Validate TOS acceptance BEFORE parsing other fields
+      const acceptTerms = req.body.acceptTerms;
+      if (acceptTerms !== true) {
+        return res.status(400).json({ 
+          message: "You must accept the Terms of Service to register" 
+        });
+      }
+
       const data = insertArtistSchema.parse(req.body);
 
       const existing = await storage.getArtistByEmail(data.email);
@@ -201,11 +210,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email already registered" });
       }
 
+      // Capture IP address for TOS audit trail
+      const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() 
+        || req.socket.remoteAddress 
+        || 'unknown';
+
       const hashedPassword = await bcrypt.hash(data.password, 10);
       const artist = await storage.createArtist({
         ...data,
         password: hashedPassword,
-      });
+        tosAcceptedAt: new Date(),
+        tosIpAddress: ipAddress,
+        tosVersion: "v1.0-2025-11", // Track TOS version for legal compliance
+      } as any);
 
       // Regenerate session and automatically log in the new artist
       req.session.regenerate((err) => {
@@ -1045,7 +1062,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         artistId: req.user!.id,
       });
-      const artwork = await storage.createArtwork(data);
+
+      // Enforce IP declaration at API level (belt & suspenders with Zod validation)
+      if (!data.ipDeclarationAccepted) {
+        return res.status(400).json({ 
+          message: "You must confirm you have rights to this artwork" 
+        });
+      }
+
+      // Capture IP declaration text snapshot for legal evidence
+      const ipDeclarationText = "I confirm that I own the rights to this artwork and it does not violate any trademarks, copyrights, or other intellectual property rights. I understand that uploading artwork containing brand logos, copyrighted characters, or other protected content will result in immediate removal and forfeiture of any pending earnings.";
+
+      const artwork = await storage.createArtwork({
+        ...data,
+        ipDeclarationText,
+      } as any);
+      
       res.status(201).json(normalizeArtwork(artwork, req));
     } catch (error: any) {
       console.error("Create artwork error:", error);
@@ -1206,6 +1238,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Reject artwork error:", error);
       res.status(500).json({ message: error.message || "Failed to reject artwork" });
+    }
+  });
+
+  // Flag artwork for IP violation (admin only)
+  app.post("/api/artworks/:id/flag", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const data = insertViolationReportSchema.parse({
+        ...req.body,
+        artworkId: id,
+        reporterId: req.user!.id,
+      });
+
+      const artwork = await storage.getArtwork(id);
+      if (!artwork) {
+        return res.status(404).json({ message: "Artwork not found" });
+      }
+
+      const report = await storage.createViolationReport(data);
+      res.status(201).json(report);
+    } catch (error: any) {
+      console.error("Flag artwork error:", error);
+      res.status(400).json({ message: error.message || "Failed to flag artwork" });
+    }
+  });
+
+  // Get violation reports for artwork (admin only)
+  app.get("/api/artworks/:id/violations", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const reports = await storage.getViolationReportsByArtwork(id);
+      res.json(reports);
+    } catch (error: any) {
+      console.error("Get violations error:", error);
+      res.status(500).json({ message: "Failed to fetch violation reports" });
     }
   });
 

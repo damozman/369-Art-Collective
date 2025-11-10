@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
 import { Palette, Loader2, Upload, X, Check } from "lucide-react";
@@ -41,13 +42,13 @@ export default function Register() {
   });
 
   async function onSubmitAccount(data: RegistrationForm) {
-    const { confirmPassword, acceptTerms, ...artistData } = data;
+    const { confirmPassword, ...registrationData } = data;
     setIsLoading(true);
     try {
       const response = await fetch("/api/artists/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(artistData),
+        body: JSON.stringify(registrationData),
       });
 
       if (!response.ok) {
@@ -312,6 +313,34 @@ export default function Register() {
                           />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="acceptTerms"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border p-4">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="checkbox-accept-terms"
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="text-sm font-medium">
+                            Terms of Service & Intellectual Property Agreement
+                          </FormLabel>
+                          <p className="text-xs text-muted-foreground">
+                            I confirm that all artwork I upload will be my original work OR work I have proper licensing rights to use. 
+                            I understand that uploading artwork containing trademarks, copyrighted material, or other intellectual property 
+                            I do not own will result in immediate removal of my artwork and forfeiture of any pending earnings. 
+                            I agree to indemnify 247 Print Network against any claims arising from IP violations.
+                          </p>
+                          <FormMessage />
+                        </div>
                       </FormItem>
                     )}
                   />

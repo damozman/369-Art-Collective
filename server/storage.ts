@@ -7,6 +7,7 @@ import {
   payouts as payoutsTable,
   passwordResetTokens,
   portfolioSubmissions,
+  violationReports,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -18,6 +19,8 @@ import {
   type PasswordResetToken,
   type PortfolioSubmission,
   type InsertPortfolioSubmission,
+  type ViolationReport,
+  type InsertViolationReport,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
@@ -48,6 +51,11 @@ export interface IStorage {
   // Portfolio Submission methods
   createPortfolioSubmission(submission: InsertPortfolioSubmission): Promise<PortfolioSubmission>;
   getPortfolioSubmissionsByArtist(artistId: string): Promise<PortfolioSubmission[]>;
+
+  // Violation Report methods
+  createViolationReport(report: InsertViolationReport): Promise<ViolationReport>;
+  getViolationReportsByArtwork(artworkId: string): Promise<ViolationReport[]>;
+  getAllViolationReports(): Promise<ViolationReport[]>;
 
   // Artwork methods
   getArtwork(id: string): Promise<Artwork | undefined>;
@@ -234,6 +242,31 @@ class PostgresStorage implements IStorage {
     return submissions;
   }
 
+  async createViolationReport(report: InsertViolationReport): Promise<ViolationReport> {
+    const [violationReport] = await db
+      .insert(violationReports)
+      .values(report)
+      .returning();
+    return violationReport;
+  }
+
+  async getViolationReportsByArtwork(artworkId: string): Promise<ViolationReport[]> {
+    const reports = await db
+      .select()
+      .from(violationReports)
+      .where(eq(violationReports.artworkId, artworkId))
+      .orderBy(violationReports.createdAt);
+    return reports;
+  }
+
+  async getAllViolationReports(): Promise<ViolationReport[]> {
+    const reports = await db
+      .select()
+      .from(violationReports)
+      .orderBy(violationReports.createdAt);
+    return reports;
+  }
+
   async getArtwork(id: string): Promise<Artwork | undefined> {
     const [artwork] = await db
       .select()
@@ -391,6 +424,7 @@ class MemStorage implements IStorage {
   private artists: Map<string, Artist> = new Map();
   private admins: Map<string, Admin> = new Map();
   private portfolioSubmissions: Map<string, PortfolioSubmission> = new Map();
+  private violationReports: Map<string, ViolationReport> = new Map();
   private artworks: Map<string, Artwork> = new Map();
 
   async getArtist(id: string): Promise<Artist | undefined> {
@@ -514,6 +548,31 @@ class MemStorage implements IStorage {
   async getPortfolioSubmissionsByArtist(artistId: string): Promise<PortfolioSubmission[]> {
     return Array.from(this.portfolioSubmissions.values())
       .filter((s) => s.artistId === artistId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  async createViolationReport(report: InsertViolationReport): Promise<ViolationReport> {
+    const id = randomUUID();
+    const violationReport: ViolationReport = {
+      ...report,
+      id,
+      status: report.status || "pending",
+      resolvedAt: null,
+      resolutionNotes: null,
+      createdAt: new Date(),
+    };
+    this.violationReports.set(id, violationReport);
+    return violationReport;
+  }
+
+  async getViolationReportsByArtwork(artworkId: string): Promise<ViolationReport[]> {
+    return Array.from(this.violationReports.values())
+      .filter((r) => r.artworkId === artworkId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }
+
+  async getAllViolationReports(): Promise<ViolationReport[]> {
+    return Array.from(this.violationReports.values())
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }
 

@@ -15,6 +15,9 @@ import { z } from "zod";
 
 const registrationSchema = insertArtistSchema.extend({
   confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: "You must accept the Terms of Service",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -34,11 +37,11 @@ export default function Register() {
 
   const form = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
-    defaultValues: { email: "", password: "", confirmPassword: "", name: "", artistShort: "" },
+    defaultValues: { email: "", password: "", confirmPassword: "", name: "", artistShort: "", acceptTerms: false },
   });
 
   async function onSubmitAccount(data: RegistrationForm) {
-    const { confirmPassword, ...artistData } = data;
+    const { confirmPassword, acceptTerms, ...artistData } = data;
     setIsLoading(true);
     try {
       const response = await fetch("/api/artists/register", {

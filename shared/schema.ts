@@ -16,6 +16,9 @@ export const artists = pgTable("artists", {
   stripeAccountStatus: text("stripe_account_status"), // pending, active, restricted
   referralCode: text("referral_code").notNull().unique(), // Unique code for referral links (e.g., "ARTIST-ABC123")
   referredBy: varchar("referred_by").references((): any => artists.id), // Which artist recruited them
+  tosAcceptedAt: timestamp("tos_accepted_at"), // Terms of Service acceptance timestamp for legal compliance
+  tosIpAddress: text("tos_ip_address"), // IP address when TOS was accepted for audit trail
+  tosVersion: text("tos_version"), // Version/hash of TOS accepted (e.g., "v1.0-2025-11" or hash)
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -48,6 +51,19 @@ export const portfolioSubmissions = pgTable("portfolio_submissions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Violation Reports - tracking suspected IP violations
+export const violationReports = pgTable("violation_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artworkId: varchar("artwork_id").notNull().references(() => artworks.id),
+  reporterId: varchar("reporter_id").notNull().references(() => admins.id), // Admin who flagged it
+  reason: text("reason").notNull(), // e.g., "trademark", "copyright", "inappropriate"
+  notes: text("notes"), // Additional details about the violation
+  status: text("status").notNull().default("pending"), // pending, under_review, resolved, dismissed
+  resolvedAt: timestamp("resolved_at"),
+  resolutionNotes: text("resolution_notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Artworks table - submitted artwork
 export const artworks = pgTable("artworks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -58,6 +74,8 @@ export const artworks = pgTable("artworks", {
   imageUrl: text("image_url").notNull(),
   status: text("status").notNull().default("pending"), // pending, approved, rejected
   rejectionReason: text("rejection_reason"),
+  ipDeclarationAccepted: boolean("ip_declaration_accepted").notNull().default(false), // Artist confirms original work/proper rights
+  ipDeclarationText: text("ip_declaration_text"), // Snapshot of declaration text at time of upload
   shopifyProductId: text("shopify_product_id"),
   shopifyProductStatus: text("shopify_product_status").default("draft"), // draft, active - tracks Shopify product visibility
   printifyProductId: text("printify_product_id"), // Printify product ID
@@ -71,6 +89,9 @@ export const insertArtistSchema = createInsertSchema(artists).omit({
   id: true,
   createdAt: true,
   referralCode: true, // Generated automatically
+  tosAcceptedAt: true, // Server sets this
+  tosIpAddress: true, // Server sets this
+  tosVersion: true, // Server sets this
 }).extend({
   email: z.string().email(),
   password: z.string().min(6),
@@ -102,11 +123,15 @@ export const insertArtworkSchema = createInsertSchema(artworks).omit({
   status: true,
   shopifyProductId: true,
   rejectionReason: true,
+  ipDeclarationText: true, // Server sets this
 }).extend({
   title: z.string().min(1),
   description: z.string().optional(),
   tags: z.array(z.string()).default([]),
   imageUrl: z.string().min(1), // Accept both URLs and paths
+  ipDeclarationAccepted: z.boolean().refine((val) => val === true, {
+    message: "You must confirm you have rights to this artwork",
+  }),
 });
 
 export const updateArtworkSchema = z.object({
@@ -128,6 +153,20 @@ export type PortfolioSubmission = typeof portfolioSubmissions.$inferSelect;
 export type InsertArtwork = z.infer<typeof insertArtworkSchema>;
 export type UpdateArtwork = z.infer<typeof updateArtworkSchema>;
 export type Artwork = typeof artworks.$inferSelect;
+
+export const insertViolationReportSchema = createInsertSchema(violationReports).omit({
+  id: true,
+  createdAt: true,
+  resolvedAt: true,
+}).extend({
+  artworkId: z.string().min(1),
+  reporterId: z.string().min(1),
+  reason: z.enum(["trademark", "copyright", "inappropriate", "other"]),
+  notes: z.string().optional(),
+});
+
+export type InsertViolationReport = z.infer<typeof insertViolationReportSchema>;
+export type ViolationReport = typeof violationReports.$inferSelect;
 
 // Login schemas
 export const loginSchema = z.object({

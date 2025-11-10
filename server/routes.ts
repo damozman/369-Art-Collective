@@ -19,6 +19,7 @@ import {
   updateAdminProfileSchema,
   deleteAccountSchema,
   insertViolationReportSchema,
+  insertTestimonialSchema,
 } from "@shared/schema";
 import crypto from "crypto";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured, updateProductStatus } from "./lib/shopify";
@@ -1988,6 +1989,116 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Get artist payouts error:", error);
       res.status(500).json({ message: "Failed to fetch payouts" });
+    }
+  });
+
+  // ==================== TESTIMONIALS ROUTES ====================
+  
+  // Public: Get all active testimonials
+  app.get("/api/testimonials", async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const testimonials = await storage.getActiveTestimonials(limit);
+      res.json(testimonials);
+    } catch (error: any) {
+      console.error("Get testimonials error:", error);
+      res.status(500).json({ message: "Failed to fetch testimonials" });
+    }
+  });
+
+  // Public: Get testimonial by slug
+  app.get("/api/testimonials/:slug", async (req, res) => {
+    try {
+      const testimonial = await storage.getTestimonialBySlug(req.params.slug);
+      if (!testimonial) {
+        return res.status(404).json({ message: "Testimonial not found" });
+      }
+      if (!testimonial.isActive) {
+        return res.status(404).json({ message: "Testimonial not available" });
+      }
+      res.json(testimonial);
+    } catch (error: any) {
+      console.error("Get testimonial by slug error:", error);
+      res.status(500).json({ message: "Failed to fetch testimonial" });
+    }
+  });
+
+  // Admin: Get all testimonials (including inactive)
+  app.get("/api/admin/testimonials", requireAdmin, async (_req, res) => {
+    try {
+      const testimonials = await storage.getAllTestimonials();
+      res.json(testimonials);
+    } catch (error: any) {
+      console.error("Get all testimonials error:", error);
+      res.status(500).json({ message: "Failed to fetch testimonials" });
+    }
+  });
+
+  // Admin: Create testimonial
+  app.post("/api/admin/testimonials", requireAdmin, async (req, res) => {
+    try {
+      const validatedData = insertTestimonialSchema.parse(req.body);
+      
+      // Generate unique share slug if not provided
+      if (!validatedData.shareSlug) {
+        const slugBase = validatedData.artistName.toLowerCase().replace(/\s+/g, '-');
+        validatedData.shareSlug = `${slugBase}-${Date.now()}`;
+      }
+      
+      const testimonial = await storage.createTestimonial(validatedData);
+      res.status(201).json(testimonial);
+    } catch (error: any) {
+      console.error("Create testimonial error:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create testimonial" });
+    }
+  });
+
+  // Admin: Update testimonial
+  app.patch("/api/admin/testimonials/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const testimonial = await storage.updateTestimonial(id, updates);
+      res.json(testimonial);
+    } catch (error: any) {
+      console.error("Update testimonial error:", error);
+      if (error.message === "Testimonial not found") {
+        return res.status(404).json({ message: "Testimonial not found" });
+      }
+      res.status(500).json({ message: "Failed to update testimonial" });
+    }
+  });
+
+  // Admin: Delete testimonial
+  app.delete("/api/admin/testimonials/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteTestimonial(id);
+      res.json({ message: "Testimonial deleted successfully" });
+    } catch (error: any) {
+      console.error("Delete testimonial error:", error);
+      res.status(500).json({ message: "Failed to delete testimonial" });
+    }
+  });
+
+  // Admin: Reorder testimonials
+  app.post("/api/admin/testimonials/reorder", requireAdmin, async (req, res) => {
+    try {
+      const { reorderedItems } = req.body;
+      
+      if (!Array.isArray(reorderedItems)) {
+        return res.status(400).json({ message: "reorderedItems must be an array" });
+      }
+      
+      await storage.reorderTestimonials(reorderedItems);
+      res.json({ message: "Testimonials reordered successfully" });
+    } catch (error: any) {
+      console.error("Reorder testimonials error:", error);
+      res.status(500).json({ message: "Failed to reorder testimonials" });
     }
   });
 

@@ -26,6 +26,10 @@ interface ArtworkData {
   artworkId: string;
   imageUrl: string;
   tags?: string[];
+  artworkStory?: string;
+  styleTags?: string[];
+  suggestedUse?: string;
+  seoSlug?: string;
 }
 
 function loadConfig<T>(filename: string): T {
@@ -65,19 +69,53 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
       }
     }
 
+    // Build comprehensive tags including style tags
     const tags = [
       "New",
       ...finishes.map(f => `Finish:${f}`),
       `Artist:${artwork.artistName}`,
       ...(artwork.tags || []),
+      ...(artwork.styleTags || []).map(tag => `Style:${tag}`),
     ];
 
-    const productPayload = {
+    // Build rich HTML product description with marketing content
+    let bodyHtml = "";
+    
+    // Main description
+    if (artwork.description) {
+      bodyHtml += `<p>${artwork.description}</p>`;
+    }
+    
+    // Artwork story section
+    if (artwork.artworkStory) {
+      bodyHtml += `<div style="margin-top: 1.5rem;">`;
+      bodyHtml += `<h3 style="font-weight: 600; margin-bottom: 0.5rem;">The Story Behind This Artwork</h3>`;
+      bodyHtml += `<p style="color: #555;">${artwork.artworkStory}</p>`;
+      bodyHtml += `</div>`;
+    }
+    
+    // Suggested use section
+    if (artwork.suggestedUse) {
+      bodyHtml += `<div style="margin-top: 1.5rem;">`;
+      bodyHtml += `<h3 style="font-weight: 600; margin-bottom: 0.5rem;">Perfect For</h3>`;
+      bodyHtml += `<p style="color: #555;">${artwork.suggestedUse}</p>`;
+      bodyHtml += `</div>`;
+    }
+    
+    // Artist attribution
+    bodyHtml += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e5e5;">`;
+    bodyHtml += `<p style="font-style: italic;">Created by <strong>${artwork.artistName}</strong></p>`;
+    bodyHtml += `</div>`;
+    
+    // Fallback if no content
+    if (!bodyHtml) {
+      bodyHtml = `<p>${artwork.title} by ${artwork.artistName}</p>`;
+    }
+
+    const productPayload: any = {
       product: {
         title: artwork.title,
-        body_html: artwork.description 
-          ? `<p>${artwork.description}</p><p>by ${artwork.artistName}</p>`
-          : `<p>${artwork.title} by ${artwork.artistName}</p>`,
+        body_html: bodyHtml,
         vendor: artwork.artistName,
         product_type: "Art Print",
         status: "draft",
@@ -90,6 +128,11 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
         variants,
       },
     };
+    
+    // Add SEO-friendly handle (URL slug) if available
+    if (artwork.seoSlug) {
+      productPayload.product.handle = artwork.seoSlug;
+    }
 
     console.log(`[Shopify] Creating product "${artwork.title}" with image URL: ${artwork.imageUrl}`);
 

@@ -27,6 +27,7 @@ import {
   type InsertStripeWebhookEvent,
   type Testimonial,
   type InsertTestimonial,
+  type TestimonialWithArtist,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
@@ -101,6 +102,10 @@ export interface IStorage {
   getAllTestimonials(): Promise<Testimonial[]>;
   getActiveTestimonials(limit?: number): Promise<Testimonial[]>;
   reorderTestimonials(reorderedItems: Array<{ id: string; displayOrder: number }>): Promise<void>;
+  
+  // Testimonial methods with artist data (for affiliate links)
+  getAllTestimonialsWithArtist(): Promise<TestimonialWithArtist[]>;
+  getTestimonialBySlugWithArtist(slug: string): Promise<TestimonialWithArtist | undefined>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -547,6 +552,41 @@ class PostgresStorage implements IStorage {
         .where(eq(testimonials.id, item.id));
     }
   }
+
+  async getAllTestimonialsWithArtist(): Promise<TestimonialWithArtist[]> {
+    const results = await db
+      .select({
+        testimonial: testimonials,
+        artistReferralCode: artists.referralCode,
+      })
+      .from(testimonials)
+      .leftJoin(artists, eq(testimonials.artistId, artists.id))
+      .orderBy(testimonials.displayOrder, testimonials.createdAt);
+    
+    return results.map(row => ({
+      ...row.testimonial,
+      artistReferralCode: row.artistReferralCode,
+    }));
+  }
+
+  async getTestimonialBySlugWithArtist(slug: string): Promise<TestimonialWithArtist | undefined> {
+    const [result] = await db
+      .select({
+        testimonial: testimonials,
+        artistReferralCode: artists.referralCode,
+      })
+      .from(testimonials)
+      .leftJoin(artists, eq(testimonials.artistId, artists.id))
+      .where(eq(testimonials.shareSlug, slug))
+      .limit(1);
+    
+    if (!result) return undefined;
+    
+    return {
+      ...result.testimonial,
+      artistReferralCode: result.artistReferralCode,
+    };
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -933,6 +973,16 @@ class MemStorage implements IStorage {
 
   async reorderTestimonials(reorderedItems: Array<{ id: string; displayOrder: number }>): Promise<void> {
     console.log("MemStorage: reorderTestimonials called (stub)", reorderedItems);
+  }
+
+  async getAllTestimonialsWithArtist(): Promise<TestimonialWithArtist[]> {
+    console.log("MemStorage: getAllTestimonialsWithArtist called (stub)");
+    return [];
+  }
+
+  async getTestimonialBySlugWithArtist(slug: string): Promise<TestimonialWithArtist | undefined> {
+    console.log("MemStorage: getTestimonialBySlugWithArtist called (stub)", slug);
+    return undefined;
   }
 }
 

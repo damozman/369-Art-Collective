@@ -48,7 +48,8 @@ export type EmailType =
   | 'portfolio_approved'
   | 'portfolio_rejected'
   | 'artwork_approved'
-  | 'artwork_rejected';
+  | 'artwork_rejected'
+  | 'custom';
 
 export interface EmailData {
   recipientEmail: string;

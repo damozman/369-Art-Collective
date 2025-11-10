@@ -623,6 +623,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk artist operations (admin only) - approve or reject multiple artists
+  app.post("/api/artists/bulk", requireAdmin, async (req, res) => {
+    try {
+      const { artistIds, action } = req.body;
+
+      if (!Array.isArray(artistIds) || artistIds.length === 0) {
+        return res.status(400).json({ message: "artistIds must be a non-empty array" });
+      }
+
+      if (!["approve", "reject"].includes(action)) {
+        return res.status(400).json({ message: "action must be 'approve' or 'reject'" });
+      }
+
+      const results: Array<{ artistId: string; success: boolean; error?: string }> = [];
+      let successCount = 0;
+      let failureCount = 0;
+
+      // Process each artist sequentially to avoid overwhelming email service
+      for (const artistId of artistIds) {
+        try {
+          const artist = await storage.getArtist(artistId);
+          if (!artist) {
+            results.push({ artistId, success: false, error: "Artist not found" });
+            failureCount++;
+            continue;
+          }
+
+          if (action === "approve") {
+            // Approve artist
+            await storage.updateArtist(artistId, { approved: true });
+
+            // Send approval email (non-blocking)
+            emailService.sendPortfolioDecisionEmail(artist.email, artist.name, artist.id, true)
+              .catch(err => console.error(`Failed to send approval email for artist ${artistId}:`, err));
+
+            results.push({ artistId, success: true });
+            successCount++;
+          } else {
+            // Reject artist (soft delete)
+            await storage.deleteArtist(artistId);
+
+            // Send rejection email (non-blocking)
+            emailService.sendPortfolioDecisionEmail(artist.email, artist.name, artist.id, false)
+              .catch(err => console.error(`Failed to send rejection email for artist ${artistId}:`, err));
+
+            results.push({ artistId, success: true });
+            successCount++;
+          }
+        } catch (error: any) {
+          console.error(`Bulk operation failed for artist ${artistId}:`, error);
+          results.push({ artistId, success: false, error: error.message });
+          failureCount++;
+        }
+      }
+
+      res.json({
+        totalProcessed: artistIds.length,
+        successCount,
+        failureCount,
+        results,
+      });
+    } catch (error: any) {
+      console.error("Bulk artist operation error:", error);
+      res.status(500).json({ message: error.message || "Failed to process bulk operation" });
+    }
+  });
+
+  // Batch email to artists (admin only)
+  app.post("/api/artists/batch-email", requireAdmin, async (req, res) => {
+    try {
+      const { artistIds, subject, message } = req.body;
+
+      if (!Array.isArray(artistIds) || artistIds.length === 0) {
+        return res.status(400).json({ message: "artistIds must be a non-empty array" });
+      }
+
+      if (!subject || !subject.trim()) {
+        return res.status(400).json({ message: "subject is required" });
+      }
+
+      if (!message || !message.trim()) {
+        return res.status(400).json({ message: "message is required" });
+      }
+
+      const results: Array<{ artistId: string; success: boolean; error?: string }> = [];
+      let successCount = 0;
+      let failureCount = 0;
+
+      // Process each artist sequentially to avoid rate limiting
+      for (const artistId of artistIds) {
+        try {
+          const artist = await storage.getArtist(artistId);
+          if (!artist) {
+            results.push({ artistId, success: false, error: "Artist not found" });
+            failureCount++;
+            continue;
+          }
+
+          // Send custom email using the base sendEmail method
+          const result = await emailService.sendEmail({
+            recipientEmail: artist.email,
+            recipientType: 'artist',
+            recipientId: artist.id,
+            emailType: 'custom',
+            subject: subject.trim(),
+            htmlBody: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2>Hello ${artist.name},</h2>
+                <div style="margin: 20px 0; line-height: 1.6;">
+                  ${message.trim().replace(/\n/g, '<br>')}
+                </div>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                <p style="color: #666; font-size: 12px;">
+                  This is an official message from 247 Print Network administration.
+                </p>
+              </div>
+            `,
+            textBody: `Hello ${artist.name},\n\n${message.trim()}\n\n---\nThis is an official message from 247 Print Network administration.`,
+            metadata: { adminSent: true, batchEmail: true },
+          });
+
+          if (result.success) {
+            results.push({ artistId, success: true });
+            successCount++;
+          } else {
+            results.push({ artistId, success: false, error: result.error || "Email send failed" });
+            failureCount++;
+          }
+        } catch (error: any) {
+          console.error(`Batch email failed for artist ${artistId}:`, error);
+          results.push({ artistId, success: false, error: error.message });
+          failureCount++;
+        }
+      }
+
+      res.json({
+        totalProcessed: artistIds.length,
+        successCount,
+        failureCount,
+        results,
+      });
+    } catch (error: any) {
+      console.error("Batch email error:", error);
+      res.status(500).json({ message: error.message || "Failed to send batch emails" });
+    }
+  });
+
   // Delete artist (admin only)
   app.post("/api/admin/artists/:id/delete", requireAdmin, async (req, res) => {
     try {

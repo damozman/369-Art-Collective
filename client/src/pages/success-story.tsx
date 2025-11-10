@@ -271,6 +271,13 @@ export default function SuccessStory() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Legal Disclaimer - Artist Consent and Authenticity */}
+        <div className="text-center text-sm text-muted-foreground py-6 border-t">
+          <p>
+            This testimonial represents the authentic experience of <strong>{testimonial.artistName}</strong>, a verified 247 Print Network artist who has consented to share their success story publicly. Individual results may vary based on effort, artwork quality, and market conditions.
+          </p>
+        </div>
       </main>
     </div>
   );

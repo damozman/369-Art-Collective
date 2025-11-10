@@ -75,6 +75,7 @@ export interface IStorage {
   // Sale methods (MVP)
   createSale(sale: any): Promise<any>;
   getSalesByArtist(artistId: string): Promise<any[]>;
+  updateSale(id: string, updates: any): Promise<any>;
   
   // Payout methods
   createPayout(payout: any): Promise<any>;
@@ -380,6 +381,15 @@ class PostgresStorage implements IStorage {
       .where(eq(salesTable.artistId, artistId))
       .orderBy(salesTable.createdAt);
     return artistSales;
+  }
+
+  async updateSale(id: string, updates: any): Promise<any> {
+    const [updatedSale] = await db
+      .update(salesTable)
+      .set(updates)
+      .where(eq(salesTable.id, id))
+      .returning();
+    return updatedSale;
   }
 
   async createPayout(payout: any): Promise<any> {
@@ -702,6 +712,11 @@ class MemStorage implements IStorage {
   async getSalesByArtist(artistId: string): Promise<any[]> {
     console.log("MemStorage: getSalesByArtist called (stub)", artistId);
     return [];
+  }
+
+  async updateSale(id: string, updates: any): Promise<any> {
+    console.log("MemStorage: updateSale called (stub)", id, updates);
+    return { id, ...updates };
   }
 
   async createPayout(payout: any): Promise<any> {

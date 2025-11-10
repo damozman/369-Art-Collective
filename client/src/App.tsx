@@ -38,6 +38,7 @@ function Router() {
       <Route path="/success-stories/:slug" component={SuccessStory} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminLogin} />
+      <Route path="/admin/login" component={AdminLogin} />
       <Route path="/register" component={Register} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/admin/forgot-password" component={AdminForgotPassword} />

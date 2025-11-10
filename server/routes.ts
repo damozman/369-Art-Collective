@@ -643,6 +643,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update admin notes for artist (admin only)
+  app.patch("/api/admin/artists/:id/notes", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { adminNotes } = req.body;
+
+      if (typeof adminNotes !== 'string') {
+        return res.status(400).json({ message: "Admin notes must be a string" });
+      }
+
+      const artist = await storage.getArtist(id);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      const updatedArtist = await storage.updateArtist(id, { adminNotes });
+      const { password, ...artistData } = updatedArtist;
+      
+      res.json(artistData);
+    } catch (error: any) {
+      console.error("Update admin notes error:", error);
+      res.status(500).json({ message: "Failed to update admin notes" });
+    }
+  });
+
   // Get single artist details (admin only)
   app.get("/api/artists/:id", requireAdmin, async (req, res) => {
     try {

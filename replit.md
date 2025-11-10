@@ -12,6 +12,7 @@ The platform is built with a clear separation between frontend and backend.
 **Technical Implementations:**
 - **Artist Workflow:** Artists register, submit a portfolio for admin approval, then upload artwork, track its status, and manage product visibility.
 - **Admin Workflow:** Admins manage artist accounts, approve/reject artists, and review/approve artwork submissions, which triggers Shopify product creation.
+  - **Admin CRM Notes:** Private notes field on each artist's detail page for tracking calls, conversations, preferences, and relationship management (personal CRM functionality).
 - **Printify Integration:** Approved artwork automatically creates Printify POD products.
 - **Shopify Integration:** Shopify webhooks capture orders, and the platform integrates with the Shopify Admin API for storefront product management.
 - **Royalty System:** A tiered royalty system (30% to 45% based on monthly sales) is implemented, alongside a referral bonus (+5% for UTM-tracked sales) and a recruitment bonus (5% of recruited artist's royalties).
@@ -68,9 +69,12 @@ The platform is built with a clear separation between frontend and backend.
     - Homepage GET /api/featured-testimonials endpoint returns tier-sorted testimonials with proper badge display
     - Audit logging via featuredRotationLog table tracks all rotation events and manual overrides
     - Raw SQL implementation for featured testimonials query (bypasses Drizzle query builder to avoid SQL generation issues)
-
-## Future Enhancements
-- **Admin CRM Notes for Artists:** Add a private notes field on each artist's admin page for tracking calls, conversations, and relationship management (personal CRM functionality)
+- **Email Notifications:**
+  - Resend integration for transactional emails
+  - Professional HTML + text email templates (welcome, password reset, portfolio decision, artwork decision)
+  - Email delivery logging via emailLogs table
+  - Non-blocking sends with error handling
+  - Integrated into 6 endpoints: registration, portfolio approval, artwork approval/rejection, password resets (artist & admin)
 
 ## External Dependencies
 - **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered) for persistent storage.

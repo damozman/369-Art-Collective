@@ -28,6 +28,7 @@ export const artists = pgTable("artists", {
   bio: text("bio"), // Artist bio for product pages and profile
   profilePhoto: text("profile_photo"), // URL to artist profile photo
   socialLinks: jsonb("social_links"), // { instagram, twitter, website, etc. }
+  adminNotes: text("admin_notes"), // Private admin notes for CRM (relationship tracking, calls, preferences)
   tosAcceptedAt: timestamp("tos_accepted_at"), // Terms of Service acceptance timestamp for legal compliance
   tosIpAddress: text("tos_ip_address"), // IP address when TOS was accepted for audit trail
   tosVersion: text("tos_version"), // Version/hash of TOS accepted (e.g., "v1.0-2025-11" or hash)

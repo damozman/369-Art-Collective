@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -7,17 +7,35 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { SiFacebook, SiX, SiLinkedin } from "react-icons/si";
-import type { Testimonial } from "@shared/schema";
+import type { TestimonialWithArtist } from "@shared/schema";
 
 export default function SuccessStory() {
   const [, params] = useRoute("/success-stories/:slug");
   const [, setLocation] = useLocation();
   const slug = params?.slug;
 
-  const { data: testimonial, isLoading, error } = useQuery<Testimonial>({
+  const { data: testimonial, isLoading, error } = useQuery<TestimonialWithArtist>({
     queryKey: [`/api/testimonials/${slug}`],
     enabled: !!slug,
   });
+
+  const referralParams = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    const utmSource = params.get('utm_source');
+    const utmMedium = params.get('utm_medium');
+    const utmCampaign = params.get('utm_campaign');
+    
+    if (!ref && !utmSource) return '';
+    
+    const queryParams = new URLSearchParams();
+    if (ref) queryParams.set('ref', ref);
+    if (utmSource) queryParams.set('utm_source', utmSource);
+    if (utmMedium) queryParams.set('utm_medium', utmMedium);
+    if (utmCampaign) queryParams.set('utm_campaign', utmCampaign);
+    
+    return `?${queryParams.toString()}`;
+  }, [window.location.search]);
 
   useEffect(() => {
     if (testimonial) {
@@ -244,7 +262,7 @@ export default function SuccessStory() {
               Join {testimonial.artistName} and hundreds of other artists earning passive income through our print-on-demand marketplace.
             </p>
             <div className="flex gap-3 justify-center">
-              <Button onClick={() => setLocation("/register")} data-testid="button-join-now">
+              <Button onClick={() => setLocation(`/register${referralParams}`)} data-testid="button-join-now">
                 Join as Artist
               </Button>
               <Button variant="outline" onClick={() => setLocation("/")} data-testid="button-learn-more">

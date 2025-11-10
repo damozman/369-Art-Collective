@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useLocation } from "wouter";
-import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings, Flag, MessageSquare } from "lucide-react";
+import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings, Flag, MessageSquare, Search, ArrowUpDown } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -27,6 +29,13 @@ export default function AdminDashboard() {
   const [showFlagDialog, setShowFlagDialog] = useState(false);
   const [reason, setReason] = useState<"trademark" | "copyright" | "inappropriate" | "other">("trademark");
   const [notes, setNotes] = useState("");
+  
+  // Enhanced filtering & bulk selection state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "artist-az" | "artist-za">("newest");
+  const [selectedArtworkIds, setSelectedArtworkIds] = useState<Set<string>>(new Set());
+  const [showBulkRejectDialog, setShowBulkRejectDialog] = useState(false);
+  const [bulkRejectionReason, setBulkRejectionReason] = useState("");
 
   const { data: artworks, isLoading } = useQuery<ArtworkWithArtist[]>({
     queryKey: ["/api/artworks/all"],
@@ -45,9 +54,42 @@ export default function AdminDashboard() {
 
   const pendingArtistsCount = artists?.filter(a => !a.approved).length || 0;
 
-  const filteredArtworks = artworks?.filter(a => 
-    statusFilter === "all" ? true : a.status === statusFilter
-  );
+  // Enhanced filtering with search and sorting
+  const filteredArtworks = useMemo(() => {
+    if (!artworks) return [];
+    
+    let filtered = artworks.filter(a => 
+      statusFilter === "all" ? true : a.status === statusFilter
+    );
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(a => 
+        a.title.toLowerCase().includes(query) ||
+        a.artist.name.toLowerCase().includes(query) ||
+        a.artist.email.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        case "oldest":
+          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        case "artist-az":
+          return a.artist.name.localeCompare(b.artist.name);
+        case "artist-za":
+          return b.artist.name.localeCompare(a.artist.name);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [artworks, statusFilter, searchQuery, sortBy]);
 
   const stats = {
     total: artworks?.length || 0,
@@ -122,6 +164,51 @@ export default function AdminDashboard() {
     },
   });
 
+  // Bulk operations mutations
+  const bulkApproveMutation = useMutation({
+    mutationFn: async (artworkIds: string[]) => {
+      return apiRequest("POST", "/api/artworks/bulk", { artworkIds, action: "approve" });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/artworks/all"] });
+      toast({
+        title: "Bulk approval complete",
+        description: `${data.successCount} artworks approved, ${data.failureCount} failed`,
+      });
+      setSelectedArtworkIds(new Set());
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Bulk approval failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const bulkRejectMutation = useMutation({
+    mutationFn: async ({ artworkIds, reason }: { artworkIds: string[]; reason: string }) => {
+      return apiRequest("POST", "/api/artworks/bulk", { artworkIds, action: "reject", reason });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/artworks/all"] });
+      toast({
+        title: "Bulk rejection complete",
+        description: `${data.successCount} artworks rejected, ${data.failureCount} failed`,
+      });
+      setSelectedArtworkIds(new Set());
+      setShowBulkRejectDialog(false);
+      setBulkRejectionReason("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Bulk rejection failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleApprove = (artwork: ArtworkWithArtist) => {
     approveMutation.mutate(artwork.id);
   };
@@ -154,6 +241,56 @@ export default function AdminDashboard() {
       notes,
     });
   };
+
+  // Selection management helpers
+  const toggleSelectArtwork = (artworkId: string) => {
+    const newSelected = new Set(selectedArtworkIds);
+    if (newSelected.has(artworkId)) {
+      newSelected.delete(artworkId);
+    } else {
+      newSelected.add(artworkId);
+    }
+    setSelectedArtworkIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedArtworkIds.size === filteredArtworks.length) {
+      setSelectedArtworkIds(new Set());
+    } else {
+      setSelectedArtworkIds(new Set(filteredArtworks.map(a => a.id)));
+    }
+  };
+
+  const handleBulkApprove = () => {
+    if (selectedArtworkIds.size === 0) return;
+    bulkApproveMutation.mutate(Array.from(selectedArtworkIds));
+  };
+
+  const handleBulkReject = () => {
+    if (!bulkRejectionReason.trim()) {
+      toast({
+        title: "Rejection reason required",
+        description: "Please provide a reason for bulk rejection",
+        variant: "destructive",
+      });
+      return;
+    }
+    bulkRejectMutation.mutate({
+      artworkIds: Array.from(selectedArtworkIds),
+      reason: bulkRejectionReason,
+    });
+  };
+
+  // Reset selection when filters change
+  const handleFilterChange = (filter: "all" | "pending" | "approved" | "rejected") => {
+    setStatusFilter(filter);
+    setSelectedArtworkIds(new Set());
+  };
+
+  // Clear selection when search or sort changes
+  useEffect(() => {
+    setSelectedArtworkIds(new Set());
+  }, [searchQuery, sortBy]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -239,25 +376,25 @@ export default function AdminDashboard() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card className="hover-elevate cursor-pointer" onClick={() => setStatusFilter("all")}>
+          <Card className="hover-elevate cursor-pointer" onClick={() => handleFilterChange("all")}>
             <CardHeader className="p-4">
               <CardDescription>Total Submissions</CardDescription>
               <CardTitle className="text-3xl" data-testid="text-total">{stats.total}</CardTitle>
             </CardHeader>
           </Card>
-          <Card className="hover-elevate cursor-pointer" onClick={() => setStatusFilter("pending")}>
+          <Card className="hover-elevate cursor-pointer" onClick={() => handleFilterChange("pending")}>
             <CardHeader className="p-4">
               <CardDescription>Pending Review</CardDescription>
               <CardTitle className="text-3xl text-yellow-600" data-testid="text-pending">{stats.pending}</CardTitle>
             </CardHeader>
           </Card>
-          <Card className="hover-elevate cursor-pointer" onClick={() => setStatusFilter("approved")}>
+          <Card className="hover-elevate cursor-pointer" onClick={() => handleFilterChange("approved")}>
             <CardHeader className="p-4">
               <CardDescription>Approved</CardDescription>
               <CardTitle className="text-3xl text-green-600" data-testid="text-approved">{stats.approved}</CardTitle>
             </CardHeader>
           </Card>
-          <Card className="hover-elevate cursor-pointer" onClick={() => setStatusFilter("rejected")}>
+          <Card className="hover-elevate cursor-pointer" onClick={() => handleFilterChange("rejected")}>
             <CardHeader className="p-4">
               <CardDescription>Rejected</CardDescription>
               <CardTitle className="text-3xl text-red-600" data-testid="text-rejected">{stats.rejected}</CardTitle>
@@ -265,7 +402,7 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)} className="mb-6">
+        <Tabs value={statusFilter} onValueChange={(v) => handleFilterChange(v as any)} className="mb-6">
           <TabsList>
             <TabsTrigger value="all" data-testid="tab-all">All</TabsTrigger>
             <TabsTrigger value="pending" data-testid="tab-pending">Pending</TabsTrigger>

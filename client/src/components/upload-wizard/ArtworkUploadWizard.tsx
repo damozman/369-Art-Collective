@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Form } from "@/components/ui/form";
 import { ChevronRight, ChevronLeft, Check } from "lucide-react";
 import { StepImageUpload } from "./StepImageUpload";
 import { StepBasicDetails } from "./StepBasicDetails";
@@ -112,9 +113,10 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
   };
 
   return (
-    <div className="space-y-6">
-      {/* Progress Bar */}
-      <Card>
+    <Form {...form}>
+      <div className="space-y-6">
+        {/* Progress Bar */}
+        <Card>
         <CardContent className="pt-6">
           <div className="space-y-4">
             <div className="flex justify-between text-sm">
@@ -221,5 +223,6 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
         )}
       </div>
     </div>
+    </Form>
   );
 }

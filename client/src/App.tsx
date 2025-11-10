@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProtectedRoute } from "@/components/protected-route";
+import { AdminLayout } from "@/components/layouts/admin-layout";
+import { ArtistLayout } from "@/components/layouts/artist-layout";
 
 import Home from "@/pages/home";
 import Login from "@/pages/login";
@@ -47,91 +49,121 @@ function Router() {
       
       <Route path="/artist/pending">
         <ProtectedRoute requiredType="artist">
-          <ArtistPending />
+          <ArtistLayout>
+            <ArtistPending />
+          </ArtistLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/artist/dashboard">
         <ProtectedRoute requiredType="artist">
-          <ArtistDashboard />
+          <ArtistLayout>
+            <ArtistDashboard />
+          </ArtistLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/artist/upload">
         <ProtectedRoute requiredType="artist">
-          <UploadArtwork />
+          <ArtistLayout>
+            <UploadArtwork />
+          </ArtistLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/artist/earnings">
         <ProtectedRoute requiredType="artist">
-          <ArtistEarnings />
+          <ArtistLayout>
+            <ArtistEarnings />
+          </ArtistLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/artist/referrals">
         <ProtectedRoute requiredType="artist">
-          <ArtistReferrals />
+          <ArtistLayout>
+            <ArtistReferrals />
+          </ArtistLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/artist/payouts">
         <ProtectedRoute requiredType="artist">
-          <ArtistPayouts />
+          <ArtistLayout>
+            <ArtistPayouts />
+          </ArtistLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/artist/settings">
         <ProtectedRoute requiredType="artist">
-          <ArtistSettings />
+          <ArtistLayout>
+            <ArtistSettings />
+          </ArtistLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/artist/analytics">
         <ProtectedRoute requiredType="artist">
-          <ArtistAnalytics />
+          <ArtistLayout>
+            <ArtistAnalytics />
+          </ArtistLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/admin/dashboard">
         <ProtectedRoute requiredType="admin">
-          <AdminDashboard />
+          <AdminLayout>
+            <AdminDashboard />
+          </AdminLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/admin/artists">
         <ProtectedRoute requiredType="admin">
-          <AdminArtists />
+          <AdminLayout>
+            <AdminArtists />
+          </AdminLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/admin/artists/:id">
         <ProtectedRoute requiredType="admin">
-          <AdminArtistDetail />
+          <AdminLayout>
+            <AdminArtistDetail />
+          </AdminLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/admin/payouts">
         <ProtectedRoute requiredType="admin">
-          <AdminPayouts />
+          <AdminLayout>
+            <AdminPayouts />
+          </AdminLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/admin/testimonials">
         <ProtectedRoute requiredType="admin">
-          <AdminTestimonials />
+          <AdminLayout>
+            <AdminTestimonials />
+          </AdminLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/admin/empire">
         <ProtectedRoute requiredType="admin">
-          <AdminEmpire />
+          <AdminLayout>
+            <AdminEmpire />
+          </AdminLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/admin/settings">
         <ProtectedRoute requiredType="admin">
-          <AdminSettings />
+          <AdminLayout>
+            <AdminSettings />
+          </AdminLayout>
         </ProtectedRoute>
       </Route>
       

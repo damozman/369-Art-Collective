@@ -38,6 +38,7 @@ export interface IStorage {
   // Artist methods
   getArtist(id: string): Promise<Artist | undefined>;
   getArtistByEmail(email: string): Promise<Artist | undefined>;
+  getArtistByReferralCode(referralCode: string): Promise<Artist | undefined>;
   getAllArtists(): Promise<Artist[]>;
   createArtist(artist: InsertArtist): Promise<Artist>;
   updateArtist(id: string, updates: Partial<Artist>): Promise<Artist>;
@@ -138,6 +139,20 @@ class PostgresStorage implements IStorage {
     return artist;
   }
 
+  async getArtistByReferralCode(referralCode: string): Promise<Artist | undefined> {
+    const [artist] = await db
+      .select()
+      .from(artists)
+      .where(eq(artists.referralCode, referralCode))
+      .limit(1);
+    
+    // Filter out deleted artists
+    if (artist?.deletedAt) {
+      return undefined;
+    }
+    return artist;
+  }
+
   async getAllArtists(): Promise<Artist[]> {
     const allArtists = await db
       .select()
@@ -148,6 +163,7 @@ class PostgresStorage implements IStorage {
   }
 
   async createArtist(insertArtist: InsertArtist): Promise<Artist> {
+    // Always generate a new unique referral code for this artist
     const referralCode = generateReferralCode(insertArtist.name);
     
     const [artist] = await db

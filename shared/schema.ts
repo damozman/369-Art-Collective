@@ -24,6 +24,7 @@ export const artists = pgTable("artists", {
   externalAccountLast4: text("external_account_last4"), // Last 4 digits of bank account for UI display
   referralCode: text("referral_code").notNull().unique(), // Unique code for referral links (e.g., "ARTIST-ABC123")
   referredBy: varchar("referred_by").references((): any => artists.id), // Which artist recruited them
+  referralSource: text("referral_source"), // Source of referral: "testimonial" or "general" (captured from utm_medium)
   tosAcceptedAt: timestamp("tos_accepted_at"), // Terms of Service acceptance timestamp for legal compliance
   tosIpAddress: text("tos_ip_address"), // IP address when TOS was accepted for audit trail
   tosVersion: text("tos_version"), // Version/hash of TOS accepted (e.g., "v1.0-2025-11" or hash)

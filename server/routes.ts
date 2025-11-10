@@ -31,6 +31,7 @@ import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
 import { validateImageQuality, MIN_WIDTH, MIN_HEIGHT } from "./lib/image-validator";
 import { stripeConnectService } from "./lib/stripe-connect";
 import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from "./lib/payout-service";
+import { emailService } from "./lib/email-service";
 
 // Ensure uploads directory exists
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -523,6 +524,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tosVersion: "v1.0-2025-11", // Track TOS version for legal compliance
       } as any);
 
+      // Send welcome email (non-blocking)
+      emailService.sendWelcomeEmail(artist.email, artist.name, artist.id)
+        .catch(err => console.error('Failed to send welcome email:', err));
+
       // Regenerate session and automatically log in the new artist
       req.session.regenerate((err) => {
         if (err) {
@@ -605,6 +610,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const artist = await storage.updateArtist(id, { approved: true });
+      
+      // Send portfolio approval email (non-blocking)
+      emailService.sendPortfolioDecisionEmail(artist.email, artist.name, artist.id, true)
+        .catch(err => console.error('Failed to send portfolio approval email:', err));
+      
       const { password, ...artistData } = artist;
       res.json(artistData);
     } catch (error: any) {
@@ -915,9 +925,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // SECURITY: Log audit trail without exposing token
       console.log(`[SECURITY] Password reset requested for artist: ${email.substring(0, 3)}***@${email.split('@')[1]}`);
       
-      // TODO: Integrate email service to send reset link to user's email
-      // For now, admins must manually distribute reset links via secure channel
-      // The reset link should be: /reset-password?token=${plainToken}&type=artist
+      // Send password reset email (non-blocking)
+      emailService.sendPasswordResetEmail(email, 'artist', plainToken)
+        .catch(err => console.error('Failed to send password reset email:', err));
 
       res.json(response);
     } catch (error: any) {
@@ -949,9 +959,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // SECURITY: Log audit trail without exposing token
       console.log(`[SECURITY] Password reset requested for admin: ${email.substring(0, 3)}***@${email.split('@')[1]}`);
       
-      // TODO: Integrate email service to send reset link to user's email
-      // For now, admins must manually distribute reset links via secure channel
-      // The reset link should be: /reset-password?token=${plainToken}&type=admin
+      // Send password reset email (non-blocking)
+      emailService.sendPasswordResetEmail(email, 'admin', plainToken)
+        .catch(err => console.error('Failed to send password reset email:', err));
 
       res.json(response);
     } catch (error: any) {
@@ -1600,6 +1610,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         printifyImageId,
       });
 
+      // Send artwork approval email (non-blocking)
+      emailService.sendArtworkDecisionEmail(artist.email, artist.name, artist.id, artwork.title, true)
+        .catch(err => console.error('Failed to send artwork approval email:', err));
+
       res.json(normalizeArtwork(updated, req));
     } catch (error: any) {
       console.error("Approve artwork error:", error);
@@ -1613,10 +1627,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { reason } = req.body;
 
+      const artwork = await storage.getArtwork(id);
+      if (!artwork) {
+        return res.status(404).json({ message: "Artwork not found" });
+      }
+
+      const artist = await storage.getArtist(artwork.artistId);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
       const updated = await storage.updateArtwork(id, {
         status: "rejected",
         rejectionReason: reason || "No reason provided",
       });
+
+      // Send artwork rejection email (non-blocking)
+      emailService.sendArtworkDecisionEmail(
+        artist.email, 
+        artist.name, 
+        artist.id, 
+        artwork.title, 
+        false, 
+        reason
+      ).catch(err => console.error('Failed to send artwork rejection email:', err));
 
       res.json(normalizeArtwork(updated, req));
     } catch (error: any) {

@@ -216,6 +216,13 @@ export default function SuccessStory() {
               "{testimonial.quote}"
             </blockquote>
             <p className="text-right mt-4 font-semibold">— {testimonial.artistName}</p>
+            
+            {/* Legal Consent Disclaimer */}
+            <div className="mt-6 pt-6 border-t border-border/50">
+              <p className="text-sm text-muted-foreground text-center">
+                ✓ <strong className="text-foreground">{testimonial.artistName}</strong> has provided written consent to share this testimonial publicly. Results may vary based on artwork quality, effort, and market conditions.
+              </p>
+            </div>
           </CardContent>
         </Card>
 

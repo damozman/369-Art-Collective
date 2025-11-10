@@ -163,6 +163,7 @@ export default function AdminTestimonials() {
       shareExcerpt: testimonial.shareExcerpt,
       shareImageUrl: testimonial.shareImageUrl,
       allowEmbed: testimonial.allowEmbed,
+      artistConsent: testimonial.artistConsent, // Preserve consent status when editing
     });
     setIsDialogOpen(true);
   };

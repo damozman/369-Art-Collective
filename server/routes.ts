@@ -76,7 +76,7 @@ const passwordResetLimiter = rateLimit({
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 login attempts per window
+  max: 100, // 100 login attempts per window (increased for testing)
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {

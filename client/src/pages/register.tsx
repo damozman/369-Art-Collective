@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +30,7 @@ export default function Register() {
   const [step, setStep] = useState<"account" | "portfolio">("account");
   const [portfolioFiles, setPortfolioFiles] = useState<File[]>([]);
   const [portfolioPreviews, setPortfolioPreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
@@ -84,21 +85,36 @@ export default function Register() {
         description: "Maximum 3 portfolio images allowed",
         variant: "destructive",
       });
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       return;
     }
 
     // Create preview URLs
     const newPreviews = files.map(file => URL.createObjectURL(file));
-    setPortfolioFiles([...portfolioFiles, ...files]);
-    setPortfolioPreviews([...portfolioPreviews, ...newPreviews]);
+    setPortfolioFiles(prev => [...prev, ...files]);
+    setPortfolioPreviews(prev => [...prev, ...newPreviews]);
+    
+    // Reset file input to allow selecting same files again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   function removeFile(index: number) {
-    // Revoke preview URL
+    // Revoke preview URL to free memory
     URL.revokeObjectURL(portfolioPreviews[index]);
     
-    setPortfolioFiles(portfolioFiles.filter((_, i) => i !== index));
-    setPortfolioPreviews(portfolioPreviews.filter((_, i) => i !== index));
+    // Update state
+    setPortfolioFiles(prev => prev.filter((_, i) => i !== index));
+    setPortfolioPreviews(prev => prev.filter((_, i) => i !== index));
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   async function submitPortfolio() {
@@ -364,6 +380,7 @@ export default function Register() {
                   </div>
                   <input
                     id="portfolio-upload"
+                    ref={fileInputRef}
                     type="file"
                     className="hidden"
                     accept="image/png,image/jpeg,image/jpg"

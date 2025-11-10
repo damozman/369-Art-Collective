@@ -403,6 +403,46 @@ export default function AdminDashboard() {
                   </div>
                 )}
 
+                {selectedArtwork.artworkStory && (
+                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-4 rounded-md">
+                    <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Artwork Story</h4>
+                    <p className="text-sm text-blue-800 dark:text-blue-200" data-testid="dialog-artwork-story">
+                      {selectedArtwork.artworkStory}
+                    </p>
+                  </div>
+                )}
+
+                {selectedArtwork.styleTags && selectedArtwork.styleTags.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2">Style Tags</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedArtwork.styleTags.map((tag, idx) => (
+                        <Badge key={idx} variant="secondary" className="bg-purple-100 dark:bg-purple-900/30 text-purple-900 dark:text-purple-100" data-testid={`badge-style-${idx}`}>
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedArtwork.suggestedUse && (
+                  <div>
+                    <h4 className="font-medium mb-2">Suggested Use</h4>
+                    <p className="text-sm text-muted-foreground" data-testid="dialog-suggested-use">
+                      {selectedArtwork.suggestedUse}
+                    </p>
+                  </div>
+                )}
+
+                {selectedArtwork.seoSlug && (
+                  <div className="bg-muted/30 p-3 rounded-md border border-border">
+                    <h4 className="font-medium mb-1 text-sm">SEO Slug</h4>
+                    <code className="text-xs text-muted-foreground font-mono" data-testid="dialog-seo-slug">
+                      {selectedArtwork.seoSlug}
+                    </code>
+                  </div>
+                )}
+
                 {selectedArtwork.ipDeclarationAccepted && (
                   <div className="bg-muted/50 p-3 rounded-md">
                     <h4 className="font-medium mb-1 text-sm">IP Declaration</h4>

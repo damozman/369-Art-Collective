@@ -2178,6 +2178,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Artist: Get featured subscription status
+  app.get("/api/artists/featured-status", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      const subscription = await storage.getActiveFeaturedSubscriptionByArtist(artist.id);
+      
+      res.json({
+        hasActiveSubscription: !!subscription,
+        subscription: subscription || null,
+      });
+    } catch (error: any) {
+      console.error("Get featured status error:", error);
+      res.status(500).json({ message: "Failed to fetch featured status" });
+    }
+  });
+
   // ==================== TESTIMONIALS ROUTES ====================
   
   // Public: Get all active testimonials

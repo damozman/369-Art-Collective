@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
-import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings, Eye, EyeOff } from "lucide-react";
+import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings, Eye, EyeOff, Crown, Sparkles, ExternalLink } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Artwork } from "@shared/schema";
 import {
@@ -23,6 +23,167 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+// Featured Status Card Component
+function FeaturedStatusCard({ 
+  featuredStatus, 
+  isLoading, 
+  onUpgrade 
+}: { 
+  featuredStatus: { hasActiveSubscription: boolean; subscription: any | null } | undefined;
+  isLoading: boolean;
+  onUpgrade: () => void;
+}) {
+  if (isLoading) {
+    return (
+      <Card className="mb-8" data-testid="card-featured-loading">
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-3/4" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // State 1: No active subscription - show upgrade CTA
+  if (!featuredStatus?.hasActiveSubscription) {
+    return (
+      <Card className="mb-8 border-primary/20" data-testid="card-featured-upgrade">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-primary" />
+            <CardTitle>Boost Your Visibility</CardTitle>
+          </div>
+          <CardDescription>
+            Get your testimonial featured on the homepage to drive more product sales
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium">Homepage Featuring</p>
+                  <p className="text-muted-foreground text-xs">Stand out at the top</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <DollarSign className="h-4 w-4 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium">Increase Sales</p>
+                  <p className="text-muted-foreground text-xs">More visibility = more products</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Users className="h-4 w-4 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium">Build Authority</p>
+                  <p className="text-muted-foreground text-xs">Showcase your success</p>
+                </div>
+              </div>
+            </div>
+            <Button onClick={onUpgrade} className="w-full" data-testid="button-upgrade-featured">
+              <Crown className="mr-2 h-4 w-4" />
+              Get Featured - $99/month
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Requires an active testimonial. Cancel anytime.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const sub = featuredStatus.subscription;
+  const tier = sub?.featuredTier;
+
+  // State 2: Premium subscription
+  if (tier === "premium") {
+    return (
+      <Card className="mb-8 border-primary/40 bg-primary/5" data-testid="card-featured-premium">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-primary" />
+              <CardTitle>Featured Status: Active</CardTitle>
+            </div>
+            <Badge variant="default" className="bg-primary" data-testid="badge-tier-premium">
+              <Sparkles className="w-3 h-3 mr-1" />Sponsored
+            </Badge>
+          </div>
+          <CardDescription>
+            Your testimonial is featured on the homepage
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Started</span>
+              <span className="font-medium">{new Date(sub.startDate).toLocaleDateString()}</span>
+            </div>
+            {sub.stripeSubscriptionStatus && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Status</span>
+                <Badge variant={sub.stripeSubscriptionStatus === "active" ? "default" : "secondary"} data-testid="badge-stripe-status">
+                  {sub.stripeSubscriptionStatus}
+                </Badge>
+              </div>
+            )}
+            <div className="pt-2 border-t">
+              <p className="text-xs text-muted-foreground">
+                Your subscription renews monthly at $99. Manage your subscription in Stripe.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // State 3: Merit-based or admin override
+  const isMerit = tier === "merit";
+  const isAdmin = tier === "admin_override";
+  
+  return (
+    <Card className="mb-8 border-green-500/40 bg-green-500/5" data-testid={`card-featured-${tier}`}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-green-600" />
+            <CardTitle>Featured Status: Active</CardTitle>
+          </div>
+          <Badge variant="default" className="bg-green-600" data-testid={`badge-tier-${tier}`}>
+            <Sparkles className="w-3 h-3 mr-1" />
+            {isMerit ? "Top Earner" : "Admin Selected"}
+          </Badge>
+        </div>
+        <CardDescription>
+          {isMerit ? "Congratulations! You're in the top 5 earning artists this month." : "Your testimonial has been selected for featuring."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Active Until</span>
+            <span className="font-medium">
+              {sub.endDate ? new Date(sub.endDate).toLocaleDateString() : "Ongoing"}
+            </span>
+          </div>
+          <div className="pt-2 border-t">
+            <p className="text-xs text-muted-foreground">
+              {isMerit ? "Keep up the great work! This status auto-renews monthly if you remain in the top 5." : "Contact admin for more information about your featured status."}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ArtistDashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
@@ -36,6 +197,31 @@ export default function ArtistDashboard() {
 
   const { data: payoutData, isLoading: payoutLoading, isError: payoutError } = useQuery<{ payouts: any[]; unpaidEarnings: number; unpaidSalesCount: number }>({
     queryKey: ["/api/artists/payouts"],
+  });
+
+  const { data: featuredStatus, isLoading: featuredLoading } = useQuery<{
+    hasActiveSubscription: boolean;
+    subscription: any | null;
+  }>({
+    queryKey: ["/api/artists/featured-status"],
+  });
+
+  const checkoutMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/stripe/create-featured-checkout");
+    },
+    onSuccess: (data: any) => {
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Checkout failed",
+        description: error.message || "Failed to create checkout session",
+        variant: "destructive",
+      });
+    },
   });
 
   const stats = {
@@ -213,6 +399,13 @@ export default function ArtistDashboard() {
               </CardHeader>
             </Card>
           </div>
+
+          {/* Featured Status Section */}
+          <FeaturedStatusCard
+            featuredStatus={featuredStatus}
+            isLoading={featuredLoading}
+            onUpgrade={() => checkoutMutation.mutate()}
+          />
         </div>
 
         {isLoading ? (

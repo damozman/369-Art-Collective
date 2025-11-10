@@ -360,25 +360,41 @@ export default function ArtistDashboard() {
             <Card>
               <CardHeader className="p-4">
                 <CardDescription>Total Submissions</CardDescription>
-                <CardTitle className="text-3xl" data-testid="text-total">{stats.total}</CardTitle>
+                {isLoading ? (
+                  <Skeleton className="h-9 w-12" />
+                ) : (
+                  <CardTitle className="text-3xl" data-testid="text-total">{stats.total}</CardTitle>
+                )}
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="p-4">
                 <CardDescription>Pending Review</CardDescription>
-                <CardTitle className="text-3xl text-yellow-600" data-testid="text-pending">{stats.pending}</CardTitle>
+                {isLoading ? (
+                  <Skeleton className="h-9 w-12" />
+                ) : (
+                  <CardTitle className="text-3xl text-yellow-600" data-testid="text-pending">{stats.pending}</CardTitle>
+                )}
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="p-4">
                 <CardDescription>Approved</CardDescription>
-                <CardTitle className="text-3xl text-green-600" data-testid="text-approved">{stats.approved}</CardTitle>
+                {isLoading ? (
+                  <Skeleton className="h-9 w-12" />
+                ) : (
+                  <CardTitle className="text-3xl text-green-600" data-testid="text-approved">{stats.approved}</CardTitle>
+                )}
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="p-4">
                 <CardDescription>Rejected</CardDescription>
-                <CardTitle className="text-3xl text-red-600" data-testid="text-rejected">{stats.rejected}</CardTitle>
+                {isLoading ? (
+                  <Skeleton className="h-9 w-12" />
+                ) : (
+                  <CardTitle className="text-3xl text-red-600" data-testid="text-rejected">{stats.rejected}</CardTitle>
+                )}
               </CardHeader>
             </Card>
             <Card>

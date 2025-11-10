@@ -146,7 +146,14 @@ export interface IStorage {
   }): Promise<FeaturedRotationLog>;
   
   // Helper for rotation: Get top earning artists with tie-break
-  getTopEarningArtistsForRotation(limit: number, minEarnings: number): Promise<Array<Artist & { totalLifetimeEarnings: string }>>;
+  getTopEarningArtistsForRotation(limit: number, minEarnings: number): Promise<Array<{
+    artistId: string;
+    artistName: string;
+    testimonialId: string | null;
+    monthlyEarnings: string;
+    totalEarnings: string;
+    rank: number;
+  }>>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -760,31 +767,73 @@ class PostgresStorage implements IStorage {
     return created;
   }
 
-  async getTopEarningArtistsForRotation(limit: number, minEarnings: number): Promise<Array<Artist & { totalLifetimeEarnings: string }>> {
-    // Get artists with their lifetime earnings from sales table
-    const results = await db
+  async getTopEarningArtistsForRotation(limit: number, minEarnings: number): Promise<Array<{
+    artistId: string;
+    artistName: string;
+    testimonialId: string | null;
+    monthlyEarnings: string;
+    totalEarnings: string;
+    rank: number;
+  }>> {
+    // Step 1: Get top earning artists (deduplicated by artist ID)
+    // Query 3x limit to account for artists without testimonials
+    const candidateLimit = limit * 3;
+    const topArtists = await db
       .select({
-        artist: artists,
+        artistId: artists.id,
+        artistName: artists.name,
+        monthlyEarnings: artists.monthlySales,
         totalLifetimeEarnings: drizzleSql<string>`COALESCE(SUM(${salesTable.totalEarnings}), 0)::text`,
       })
       .from(artists)
       .leftJoin(salesTable, eq(artists.id, salesTable.artistId))
       .where(and(
         isNull(artists.deletedAt),
-        gte(artists.monthlySales, minEarnings.toString())
+        drizzleSql`(${artists.monthlySales})::numeric >= ${minEarnings}` // Cast to numeric for proper comparison
       ))
-      .groupBy(artists.id)
+      .groupBy(artists.id, artists.name, artists.monthlySales, artists.createdAt)
       .orderBy(
-        desc(artists.monthlySales), // Primary: monthly sales
+        drizzleSql`(${artists.monthlySales})::numeric DESC`, // Primary: monthly sales (numeric sort)
         drizzleSql`SUM(${salesTable.totalEarnings}) DESC`, // Tie-break 1: lifetime earnings
         asc(artists.createdAt) // Tie-break 2: earliest signup
       )
-      .limit(limit);
+      .limit(candidateLimit);
 
-    return results.map(r => ({
-      ...r.artist,
-      totalLifetimeEarnings: r.totalLifetimeEarnings || '0',
-    }));
+    // Step 2: For each artist, get their first active testimonial (if any)
+    // Only include artists who have at least one active testimonial
+    const results = await Promise.all(
+      topArtists.map(async (artist) => {
+        const [testimonial] = await db
+          .select({ id: testimonials.id })
+          .from(testimonials)
+          .where(and(
+            eq(testimonials.artistId, artist.artistId),
+            eq(testimonials.isActive, true)
+          ))
+          .orderBy(desc(testimonials.createdAt)) // Pick most recent testimonial
+          .limit(1);
+
+        return {
+          ...artist,
+          testimonialId: testimonial?.id || null,
+        };
+      })
+    );
+
+    // Step 3: Filter to only artists with testimonials, take first N, and add ranking
+    const eligibleArtists = results
+      .filter(r => r.testimonialId !== null)
+      .slice(0, limit) // Take exactly `limit` artists with testimonials
+      .map((r, index) => ({
+        artistId: r.artistId,
+        artistName: r.artistName,
+        testimonialId: r.testimonialId,
+        monthlyEarnings: r.monthlyEarnings,
+        totalEarnings: r.totalLifetimeEarnings || '0',
+        rank: index + 1, // 1-based ranking
+      }));
+
+    return eligibleArtists;
   }
 }
 
@@ -1276,7 +1325,14 @@ class MemStorage implements IStorage {
     } as FeaturedRotationLog;
   }
 
-  async getTopEarningArtistsForRotation(limit: number, minEarnings: number): Promise<Array<Artist & { totalLifetimeEarnings: string }>> {
+  async getTopEarningArtistsForRotation(limit: number, minEarnings: number): Promise<Array<{
+    artistId: string;
+    artistName: string;
+    testimonialId: string | null;
+    monthlyEarnings: string;
+    totalEarnings: string;
+    rank: number;
+  }>> {
     console.log("MemStorage: getTopEarningArtistsForRotation called (stub)", limit, minEarnings);
     return [];
   }

@@ -10,6 +10,8 @@ import {
   violationReports,
   stripeWebhookEvents,
   testimonials,
+  featuredSubscriptions,
+  featuredRotationLog,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -28,10 +30,14 @@ import {
   type Testimonial,
   type InsertTestimonial,
   type TestimonialWithArtist,
+  type FeaturedSubscription,
+  type InsertFeaturedSubscription,
+  type FeaturedRotationLog,
+  type FeaturedTier,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNull, and, desc, asc, gte, sql as drizzleSql, sum } from "drizzle-orm";
 import { generateReferralCode } from "./lib/referral-code-generator";
 
 export interface IStorage {
@@ -107,6 +113,40 @@ export interface IStorage {
   // Testimonial methods with artist data (for affiliate links)
   getAllTestimonialsWithArtist(): Promise<TestimonialWithArtist[]>;
   getTestimonialBySlugWithArtist(slug: string): Promise<TestimonialWithArtist | undefined>;
+
+  // Featured Subscription methods
+  createFeaturedSubscription(subscription: InsertFeaturedSubscription): Promise<FeaturedSubscription>;
+  updateFeaturedSubscription(id: string, updates: Partial<FeaturedSubscription>): Promise<FeaturedSubscription>;
+  getFeaturedSubscriptionsByArtist(artistId: string): Promise<FeaturedSubscription[]>;
+  getActiveFeaturedSubscriptions(): Promise<FeaturedSubscription[]>;
+  getActiveFeaturedSubscriptionByArtist(artistId: string): Promise<FeaturedSubscription | undefined>;
+  getFeaturedSlotsByTier(tier: string): Promise<FeaturedSubscription[]>;
+  getFeaturedSubscriptionByStripeId(stripeSubscriptionId: string): Promise<FeaturedSubscription | undefined>;
+  endFeaturedSubscription(id: string, endDate: Date, endReason: string): Promise<FeaturedSubscription>;
+  
+  // Featured testimonials display with tier info
+  getFeaturedTestimonials(): Promise<Array<{
+    testimonial: Testimonial;
+    tier: string;
+    status?: string;
+    activeUntil?: Date | null;
+    tierPriority: number;
+  }>>;
+  
+  // Featured rotation log
+  logFeaturedRotation(log: {
+    rotationDate: Date;
+    testimonialId: string;
+    artistId: string;
+    featuredTier: string;
+    artistEarnings: string;
+    rank?: number;
+    action: string;
+    reason?: string;
+  }): Promise<FeaturedRotationLog>;
+  
+  // Helper for rotation: Get top earning artists with tie-break
+  getTopEarningArtistsForRotation(limit: number, minEarnings: number): Promise<Array<Artist & { totalLifetimeEarnings: string }>>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -603,6 +643,149 @@ class PostgresStorage implements IStorage {
       artistReferralCode: result.artistReferralCode,
     };
   }
+
+  // Featured Subscription methods
+  async createFeaturedSubscription(subscription: InsertFeaturedSubscription): Promise<FeaturedSubscription> {
+    const [created] = await db.insert(featuredSubscriptions).values([subscription]).returning();
+    return created;
+  }
+
+  async updateFeaturedSubscription(id: string, updates: Partial<FeaturedSubscription>): Promise<FeaturedSubscription> {
+    const [updated] = await db
+      .update(featuredSubscriptions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(featuredSubscriptions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getFeaturedSubscriptionsByArtist(artistId: string): Promise<FeaturedSubscription[]> {
+    return await db
+      .select()
+      .from(featuredSubscriptions)
+      .where(eq(featuredSubscriptions.artistId, artistId));
+  }
+
+  async getActiveFeaturedSubscriptions(): Promise<FeaturedSubscription[]> {
+    return await db
+      .select()
+      .from(featuredSubscriptions)
+      .where(isNull(featuredSubscriptions.endDate));
+  }
+
+  async getActiveFeaturedSubscriptionByArtist(artistId: string): Promise<FeaturedSubscription | undefined> {
+    const [subscription] = await db
+      .select()
+      .from(featuredSubscriptions)
+      .where(and(
+        eq(featuredSubscriptions.artistId, artistId),
+        isNull(featuredSubscriptions.endDate)
+      ))
+      .limit(1);
+    return subscription;
+  }
+
+  async getFeaturedSlotsByTier(tier: string): Promise<FeaturedSubscription[]> {
+    return await db
+      .select()
+      .from(featuredSubscriptions)
+      .where(and(
+        eq(featuredSubscriptions.featuredTier, tier as FeaturedTier),
+        isNull(featuredSubscriptions.endDate)
+      ));
+  }
+
+  async getFeaturedSubscriptionByStripeId(stripeSubscriptionId: string): Promise<FeaturedSubscription | undefined> {
+    const [subscription] = await db
+      .select()
+      .from(featuredSubscriptions)
+      .where(eq(featuredSubscriptions.stripeSubscriptionId, stripeSubscriptionId))
+      .limit(1);
+    return subscription;
+  }
+
+  async endFeaturedSubscription(id: string, endDate: Date, endReason: string): Promise<FeaturedSubscription> {
+    const [updated] = await db
+      .update(featuredSubscriptions)
+      .set({ endDate, endReason, updatedAt: new Date() })
+      .where(eq(featuredSubscriptions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getFeaturedTestimonials(): Promise<Array<{
+    testimonial: Testimonial;
+    tier: string;
+    status?: string;
+    activeUntil?: Date | null;
+    tierPriority: number;
+  }>> {
+    const now = new Date();
+    const results = await db
+      .select({
+        testimonial: testimonials,
+        tier: featuredSubscriptions.featuredTier,
+        status: featuredSubscriptions.subscriptionStatus,
+        activeUntil: featuredSubscriptions.expiresAt,
+        tierPriority: featuredSubscriptions.tierPriority,
+      })
+      .from(featuredSubscriptions)
+      .innerJoin(testimonials, eq(featuredSubscriptions.testimonialId, testimonials.id))
+      .where(and(
+        isNull(featuredSubscriptions.endDate), // Active subscription
+        eq(testimonials.isActive, true) // Active testimonial
+      ))
+      .orderBy(asc(featuredSubscriptions.tierPriority));
+
+    return results.map(r => ({
+      testimonial: r.testimonial,
+      tier: r.tier || '',
+      status: r.status || undefined,
+      activeUntil: r.activeUntil,
+      tierPriority: r.tierPriority || 50,
+    }));
+  }
+
+  async logFeaturedRotation(log: {
+    rotationDate: Date;
+    testimonialId: string;
+    artistId: string;
+    featuredTier: string;
+    artistEarnings: string;
+    rank?: number;
+    action: string;
+    reason?: string;
+  }): Promise<FeaturedRotationLog> {
+    const [created] = await db.insert(featuredRotationLog).values([log]).returning();
+    return created;
+  }
+
+  async getTopEarningArtistsForRotation(limit: number, minEarnings: number): Promise<Array<Artist & { totalLifetimeEarnings: string }>> {
+    // Get artists with their lifetime earnings from sales table
+    const results = await db
+      .select({
+        artist: artists,
+        totalLifetimeEarnings: drizzleSql<string>`COALESCE(SUM(${salesTable.totalEarnings}), 0)::text`,
+      })
+      .from(artists)
+      .leftJoin(salesTable, eq(artists.id, salesTable.artistId))
+      .where(and(
+        isNull(artists.deletedAt),
+        gte(artists.monthlySales, minEarnings.toString())
+      ))
+      .groupBy(artists.id)
+      .orderBy(
+        desc(artists.monthlySales), // Primary: monthly sales
+        drizzleSql`SUM(${salesTable.totalEarnings}) DESC`, // Tie-break 1: lifetime earnings
+        asc(artists.createdAt) // Tie-break 2: earliest signup
+      )
+      .limit(limit);
+
+    return results.map(r => ({
+      ...r.artist,
+      totalLifetimeEarnings: r.totalLifetimeEarnings || '0',
+    }));
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -659,6 +842,7 @@ class MemStorage implements IStorage {
       stripeDefaultCurrency: null,
       externalAccountLast4: null,
       referredBy: null,
+      referralSource: null,
       tosAcceptedAt: null,
       tosIpAddress: null,
       tosVersion: null,
@@ -931,6 +1115,10 @@ class MemStorage implements IStorage {
       isActive: testimonial.isActive !== undefined ? testimonial.isActive : true,
       displayOrder: testimonial.displayOrder || 0,
       allowEmbed: testimonial.allowEmbed || false,
+      artistConsent: testimonial.artistConsent || false,
+      consentTimestamp: null, // Set server-side
+      consentVersion: null, // Set server-side
+      approvedByAdminId: null, // Set server-side
       createdAt: new Date(),
       updatedAt: new Date(),
     } as Testimonial;
@@ -957,6 +1145,10 @@ class MemStorage implements IStorage {
       shareExcerpt: null,
       shareImageUrl: null,
       allowEmbed: false,
+      artistConsent: false,
+      consentTimestamp: null,
+      consentVersion: null,
+      approvedByAdminId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       ...updates,
@@ -999,6 +1191,94 @@ class MemStorage implements IStorage {
   async getTestimonialBySlugWithArtist(slug: string): Promise<TestimonialWithArtist | undefined> {
     console.log("MemStorage: getTestimonialBySlugWithArtist called (stub)", slug);
     return undefined;
+  }
+
+  async getArtistByReferralCode(referralCode: string): Promise<Artist | undefined> {
+    console.log("MemStorage: getArtistByReferralCode called (stub)", referralCode);
+    return undefined;
+  }
+
+  async createFeaturedSubscription(subscription: InsertFeaturedSubscription): Promise<FeaturedSubscription> {
+    console.log("MemStorage: createFeaturedSubscription called (stub)", subscription);
+    return {
+      id: randomUUID(),
+      ...subscription,
+      tierPriority: subscription.tierPriority || 50,
+      currentPeriodEnd: subscription.currentPeriodEnd || null,
+      expiresAt: subscription.expiresAt || null,
+      endReason: subscription.endReason || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as FeaturedSubscription;
+  }
+
+  async updateFeaturedSubscription(id: string, updates: Partial<FeaturedSubscription>): Promise<FeaturedSubscription> {
+    console.log("MemStorage: updateFeaturedSubscription called (stub)", id, updates);
+    return { id, ...updates } as FeaturedSubscription;
+  }
+
+  async getFeaturedSubscriptionsByArtist(artistId: string): Promise<FeaturedSubscription[]> {
+    console.log("MemStorage: getFeaturedSubscriptionsByArtist called (stub)", artistId);
+    return [];
+  }
+
+  async getActiveFeaturedSubscriptions(): Promise<FeaturedSubscription[]> {
+    console.log("MemStorage: getActiveFeaturedSubscriptions called (stub)");
+    return [];
+  }
+
+  async getActiveFeaturedSubscriptionByArtist(artistId: string): Promise<FeaturedSubscription | undefined> {
+    console.log("MemStorage: getActiveFeaturedSubscriptionByArtist called (stub)", artistId);
+    return undefined;
+  }
+
+  async getFeaturedSlotsByTier(tier: string): Promise<FeaturedSubscription[]> {
+    console.log("MemStorage: getFeaturedSlotsByTier called (stub)", tier);
+    return [];
+  }
+
+  async getFeaturedSubscriptionByStripeId(stripeSubscriptionId: string): Promise<FeaturedSubscription | undefined> {
+    console.log("MemStorage: getFeaturedSubscriptionByStripeId called (stub)", stripeSubscriptionId);
+    return undefined;
+  }
+
+  async endFeaturedSubscription(id: string, endDate: Date, endReason: string): Promise<FeaturedSubscription> {
+    console.log("MemStorage: endFeaturedSubscription called (stub)", id, endDate, endReason);
+    return { id, endDate, endReason } as FeaturedSubscription;
+  }
+
+  async getFeaturedTestimonials(): Promise<Array<{
+    testimonial: Testimonial;
+    tier: string;
+    status?: string;
+    activeUntil?: Date | null;
+    tierPriority: number;
+  }>> {
+    console.log("MemStorage: getFeaturedTestimonials called (stub)");
+    return [];
+  }
+
+  async logFeaturedRotation(log: {
+    rotationDate: Date;
+    testimonialId: string;
+    artistId: string;
+    featuredTier: string;
+    artistEarnings: string;
+    rank?: number;
+    action: string;
+    reason?: string;
+  }): Promise<FeaturedRotationLog> {
+    console.log("MemStorage: logFeaturedRotation called (stub)", log);
+    return {
+      id: randomUUID(),
+      ...log,
+      createdAt: new Date(),
+    } as FeaturedRotationLog;
+  }
+
+  async getTopEarningArtistsForRotation(limit: number, minEarnings: number): Promise<Array<Artist & { totalLifetimeEarnings: string }>> {
+    console.log("MemStorage: getTopEarningArtistsForRotation called (stub)", limit, minEarnings);
+    return [];
   }
 }
 

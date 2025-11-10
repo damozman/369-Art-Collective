@@ -405,17 +405,23 @@ export type InsertStripeWebhookEvent = typeof stripeWebhookEvents.$inferInsert;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
 
+// Featured tier enum for type safety
+export type FeaturedTier = "admin_override" | "premium" | "merit";
+
 // Featured Subscriptions - Track premium featured placement subscriptions
 export const featuredSubscriptions = pgTable("featured_subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   artistId: varchar("artist_id").notNull().references(() => artists.id),
   testimonialId: varchar("testimonial_id").notNull().references(() => testimonials.id),
-  featuredTier: text("featured_tier").notNull(), // "merit", "premium", "admin_override"
+  featuredTier: text("featured_tier").notNull().$type<FeaturedTier>(), // "admin_override", "premium", "merit"
+  tierPriority: integer("tier_priority").notNull().default(50), // Lower = higher priority. admin_override=10, premium=20, merit=30-100
   stripeSubscriptionId: text("stripe_subscription_id"), // Null for merit/admin, populated for premium
   subscriptionStatus: text("subscription_status"), // active, cancelled, past_due, unpaid (for premium tier)
+  currentPeriodEnd: timestamp("current_period_end"), // When current subscription period ends (from Stripe)
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date"), // Null = ongoing, set when subscription ends
-  minEarningsThreshold: decimal("min_earnings_threshold", { precision: 10, scale: 2 }), // Minimum earnings to qualify (for merit tier)
+  expiresAt: timestamp("expires_at"), // When this featured placement expires (for merit rotation)
+  endReason: text("end_reason"), // Why subscription ended: "cancelled", "expired", "testimonial_deleted", "rotation", "admin_action"
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -439,6 +445,8 @@ export const insertFeaturedSubscriptionSchema = createInsertSchema(featuredSubsc
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  featuredTier: z.enum(['admin_override','premium','merit'])
 });
 
 // Types for featured subscriptions

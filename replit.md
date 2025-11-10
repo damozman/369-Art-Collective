@@ -69,6 +69,9 @@ The platform is built with a clear separation between frontend and backend.
     - Audit logging via featuredRotationLog table tracks all rotation events and manual overrides
     - Raw SQL implementation for featured testimonials query (bypasses Drizzle query builder to avoid SQL generation issues)
 
+## Future Enhancements
+- **Admin CRM Notes for Artists:** Add a private notes field on each artist's admin page for tracking calls, conversations, and relationship management (personal CRM functionality)
+
 ## External Dependencies
 - **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered) for persistent storage.
 - **Printify API:** For creating POD products and managing fulfillment.

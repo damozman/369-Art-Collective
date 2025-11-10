@@ -1614,7 +1614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Step 2: Create Shopify product (for storefront)
+      // Step 2: Create Shopify product (for storefront) with enhanced marketing content
       if (isShopifyConfigured()) {
         try {
           const shopifyProduct = await createArtworkProduct({
@@ -1625,10 +1625,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             artworkId: id,
             imageUrl,
             tags: artwork.tags || [],
+            artworkStory: artwork.artworkStory || undefined,
+            styleTags: artwork.styleTags || undefined,
+            suggestedUse: artwork.suggestedUse || undefined,
+            seoSlug: artwork.seoSlug || undefined,
           });
 
           shopifyProductId = shopifyProduct.product.id.toString();
-          console.log("Shopify product created:", shopifyProductId);
+          console.log("Shopify product created with marketing content:", shopifyProductId);
         } catch (error: any) {
           console.error("Shopify product creation failed:", error);
           // Continue even if Shopify fails - Printify is the critical part

@@ -16,6 +16,11 @@ The platform is built with a clear separation between frontend and backend.
   - **Admin CRM Notes:** Private notes field on each artist's detail page for tracking calls, conversations, preferences, and relationship management (personal CRM functionality).
 - **Printify Integration:** Approved artwork automatically creates Printify POD products.
 - **Shopify Integration:** Shopify webhooks capture orders, and the platform integrates with the Shopify Admin API for storefront product management.
+  - **Enhanced Product Creation:** When artwork is approved, Shopify products are enriched with marketing content:
+    - **Rich Product Descriptions:** HTML-formatted descriptions include artwork story ("The Story Behind This Artwork"), suggested use ("Perfect For"), and artist attribution
+    - **SEO-Friendly URLs:** Product handles use the artwork's SEO slug (e.g., "mountain-sunset-landscape") for better search discoverability
+    - **Enhanced Tagging:** Style tags are added with "Style:" prefix (e.g., "Style:Modern", "Style:Abstract") for improved categorization and filtering
+    - All marketing fields from the upload wizard automatically populate Shopify product pages for richer customer experience
 - **Royalty System:** A tiered royalty system (30% to 45% based on monthly sales) is implemented, alongside a referral bonus (+5% for UTM-tracked sales) and a recruitment bonus (5% of recruited artist's royalties).
 - **Stripe Connect Payouts:**
   - Artists onboard via Stripe Connect Express for automated payout capabilities

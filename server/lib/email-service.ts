@@ -1,5 +1,4 @@
-// Note: Resend package will be installed after package.json vite-plugin issues are resolved
-// import { Resend } from 'resend';
+import { Resend } from 'resend';
 import { db } from './db';
 import { emailLogs } from '@shared/schema';
 
@@ -34,15 +33,11 @@ async function getCredentials() {
 }
 
 async function getUncachableResendClient() {
-  // Temporarily disabled until resend package is installed
-  throw new Error('Resend package not yet installed');
-  
-  // Uncomment when resend package is installed:
-  // const credentials = await getCredentials();
-  // return {
-  //   client: new Resend(credentials.apiKey),
-  //   fromEmail: connectionSettings.settings.from_email
-  // };
+  const credentials = await getCredentials();
+  return {
+    client: new Resend(credentials.apiKey),
+    fromEmail: connectionSettings.settings.from_email
+  };
 }
 
 const FROM_NAME = '247 Print Network Team';

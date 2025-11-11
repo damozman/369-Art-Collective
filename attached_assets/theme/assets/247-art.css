@@ -1,49 +1,89 @@
 /*
 247 Print Network - Premium Art Product Styles
 Displate-inspired clean, artist-centric design
+DEFENSIVE CSS - Overrides base theme
 */
 
-/* ===== LAYOUT & GRID ===== */
-.247pn-art-product {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 3rem 2rem;
+/* ===== CRITICAL LAYOUT RESET & GRID ===== */
+section.247pn-art-product {
+  /* Reset any base theme positioning */
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows: auto !important;
+  gap: 4rem !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 3rem 2rem !important;
+  
+  /* Prevent base theme interference */
+  width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+/* Force children into grid cells */
+section.247pn-art-product > * {
+  position: relative !important;
+  z-index: 1 !important;
 }
 
 @media (max-width: 1024px) {
-  .247pn-art-product {
-    grid-template-columns: 1fr;
-    gap: 2rem;
+  section.247pn-art-product {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
   }
 }
 
 /* ===== PRODUCT IMAGE ===== */
-.product__media {
-  position: sticky;
-  top: 2rem;
-  height: fit-content;
+section.247pn-art-product .product__media {
+  position: relative !important;
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  height: auto !important;
+  z-index: 1 !important;
 }
 
-.product__media img {
-  width: 100%;
-  height: auto;
+/* Remove sticky on mobile to prevent issues */
+@media (min-width: 1025px) {
+  section.247pn-art-product .product__media {
+    position: sticky !important;
+    top: 2rem !important;
+    height: fit-content !important;
+  }
+}
+
+section.247pn-art-product .product__media img {
+  width: 100% !important;
+  height: auto !important;
+  display: block !important;
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   transition: transform 0.3s ease;
 }
 
-.product__media img:hover {
+section.247pn-art-product .product__media img:hover {
   transform: scale(1.02);
 }
 
 /* ===== PRODUCT INFO ===== */
-.product__info {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+section.247pn-art-product .product__info {
+  position: relative !important;
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2rem !important;
+  width: 100% !important;
+  z-index: 2 !important;
+}
+
+@media (max-width: 1024px) {
+  section.247pn-art-product .product__info {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+  }
 }
 
 .product__title {

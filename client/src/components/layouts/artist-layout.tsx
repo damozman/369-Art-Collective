@@ -73,6 +73,11 @@ export function ArtistLayout({ children }: ArtistLayoutProps) {
           icon: Upload,
         },
         {
+          label: "AI Studio",
+          path: "/artist/ai-studio",
+          icon: Sparkles,
+        },
+        {
           label: "Pending Review",
           path: "/artist/pending",
           icon: Clock,

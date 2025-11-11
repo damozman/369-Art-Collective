@@ -13,7 +13,26 @@ Quality guarantees and trust signals
         {% if block.type == 'badge' %}
           <div class="trust-badge" data-testid="badge-{{ forloop.index }}">
             <div class="trust-badge__icon">
-              <div class="trust-badge__icon-bg"></div>
+              <div class="trust-badge__icon-bg">
+                {% case forloop.index %}
+                  {% when 1 %}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                    </svg>
+                  {% when 2 %}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                  {% when 3 %}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                    </svg>
+                  {% when 4 %}
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                {% endcase %}
+              </div>
             </div>
             <h3 class="trust-badge__title">{{ block.settings.title }}</h3>
             <p class="trust-badge__text">{{ block.settings.description }}</p>
@@ -59,6 +78,9 @@ Quality guarantees and trust signals
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   border-radius: 20px;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .trust-badge:hover .trust-badge__icon-bg {

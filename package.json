@@ -6,7 +6,11 @@
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "vite build",
     "start": "NODE_ENV=production tsx server/index.ts",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "shopify:auth": "shopify auth login",
+    "shopify:deploy": "node scripts/deploy-shopify-theme.js",
+    "shopify:assign-templates": "node scripts/assign-art-template.js",
+    "shopify:watch": "shopify theme dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

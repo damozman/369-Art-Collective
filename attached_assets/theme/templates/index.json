@@ -7,7 +7,9 @@
         "title": "Discover Art That Speaks",
         "subtitle": "Premium print-on-demand artwork from independent creators. Every purchase supports artists directly with fair royalties.",
         "primary_button_text": "Shop Art",
+        "primary_button_url": "/collections/all",
         "secondary_button_text": "Become an Artist",
+        "secondary_button_url": "/pages/join",
         "show_stats": true,
         "stat_1_value": "500+",
         "stat_1_label": "Active Artists",
@@ -23,8 +25,43 @@
         "eyebrow_text": "Meet the Creators",
         "title": "Featured Artists",
         "subtitle": "Discover talented creators from around the world bringing unique visions to life",
-        "cta_text": "View All Artists"
-      }
+        "cta_text": "View All Artists",
+        "cta_url": "/pages/creators"
+      },
+      "blocks": {
+        "artist_1": {
+          "type": "artist",
+          "settings": {
+            "artist_name": "Featured Artist",
+            "specialty": "Digital Art",
+            "artwork_count": "24",
+            "artist_url": "/collections/all"
+          }
+        },
+        "artist_2": {
+          "type": "artist",
+          "settings": {
+            "artist_name": "Creative Vision",
+            "specialty": "Abstract Art",
+            "artwork_count": "18",
+            "artist_url": "/collections/all"
+          }
+        },
+        "artist_3": {
+          "type": "artist",
+          "settings": {
+            "artist_name": "Modern Master",
+            "specialty": "Contemporary",
+            "artwork_count": "32",
+            "artist_url": "/collections/all"
+          }
+        }
+      },
+      "block_order": [
+        "artist_1",
+        "artist_2",
+        "artist_3"
+      ]
     }
   },
   "order": [

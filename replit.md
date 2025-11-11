@@ -31,7 +31,14 @@ The platform employs a clear separation between frontend and backend.
 - **Automated Integrations:**
     - **Printify:** Automated POD product creation.
     - **Shopify:** Integration for storefront product management, order capture via webhooks, enriched product creation, and automated theme deployment (`scripts/deploy-shopify-theme.js`).
-    - **Shopify Theme Design:** Custom `247-art.css` with a Displate-inspired aesthetic, artist spotlight, interactive grid-based option selectors, and robust mobile responsiveness.
+    - **Shopify Theme Design:** Custom `247-art.css` with a Displate-inspired aesthetic (#6366f1 accent, #0f0f0f blacks, pill-shaped buttons, layered shadows), artist spotlight, interactive grid-based option selectors, multi-image gallery system for Printify POD products with variant-to-image mapping, and robust mobile responsiveness.
+    - **Customer-Facing Pages:** Complete Displate-inspired storefront with modern 2024/2025 aesthetic:
+        - **About Page:** Mission statement, how-it-works process (4-step cards), platform benefits, fair royalty system
+        - **Meet the Creators:** Artist directory with profile cards, artwork counts, collection links
+        - **Contact Us:** Professional contact form with email/response time info, success/error handling
+        - **Help/FAQs:** Interactive accordion with categories (Orders, Shipping, Artists, Products)
+        - **Join the Creatorverse:** Artist recruitment landing page with royalty tiers, benefits cards, prominent CTAs
+        - **Product Pages:** Two-column layout (image left, info right) with multi-image gallery, variant-to-image switching, lightbox zoom
 - **Royalty System:** Tiered royalties (30-45%), referral bonuses (+5% for UTM-tracked sales), and recruitment bonuses (5% of recruited artist's royalties).
 - **Payouts:** Stripe Connect Express for automated artist payouts, including webhook integration and admin management UI.
 - **Security:** Session-based authentication with HTTP-only cookies, session regeneration, CSRF protection, bcrypt password hashing, and separated login architectures.

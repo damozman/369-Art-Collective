@@ -305,7 +305,16 @@ async function getResourceIds() {
     }
     
     await delay();
-    
+  } catch (error) {
+    if (error.message.includes('read_content')) {
+      log(`⚠ Warning: API token lacks 'read_content' scope, skipping page fetch`, colors.yellow);
+      log(`  Menu items will use HTTP links instead of resource IDs`, colors.yellow);
+    } else {
+      log(`⚠ Warning: Failed to fetch pages: ${error.message}`, colors.yellow);
+    }
+  }
+  
+  try {
     // Fetch all collections
     log('Fetching collections...', colors.blue);
     const collectionsData = await shopifyRequest('collections.json?limit=250');
@@ -315,9 +324,13 @@ async function getResourceIds() {
       });
       log(`✓ Found ${collectionsData.collections.length} collections`, colors.green);
     }
-    
   } catch (error) {
-    log(`⚠ Warning: Failed to fetch resources: ${error.message}`, colors.yellow);
+    if (error.message.includes('read_content')) {
+      log(`⚠ Warning: API token lacks 'read_content' scope, skipping collection fetch`, colors.yellow);
+      log(`  Menu items will use HTTP links instead of resource IDs`, colors.yellow);
+    } else {
+      log(`⚠ Warning: Failed to fetch collections: ${error.message}`, colors.yellow);
+    }
   }
   
   return resources;
@@ -328,33 +341,40 @@ function convertToGraphQLMenuItems(items, resources) {
   return items.map(item => {
     const menuItem = {
       title: item.title,
-      type: 'HTTP',
-      url: item.url || '/',
     };
     
     // Determine type and resource ID
-    if (item.resource_type === 'page' && item.handle) {
+    if (item.resource_type === 'frontpage') {
+      // FRONTPAGE type - no URL or resourceId needed
+      menuItem.type = 'FRONTPAGE';
+    } else if (item.resource_type === 'page' && item.handle) {
+      menuItem.url = `/pages/${item.handle}`;
       if (resources.pages[item.handle]) {
         menuItem.type = 'PAGE';
         menuItem.resourceId = `gid://shopify/Page/${resources.pages[item.handle]}`;
       } else {
+        menuItem.type = 'HTTP';
         log(`  ⚠ Page "${item.handle}" not found, using HTTP link`, colors.yellow);
       }
-      menuItem.url = `/pages/${item.handle}`;
     } else if (item.resource_type === 'collection' && item.handle) {
+      menuItem.url = `/collections/${item.handle}`;
       if (resources.collections[item.handle]) {
         menuItem.type = 'COLLECTION';
         menuItem.resourceId = `gid://shopify/Collection/${resources.collections[item.handle]}`;
       } else {
+        menuItem.type = 'HTTP';
         log(`  ⚠ Collection "${item.handle}" not found, using HTTP link`, colors.yellow);
       }
-      menuItem.url = `/collections/${item.handle}`;
-    } else if (item.resource_type === 'frontpage') {
-      menuItem.type = 'HTTP';
-      menuItem.url = '/';
     } else if (item.resource_type === 'policy' && item.handle) {
       menuItem.type = 'HTTP';
       menuItem.url = `/policies/${item.handle}`;
+    } else if (item.url) {
+      menuItem.type = 'HTTP';
+      menuItem.url = item.url;
+    } else {
+      // Default for parent items without links
+      menuItem.type = 'HTTP';
+      menuItem.url = '#';
     }
     
     // Handle nested items
@@ -377,12 +397,8 @@ async function createMenu(menuConfig, resources) {
     log(`Creating menu with GraphQL...`, colors.blue);
     
     const mutation = `
-      mutation CreateMenu($title: String!, $handle: String!, $items: [MenuItemInput!]!) {
-        menuCreate(menu: {
-          title: $title
-          handle: $handle
-          items: $items
-        }) {
+      mutation CreateMenu($title: String!, $handle: String!, $items: [MenuItemCreateInput!]!) {
+        menuCreate(title: $title, handle: $handle, items: $items) {
           menu {
             id
             handle

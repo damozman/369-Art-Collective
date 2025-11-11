@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
-import { insertInfluencerSchema } from "@shared/schema";
+import { influencerApplicationSchema } from "@shared/schema";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,52 +27,49 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Sparkles, TrendingUp, Users, Award } from "lucide-react";
 
-const applicationSchema = insertInfluencerSchema
-  .omit({ affiliateCode: true, currentTier: true, status: true, createdAt: true, approvedAt: true })
-  .extend({
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+// Form schema extends influencerApplicationSchema with confirmPassword and UI-only niche field
+const formSchema = influencerApplicationSchema.extend({
+  confirmPassword: z.string(),
+  niche: z.string().optional(), // UI-only field
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
-type ApplicationForm = z.infer<typeof applicationSchema>;
+type FormData = z.infer<typeof formSchema>;
 
 export default function InfluencerApply() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<ApplicationForm>({
-    resolver: zodResolver(applicationSchema),
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
-      socialHandles: {
-        instagram: "",
-        tiktok: "",
-        youtube: "",
-        twitter: "",
-        other: "",
-      },
-      audience: "",
+      socialLinks: {},
+      audienceSize: undefined,
+      applicationNotes: "",
       niche: "",
-      motivation: "",
     },
   });
 
-  const onSubmit = async (data: ApplicationForm) => {
+  const onSubmit = async (data: FormData) => {
     try {
       setIsSubmitting(true);
-      const { confirmPassword, ...submitData } = data;
+      const { confirmPassword, niche, ...submitData} = data;
       
-      await apiRequest("/api/influencers/apply", {
-        method: "POST",
-        body: JSON.stringify(submitData),
+      // Combine niche into applicationNotes if provided
+      const applicationNotes = niche 
+        ? `${submitData.applicationNotes}\n\nContent Niche: ${niche}`.trim()
+        : submitData.applicationNotes;
+
+      await apiRequest("POST", "/api/influencers/apply", {
+        ...submitData,
+        applicationNotes,
       });
 
       toast({
@@ -105,8 +102,8 @@ export default function InfluencerApply() {
             Join Our Influencer Program
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Earn up to 18% commission promoting artist-designed print-on-demand products.
-            Grow with our tiered rewards system and unlock exclusive badges.
+            Earn up to 40% commission promoting artist-designed print-on-demand products.
+            Grow with our tiered rewards system and unlock exclusive achievements.
           </p>
         </div>
       </div>
@@ -121,7 +118,7 @@ export default function InfluencerApply() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Start at 8% (Bronze) and earn up to 18% (Elite) as you grow your sales.
+                Start at 20% (Bronze) and earn up to 40% (Elite) as you grow your sales.
                 Progress automatically based on monthly performance.
               </p>
             </CardContent>
@@ -130,12 +127,12 @@ export default function InfluencerApply() {
           <Card data-testid="card-benefit-2">
             <CardHeader>
               <Award className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Badges & Achievements</CardTitle>
+              <CardTitle>Achievements & Leaderboards</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Unlock exclusive badges, share on social media, and compete on leaderboards.
-                Monthly challenges with bonus rewards.
+                Unlock exclusive achievements, compete on leaderboards, and participate
+                in monthly challenges with bonus rewards.
               </p>
             </CardContent>
           </Card>
@@ -147,7 +144,7 @@ export default function InfluencerApply() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Invite other influencers and earn 5% of their commissions for the first 3 months.
+                Invite artists and earn additional commissions from their sales.
                 Build your network while they build theirs.
               </p>
             </CardContent>
@@ -241,13 +238,13 @@ export default function InfluencerApply() {
                   />
                 </div>
 
-                {/* Social Handles */}
+                {/* Social Media */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold">Social Media Handles</h3>
+                  <h3 className="font-semibold">Social Media</h3>
                   
                   <FormField
                     control={form.control}
-                    name="socialHandles.instagram"
+                    name="socialLinks.instagram"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Instagram</FormLabel>
@@ -256,7 +253,8 @@ export default function InfluencerApply() {
                             data-testid="input-instagram"
                             placeholder="@yourusername"
                             {...field}
-                            value={field.value || ""}
+                            value={(field.value as string) || ""}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -266,7 +264,7 @@ export default function InfluencerApply() {
 
                   <FormField
                     control={form.control}
-                    name="socialHandles.tiktok"
+                    name="socialLinks.tiktok"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>TikTok</FormLabel>
@@ -275,7 +273,8 @@ export default function InfluencerApply() {
                             data-testid="input-tiktok"
                             placeholder="@yourusername"
                             {...field}
-                            value={field.value || ""}
+                            value={(field.value as string) || ""}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -285,7 +284,7 @@ export default function InfluencerApply() {
 
                   <FormField
                     control={form.control}
-                    name="socialHandles.youtube"
+                    name="socialLinks.youtube"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>YouTube</FormLabel>
@@ -294,7 +293,8 @@ export default function InfluencerApply() {
                             data-testid="input-youtube"
                             placeholder="Channel URL or handle"
                             {...field}
-                            value={field.value || ""}
+                            value={(field.value as string) || ""}
+                            onChange={(e) => field.onChange(e.target.value)}
                           />
                         </FormControl>
                         <FormMessage />
@@ -303,22 +303,25 @@ export default function InfluencerApply() {
                   />
                 </div>
 
-                {/* Audience & Motivation */}
+                {/* Audience & Details */}
                 <FormField
                   control={form.control}
-                  name="audience"
+                  name="audienceSize"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Audience Size</FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-audience"
-                          placeholder="e.g., 50K Instagram followers, 20K TikTok"
+                          type="number"
+                          placeholder="15000"
                           {...field}
+                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormDescription>
-                        Tell us about your total reach across all platforms
+                        Total followers across all platforms
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -334,7 +337,7 @@ export default function InfluencerApply() {
                       <FormControl>
                         <Input
                           data-testid="input-niche"
-                          placeholder="e.g., Fashion, Home Decor, Art & Design"
+                          placeholder="e.g., Art & Design, Fashion, Home Decor"
                           {...field}
                         />
                       </FormControl>
@@ -345,7 +348,7 @@ export default function InfluencerApply() {
 
                 <FormField
                   control={form.control}
-                  name="motivation"
+                  name="applicationNotes"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Why Join?</FormLabel>
@@ -355,6 +358,8 @@ export default function InfluencerApply() {
                           placeholder="Tell us why you're interested in promoting artist-designed products..."
                           rows={4}
                           {...field}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -378,7 +383,7 @@ export default function InfluencerApply() {
                 Already have an account?{" "}
                 <Button
                   data-testid="link-login"
-                  variant="link"
+                  variant="ghost"
                   className="p-0 h-auto"
                   onClick={() => navigate("/influencer/login")}
                 >

@@ -526,7 +526,7 @@ export const influencers = pgTable("influencers", {
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   name: text("name").notNull(),
-  affiliateCode: text("affiliate_code").notNull().unique(), // Unique code for tracking (e.g., "SARAH_INFLUENCER")
+  affiliateCode: text("affiliate_code").unique(), // Unique code for tracking (generated on approval)
   status: text("status").notNull().default("pending"), // pending, active, suspended
   
   // Commission settings
@@ -700,6 +700,20 @@ export const activityFeedEvents = pgTable("activity_feed_events", {
 export const insertInfluencerSchema = createInsertSchema(influencers).omit({
   id: true,
   createdAt: true,
+});
+
+// Application schema - for public influencer applications (no affiliateCode yet)
+export const influencerApplicationSchema = insertInfluencerSchema.omit({
+  affiliateCode: true,
+  status: true,
+  currentTier: true,
+  commissionType: true,
+  commissionRate: true,
+  stripeAccountId: true,
+  stripeAccountStatus: true,
+  stripeOnboardingComplete: true,
+  adminNotes: true,
+  approvedAt: true,
 });
 
 export const insertAffiliateClickSchema = createInsertSchema(affiliateClicks).omit({

@@ -1511,10 +1511,41 @@ class PostgresStorage implements IStorage {
   }
 
   async approveInfluencer(id: string): Promise<Influencer> {
+    // Get the influencer to check if they already have an affiliate code
+    const influencer = await this.getInfluencer(id);
+    if (!influencer) {
+      throw new Error("Influencer not found");
+    }
+
+    // Generate affiliate code if not already present
+    let affiliateCode = influencer.affiliateCode;
+    if (!affiliateCode) {
+      // Generate unique affiliate code with INF- prefix
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      while (attempts < maxAttempts) {
+        affiliateCode = `INF-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+        
+        // Check if code already exists
+        const existing = await db.query.influencers.findFirst({
+          where: eq(influencers.affiliateCode, affiliateCode),
+        });
+        
+        if (!existing) break;
+        attempts++;
+      }
+      
+      if (attempts === maxAttempts) {
+        throw new Error("Failed to generate unique affiliate code");
+      }
+    }
+
     const [approved] = await db
       .update(influencers)
       .set({ 
         status: "active",
+        affiliateCode,
         approvedAt: new Date()
       })
       .where(eq(influencers.id, id))

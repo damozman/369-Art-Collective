@@ -21,6 +21,7 @@ import {
   insertViolationReportSchema,
   insertTestimonialSchema,
   insertInfluencerSchema,
+  influencerApplicationSchema,
 } from "@shared/schema";
 import crypto from "crypto";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured, updateProductStatus } from "./lib/shopify";
@@ -1532,7 +1533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public: Influencer application
   app.post("/api/influencers/apply", async (req, res) => {
     try {
-      const data = insertInfluencerSchema.parse(req.body);
+      const data = influencerApplicationSchema.parse(req.body);
 
       // Check for existing email
       const existing = await storage.getInfluencerByEmail(data.email);
@@ -1543,14 +1544,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash password
       const hashedPassword = await bcrypt.hash(data.password, 10);
 
-      // Generate unique affiliate code with INF- prefix
-      const affiliateCode = await generateReferralCode('INF-');
-
-      // Create influencer with pending status
+      // Create influencer with pending status (no affiliateCode yet - generated on approval)
       const influencer = await storage.createInfluencer({
         ...data,
         password: hashedPassword,
-        affiliateCode,
         status: "pending",
         currentTier: "bronze",
       });

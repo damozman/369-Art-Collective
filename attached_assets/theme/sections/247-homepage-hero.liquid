@@ -38,15 +38,17 @@ Displate-inspired hero with featured artwork
         </div>
       </div>
       
-      {% if section.settings.featured_image %}
-        <div class="homepage-hero__image">
+      <div class="homepage-hero__image">
+        {% if section.settings.featured_image %}
           <img 
             src="{{ section.settings.featured_image | img_url: '1200x1200' }}" 
             alt="{{ section.settings.title }}"
             loading="eager"
           >
-        </div>
-      {% endif %}
+        {% else %}
+          <div class="homepage-hero__image-placeholder"></div>
+        {% endif %}
+      </div>
     </div>
 
     {% if section.settings.show_stats %}
@@ -210,6 +212,33 @@ Displate-inspired hero with featured artwork
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.homepage-hero__image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.homepage-hero__image-placeholder::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-20px, 20px) rotate(10deg); }
 }
 
 .homepage-hero__stats {

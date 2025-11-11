@@ -1556,7 +1556,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Send welcome/pending email (non-blocking)
-      // TODO: Add email notification
+      emailService.sendInfluencerApplicationEmail(
+        influencer.email,
+        influencer.name,
+        influencer.id
+      ).catch(err => {
+        console.error('Failed to send influencer application email:', err);
+        // Non-blocking: continue even if email fails
+      });
 
       const { password: _, ...influencerData } = influencer;
       res.status(201).json(influencerData);
@@ -1826,7 +1833,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const influencer = await storage.approveInfluencer(req.params.id);
       
       // Send approval email (non-blocking)
-      // TODO: Add email notification
+      emailService.sendInfluencerApprovalEmail(
+        influencer.email,
+        influencer.name,
+        influencer.id,
+        influencer.affiliateCode
+      ).catch(err => {
+        console.error('Failed to send influencer approval email:', err);
+        // Non-blocking: continue even if email fails
+      });
 
       const { password: _, ...influencerData } = influencer;
       res.json(influencerData);

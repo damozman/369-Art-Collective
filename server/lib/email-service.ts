@@ -51,6 +51,8 @@ export type EmailType =
   | 'artwork_rejected'
   | 'artwork_archive_warning'
   | 'artwork_archived'
+  | 'influencer_application'
+  | 'influencer_approved'
   | 'custom';
 
 export interface EmailData {
@@ -264,6 +266,49 @@ export class EmailService {
       htmlBody,
       textBody,
       metadata: { artistName, artworkTitle, artworkId },
+    });
+  }
+
+  async sendInfluencerApplicationEmail(
+    influencerEmail: string,
+    influencerName: string,
+    influencerId: string
+  ) {
+    const subject = 'Welcome to 247 Print Network Influencer Program!';
+    const htmlBody = this.getInfluencerApplicationHTML(influencerName);
+    const textBody = this.getInfluencerApplicationText(influencerName);
+
+    return this.sendEmail({
+      recipientEmail: influencerEmail,
+      recipientType: 'artist',
+      recipientId: influencerId,
+      emailType: 'influencer_application',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { influencerName },
+    });
+  }
+
+  async sendInfluencerApprovalEmail(
+    influencerEmail: string,
+    influencerName: string,
+    influencerId: string,
+    affiliateCode: string
+  ) {
+    const subject = 'Your Influencer Application is Approved!';
+    const htmlBody = this.getInfluencerApprovalHTML(influencerName, affiliateCode);
+    const textBody = this.getInfluencerApprovalText(influencerName, affiliateCode);
+
+    return this.sendEmail({
+      recipientEmail: influencerEmail,
+      recipientType: 'artist',
+      recipientId: influencerId,
+      emailType: 'influencer_approved',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { influencerName, affiliateCode },
     });
   }
 
@@ -949,6 +994,248 @@ Best regards,
 
 ---
 This action was taken in accordance with our marketplace quality policy and terms of service.
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+  }
+
+  private getInfluencerApplicationHTML(influencerName: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .info { background: #e0e7ff; border-left: 4px solid #667eea; padding: 15px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Welcome to the Influencer Program!</h1>
+          </div>
+          <div class="content">
+            <p>Hi ${influencerName},</p>
+            
+            <p>Thank you for applying to become a 247 Print Network influencer! We're excited about your interest in partnering with us.</p>
+            
+            <div class="info">
+              <strong>Application Status:</strong> Pending Review<br>
+              <strong>Review Timeline:</strong> 24-48 hours<br>
+              <strong>Next Steps:</strong> We'll email you once approved
+            </div>
+            
+            <p><strong>What Happens Next:</strong></p>
+            <ol>
+              <li>Our team will review your application within 1-2 business days</li>
+              <li>We'll evaluate your platform, audience, and alignment with our brand</li>
+              <li>Upon approval, you'll receive your unique affiliate code</li>
+              <li>Start promoting and earning commissions immediately!</li>
+            </ol>
+            
+            <p><strong>Commission Structure:</strong></p>
+            <ul>
+              <li><strong>Bronze (Start):</strong> 20% commission</li>
+              <li><strong>Silver ($500/month):</strong> 25% commission</li>
+              <li><strong>Gold ($2,000/month):</strong> 30% commission</li>
+              <li><strong>Platinum ($5,000/month):</strong> 35% commission</li>
+              <li><strong>Elite ($10,000/month):</strong> 40% commission</li>
+            </ul>
+            
+            <p>We review applications carefully to ensure quality partnerships that benefit both our artists and influencers. You'll hear from us soon!</p>
+            
+            <p>If you have any questions in the meantime, feel free to reply to this email.</p>
+            
+            <p>Best regards,<br>247 Print Network Partnerships Team</p>
+          </div>
+          <div class="footer">
+            <p>© 2025 247 Print Network. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private getInfluencerApplicationText(influencerName: string): string {
+    return `
+Welcome to the Influencer Program!
+
+Hi ${influencerName},
+
+Thank you for applying to become a 247 Print Network influencer! We're excited about your interest in partnering with us.
+
+APPLICATION STATUS: Pending Review
+REVIEW TIMELINE: 24-48 hours
+NEXT STEPS: We'll email you once approved
+
+What Happens Next:
+1. Our team will review your application within 1-2 business days
+2. We'll evaluate your platform, audience, and alignment with our brand
+3. Upon approval, you'll receive your unique affiliate code
+4. Start promoting and earning commissions immediately!
+
+COMMISSION STRUCTURE:
+• Bronze (Start): 20% commission
+• Silver ($500/month): 25% commission
+• Gold ($2,000/month): 30% commission
+• Platinum ($5,000/month): 35% commission
+• Elite ($10,000/month): 40% commission
+
+We review applications carefully to ensure quality partnerships that benefit both our artists and influencers. You'll hear from us soon!
+
+If you have any questions in the meantime, feel free to reply to this email.
+
+Best regards,
+247 Print Network Partnerships Team
+
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+  }
+
+  private getInfluencerApprovalHTML(influencerName: string, affiliateCode: string): string {
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/influencer/dashboard`;
+    const affiliateUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/?ref=${affiliateCode}`;
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .success { background: #d1fae5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
+          .code-box { background: #f3f4f6; border: 2px dashed #667eea; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
+          .button { display: inline-block; background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>You're Approved!</h1>
+          </div>
+          <div class="content">
+            <p>Hi ${influencerName},</p>
+            
+            <div class="success">
+              <strong>Congratulations!</strong> Your influencer application has been approved. Welcome to the 247 Print Network family!
+            </div>
+            
+            <p><strong>Your Unique Affiliate Code:</strong></p>
+            <div class="code-box">
+              <h2 style="margin: 0; color: #667eea; font-size: 28px;">${affiliateCode}</h2>
+              <p style="margin: 10px 0 0 0; color: #666;">Share this link with your audience</p>
+              <p style="word-break: break-all; color: #667eea; margin: 10px 0 0 0;">${affiliateUrl}</p>
+            </div>
+            
+            <p><strong>Getting Started:</strong></p>
+            <ol>
+              <li><strong>Access Your Dashboard:</strong> View real-time stats, earnings, and performance metrics</li>
+              <li><strong>Share Your Link:</strong> Promote your affiliate link across social media, blog, email, etc.</li>
+              <li><strong>Track Conversions:</strong> Monitor clicks, artist signups, and sales in real-time</li>
+              <li><strong>Earn Commissions:</strong> Get paid for every sale from artists you recruit</li>
+            </ol>
+            
+            <p><strong>Your Commission Tiers:</strong></p>
+            <ul>
+              <li><strong>Bronze (Current):</strong> 20% commission - You're starting here!</li>
+              <li><strong>Silver:</strong> 25% at $500/month in sales</li>
+              <li><strong>Gold:</strong> 30% at $2,000/month</li>
+              <li><strong>Platinum:</strong> 35% at $5,000/month</li>
+              <li><strong>Elite:</strong> 40% at $10,000/month</li>
+            </ul>
+            
+            <p><strong>Dashboard Features:</strong></p>
+            <ul>
+              <li>Real-time click and conversion tracking</li>
+              <li>Tier progress visualization</li>
+              <li>Earnings breakdown and payout history</li>
+              <li>Achievement unlocking and leaderboard rankings</li>
+              <li>Active challenges with prizes</li>
+            </ul>
+            
+            <a href="${dashboardUrl}" class="button">Go to Your Dashboard</a>
+            
+            <p><strong>Pro Tips for Success:</strong></p>
+            <ul>
+              <li>Share authentic stories about the artists and their work</li>
+              <li>Use UTM parameters to track which campaigns perform best</li>
+              <li>Engage with your audience - answer questions about the platform</li>
+              <li>Highlight the royalty structure to attract quality artists</li>
+              <li>Join our monthly challenges for bonus payouts</li>
+            </ul>
+            
+            <p>We're excited to partner with you! If you have any questions or need marketing materials, reply to this email.</p>
+            
+            <p>Best regards,<br>247 Print Network Partnerships Team</p>
+          </div>
+          <div class="footer">
+            <p>© 2025 247 Print Network. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private getInfluencerApprovalText(influencerName: string, affiliateCode: string): string {
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/influencer/dashboard`;
+    const affiliateUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/?ref=${affiliateCode}`;
+    
+    return `
+You're Approved!
+
+Hi ${influencerName},
+
+Congratulations! Your influencer application has been approved. Welcome to the 247 Print Network family!
+
+YOUR UNIQUE AFFILIATE CODE: ${affiliateCode}
+
+Share this link with your audience:
+${affiliateUrl}
+
+GETTING STARTED:
+1. Access Your Dashboard: View real-time stats, earnings, and performance metrics
+2. Share Your Link: Promote your affiliate link across social media, blog, email, etc.
+3. Track Conversions: Monitor clicks, artist signups, and sales in real-time
+4. Earn Commissions: Get paid for every sale from artists you recruit
+
+YOUR COMMISSION TIERS:
+• Bronze (Current): 20% commission - You're starting here!
+• Silver: 25% at $500/month in sales
+• Gold: 30% at $2,000/month
+• Platinum: 35% at $5,000/month
+• Elite: 40% at $10,000/month
+
+DASHBOARD FEATURES:
+• Real-time click and conversion tracking
+• Tier progress visualization
+• Earnings breakdown and payout history
+• Achievement unlocking and leaderboard rankings
+• Active challenges with prizes
+
+Go to Your Dashboard: ${dashboardUrl}
+
+PRO TIPS FOR SUCCESS:
+• Share authentic stories about the artists and their work
+• Use UTM parameters to track which campaigns perform best
+• Engage with your audience - answer questions about the platform
+• Highlight the royalty structure to attract quality artists
+• Join our monthly challenges for bonus payouts
+
+We're excited to partner with you! If you have any questions or need marketing materials, reply to this email.
+
+Best regards,
+247 Print Network Partnerships Team
+
 © 2025 247 Print Network. All rights reserved.
     `.trim();
   }

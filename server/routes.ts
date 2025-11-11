@@ -677,7 +677,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Only show approved, non-archived artworks with absolute URLs
       const publicArtworks = artworks
-        .filter(a => a.status === "approved" && !a.archived)
+        .filter(a => a.status === "approved" && !a.archivedAt)
         .map(artwork => ({
           id: artwork.id,
           title: artwork.title,

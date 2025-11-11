@@ -70,7 +70,13 @@ async function deploy() {
   // Step 1: Verify all theme files exist
   log('Step 1: Verifying theme files...', colors.bright);
   const themeFiles = [
-    // Sections (17 files)
+    // Layout (1 file)
+    'attached_assets/theme/layout/theme.liquid',
+    // Config (1 file)
+    'attached_assets/theme/config/settings_schema.json',
+    // Sections (19 files)
+    'attached_assets/theme/sections/header.liquid',
+    'attached_assets/theme/sections/footer.liquid',
     'attached_assets/theme/sections/247-about-content.liquid',
     'attached_assets/theme/sections/247-art-product.liquid',
     'attached_assets/theme/sections/247-artist-cta-banner.liquid',
@@ -152,7 +158,13 @@ async function deploy() {
   
   // Build --only parameter with all files
   const onlyFiles = [
+    // Layout
+    'layout/theme.liquid',
+    // Config
+    'config/settings_schema.json',
     // All sections
+    'sections/header.liquid',
+    'sections/footer.liquid',
     'sections/247-about-content.liquid',
     'sections/247-art-product.liquid',
     'sections/247-artist-cta-banner.liquid',
@@ -193,7 +205,7 @@ async function deploy() {
   const deployCommand = `shopify theme push --store=${storeUrl} --path attached_assets/theme --development --force --only ${onlyFiles}`;
   
   log('Note: Deploying to development theme. Use --live flag for production.', colors.yellow);
-  const success = runCommand(deployCommand, 'Uploading all 30 theme files');
+  const success = runCommand(deployCommand, 'Uploading all 33 theme files (including header & footer)');
 
   if (success) {
     logSection('✅ Deployment Successful!');

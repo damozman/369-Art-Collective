@@ -1,0 +1,19 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "247 Print Network",
+    "theme_version": "1.0.0",
+    "theme_author": "3six9 Media Masters",
+    "theme_documentation_url": "https://247printnetwork.com",
+    "theme_support_url": "https://247printnetwork.com/pages/contact"
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Theme Colors"
+      }
+    ]
+  }
+]

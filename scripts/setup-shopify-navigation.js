@@ -380,66 +380,137 @@ function convertToGraphQLMenuItems(items, resources) {
   });
 }
 
-// Step 4: Create menu using GraphQL
-async function createMenu(menuConfig, resources) {
-  logSection(`Creating Menu: ${menuConfig.title}`);
-  
+// Step 4: Get existing menu by handle
+async function getMenuByHandle(handle) {
   try {
-    log('Converting menu structure...', colors.blue);
-    const menuItems = convertToGraphQLMenuItems(menuConfig.items, resources);
-    
-    log(`Creating menu with GraphQL...`, colors.blue);
-    
-    const mutation = `
-      mutation CreateMenu($title: String!, $handle: String!, $items: [MenuItemCreateInput!]!) {
-        menuCreate(title: $title, handle: $handle, items: $items) {
-          menu {
-            id
-            handle
-            title
-          }
-          userErrors {
-            field
-            message
+    const query = `
+      {
+        menus(first: 50) {
+          edges {
+            node {
+              id
+              handle
+              title
+            }
           }
         }
       }
     `;
     
-    const variables = {
-      title: menuConfig.title,
-      handle: menuConfig.handle,
-      items: menuItems,
-    };
+    const data = await shopifyGraphQL(query);
+    const menu = data.menus.edges.find(edge => edge.node.handle === handle);
+    return menu ? menu.node : null;
+  } catch (error) {
+    log(`⚠ Warning: Failed to fetch menu: ${error.message}`, colors.yellow);
+    return null;
+  }
+}
+
+// Step 5: Create or update menu using GraphQL
+async function createOrUpdateMenu(menuConfig, resources) {
+  logSection(`Setting up Menu: ${menuConfig.title}`);
+  
+  try {
+    log('Converting menu structure...', colors.blue);
+    const menuItems = convertToGraphQLMenuItems(menuConfig.items, resources);
     
-    const data = await shopifyGraphQL(mutation, variables);
+    // Check if menu already exists
+    log('Checking if menu exists...', colors.blue);
+    const existingMenu = await getMenuByHandle(menuConfig.handle);
     
-    if (data.menuCreate.userErrors && data.menuCreate.userErrors.length > 0) {
-      const errors = data.menuCreate.userErrors.map(e => `${e.field}: ${e.message}`).join(', ');
-      throw new Error(errors);
+    if (existingMenu) {
+      log(`✓ Found existing menu (${existingMenu.handle})`, colors.green);
+      log(`  Updating menu...`, colors.blue);
+      
+      // Use menuUpdate mutation
+      const mutation = `
+        mutation UpdateMenu($id: ID!, $title: String!, $handle: String!, $items: [MenuItemUpdateInput!]!) {
+          menuUpdate(id: $id, title: $title, handle: $handle, items: $items) {
+            menu {
+              id
+              handle
+              title
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+      
+      const variables = {
+        id: existingMenu.id,
+        title: menuConfig.title,
+        handle: menuConfig.handle,
+        items: menuItems,
+      };
+      
+      const data = await shopifyGraphQL(mutation, variables);
+      
+      if (data.menuUpdate.userErrors && data.menuUpdate.userErrors.length > 0) {
+        const errors = data.menuUpdate.userErrors.map(e => `${e.field}: ${e.message}`).join(', ');
+        throw new Error(errors);
+      }
+      
+      const menu = data.menuUpdate.menu;
+      log(`✓ Menu updated successfully!`, colors.green);
+      log(`  ID: ${menu.id}`, colors.cyan);
+      log(`  Handle: ${menu.handle}`, colors.cyan);
+      
+      // Log menu structure
+      log('\nMenu structure:', colors.bright);
+      logMenuItems(menuConfig.items, 0);
+      
+      return menu;
+      
+    } else {
+      log('No existing menu found, creating new menu...', colors.blue);
+      
+      // Use menuCreate mutation
+      const mutation = `
+        mutation CreateMenu($title: String!, $handle: String!, $items: [MenuItemCreateInput!]!) {
+          menuCreate(title: $title, handle: $handle, items: $items) {
+            menu {
+              id
+              handle
+              title
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+      
+      const variables = {
+        title: menuConfig.title,
+        handle: menuConfig.handle,
+        items: menuItems,
+      };
+      
+      const data = await shopifyGraphQL(mutation, variables);
+      
+      if (data.menuCreate.userErrors && data.menuCreate.userErrors.length > 0) {
+        const errors = data.menuCreate.userErrors.map(e => `${e.field}: ${e.message}`).join(', ');
+        throw new Error(errors);
+      }
+      
+      const menu = data.menuCreate.menu;
+      log(`✓ Menu created successfully!`, colors.green);
+      log(`  ID: ${menu.id}`, colors.cyan);
+      log(`  Handle: ${menu.handle}`, colors.cyan);
+      
+      // Log menu structure
+      log('\nMenu structure:', colors.bright);
+      logMenuItems(menuConfig.items, 0);
+      
+      return menu;
     }
-    
-    const menu = data.menuCreate.menu;
-    log(`✓ Menu created successfully!`, colors.green);
-    log(`  ID: ${menu.id}`, colors.cyan);
-    log(`  Handle: ${menu.handle}`, colors.cyan);
-    
-    // Log menu structure
-    log('\nMenu structure:', colors.bright);
-    logMenuItems(menuConfig.items, 0);
-    
-    return menu;
     
   } catch (error) {
-    log(`❌ Failed to create menu: ${error.message}`, colors.red);
-    
-    // If menu already exists, try to delete and recreate
-    if (error.message.includes('already exists') || error.message.includes('taken')) {
-      log(`\n⚠ Menu "${menuConfig.title}" already exists`, colors.yellow);
-      log('You can delete it manually in Shopify Admin → Content → Menus', colors.yellow);
-      log('Or run this script again after deleting it.', colors.yellow);
-    }
-    
+    log(`❌ Failed to create/update menu: ${error.message}`, colors.red);
     throw error;
   }
 }
@@ -475,11 +546,11 @@ async function main() {
     // Step 2: Get resource IDs
     const resources = await getResourceIds();
     
-    // Step 3: Create main menu
-    await createMenu(MAIN_MENU, resources);
+    // Step 3: Create or update main menu
+    await createOrUpdateMenu(MAIN_MENU, resources);
     
-    // Step 4: Create footer menu
-    await createMenu(FOOTER_MENU, resources);
+    // Step 4: Create or update footer menu
+    await createOrUpdateMenu(FOOTER_MENU, resources);
     
     // Success summary
     logSection('✅ Navigation Setup Complete!');

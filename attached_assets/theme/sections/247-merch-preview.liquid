@@ -20,51 +20,95 @@ Shows coming soon merch products to build anticipation
       </p>
     </div>
 
-    {%- comment -%} Merch Grid {%- endcomment -%}
-    <div class="merch-preview__grid">
-      
-      {%- comment -%} T-Shirt {%- endcomment -%}
-      <div class="merch-preview-card">
-        <div class="merch-preview-card__badge">Coming Soon</div>
-        <div class="merch-preview-card__icon">
-          <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-            <path d="M30 37.5h60M30 37.5l-7.5 7.5v45h75V45l-7.5-7.5M30 37.5l7.5-7.5h45l7.5 7.5M60 52.5v37.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          </svg>
+    {%- comment -%} Merch Carousel {%- endcomment -%}
+    <div class="merch-carousel-wrapper">
+      <button class="merch-carousel__nav merch-carousel__nav--prev" aria-label="Previous" data-testid="button-merch-prev">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+
+      <div class="merch-preview__carousel" data-testid="carousel-merch">
+        
+        {%- comment -%} T-Shirt {%- endcomment -%}
+        <div class="merch-preview-card">
+          <div class="merch-preview-card__badge">Coming Soon</div>
+          <div class="merch-preview-card__icon">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <path d="M30 37.5h60M30 37.5l-7.5 7.5v45h75V45l-7.5-7.5M30 37.5l7.5-7.5h45l7.5 7.5M60 52.5v37.5" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 class="merch-preview-card__title">Premium Apparel</h3>
+          <p class="merch-preview-card__description">Wear your favorite artwork on high-quality tees, hoodies, and more</p>
+          <div class="merch-preview-card__price">From $28</div>
         </div>
-        <h3 class="merch-preview-card__title">Premium Apparel</h3>
-        <p class="merch-preview-card__description">Wear your favorite artwork on high-quality tees, hoodies, and more</p>
-        <div class="merch-preview-card__price">From $28</div>
+
+        {%- comment -%} Mugs {%- endcomment -%}
+        <div class="merch-preview-card">
+          <div class="merch-preview-card__badge">Coming Soon</div>
+          <div class="merch-preview-card__icon">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <rect x="30" y="37.5" width="52.5" height="45" rx="3" stroke="currentColor" stroke-width="3"/>
+              <path d="M82.5 52.5h7.5c4.14 0 7.5 3.36 7.5 7.5s-3.36 7.5-7.5 7.5h-7.5" stroke="currentColor" stroke-width="3"/>
+              <line x1="37.5" y1="82.5" x2="75" y2="82.5" stroke="currentColor" stroke-width="3"/>
+            </svg>
+          </div>
+          <h3 class="merch-preview-card__title">Home & Living</h3>
+          <p class="merch-preview-card__description">Ceramic mugs, throw pillows, and cozy blankets featuring artist designs</p>
+          <div class="merch-preview-card__price">From $18</div>
+        </div>
+
+        {%- comment -%} Accessories {%- endcomment -%}
+        <div class="merch-preview-card">
+          <div class="merch-preview-card__badge">Coming Soon</div>
+          <div class="merch-preview-card__icon">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <rect x="42" y="22.5" width="36" height="75" rx="4.5" stroke="currentColor" stroke-width="3"/>
+              <circle cx="60" cy="90" r="3" fill="currentColor"/>
+            </svg>
+          </div>
+          <h3 class="merch-preview-card__title">Accessories</h3>
+          <p class="merch-preview-card__description">Phone cases, tote bags, stickers, and everyday essentials</p>
+          <div class="merch-preview-card__price">From $12</div>
+        </div>
+
+        {%- comment -%} Stationery {%- endcomment -%}
+        <div class="merch-preview-card">
+          <div class="merch-preview-card__badge">Coming Soon</div>
+          <div class="merch-preview-card__icon">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <rect x="30" y="30" width="60" height="60" rx="3" stroke="currentColor" stroke-width="3"/>
+              <line x1="45" y1="50" x2="75" y2="50" stroke="currentColor" stroke-width="2"/>
+              <line x1="45" y1="60" x2="75" y2="60" stroke="currentColor" stroke-width="2"/>
+              <line x1="45" y1="70" x2="65" y2="70" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <h3 class="merch-preview-card__title">Stationery</h3>
+          <p class="merch-preview-card__description">Notebooks, greeting cards, and desk accessories with unique artwork</p>
+          <div class="merch-preview-card__price">From $8</div>
+        </div>
+
+        {%- comment -%} Wall Decor {%- endcomment -%}
+        <div class="merch-preview-card">
+          <div class="merch-preview-card__badge">Coming Soon</div>
+          <div class="merch-preview-card__icon">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="60" r="30" stroke="currentColor" stroke-width="3"/>
+              <path d="M60 30v-15M60 105v-15M30 60H15M105 60H90" stroke="currentColor" stroke-width="3"/>
+            </svg>
+          </div>
+          <h3 class="merch-preview-card__title">Wall Decals</h3>
+          <p class="merch-preview-card__description">Removable wall decals and stickers to transform any space</p>
+          <div class="merch-preview-card__price">From $15</div>
+        </div>
+
       </div>
 
-      {%- comment -%} Mugs {%- endcomment -%}
-      <div class="merch-preview-card">
-        <div class="merch-preview-card__badge">Coming Soon</div>
-        <div class="merch-preview-card__icon">
-          <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-            <rect x="30" y="37.5" width="52.5" height="45" rx="3" stroke="currentColor" stroke-width="3"/>
-            <path d="M82.5 52.5h7.5c4.14 0 7.5 3.36 7.5 7.5s-3.36 7.5-7.5 7.5h-7.5" stroke="currentColor" stroke-width="3"/>
-            <line x1="37.5" y1="82.5" x2="75" y2="82.5" stroke="currentColor" stroke-width="3"/>
-          </svg>
-        </div>
-        <h3 class="merch-preview-card__title">Home & Living</h3>
-        <p class="merch-preview-card__description">Ceramic mugs, throw pillows, and cozy blankets featuring artist designs</p>
-        <div class="merch-preview-card__price">From $18</div>
-      </div>
-
-      {%- comment -%} Accessories {%- endcomment -%}
-      <div class="merch-preview-card">
-        <div class="merch-preview-card__badge">Coming Soon</div>
-        <div class="merch-preview-card__icon">
-          <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
-            <rect x="42" y="22.5" width="36" height="75" rx="4.5" stroke="currentColor" stroke-width="3"/>
-            <circle cx="60" cy="90" r="3" fill="currentColor"/>
-          </svg>
-        </div>
-        <h3 class="merch-preview-card__title">Accessories</h3>
-        <p class="merch-preview-card__description">Phone cases, tote bags, stickers, and everyday essentials</p>
-        <div class="merch-preview-card__price">From $12</div>
-      </div>
-
+      <button class="merch-carousel__nav merch-carousel__nav--next" aria-label="Next" data-testid="button-merch-next">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
     </div>
 
     {%- comment -%} CTA {%- endcomment -%}
@@ -127,11 +171,61 @@ Shows coming soon merch products to build anticipation
   margin: 0 auto;
 }
 
-.merch-preview__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+.merch-carousel-wrapper {
+  position: relative;
   margin-bottom: 4rem;
+}
+
+.merch-preview__carousel {
+  display: flex;
+  gap: 2rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 1rem 0;
+}
+
+.merch-preview__carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.merch-carousel__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.merch-carousel__nav:hover {
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.merch-carousel__nav--prev {
+  left: -24px;
+}
+
+.merch-carousel__nav--next {
+  right: -24px;
+}
+
+.merch-carousel__nav svg {
+  color: #6366f1;
 }
 
 .merch-preview-card {
@@ -142,6 +236,8 @@ Shows coming soon merch products to build anticipation
   padding: 3rem 2rem;
   text-align: center;
   transition: all 0.4s ease;
+  flex: 0 0 320px;
+  scroll-snap-align: start;
 }
 
 .merch-preview-card:hover {
@@ -225,9 +321,12 @@ Shows coming soon merch products to build anticipation
     font-size: 2rem;
   }
 
-  .merch-preview__grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+  .merch-carousel__nav {
+    display: none;
+  }
+
+  .merch-preview__carousel {
+    gap: 1rem;
   }
 
   .merch-preview-card {
@@ -239,6 +338,32 @@ Shows coming soon merch products to build anticipation
   }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const carousel = document.querySelector('.merch-preview__carousel');
+  const prevBtn = document.querySelector('.merch-carousel__nav--prev');
+  const nextBtn = document.querySelector('.merch-carousel__nav--next');
+
+  if (carousel && prevBtn && nextBtn) {
+    const cardWidth = 320 + 32; // card width + gap
+
+    prevBtn.addEventListener('click', () => {
+      carousel.scrollBy({
+        left: -cardWidth * 2,
+        behavior: 'smooth'
+      });
+    });
+
+    nextBtn.addEventListener('click', () => {
+      carousel.scrollBy({
+        left: cardWidth * 2,
+        behavior: 'smooth'
+      });
+    });
+  }
+});
+</script>
 
 {% schema %}
 {

@@ -18,6 +18,7 @@ import AdminForgotPassword from "@/pages/admin-forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import ArtistDashboard from "@/pages/artist-dashboard";
 import UploadArtwork from "@/pages/upload-artwork";
+import ArtistAiStudio from "@/pages/artist-ai-studio";
 import ArtistEarnings from "@/pages/artist-earnings";
 import ArtistReferrals from "@/pages/artist-referrals";
 import ArtistPayouts from "@/pages/artist-payouts";
@@ -75,6 +76,14 @@ function Router() {
         <ProtectedRoute requiredType="artist">
           <ArtistLayout>
             <UploadArtwork />
+          </ArtistLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/artist/ai-studio">
+        <ProtectedRoute requiredType="artist">
+          <ArtistLayout>
+            <ArtistAiStudio />
           </ArtistLayout>
         </ProtectedRoute>
       </Route>

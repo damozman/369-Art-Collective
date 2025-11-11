@@ -1,391 +1,497 @@
-# 247 Print Network - Complete Navigation Setup Guide
+# Shopify Navigation Setup - Automated Script
 
 ## Overview
-This guide walks you through deploying all theme files and setting up complete navigation for your Shopify store.
+**NEW:** Fully automated script that creates pages and navigation menus for your 247 Print Network Shopify store using the Shopify Admin API.
 
-**What You're Deploying:**
-- ✅ **30 theme files** (17 sections, 3 snippets, 2 assets, 8 templates)
-- ✅ **7 custom pages** (Homepage, About, Contact, Creators, FAQ, Join, Collections)
-- ✅ **Complete navigation** (Main menu + Footer menu)
+**What It Does:**
+1. ✅ Creates 5 custom pages with assigned templates (REST API)
+2. ✅ Creates main navigation menu with dropdowns (GraphQL API)
+3. ✅ Creates footer navigation menu with sections (GraphQL API)
+4. ✅ Handles duplicates gracefully (skips existing pages/menus)
+5. ✅ Uses functional URLs even when collections don't exist yet
+
+**Time Savings:** Manual setup (~30 minutes) → Automated (~30 seconds)
 
 ---
 
-## Step 1: Deploy All Theme Files to Shopify
+## Quick Start
 
 ### Prerequisites
-1. **Shopify CLI installed** (already installed via `@shopify/cli` package)
-2. **Authenticated to Shopify** (run `shopify auth login` if needed)
-3. **Store URL set** in environment variables
 
-### Run Deployment
+1. **Shopify Admin API Access Token** with scopes:
+   - `write_content` (for page creation)
+   - `write_online_store_navigation` (for menu creation)
+
+2. **Environment Variables** in Replit Secrets:
+   - `SHOPIFY_SHOP_URL` (e.g., `your-store.myshopify.com`)
+   - `SHOPIFY_ACCESS_TOKEN` (your Admin API token)
+
+### Run the Script
 
 ```bash
-# Authenticate to Shopify (if not already)
-npm run shopify:auth
-
-# Deploy all 30 theme files to development theme
-npm run shopify:deploy
+node scripts/setup-shopify-navigation.js
 ```
 
-**Expected Output:**
-```
-============================================================
-  247 Print Network - Shopify Theme Deployment
-============================================================
-
-Step 1: Verifying theme files...
-✓ Found: attached_assets/theme/sections/247-about-content.liquid
-✓ Found: attached_assets/theme/sections/247-art-product.liquid
-... (30 files)
-
-✓ All 30 theme files verified!
-
-============================================================
-  Step 2: Checking Shopify Authentication
-============================================================
-
-✓ Shopify authentication verified
-
-============================================================
-  Step 3: Deploying Theme Files
-============================================================
-
-Deploying to store: bvhpq0-hy.myshopify.com
-Note: Deploying to development theme. Use --live flag for production.
-
-🔧 Uploading all 30 theme files...
-✓ Uploading all 30 theme files completed
-
-============================================================
-  ✅ Deployment Successful!
-============================================================
-```
+**That's it!** The script will:
+- Create 5 pages with custom templates
+- Create main menu with dropdown navigation
+- Create footer menu with sections
+- Skip any existing resources
+- Warn you about missing collections (but still create working links)
 
 ---
 
-## Step 2: Create Pages in Shopify Admin
+## What Gets Created
 
-### Go to Shopify Admin → Content → Pages
+### 📄 Pages (with Custom Templates)
 
-**Create 5 new pages** with these exact settings:
+| Page | Handle | Template | Description |
+|------|--------|----------|-------------|
+| About Us | `about` | `page.about` | Platform mission and how it works |
+| Contact Us | `contact` | `page.contact` | Contact form and support info |
+| Meet the Creators | `creators` | `page.creators` | Artist directory |
+| FAQs | `faq` | `page.faq` | Frequently asked questions |
+| Join the Creatorverse | `join` | `page.join` | Artist recruitment |
 
-| Page Title | Handle (URL) | Template | Description |
-|------------|--------------|----------|-------------|
-| **About Us** | `about` | `page.about` | Platform mission and how it works |
-| **Contact Us** | `contact` | `page.contact` | Contact form and support info |
-| **Meet the Creators** | `creators` | `page.creators` | Artist directory with profile cards |
-| **FAQs** | `faq` | `page.faq` | Frequently asked questions |
-| **Join the Creatorverse** | `join` | `page.join` | Artist recruitment landing page |
-
-### How to Create Each Page:
-
-1. Click **"Add page"**
-2. **Title:** Enter the page title (e.g., "About Us")
-3. **Content:** Leave blank (the template handles all content)
-4. **Template:** Click the dropdown and select the custom template (e.g., `page.about`)
-5. Click **"Save"**
-
-**Important:** The template dropdown will only show custom templates AFTER you've deployed the theme files in Step 1.
-
----
-
-## Step 3: Configure Main Navigation Menu
-
-### Go to Shopify Admin → Content → Menus → Main Menu
-
-**Build this menu structure:**
+### 🧭 Main Navigation Menu
 
 ```
 Main Menu
-├── Home (/)
-├── Shop by Artist 👇
-│   ├── Featured Artists (/collections/featured-artists)
-│   ├── Abstract Artists (/collections/abstract-art)
-│   ├── Nature Artists (/collections/nature-landscapes)
-│   ├── Urban Artists (/collections/urban-street)
-│   └── Pop Culture Artists (/collections/pop-culture)
-├── Shop by Style 👇
-│   ├── Abstract Art (/collections/abstract-art)
-│   ├── Nature & Landscapes (/collections/nature-landscapes)
-│   ├── Urban & Street (/collections/urban-street)
-│   └── Pop Culture (/collections/pop-culture)
-├── Featured (/collections/featured)
-├── About (/pages/about)
-├── Meet the Creators (/pages/creators)
-└── Contact (/pages/contact)
+├── 🏠 Home (/)
+├── 📦 Shop
+│   ├── By Artist
+│   │   ├── Featured Artists
+│   │   └── Browse All Artists
+│   └── By Style
+│       ├── Abstract
+│       ├── Pop Culture
+│       ├── Nature & Landscapes
+│       └── Urban & Street
+├── ℹ️ About
+│   ├── About Us
+│   ├── Meet the Creators
+│   ├── Join as an Artist
+│   └── FAQs
+└── 💬 Support
+    ├── Contact Us
+    ├── Shipping Policy
+    ├── Refund Policy
+    └── Privacy Policy
 ```
 
-### How to Add Menu Items:
-
-1. Click **"Add menu item"**
-2. **Name:** Enter the display name (e.g., "Shop by Artist")
-3. **Link:** Select the page/collection from the dropdown or paste the URL
-4. For **dropdown menus** (Shop by Artist, Shop by Style):
-   - Add the parent item first
-   - Click **"Add menu item"** again
-   - Drag and drop the child items **under** the parent
-   - Indent child items by dragging them to the right
-5. Click **"Save menu"**
-
-**Tips:**
-- Use the search box to find collections quickly
-- Drag items to reorder them
-- Indent items to create dropdowns
-- Save frequently to avoid losing work
-
----
-
-## Step 4: Configure Footer Navigation Menu
-
-### Go to Shopify Admin → Content → Menus → Footer Menu
-
-**Build this menu structure:**
+### 🦶 Footer Navigation Menu
 
 ```
 Footer Menu
-├── Shop 👇
-│   ├── All Art (/collections/all)
-│   ├── Featured (/collections/featured)
-│   ├── Abstract Art (/collections/abstract-art)
-│   ├── Nature & Landscapes (/collections/nature-landscapes)
-│   └── Urban & Street (/collections/urban-street)
-├── About 👇
-│   ├── About Us (/pages/about)
-│   ├── Meet the Creators (/pages/creators)
-│   ├── Join as an Artist (/pages/join)
-│   └── FAQs (/pages/faq)
-├── Support 👇
-│   ├── Contact Us (/pages/contact)
-│   ├── Shipping Policy (/policies/shipping-policy)
-│   ├── Refund Policy (/policies/refund-policy)
-│   └── Privacy Policy (/policies/privacy-policy)
-└── Legal 👇
-    ├── Terms of Service (/policies/terms-of-service)
-    └── Privacy Policy (/policies/privacy-policy)
+├── 📖 About
+│   ├── About Us
+│   ├── Meet the Creators
+│   ├── Join as an Artist
+│   └── FAQs
+├── 💬 Support
+│   ├── Contact Us
+│   ├── Shipping Policy
+│   ├── Refund Policy
+│   └── Privacy Policy
+└── ⚖️ Legal
+    ├── Terms of Service
+    └── Privacy Policy
 ```
 
-**Note:** Shopify auto-generates policy pages. You can customize them under **Settings → Policies**.
+---
+
+## Graceful Degradation (Smart Fallbacks)
+
+### Missing Collections/Pages
+
+**The script creates working HTTP links even when resources don't exist yet:**
+
+```
+⚠ Collection "abstract-art" not found, using HTTP link
+  URL: /collections/abstract-art
+```
+
+**How It Works:**
+- ✅ Links use functional storefront paths (e.g., `/collections/abstract-art`)
+- ✅ Menus work immediately, even if collections aren't created yet
+- ✅ When you create the collection later, links work automatically
+- ✅ No need to re-run the script
+
+### Existing Pages
+
+**Detects and skips pages that already exist:**
+
+```
+⚠ Page "About Us" already exists, skipping
+  URL: /pages/about
+```
+
+**How It Works:**
+- ✅ Treats existing pages as successful skips (not errors)
+- ✅ Shows page URL so you know it's available
+- ✅ Prevents duplicate page errors
 
 ---
 
-## Step 5: Customize Homepage Sections
+## Technical Details
 
-### Go to Shopify Admin → Themes → Customize (Development Theme)
+### API Usage
 
-**Add these sections in order:**
+- **REST API:** Page creation (Shopify Admin API 2025-01)
+- **GraphQL API:** Menu creation (`menuCreate` mutation)
+- **Rate Limiting:** 500ms delay between requests to respect Shopify limits
 
-1. **247 Homepage Hero**
-   - Main headline, subheadline, CTA buttons
-   - Background image/gradient
+### Resource Linking
 
-2. **247 Featured Collections**
-   - Shows 4 featured art collections
-   - Links to Abstract, Nature, Urban, Pop Culture
+| Resource Type | GraphQL ID | Fallback URL |
+|---------------|-----------|--------------|
+| Page | `gid://shopify/Page/{ID}` | `/pages/{handle}` |
+| Collection | `gid://shopify/Collection/{ID}` | `/collections/{handle}` |
+| Policy | N/A (HTTP only) | `/policies/{handle}` |
+| Frontpage | N/A (HTTP only) | `/` |
 
-3. **247 Featured Artists**
-   - Displays 3-4 featured artist profiles
-   - Artist avatars, bios, artwork counts
+### Security
 
-4. **247 Merch Preview** (Coming Soon)
-   - Shows upcoming merchandise categories
-   - Apparel, Home & Living, Accessories
-
-5. **247 Trust Badges**
-   - Free Shipping, Secure Checkout, Artist Support
-   - Quality Guarantee, Easy Returns
-
-### How to Add Sections:
-
-1. Click **"Add section"** button
-2. Search for "247" to see all custom sections
-3. Select the section to add
-4. Configure section settings (text, images, links)
-5. Click **"Save"**
-
-**Tips:**
-- Preview on desktop and mobile before saving
-- Use high-quality images (1200px+ width)
-- Keep hero headlines concise and punchy
-- Test all CTA buttons
+- ✅ Loads credentials from environment variables (no hardcoded secrets)
+- ✅ HTTPS-only API requests
+- ✅ HMAC verification for webhooks (in production)
 
 ---
 
-## Step 6: Test All Navigation & Pages
+## Example Script Output
 
-### Testing Checklist
+```
+═════════════════════════════════════════════
+📋 Shopify Navigation Setup Script
+═════════════════════════════════════════════
 
-**Main Menu:**
-- [ ] Click every menu item
-- [ ] Test dropdown menus (Shop by Artist, Shop by Style)
-- [ ] Verify all links go to correct pages/collections
-- [ ] Test on mobile (hamburger menu)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Creating Pages
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Creating page: About Us...
+✓ Created: About Us (ID: 123456789)
+  URL: /pages/about
+  Template: page.about
 
-**Footer Menu:**
-- [ ] Click every footer link
-- [ ] Verify all dropdowns work
-- [ ] Check policy pages load correctly
-- [ ] Test responsive layout on mobile
+Creating page: Contact Us...
+✓ Created: Contact Us (ID: 123456790)
+  URL: /pages/contact
+  Template: page.contact
 
-**Custom Pages:**
-- [ ] About Us page displays correctly
-- [ ] Contact form works and sends emails
-- [ ] Meet the Creators shows artist directory
-- [ ] FAQs accordion expands/collapses
-- [ ] Join page has working CTAs
+⚠ Page "Meet the Creators" already exists, skipping
+  URL: /pages/creators
 
-**Homepage:**
-- [ ] Hero section displays with correct CTAs
-- [ ] Featured collections show 4 collections
-- [ ] Featured artists display with images
-- [ ] Merch preview shows "Coming Soon" badges
-- [ ] Trust badges render correctly
+✓ Pages created: 4/5
 
-**Collections:**
-- [ ] Abstract Art collection loads
-- [ ] Nature & Landscapes collection loads
-- [ ] Urban & Street collection loads
-- [ ] Pop Culture collection loads
-- [ ] Featured collection loads
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Fetching Resource IDs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Fetching pages...
+✓ Found 5 pages
+Fetching collections...
+✓ Found 2 collections
 
-**Product Pages:**
-- [ ] Art products use custom template
-- [ ] Size/Finish/Frame selectors work
-- [ ] Multi-image gallery switches on variant change
-- [ ] Add to cart button works
-- [ ] Merch upsell appears at bottom
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Creating Menu: Main menu
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Converting menu structure...
+  ⚠ Collection "abstract-art" not found, using HTTP link
+  ⚠ Collection "pop-culture" not found, using HTTP link
+Creating menu with GraphQL...
+✓ Menu created successfully!
+  ID: gid://shopify/Menu/12345
+  Handle: main-menu
+  Items: 15
+
+Menu structure:
+• Home
+• Shop
+  ↳ By Artist
+    ↳ Featured Artists
+    ↳ Browse All Artists
+  ↳ By Style
+    ↳ Abstract
+    ↳ Pop Culture
+• About
+  ↳ About Us
+  ↳ Meet the Creators
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Creating Menu: Footer menu
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Converting menu structure...
+Creating menu with GraphQL...
+✓ Menu created successfully!
+  ID: gid://shopify/Menu/12346
+  Handle: footer-menu
+  Items: 12
+
+═════════════════════════════════════════════
+✅ Setup Complete!
+═════════════════════════════════════════════
+
+Summary:
+  Pages: 5 created
+  Menus: 2 created
+
+Next Steps:
+  1. Assign menus in Theme Editor
+     Shopify Admin → Themes → Customize → Header/Footer
+  2. Create missing collections (if needed)
+     Abstract Art, Pop Culture, Nature & Landscapes, etc.
+  3. Verify pages are using correct templates
+     Shopify Admin → Content → Pages
+```
 
 ---
 
-## Step 7: Publish Theme
+## Customization
 
-### Go to Shopify Admin → Themes
+### Add/Remove Pages
 
-1. Find your **Development theme** (just deployed)
-2. Click **"..."** (three dots)
-3. Click **"Publish"**
-4. Confirm publication
+Edit the `PAGES` array in `scripts/setup-shopify-navigation.js`:
 
-**Warning:** This will replace your current live theme. Make sure you've tested everything first!
+```javascript
+const PAGES = [
+  {
+    title: 'My Custom Page',
+    handle: 'custom',
+    body_html: '<p>Content here</p>',
+    template_suffix: 'custom', // Uses page.custom.liquid
+  },
+  // ... more pages
+];
+```
+
+### Modify Navigation Structure
+
+Edit `MAIN_MENU` or `FOOTER_MENU` objects:
+
+```javascript
+const MAIN_MENU = {
+  title: 'Main menu',
+  handle: 'main-menu',
+  items: [
+    {
+      title: 'My Section',
+      url: '#',
+      children: [
+        { 
+          title: 'Sub Item', 
+          resource_type: 'page', 
+          handle: 'custom' 
+        },
+      ],
+    },
+  ],
+};
+```
+
+### Supported Resource Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `page` | Custom page | `{ resource_type: 'page', handle: 'about' }` |
+| `collection` | Product collection | `{ resource_type: 'collection', handle: 'abstract-art' }` |
+| `frontpage` | Homepage | `{ resource_type: 'frontpage' }` |
+| `policy` | Shopify policy | `{ resource_type: 'policy', handle: 'shipping-policy' }` |
+| `http` | Custom URL | `{ url: 'https://example.com' }` |
 
 ---
 
 ## Troubleshooting
 
-### Theme Files Not Deploying
-```bash
-# Re-authenticate
-shopify auth logout
-shopify auth login
+### ❌ Error: "Menu already exists"
 
-# Verify store connection
-shopify whoami
+**Problem:** The script can't delete existing menus automatically.
 
-# Try deployment again
-npm run shopify:deploy
+**Solution:**
+1. Go to Shopify Admin → Content → Menus
+2. Delete the existing "Main menu" and/or "Footer menu"
+3. Run the script again
+
+### ⚠️ Warning: Missing Collections
+
+**This is normal!** The script creates working links anyway:
+
+```
+⚠ Collection "abstract-art" not found, using HTTP link
+  URL: /collections/abstract-art
 ```
 
-### Templates Not Showing in Dropdown
-- Make sure you deployed theme files FIRST
-- Refresh Shopify Admin
-- Check that template files are in development theme (Themes → Actions → Edit code)
+**Why this is OK:**
+- Links use `/collections/abstract-art` format
+- When you create the collection in Shopify, links work automatically
+- No need to re-run the script
 
-### Navigation Menu Not Saving
-- Save frequently (every 2-3 items)
-- Don't add too many items at once
-- Clear browser cache if menu looks wrong
-- Try incognito/private window
+**Optional:** Create the collections manually:
+1. Shopify Admin → Products → Collections
+2. Create collections: "Abstract Art", "Pop Culture", etc.
+3. Use handles: `abstract-art`, `pop-culture`, `nature-landscapes`, `urban-street`
 
-### Pages Not Using Custom Templates
-- Go to Pages → Click page → Template dropdown
-- Select the correct custom template (e.g., `page.about`)
-- Click "Save"
+### ❌ Pages Not Using Custom Templates
 
-### Collections Not Found
-- Make sure collections exist in Shopify Admin
-- Go to Products → Collections
-- Create collections if missing (Abstract Art, Nature & Landscapes, etc.)
-- Use exact handles from the guide
+**Problem:** Pages exist but don't use the custom template.
 
----
+**Solution:**
+1. Make sure theme is deployed first:
+   ```bash
+   node scripts/deploy-shopify-theme.js
+   ```
+2. Go to Shopify Admin → Content → Pages
+3. Click the page → Template dropdown
+4. Select custom template (e.g., `page.about`)
+5. Save
 
-## What's Next?
+### ❌ API Authentication Error
 
-After deployment and navigation setup:
+**Problem:** Script can't connect to Shopify.
 
-1. **Add Products:**
-   - Upload artwork via Replit artist dashboard
-   - Approve artwork in admin dashboard
-   - Artwork auto-publishes to Shopify
-
-2. **Configure Email Notifications:**
-   - Shopify Admin → Settings → Notifications
-   - Customize order confirmation emails
-   - Set up abandoned cart recovery
-
-3. **Set Up Analytics:**
-   - Google Analytics
-   - Facebook Pixel
-   - Shopify Analytics (built-in)
-
-4. **Marketing:**
-   - Share artist recruitment page (/pages/join)
-   - Drive traffic to featured collections
-   - Launch influencer affiliate program
+**Solution:**
+1. Verify environment variables in Replit Secrets:
+   - `SHOPIFY_SHOP_URL` (e.g., `your-store.myshopify.com`)
+   - `SHOPIFY_ACCESS_TOKEN`
+2. Check API token has required scopes:
+   - `write_content`
+   - `write_online_store_navigation`
+3. Test connection:
+   ```bash
+   curl -X GET "https://your-store.myshopify.com/admin/api/2025-01/pages.json" \
+     -H "X-Shopify-Access-Token: your-token"
+   ```
 
 ---
 
-## File Reference
+## Integration with Theme Deployment
 
-**Deployed Theme Files:**
+### Recommended Workflow
 
-**Sections (17):**
-- 247-about-content.liquid
-- 247-art-product.liquid
-- 247-artist-cta-banner.liquid
-- 247-collection-grid.liquid
-- 247-collection-header.liquid
-- 247-contact-form.liquid
-- 247-creators-grid.liquid
-- 247-faq-accordion.liquid
-- 247-featured-artists.liquid
-- 247-featured-artworks.liquid
-- 247-featured-collections.liquid
-- 247-homepage-hero.liquid
-- 247-join-benefits.liquid
-- 247-join-cta.liquid
-- 247-merch-preview.liquid
-- 247-page-hero.liquid
-- 247-trust-badges.liquid
+```bash
+# Step 1: Deploy theme files first (includes page templates)
+node scripts/deploy-shopify-theme.js
 
-**Snippets (3):**
-- 247-art-options.liquid (variant selectors)
-- 247-art-lineitem-properties.liquid (cart properties)
-- 247-merch-upsell.liquid (product page upsell)
+# Step 2: Setup navigation (creates pages with templates)
+node scripts/setup-shopify-navigation.js
+```
 
-**Assets (2):**
-- 247-art.js (variant selection logic)
-- 247-art.css (Displate-inspired styling)
+**Why this order?**
+- Theme deployment creates template files (e.g., `page.about.liquid`)
+- Navigation setup assigns templates to pages
+- If you run setup first, pages won't have templates assigned
 
-**Templates (8):**
-- index.json (homepage)
-- collection.json (collection pages)
-- page.about.json (About Us)
-- page.contact.json (Contact Us)
-- page.creators.json (Meet the Creators)
-- page.faq.json (FAQs)
-- page.join.json (Join the Creatorverse)
-- product.art.json (Art product pages)
+---
+
+## Next Steps After Running Script
+
+### 1. Assign Menus in Theme
+
+**Go to:** Shopify Admin → Online Store → Themes → Customize
+
+**Header Section:**
+- Click Header section
+- Menu: Select "Main menu"
+- Save
+
+**Footer Section:**
+- Click Footer section  
+- Menu: Select "Footer menu"
+- Save
+
+### 2. Verify Pages
+
+**Go to:** Shopify Admin → Content → Pages
+
+**Check:**
+- All 5 pages exist
+- Each page has correct template assigned
+- Page URLs work: `/pages/about`, `/pages/contact`, etc.
+
+### 3. Create Collections (Optional)
+
+**Go to:** Shopify Admin → Products → Collections
+
+**Create these collections:**
+- **Featured** (handle: `featured`)
+- **Abstract Art** (handle: `abstract-art`)
+- **Pop Culture** (handle: `pop-culture`)
+- **Nature & Landscapes** (handle: `nature-landscapes`)
+- **Urban & Street** (handle: `urban-street`)
+
+**Note:** Collections will automatically link from navigation menus.
+
+### 4. Customize Page Content
+
+**Go to:** Shopify Admin → Content → Pages → Click page
+
+**Update:**
+- Page content (text, images)
+- SEO title and description
+- Visibility settings
+
+**Templates handle most content automatically** - you may not need to edit much!
+
+---
+
+## Manual Setup (Alternative)
+
+If you prefer manual setup or need to troubleshoot, see the old guide:
+- [Manual Navigation Setup Guide](./docs/MANUAL_NAVIGATION_SETUP.md) (if available)
+
+---
+
+## Script Location & Source Code
+
+**File:** `scripts/setup-shopify-navigation.js`
+
+**Key Functions:**
+- `createPages()` - Creates 5 custom pages with templates (REST API)
+- `getResourceIds()` - Fetches page/collection IDs for linking
+- `createMenu()` - Creates navigation menus (GraphQL API)
+- `convertToGraphQLMenuItems()` - Converts config to GraphQL format
+
+**View source:** Open `scripts/setup-shopify-navigation.js` to see full implementation.
 
 ---
 
 ## Support
 
-**Need Help?**
-- Check [SHOPIFY_SETUP_GUIDE.md](./SHOPIFY_SETUP_GUIDE.md) for detailed instructions
-- Review [CREATORSTACK_SHOPIFY_SETUP.md](./CREATORSTACK_SHOPIFY_SETUP.md) for CreatorStack integration
-- Contact Shopify Support for platform-specific issues
+### Need Help?
 
-**Common Resources:**
-- Shopify Theme Documentation: https://shopify.dev/docs/themes
-- Liquid Template Language: https://shopify.dev/docs/api/liquid
+1. **Check script output** for warnings/errors
+2. **Verify credentials** in Replit Secrets
+3. **Ensure API scopes** are correct
+4. **Review this documentation** for troubleshooting
+
+### Related Documentation
+
+- [Shopify Theme Deployment](./scripts/deploy-shopify-theme.js)
+- [CreatorStack Shopify Setup](./CREATORSTACK_SHOPIFY_SETUP.md)
+- [Shopify Admin API Docs](https://shopify.dev/docs/api/admin-graphql)
+
+### Common Resources
+
+- Shopify GraphQL Explorer: https://shopify.dev/docs/api/admin-graphql
 - Shopify CLI Reference: https://shopify.dev/docs/api/shopify-cli
+- Liquid Template Language: https://shopify.dev/docs/api/liquid
+
+---
+
+## Version History
+
+**v2.0 (Current) - Automated Script**
+- ✅ Fully automated page and menu creation
+- ✅ GraphQL API for menu creation (official 2025 method)
+- ✅ Graceful degradation for missing resources
+- ✅ Duplicate detection and skipping
+- ✅ Production-ready error handling
+
+**v1.0 (Legacy) - Manual Setup**
+- Manual page creation in Shopify Admin
+- Manual menu configuration
+- See old guide for details
+
+---
+
+**Last Updated:** November 2025  
+**Script Version:** 2.0  
+**Shopify API Version:** 2025-01

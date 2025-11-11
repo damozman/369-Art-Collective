@@ -105,7 +105,24 @@ async function deploy() {
   log('\nPushing files to Shopify...', colors.bright);
   log('(This may take 30-60 seconds)', colors.yellow);
 
-  const deployCommand = `shopify theme push --path attached_assets/theme --only sections/247-art-product.liquid snippets/247-art-options.liquid snippets/247-art-lineitem-properties.liquid snippets/247-merch-upsell.liquid assets/247-art.js`;
+  // Determine store URL from environment or whoami command
+  let storeUrl = process.env.SHOPIFY_FLAG_STORE;
+  
+  if (!storeUrl) {
+    try {
+      const whoamiOutput = execSync('shopify whoami', { encoding: 'utf-8' });
+      const storeMatch = whoamiOutput.match(/Store:\s*(.+)/);
+      if (storeMatch) {
+        storeUrl = storeMatch[1].trim();
+        log(`Detected store: ${storeUrl}`, colors.blue);
+      }
+    } catch (error) {
+      // Ignore - will try without store flag
+    }
+  }
+
+  const storeFlag = storeUrl ? `--store=${storeUrl}` : '';
+  const deployCommand = `shopify theme push ${storeFlag} --path attached_assets/theme --only sections/247-art-product.liquid snippets/247-art-options.liquid snippets/247-art-lineitem-properties.liquid snippets/247-merch-upsell.liquid assets/247-art.js`;
   
   const success = runCommand(deployCommand, 'Uploading theme files');
 

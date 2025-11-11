@@ -3845,6 +3845,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CreatorStack Shopify Webhook TEST endpoint (NO HMAC verification - dev only!)
+  // Use this for local testing without needing to calculate HMAC signatures
+  app.post("/api/creatorstack/webhooks/shopify/test", async (req, res) => {
+    try {
+      console.log("[CreatorStack TEST] Processing test webhook (HMAC bypassed)");
+      
+      const shopifyOrder = req.body;
+      
+      // Process kit purchase and await result
+      const result = await processCreatorStackPurchase(shopifyOrder);
+      
+      if (!result.success) {
+        console.error(`[CreatorStack TEST] Purchase processing failed: ${result.error}`);
+        return res.status(500).json({ success: false, error: result.error, details: result });
+      }
+
+      console.log(`[CreatorStack TEST] ✅ Purchase processed: ${result.processedItems.length} items`);
+      res.status(200).json({ success: true, result });
+    } catch (error: any) {
+      console.error("[CreatorStack TEST] Webhook error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // CreatorStack Shopify Webhook - Kit Purchases
   // SECURED with HMAC verification (reuses existing Shopify webhook security)
   app.post("/api/creatorstack/webhooks/shopify", async (req: any, res) => {

@@ -15,6 +15,9 @@ import {
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Influencer } from "@shared/schema";
+import { Leaderboard } from "@/components/gamification/leaderboard";
+import { BadgesDisplay } from "@/components/gamification/badges-display";
+import { Challenges } from "@/components/gamification/challenges";
 
 export default function InfluencerDashboard() {
   const { toast } = useToast();
@@ -267,6 +270,15 @@ export default function InfluencerDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Gamification: Achievements and Leaderboard */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <BadgesDisplay influencerId={influencer?.id} />
+        <Leaderboard />
+      </div>
+
+      {/* Gamification: Challenges */}
+      <Challenges influencerId={influencer?.id} />
 
       {/* Quick Actions */}
       <Card>

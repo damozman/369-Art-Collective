@@ -3,9 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, TrendingUp, Users, DollarSign, Award, Sparkles, Target, Link as LinkIcon } from "lucide-react";
+import { Trophy, TrendingUp, Users, DollarSign, Award, Sparkles, Target, Link as LinkIcon, Activity } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
+import { formatDistanceToNow } from "date-fns";
 
 interface LeaderboardEntry {
   influencerId: string;
@@ -13,6 +14,16 @@ interface LeaderboardEntry {
   currentTier: string;
   score: number;
   rank: number;
+}
+
+interface ActivityFeedEvent {
+  id: string;
+  influencerId: string;
+  influencerName: string;
+  eventType: string;
+  eventData: any;
+  message: string;
+  createdAt: string;
 }
 
 const tierColors: Record<string, string> = {
@@ -36,6 +47,10 @@ export default function PublicLeaderboard() {
 
   const { data: leaderboard, isLoading } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/leaderboard", metric, period],
+  });
+
+  const { data: activityFeed } = useQuery<ActivityFeedEvent[]>({
+    queryKey: ["/api/activity-feed"],
   });
 
   return (
@@ -71,7 +86,7 @@ export default function PublicLeaderboard() {
       </div>
 
       <div className="container mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid lg:grid-cols-3 gap-6 mb-8" data-testid="stats-grid">
           <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/20">
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Top Earner</CardTitle>
@@ -232,6 +247,48 @@ export default function PublicLeaderboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Activity Feed */}
+        {activityFeed && activityFeed.length > 0 && (
+          <Card className="mt-8" data-testid="card-activity-feed">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-primary" />
+                <CardTitle>Recent Activity</CardTitle>
+              </div>
+              <CardDescription>
+                Live updates from our influencer community
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {activityFeed.slice(0, 10).map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-start gap-3 p-3 rounded-lg hover-elevate"
+                    data-testid={`activity-${event.id}`}
+                  >
+                    <div className="text-2xl" data-testid={`activity-icon-${event.id}`}>
+                      {event.eventType === "achievement_unlocked" && "🏆"}
+                      {event.eventType === "tier_upgrade" && "⬆️"}
+                      {event.eventType === "challenge_win" && "🥇"}
+                      {event.eventType === "big_sale" && "💰"}
+                      {event.eventType === "new_rank" && "📈"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium" data-testid={`activity-message-${event.id}`}>
+                        {event.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1" data-testid={`activity-time-${event.id}`}>
+                        {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* CTA Section */}
         <Card className="mt-8 bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/20">

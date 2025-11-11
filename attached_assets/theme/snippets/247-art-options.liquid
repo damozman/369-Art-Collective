@@ -1,49 +1,219 @@
+{% comment %}
+247PN Art Options Snippet
+Premium size/finish/format/frame selectors with Displate-inspired UI
+{% endcomment %}
 
-{%- comment -%}
-Options UI: Format (Digital / Physical), Size, Finish, Framing.
-Assumes variants are Size × Finish for physical. Digital handled via line properties.
-{%- endcomment -%}
-
-<div class="247pn-options">
-  <div class="field">
-    <label>Format</label>
-    <div class="radios">
-      <label><input type="radio" name="properties[Format]" value="Digital" data-format="digital"> Digital Download</label>
-      <label><input type="radio" name="properties[Format]" value="Physical" data-format="physical" checked> Physical Print</label>
+<div class="art-options">
+  
+  {%- comment -%} SIZE SELECTION {%- endcomment -%}
+  <div class="art-options__section">
+    <label class="art-options__label">Choose Size</label>
+    <div class="art-options__grid" id="size-selector">
+      {%- assign unique_sizes = product.options_with_values | where: 'name', 'Size' | first -%}
+      {%- for size_value in unique_sizes.values -%}
+        <div class="art-option" data-option-value="{{ size_value }}" data-option-type="size">
+          <input 
+            type="radio" 
+            name="size" 
+            value="{{ size_value }}" 
+            id="size-{{ size_value | handle }}"
+            class="visually-hidden"
+            {% if forloop.first %}checked{% endif %}
+          >
+          <div class="art-option__title">{{ size_value }}</div>
+          <div class="art-option__subtitle">
+            {%- case size_value -%}
+              {%- when '8x10' -%}Perfect for desks
+              {%- when '11x14' -%}Small wall accent
+              {%- when '16x20' -%}Statement piece
+              {%- when '18x24' -%}Gallery wall
+              {%- when '24x36' -%}Large format
+              {%- else -%}Premium print
+            {%- endcase -%}
+          </div>
+        </div>
+      {%- endfor -%}
     </div>
   </div>
 
-  <div class="field" data-physical-only>
-    <label>Finish</label>
-    <div class="radios">
-      {% assign finishes = 'Paper,Canvas,Metal' | split: ',' %}
-      {% for f in finishes %}
-        <label><input type="radio" name="properties[Finish]" value="{{ f }}" data-finish="{{ f }}" {% if forloop.first %}checked{% endif %}> {{ f }}</label>
-      {% endfor %}
+  {%- comment -%} FINISH SELECTION {%- endcomment -%}
+  <div class="art-options__section">
+    <label class="art-options__label">Choose Finish</label>
+    <div class="art-options__grid" id="finish-selector">
+      {%- assign unique_finishes = product.options_with_values | where: 'name', 'Finish' | first -%}
+      {%- for finish_value in unique_finishes.values -%}
+        <div class="art-option" data-option-value="{{ finish_value }}" data-option-type="finish">
+          <input 
+            type="radio" 
+            name="finish" 
+            value="{{ finish_value }}" 
+            id="finish-{{ finish_value | handle }}"
+            class="visually-hidden"
+            {% if forloop.first %}checked{% endif %}
+          >
+          <div class="art-option__title">{{ finish_value }}</div>
+          <div class="art-option__subtitle">
+            {%- case finish_value -%}
+              {%- when 'Paper' -%}Smooth matte
+              {%- when 'Canvas' -%}Textured finish
+              {%- when 'Metal' -%}Ultra premium
+              {%- else -%}Premium quality
+            {%- endcase -%}
+          </div>
+        </div>
+      {%- endfor -%}
     </div>
   </div>
 
-  <div class="field" data-physical-only>
-    <label>Size</label>
-    <select name="properties[Size]" id="size-select">
-      {% assign sizes = '8x10,12x16,18x24,24x36' | split: ',' %}
-      {% for s in sizes %}
-        <option value="{{ s }}">{{ s }}</option>
-      {% endfor %}
-    </select>
+  {%- comment -%} FRAME OPTIONS {%- endcomment -%}
+  <div class="frame-options">
+    <label class="art-options__label mb-small">Frame Options</label>
+    
+    <div class="frame-toggle" id="no-frame-option" data-frame-type="none">
+      <input 
+        type="radio" 
+        name="frame" 
+        value="none" 
+        id="frame-none"
+        class="frame-checkbox"
+        checked
+      >
+      <div class="frame-info">
+        <div class="frame-info__title">No Frame</div>
+        <div class="frame-info__description">Unframed print ready to frame yourself</div>
+      </div>
+      <div class="frame-price">Included</div>
+    </div>
+
+    <div class="frame-toggle" id="black-frame-option" data-frame-type="black">
+      <input 
+        type="radio" 
+        name="frame" 
+        value="black" 
+        id="frame-black"
+        class="frame-checkbox"
+      >
+      <div class="frame-info">
+        <div class="frame-info__title">Black Frame</div>
+        <div class="frame-info__description">Professional black wood frame with mounting hardware</div>
+      </div>
+      <div class="frame-price">+$29</div>
+    </div>
+
+    <div class="frame-toggle" id="white-frame-option" data-frame-type="white">
+      <input 
+        type="radio" 
+        name="frame" 
+        value="white" 
+        id="frame-white"
+        class="frame-checkbox"
+      >
+      <div class="frame-info">
+        <div class="frame-info__title">White Frame</div>
+        <div class="frame-info__description">Clean white wood frame with mounting hardware</div>
+      </div>
+      <div class="frame-price">+$29</div>
+    </div>
   </div>
 
-  <div class="field" data-physical-only>
-    <label>Frame</label>
-    <select name="properties[Frame]">
-      <option value="No Frame" selected>No Frame</option>
-      <option value="Black Classic">Black Classic</option>
-      <option value="White Classic">White Classic</option>
-      <option value="Natural Wood">Natural Wood</option>
-    </select>
+  {%- comment -%} SIZE GUIDE {%- endcomment -%}
+  <div class="size-guide">
+    <div class="size-guide__title">Size Guide</div>
+    <table class="size-guide__table">
+      <thead>
+        <tr>
+          <th>Size</th>
+          <th>Dimensions</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>8x10"</td>
+          <td>8" × 10"</td>
+          <td>Desks, shelves</td>
+        </tr>
+        <tr>
+          <td>11x14"</td>
+          <td>11" × 14"</td>
+          <td>Small walls</td>
+        </tr>
+        <tr>
+          <td>16x20"</td>
+          <td>16" × 20"</td>
+          <td>Medium walls</td>
+        </tr>
+        <tr>
+          <td>18x24"</td>
+          <td>18" × 24"</td>
+          <td>Gallery walls</td>
+        </tr>
+        <tr>
+          <td>24x36"</td>
+          <td>24" × 36"</td>
+          <td>Statement pieces</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
-  <div class="field" data-digital-only style="display:none">
-    <p>Digital download includes 1 high-res file for personal use.</p>
-  </div>
 </div>
+
+<script>
+// Premium option selector interactions
+document.addEventListener('DOMContentLoaded', function() {
+  // Size selection
+  const sizeOptions = document.querySelectorAll('[data-option-type="size"]');
+  sizeOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      sizeOptions.forEach(opt => opt.classList.remove('selected'));
+      this.classList.add('selected');
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      updateVariant();
+    });
+  });
+
+  // Finish selection
+  const finishOptions = document.querySelectorAll('[data-option-type="finish"]');
+  finishOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      finishOptions.forEach(opt => opt.classList.remove('selected'));
+      this.classList.add('selected');
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      updateVariant();
+    });
+  });
+
+  // Frame selection
+  const frameToggles = document.querySelectorAll('.frame-toggle');
+  frameToggles.forEach(toggle => {
+    toggle.addEventListener('click', function() {
+      frameToggles.forEach(t => t.classList.remove('selected'));
+      this.classList.add('selected');
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      updatePrice();
+    });
+  });
+
+  // Set initial selected states
+  sizeOptions[0]?.classList.add('selected');
+  finishOptions[0]?.classList.add('selected');
+  document.getElementById('no-frame-option')?.classList.add('selected');
+});
+
+function updateVariant() {
+  // This will be enhanced by the main 247-art.js
+  const size = document.querySelector('input[name="size"]:checked')?.value;
+  const finish = document.querySelector('input[name="finish"]:checked')?.value;
+  console.log('Variant updated:', { size, finish });
+}
+
+function updatePrice() {
+  // This will be enhanced by the main 247-art.js
+  const frame = document.querySelector('input[name="frame"]:checked')?.value;
+  console.log('Frame option:', frame);
+}
+</script>

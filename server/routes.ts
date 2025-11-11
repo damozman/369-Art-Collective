@@ -1694,6 +1694,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GAMIFICATION ENDPOINTS
   // ====================
 
+  // Public: Get activity feed (recent achievements and events)
+  app.get("/api/activity-feed", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const feed = await storage.getActivityFeed(limit);
+      res.json(feed);
+    } catch (error: any) {
+      console.error("Error fetching activity feed:", error);
+      res.status(500).json({ message: "Failed to fetch activity feed" });
+    }
+  });
+
   // Public: Get leaderboard (top influencers)
   app.get("/api/leaderboard", async (req, res) => {
     try {

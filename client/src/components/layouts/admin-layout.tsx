@@ -34,6 +34,8 @@ import {
   LogOut,
   ChevronDown,
   Sparkles,
+  Trophy,
+  Share2,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -68,6 +70,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           label: "Success Stories",
           path: "/admin/testimonials",
           icon: MessageSquare,
+        },
+      ],
+    },
+    {
+      group: "Influencer Marketing",
+      items: [
+        {
+          label: "Influencers",
+          path: "/admin/influencers",
+          icon: Share2,
+        },
+        {
+          label: "Challenges",
+          path: "/admin/challenges",
+          icon: Trophy,
         },
       ],
     },

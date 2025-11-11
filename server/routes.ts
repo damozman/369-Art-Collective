@@ -35,6 +35,10 @@ import { stripeConnectService } from "./lib/stripe-connect";
 import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from "./lib/payout-service";
 import { emailService } from "./lib/email-service";
 import { generateReferralCode } from "./lib/referral-code-generator";
+import { AchievementService } from "./achievement-service";
+
+// Initialize achievement service
+const achievementService = new AchievementService(storage);
 
 // Ensure uploads directory exists
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -547,6 +551,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               totalPayout: null,
             });
             console.log(`Affiliate conversion tracked: Artist ${artist.id} via influencer ${influencer.id}`);
+            
+            // Check for achievement unlocks
+            await achievementService.onConversionCreated(influencer.id);
           }
         } catch (err) {
           // Don't fail registration if conversion tracking fails
@@ -1623,6 +1630,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Get influencer performance error:", error);
       res.status(500).json({ message: "Failed to fetch performance stats" });
+    }
+  });
+
+  // ====================
+  // ADMIN CHALLENGE MANAGEMENT
+  // ====================
+
+  // Admin: Get all challenges
+  app.get("/api/admin/challenges", requireAdmin, async (req, res) => {
+    try {
+      const challenges = await storage.getActiveChallenges();
+      res.json(challenges);
+    } catch (error: any) {
+      console.error("Error fetching challenges:", error);
+      res.status(500).json({ message: "Failed to fetch challenges" });
+    }
+  });
+
+  // Admin: Create new challenge
+  app.post("/api/admin/challenges", requireAdmin, async (req, res) => {
+    try {
+      const challengeData = req.body;
+      
+      // Create challenge in database
+      const challenge = await storage.createChallenge({
+        name: challengeData.name,
+        description: challengeData.description,
+        challengeType: challengeData.challengeType,
+        metric: challengeData.metric,
+        goal: challengeData.goal || null,
+        startDate: new Date(challengeData.startDate),
+        endDate: new Date(challengeData.endDate),
+        firstPlacePrize: challengeData.firstPlacePrize,
+        secondPlacePrize: challengeData.secondPlacePrize || null,
+        thirdPlacePrize: challengeData.thirdPlacePrize || null,
+        prizeDescription: challengeData.prizeDescription || null,
+        status: new Date(challengeData.startDate) > new Date() ? "upcoming" : "active",
+      });
+
+      res.status(201).json(challenge);
+    } catch (error: any) {
+      console.error("Error creating challenge:", error);
+      res.status(500).json({ message: error.message || "Failed to create challenge" });
+    }
+  });
+
+  // Admin: Update challenge status
+  app.patch("/api/admin/challenges/:id/status", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      await storage.updateChallengeStatus(id, status);
+      res.json({ message: "Challenge status updated" });
+    } catch (error: any) {
+      console.error("Error updating challenge:", error);
+      res.status(500).json({ message: "Failed to update challenge" });
     }
   });
 

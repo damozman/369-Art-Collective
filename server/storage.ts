@@ -221,6 +221,17 @@ export interface IStorage {
     currentTier: string;
   }>;
   
+  // Stats for achievement checking
+  getInfluencerConversionStats(influencerId: string): Promise<{
+    totalConversions: number;
+    totalClicks: number;
+    totalEarnings: string;
+    conversionRate: number;
+    artistsRecruited: number;
+    firstConversionDate: Date | null;
+  }>;
+  getRecentConversionsCount(influencerId: string, hours: number): Promise<number>;
+  
   // ===================================
   // GAMIFICATION METHODS
   // ===================================
@@ -277,6 +288,21 @@ export interface IStorage {
     status: string;
     participantCount: number;
   }>>;
+  createChallenge(challenge: {
+    name: string;
+    description: string;
+    challengeType: string;
+    metric: string;
+    goal: string | null;
+    startDate: Date;
+    endDate: Date;
+    firstPlacePrize: string;
+    secondPlacePrize: string | null;
+    thirdPlacePrize: string | null;
+    prizeDescription: string | null;
+    status: string;
+  }): Promise<any>;
+  updateChallengeStatus(challengeId: string, status: string): Promise<void>;
   joinChallenge(challengeId: string, influencerId: string): Promise<void>;
   getChallengeLeaderboard(challengeId: string): Promise<Array<{
     influencerId: string;
@@ -1376,6 +1402,63 @@ class PostgresStorage implements IStorage {
     };
   }
 
+  async getInfluencerConversionStats(influencerId: string): Promise<{
+    totalConversions: number;
+    totalClicks: number;
+    totalEarnings: string;
+    conversionRate: number;
+    artistsRecruited: number;
+    firstConversionDate: Date | null;
+  }> {
+    // Count total clicks
+    const clicksResult = await db
+      .select({ count: drizzleSql<number>`count(*)::int` })
+      .from(affiliateClicks)
+      .where(eq(affiliateClicks.influencerId, influencerId));
+    const totalClicks = clicksResult[0]?.count || 0;
+
+    // Get all conversions for this influencer
+    const conversions = await db
+      .select()
+      .from(affiliateConversions)
+      .where(eq(affiliateConversions.influencerId, influencerId))
+      .orderBy(asc(affiliateConversions.createdAt));
+
+    const totalConversions = conversions.length;
+    const totalEarnings = conversions.reduce((sum, c) => sum + parseFloat((c.totalPayout || 0).toString()), 0);
+    const conversionRate = totalClicks > 0 ? (totalConversions / totalClicks) * 100 : 0;
+    
+    // Count artists recruited (conversions with type 'artist_signup')
+    const artistsRecruited = conversions.filter(c => c.conversionType === 'artist_signup').length;
+
+    // Get first conversion date
+    const firstConversionDate = conversions.length > 0 ? new Date(conversions[0].createdAt) : null;
+
+    return {
+      totalConversions,
+      totalClicks,
+      totalEarnings: totalEarnings.toString(),
+      conversionRate: Math.round(conversionRate * 100) / 100,
+      artistsRecruited,
+      firstConversionDate,
+    };
+  }
+
+  async getRecentConversionsCount(influencerId: string, hours: number): Promise<number> {
+    const hoursAgo = new Date();
+    hoursAgo.setHours(hoursAgo.getHours() - hours);
+
+    const result = await db
+      .select({ count: drizzleSql<number>`count(*)::int` })
+      .from(affiliateConversions)
+      .where(and(
+        eq(affiliateConversions.influencerId, influencerId),
+        gte(affiliateConversions.createdAt, hoursAgo)
+      ));
+
+    return result[0]?.count || 0;
+  }
+
   // ====================
   // GAMIFICATION METHODS
   // ====================
@@ -1585,6 +1668,31 @@ class PostgresStorage implements IStorage {
       thirdPlacePrize: c.thirdPlacePrize?.toString(),
       participantCount: c.participantCount || 0
     }));
+  }
+
+  async createChallenge(challenge: {
+    name: string;
+    description: string;
+    challengeType: string;
+    metric: string;
+    goal: string | null;
+    startDate: Date;
+    endDate: Date;
+    firstPlacePrize: string;
+    secondPlacePrize: string | null;
+    thirdPlacePrize: string | null;
+    prizeDescription: string | null;
+    status: string;
+  }): Promise<any> {
+    const [newChallenge] = await db.insert(challenges).values(challenge).returning();
+    return newChallenge;
+  }
+
+  async updateChallengeStatus(challengeId: string, status: string): Promise<void> {
+    await db
+      .update(challenges)
+      .set({ status })
+      .where(eq(challenges.id, challengeId));
   }
 
   async joinChallenge(challengeId: string, influencerId: string): Promise<void> {
@@ -2272,12 +2380,38 @@ class MemStorage implements IStorage {
     };
   }
 
+  async getInfluencerConversionStats(influencerId: string): Promise<{
+    totalConversions: number;
+    totalClicks: number;
+    totalEarnings: string;
+    conversionRate: number;
+    artistsRecruited: number;
+    firstConversionDate: Date | null;
+  }> {
+    console.log("MemStorage: getInfluencerConversionStats called (stub)", influencerId);
+    return {
+      totalConversions: 0,
+      totalClicks: 0,
+      totalEarnings: '0',
+      conversionRate: 0,
+      artistsRecruited: 0,
+      firstConversionDate: null,
+    };
+  }
+
+  async getRecentConversionsCount(influencerId: string, hours: number): Promise<number> {
+    console.log("MemStorage: getRecentConversionsCount called (stub)", influencerId, hours);
+    return 0;
+  }
+
   // Gamification stubs
   async getLeaderboard(): Promise<Array<any>> { return []; }
   async getInfluencerBadges(): Promise<Array<any>> { return []; }
   async getAllAchievements(): Promise<Array<any>> { return []; }
   async unlockAchievement(): Promise<void> {}
   async getActiveChallenges(): Promise<Array<any>> { return []; }
+  async createChallenge(): Promise<any> { return {}; }
+  async updateChallengeStatus(): Promise<void> {}
   async joinChallenge(): Promise<void> {}
   async getChallengeLeaderboard(): Promise<Array<any>> { return []; }
   async getActivityFeed(): Promise<Array<any>> { return []; }

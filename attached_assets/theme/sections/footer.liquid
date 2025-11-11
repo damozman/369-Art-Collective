@@ -1,0 +1,126 @@
+{% comment %}
+  Footer Section with Navigation
+{% endcomment %}
+
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-wrapper">
+    {% if linklists[section.settings.menu].links.size > 0 %}
+      <nav class="footer-nav">
+        <ul class="footer-menu">
+          {% for link in linklists[section.settings.menu].links %}
+            <li class="footer-column">
+              <h4 class="footer-title">{{ link.title }}</h4>
+              
+              {% if link.links.size > 0 %}
+                <ul class="footer-submenu">
+                  {% for child_link in link.links %}
+                    <li>
+                      <a href="{{ child_link.url }}">{{ child_link.title }}</a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <ul class="footer-submenu">
+                  <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+                </ul>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    {% endif %}
+
+    <div class="footer-bottom">
+      <p class="copyright">© {{ 'now' | date: '%Y' }} {{ shop.name }}. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: #1a1a1a;
+    color: #ccc;
+    padding: 3rem 2rem 1rem;
+    margin-top: 4rem;
+  }
+  
+  .footer-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  .footer-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .footer-column {
+    /* Column styling */
+  }
+  
+  .footer-title {
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+  
+  .footer-submenu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .footer-submenu li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .footer-submenu a {
+    color: #ccc;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  
+  .footer-submenu a:hover {
+    color: #fff;
+  }
+  
+  .footer-bottom {
+    border-top: 1px solid #333;
+    padding-top: 1.5rem;
+    text-align: center;
+  }
+  
+  .copyright {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #888;
+  }
+
+  @media (max-width: 768px) {
+    .footer-menu {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Footer",
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "footer"
+    }
+  ]
+}
+{% endschema %}

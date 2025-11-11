@@ -632,8 +632,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PUBLIC: Get artist profile (for customer-facing artist pages)
+  app.get("/api/artists/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const artist = await storage.getArtist(id);
+
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Only show approved artists
+      if (artist.approvalStatus !== "approved") {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Return public artist info only
+      res.json({
+        id: artist.id,
+        name: artist.name,
+        bio: artist.bio,
+        tagline: artist.tagline,
+        royaltyTier: artist.royaltyTier,
+        totalSales: artist.totalSales || 0,
+        shopifyCollectionHandle: artist.shopifyCollectionHandle,
+      });
+    } catch (error) {
+      console.error("Error fetching public artist:", error);
+      res.status(500).json({ message: "Failed to fetch artist" });
+    }
+  });
+
+  // PUBLIC: Get artist artworks (for customer-facing artist pages)
+  app.get("/api/artists/:id/artworks", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const artist = await storage.getArtist(id);
+
+      if (!artist || artist.approvalStatus !== "approved") {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      const artworks = await storage.getArtworksByArtist(id);
+      
+      // Only show approved, non-archived artworks with absolute URLs
+      const publicArtworks = artworks
+        .filter(a => a.status === "approved" && !a.archived)
+        .map(artwork => ({
+          id: artwork.id,
+          title: artwork.title,
+          description: artwork.description,
+          imageUrl: toAbsoluteUrl(artwork.imageUrl, req),
+          status: artwork.status,
+        }));
+
+      res.json(publicArtworks);
+    } catch (error) {
+      console.error("Error fetching artist artworks:", error);
+      res.status(500).json({ message: "Failed to fetch artworks" });
+    }
+  });
+
   // Get all artists (admin only)
-  app.get("/api/artists", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/artists", requireAdmin, async (_req, res) => {
     try {
       const artists = await storage.getAllArtists();
       const sanitized = artists.map(({ password, ...artist }) => artist);
@@ -854,24 +915,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get single artist details (admin only)
-  app.get("/api/artists/:id", requireAdmin, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const artist = await storage.getArtist(id);
-      if (!artist) {
-        return res.status(404).json({ message: "Artist not found" });
-      }
-      const { password, ...artistData } = artist;
-      res.json(artistData);
-    } catch (error: any) {
-      console.error("Get artist error:", error);
-      res.status(500).json({ message: "Failed to fetch artist" });
-    }
-  });
+  // Get single artist details (admin only) - REMOVED - now uses /api/admin/artists/:id above
 
   // Get artist's portfolio submissions (admin only)
-  app.get("/api/artists/:id/portfolio", requireAdmin, async (req, res) => {
+  app.get("/api/admin/artists/:id/portfolio", requireAdmin, async (req, res) => {
     try {
       const artistId = req.params.id;
       const portfolioSubmissions = await storage.getPortfolioSubmissionsByArtist(artistId);

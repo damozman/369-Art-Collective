@@ -1,0 +1,440 @@
+{% comment %}
+247 Print Network - Featured Artists Section
+Showcase artists with their artwork
+{% endcomment %}
+
+{{ '247-art.css' | asset_url | stylesheet_tag }}
+
+<section class="featured-artists">
+  <div class="featured-artists__container">
+    
+    <div class="featured-artists__header">
+      {% if section.settings.eyebrow_text != blank %}
+        <div class="featured-artists__eyebrow">{{ section.settings.eyebrow_text }}</div>
+      {% endif %}
+      <h2 class="featured-artists__title">{{ section.settings.title }}</h2>
+      {% if section.settings.subtitle != blank %}
+        <p class="featured-artists__subtitle">{{ section.settings.subtitle }}</p>
+      {% endif %}
+    </div>
+
+    <div class="featured-artists__grid">
+      {% for block in section.blocks %}
+        {% if block.type == 'artist' %}
+          <article class="artist-feature" data-testid="card-artist-{{ forloop.index }}">
+            <div class="artist-feature__content">
+              {% if block.settings.artist_image %}
+                <div class="artist-feature__image">
+                  <img 
+                    src="{{ block.settings.artist_image | img_url: '800x800' }}" 
+                    alt="{{ block.settings.artist_name }}"
+                    loading="lazy"
+                  >
+                  <div class="artist-feature__overlay">
+                    <div class="artist-feature__profile">
+                      {% if block.settings.avatar_image %}
+                        <img 
+                          src="{{ block.settings.avatar_image | img_url: '120x120' }}" 
+                          alt="{{ block.settings.artist_name }}"
+                          class="artist-feature__avatar"
+                        >
+                      {% else %}
+                        <div class="artist-feature__avatar-placeholder">
+                          {{ block.settings.artist_name | slice: 0 }}
+                        </div>
+                      {% endif %}
+                      <div class="artist-feature__info">
+                        <h3 class="artist-feature__name">{{ block.settings.artist_name }}</h3>
+                        {% if block.settings.specialty != blank %}
+                          <div class="artist-feature__specialty">{{ block.settings.specialty }}</div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% if block.settings.artist_url != blank %}
+                      <a href="{{ block.settings.artist_url }}" class="artist-feature__btn" data-testid="button-view-collection-{{ forloop.index }}">
+                        View Collection
+                        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                          <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      </a>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+              
+              {% if block.settings.artwork_count != blank %}
+                <div class="artist-feature__stats">
+                  <div class="artist-feature__stat">
+                    <span class="artist-feature__stat-value">{{ block.settings.artwork_count }}</span>
+                    <span class="artist-feature__stat-label">Artworks</span>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </article>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if section.settings.cta_text != blank and section.settings.cta_url != blank %}
+      <div class="featured-artists__footer">
+        <a href="{{ section.settings.cta_url }}" class="featured-artists__cta" data-testid="button-view-all-artists">
+          {{ section.settings.cta_text }}
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<style>
+.featured-artists {
+  background: #fff;
+  padding: 6rem 2rem;
+}
+
+.featured-artists__container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.featured-artists__header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.featured-artists__eyebrow {
+  display: inline-block;
+  padding: 0.625rem 1.5rem;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 24px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6366f1;
+  margin-bottom: 1rem;
+}
+
+.featured-artists__title {
+  font-size: 3.25rem;
+  font-weight: 800;
+  color: #0f0f0f;
+  margin: 0 0 1rem;
+  letter-spacing: -0.02em;
+}
+
+.featured-artists__subtitle {
+  font-size: 1.25rem;
+  color: #6b7280;
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.featured-artists__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+.artist-feature {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.artist-feature:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+}
+
+.artist-feature__image {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #f7f8f9;
+}
+
+.artist-feature__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.artist-feature:hover .artist-feature__image img {
+  transform: scale(1.05);
+}
+
+.artist-feature__overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem 1.5rem 1.5rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.5) 60%, transparent 100%);
+  transform: translateY(60%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.artist-feature:hover .artist-feature__overlay {
+  transform: translateY(0);
+}
+
+.artist-feature__profile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.artist-feature__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.artist-feature__avatar-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.artist-feature__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.25rem;
+  line-height: 1.2;
+}
+
+.artist-feature__specialty {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.artist-feature__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f0f0f;
+  background: #fff;
+  border-radius: 24px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.artist-feature:hover .artist-feature__btn {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.1s;
+}
+
+.artist-feature__btn:hover {
+  background: #6366f1;
+  color: #fff;
+  transform: translateX(3px) translateY(0);
+}
+
+.artist-feature__btn svg {
+  transition: transform 0.2s ease;
+}
+
+.artist-feature__btn:hover svg {
+  transform: translateX(3px);
+}
+
+.artist-feature__stats {
+  padding: 1.25rem 1.5rem;
+  background: #f7f8f9;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.artist-feature__stat {
+  text-align: center;
+}
+
+.artist-feature__stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f0f0f;
+  margin-bottom: 0.25rem;
+}
+
+.artist-feature__stat-label {
+  display: block;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.featured-artists__footer {
+  text-align: center;
+  padding-top: 2rem;
+}
+
+.featured-artists__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.125rem 2.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  border-radius: 32px;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.featured-artists__cta:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.featured-artists__cta svg {
+  transition: transform 0.3s ease;
+}
+
+.featured-artists__cta:hover svg {
+  transform: translateX(3px);
+}
+
+@media (max-width: 768px) {
+  .featured-artists {
+    padding: 4rem 1.5rem;
+  }
+
+  .featured-artists__title {
+    font-size: 2.5rem;
+  }
+
+  .featured-artists__grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+</style>
+
+{% schema %}
+{
+  "name": "247 Featured Artists",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow_text",
+      "label": "Eyebrow Text",
+      "default": "Meet the Creators"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Featured Artists"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Discover talented creators from around the world bringing unique visions to life"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "CTA Button Text",
+      "default": "View All Artists"
+    },
+    {
+      "type": "url",
+      "id": "cta_url",
+      "label": "CTA Button URL"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "artist",
+      "name": "Artist",
+      "settings": [
+        {
+          "type": "text",
+          "id": "artist_name",
+          "label": "Artist Name",
+          "default": "Artist Name"
+        },
+        {
+          "type": "text",
+          "id": "specialty",
+          "label": "Specialty",
+          "default": "Digital Artist"
+        },
+        {
+          "type": "image_picker",
+          "id": "artist_image",
+          "label": "Featured Artwork"
+        },
+        {
+          "type": "image_picker",
+          "id": "avatar_image",
+          "label": "Artist Avatar"
+        },
+        {
+          "type": "text",
+          "id": "artwork_count",
+          "label": "Artwork Count",
+          "default": "24"
+        },
+        {
+          "type": "url",
+          "id": "artist_url",
+          "label": "Artist Collection URL"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "247 Featured Artists",
+      "blocks": [
+        {
+          "type": "artist"
+        },
+        {
+          "type": "artist"
+        },
+        {
+          "type": "artist"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

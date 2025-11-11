@@ -95,6 +95,13 @@ The platform features a clear separation between frontend and backend.
         - Artist: GET `/api/artworks/my-archived`, POST `/api/artworks/:id/my-reactivate` (ownership-verified)
     - **Soft Archive Approach:** Database records preserved, Shopify marketplace removal (TODO), reactivation allowed with one-click workflow
     - **Cache Invalidation:** TanStack Query properly invalidates both active and archived caches on reactivation for instant UI updates
+- **Product Type System:**
+    - **Automatic Template Assignment:** When artwork is approved, system automatically assigns Shopify template based on product type
+    - **Configuration:** `server/lib/product-types.ts` defines mappings: art_print → "art" template, future expansion ready for apparel/accessories
+    - **Database Fields:** `productType` (default: "art_print") and `shopifyTemplate` fields on artworks table
+    - **Smart Tagging:** Product type tags automatically added (art-print, wall-art, print-on-demand for art prints)
+    - **Future-Ready:** Built to support multiple POD product categories (apparel, accessories) without code changes - just add config and Shopify templates
+    - **Zero Manual Work:** No admin intervention needed for template assignment
 - **Automated Integrations:**
     - **Printify:** Automatic POD product creation from approved artwork.
     - **Shopify:** Integration for storefront product management, order capture via webhooks, and enriched product creation (rich descriptions, SEO-friendly URLs, enhanced tagging).

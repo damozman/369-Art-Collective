@@ -75,6 +75,7 @@ async function deploy() {
     'attached_assets/theme/snippets/247-art-lineitem-properties.liquid',
     'attached_assets/theme/snippets/247-merch-upsell.liquid',
     'attached_assets/theme/assets/247-art.js',
+    'attached_assets/theme/assets/247-art.css',
     'attached_assets/theme/templates/product.art.json',
   ];
 
@@ -121,8 +122,12 @@ async function deploy() {
   }
 
   log(`Deploying to store: ${storeUrl}`, colors.blue);
-  const deployCommand = `shopify theme push --store=${storeUrl} --path attached_assets/theme --only sections/247-art-product.liquid snippets/247-art-options.liquid snippets/247-art-lineitem-properties.liquid snippets/247-merch-upsell.liquid assets/247-art.js templates/product.art.json`;
   
+  // Use --development flag to push to development theme (auto-creates if needed)
+  // Use --force to skip confirmation prompts in non-interactive mode
+  const deployCommand = `shopify theme push --store=${storeUrl} --path attached_assets/theme --development --force --only sections/247-art-product.liquid snippets/247-art-options.liquid snippets/247-art-lineitem-properties.liquid snippets/247-merch-upsell.liquid assets/247-art.js assets/247-art.css templates/product.art.json`;
+  
+  log('Note: Deploying to development theme. Use --live flag for production.', colors.yellow);
   const success = runCommand(deployCommand, 'Uploading theme files');
 
   if (success) {

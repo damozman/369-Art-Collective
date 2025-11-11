@@ -33,7 +33,7 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
     </div>
 
     {%- comment -%} Artist Spotlight {%- endcomment -%}
-    {%- if product.metafields.247pn.artist_id -%}
+    {%- if product.metafields['247pn'].artist_id -%}
       <div class="artist-spotlight">
         <div class="artist-spotlight__header">
           {%- comment -%} Artist avatar placeholder - can be enhanced with actual profile photos {%- endcomment -%}
@@ -123,7 +123,7 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
         <div class="product-details__label">Durability</div>
         <div class="product-details__value">Fade-resistant inks, built to last</div>
       </div>
-      {%- if product.metafields.247pn.artist_id -%}
+      {%- if product.metafields['247pn'].artist_id -%}
         <div class="product-details__item">
           <div class="product-details__label">Artist</div>
           <div class="product-details__value">{{ product.vendor }}</div>

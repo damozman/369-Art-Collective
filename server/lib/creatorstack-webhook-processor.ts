@@ -115,7 +115,7 @@ export async function processCreatorStackPurchase(shopifyOrder: ShopifyWebhookOr
         accessGrantedAt: new Date(),
       });
 
-      console.log(`✅ [CreatorStack] Created purchase: Buyer ${email} → Kit ${kit.title}`);
+      console.log(`✅ [CreatorStack] Created purchase: Buyer ${email} → Kit ${kit.name}`);
       processed.push({ kitId, success: true });
     } catch (error: any) {
       console.error(`[CreatorStack] Failed to create purchase for kit ${kitId}:`, error);

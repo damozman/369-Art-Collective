@@ -97,6 +97,9 @@ export const artworks = pgTable("artworks", {
   shopifyProductStatus: text("shopify_product_status").default("draft"), // draft, active - tracks Shopify product visibility
   printifyProductId: text("printify_product_id"), // Printify product ID
   printifyImageId: text("printify_image_id"), // Uploaded image ID in Printify
+  lastSaleDate: timestamp("last_sale_date"), // Most recent sale date (tracked from order items) - used to identify inactive artworks
+  archivedAt: timestamp("archived_at"), // When artwork was auto-archived for inactivity (null = active)
+  archiveWarningEmailSentAt: timestamp("archive_warning_email_sent_at"), // When we sent the 30-day warning email
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { getProductTypeConfig, getShopifyTemplate, getProductTypeTags } from "./product-types";
 
 const shopifyShopUrl = process.env.SHOPIFY_SHOP_URL || "";
 const shopifyAccessToken = process.env.SHOPIFY_ACCESS_TOKEN || "";
@@ -40,6 +41,7 @@ interface ArtworkData {
   styleTags?: string[];
   suggestedUse?: string;
   seoSlug?: string;
+  productType?: string; // Product type for template assignment (defaults to "art_print")
 }
 
 function loadConfig<T>(filename: string): T {
@@ -53,6 +55,12 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
   }
 
   try {
+    // Get product type configuration (defaults to art_print)
+    const productType = artwork.productType || "art_print";
+    const productTypeConfig = getProductTypeConfig(productType);
+    const shopifyTemplate = getShopifyTemplate(productType);
+    const productTypeTags = getProductTypeTags(productType);
+
     // Load configuration files
     const providerConfig = loadConfig<any>("provider_config.json");
     const pricingMatrix = loadConfig<any>("pricing_matrix.json");
@@ -79,9 +87,10 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
       }
     }
 
-    // Build comprehensive tags including style tags
+    // Build comprehensive tags including product type tags and style tags
     const tags = [
       "New",
+      ...productTypeTags,
       ...finishes.map(f => `Finish:${f}`),
       `Artist:${artwork.artistName}`,
       ...(artwork.tags || []),
@@ -139,6 +148,12 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
         variants,
       },
     };
+    
+    // Add Shopify template suffix if configured for this product type
+    if (shopifyTemplate) {
+      productPayload.product.template_suffix = shopifyTemplate;
+      console.log(`[Shopify] Assigning template "${shopifyTemplate}" to product "${artwork.title}"`);
+    }
     
     // Add SEO-friendly handle (URL slug) if available
     if (artwork.seoSlug) {

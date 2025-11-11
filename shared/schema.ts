@@ -880,3 +880,155 @@ export type InsertAiCredit = z.infer<typeof insertAiCreditSchema>;
 
 export type AiCreditPurchase = typeof aiCreditPurchases.$inferSelect;
 export type InsertAiCreditPurchase = z.infer<typeof insertAiCreditPurchaseSchema>;
+
+// ============================================
+// 247 CreatorStack - Digital Products Platform
+// ============================================
+
+// CreatorStack Kits - Digital product bundles (templates + AI prompts)
+export const creatorstackKits = pgTable("creatorstack_kits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Kit details
+  name: text("name").notNull(), // "Social Media Blitz", "Email Launch Rocket"
+  slug: text("slug").notNull().unique(), // URL-friendly: "social-media-blitz"
+  description: text("description").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(), // $47.00
+  
+  // Product details
+  shopifyProductId: text("shopify_product_id").unique(), // Link to Shopify product
+  category: text("category").notNull(), // "social_media", "email_marketing", "content_creation"
+  features: jsonb("features"), // Array of feature bullets
+  
+  // Deliverables
+  canvaTemplateCount: integer("canva_template_count").notNull().default(0), // e.g., 50 templates
+  canvaTemplateUrl: text("canva_template_url"), // Link to Canva template folder/file
+  promptLibraryUrl: text("prompt_library_url"), // Link to AI prompt library (PDF/Notion/etc)
+  bonusResources: jsonb("bonus_resources"), // Additional resources (videos, guides, etc.)
+  
+  // Status
+  status: text("status").notNull().default("draft"), // draft, active, archived
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// CreatorStack Buyers - Customer accounts
+export const creatorstackBuyers = pgTable("creatorstack_buyers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Account details
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(), // Hashed password
+  name: text("name").notNull(),
+  
+  // Subscription status (for future Pro membership)
+  isPro: boolean("is_pro").notNull().default(false),
+  proSubscriptionId: text("pro_subscription_id"), // Shopify subscription ID
+  proExpiresAt: timestamp("pro_expires_at"), // When Pro membership expires
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// CreatorStack Purchases - Track kit purchases and access
+export const creatorstackPurchases = pgTable("creatorstack_purchases", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Buyer and kit
+  buyerId: varchar("buyer_id").notNull().references(() => creatorstackBuyers.id),
+  kitId: varchar("kit_id").notNull().references(() => creatorstackKits.id),
+  
+  // Purchase details
+  shopifyOrderId: text("shopify_order_id").notNull(), // Shopify order ID for webhook tracking
+  shopifyOrderNumber: text("shopify_order_number"), // Human-readable order # (e.g., "#1001")
+  amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }).notNull(), // Actual amount paid
+  
+  // Access control
+  accessGranted: boolean("access_granted").notNull().default(false), // Has buyer been granted access?
+  accessGrantedAt: timestamp("access_granted_at"), // When access was unlocked
+  
+  // Download tracking
+  downloadCount: integer("download_count").notNull().default(0), // How many times resources were downloaded
+  lastAccessedAt: timestamp("last_accessed_at"), // Last time buyer accessed this kit
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// CreatorStack Prompt Generations - Track AI prompt usage
+export const creatorstackPromptGenerations = pgTable("creatorstack_prompt_generations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // User tracking
+  buyerId: varchar("buyer_id").notNull().references(() => creatorstackBuyers.id),
+  kitId: varchar("kit_id").references(() => creatorstackKits.id), // Which kit they used (optional)
+  
+  // Generation details
+  promptType: text("prompt_type").notNull(), // "social_caption", "email_subject", "blog_intro"
+  userInput: text("user_input").notNull(), // What the user entered (topic, keywords, etc.)
+  aiResponse: text("ai_response").notNull(), // Generated content from GPT
+  model: text("model").notNull().default("gpt-4o-mini"), // Which model was used
+  
+  // Cost tracking
+  tokensUsed: integer("tokens_used").notNull().default(0),
+  costUsd: decimal("cost_usd", { precision: 10, scale: 4 }).notNull().default('0'),
+  
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Insert schemas for CreatorStack
+export const insertCreatorstackKitSchema = createInsertSchema(creatorstackKits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  name: z.string().min(1, "Kit name is required"),
+  slug: z.string().min(1).regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens only"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Price must be a valid number"),
+  category: z.enum(["social_media", "email_marketing", "content_creation", "other"]),
+  status: z.enum(["draft", "active", "archived"]).default("draft"),
+});
+
+export const insertCreatorstackBuyerSchema = createInsertSchema(creatorstackBuyers).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  email: z.string().email(),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(1, "Name is required"),
+});
+
+export const insertCreatorstackPurchaseSchema = createInsertSchema(creatorstackPurchases).omit({
+  id: true,
+  createdAt: true,
+  accessGrantedAt: true,
+  lastAccessedAt: true,
+}).extend({
+  buyerId: z.string().uuid(),
+  kitId: z.string().uuid(),
+  shopifyOrderId: z.string().min(1, "Shopify order ID is required"),
+  amountPaid: z.string().regex(/^\d+(\.\d{1,2})?$/, "Amount must be a valid number"),
+});
+
+export const insertCreatorstackPromptGenerationSchema = createInsertSchema(creatorstackPromptGenerations).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  buyerId: z.string().uuid(),
+  promptType: z.string().min(1, "Prompt type is required"),
+  userInput: z.string().min(1, "User input is required"),
+  aiResponse: z.string().min(1, "AI response is required"),
+});
+
+// Types for CreatorStack
+export type CreatorstackKit = typeof creatorstackKits.$inferSelect;
+export type InsertCreatorstackKit = z.infer<typeof insertCreatorstackKitSchema>;
+
+export type CreatorstackBuyer = typeof creatorstackBuyers.$inferSelect;
+export type InsertCreatorstackBuyer = z.infer<typeof insertCreatorstackBuyerSchema>;
+
+export type CreatorstackPurchase = typeof creatorstackPurchases.$inferSelect;
+export type InsertCreatorstackPurchase = z.infer<typeof insertCreatorstackPurchaseSchema>;
+
+export type CreatorstackPromptGeneration = typeof creatorstackPromptGenerations.$inferSelect;
+export type InsertCreatorstackPromptGeneration = z.infer<typeof insertCreatorstackPromptGenerationSchema>;

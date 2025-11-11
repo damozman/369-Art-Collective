@@ -234,6 +234,10 @@ export async function processShopifyOrder(shopifyOrder: ShopifyOrder) {
 
       console.log(`Sale recorded: ${sale.id}, Artist earns: $${sale.totalEarnings}`);
 
+      // Update artwork's lastSaleDate to track activity for archive system
+      await storage.updateArtworkLastSaleDate(artwork.id, new Date());
+      console.log(`Updated lastSaleDate for artwork: ${artwork.id}`);
+
       // MVP: Skip Printify submission for now - focus on order tracking first
       // TODO: Implement Printify fulfillment post-MVP
       console.log(`Order tracked, Printify fulfillment to be implemented`);

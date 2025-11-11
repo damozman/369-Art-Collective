@@ -71,6 +71,78 @@
         "collection_4"
       ]
     },
+    "featured_artworks": {
+      "type": "247-featured-artworks",
+      "settings": {
+        "eyebrow_text": "Trending Now",
+        "title": "Featured Artworks",
+        "subtitle": "Discover stunning pieces from our talented artist community"
+      },
+      "blocks": {
+        "artwork_1": {
+          "type": "artwork",
+          "settings": {
+            "artwork_title": "Mountain Sunrise Over Misty Valley",
+            "artist_name": "Sarah Chen",
+            "artwork_image": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=800&fit=crop&q=80",
+            "artwork_url": "https://247printnetwork.myshopify.com/products/mountain-sunrise"
+          }
+        },
+        "artwork_2": {
+          "type": "artwork",
+          "settings": {
+            "artwork_title": "Abstract Color Explosion",
+            "artist_name": "Marcus Rodriguez",
+            "artwork_image": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600&h=800&fit=crop&q=80",
+            "artwork_url": "https://247printnetwork.myshopify.com/products/abstract-color"
+          }
+        },
+        "artwork_3": {
+          "type": "artwork",
+          "settings": {
+            "artwork_title": "Majestic Wildlife Portrait",
+            "artist_name": "Elena Kowalski",
+            "artwork_image": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&h=800&fit=crop&q=80",
+            "artwork_url": "https://247printnetwork.myshopify.com/products/wildlife-portrait"
+          }
+        },
+        "artwork_4": {
+          "type": "artwork",
+          "settings": {
+            "artwork_title": "Urban Night Lights",
+            "artist_name": "Liam Anderson",
+            "artwork_image": "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=600&h=800&fit=crop&q=80",
+            "artwork_url": "https://247printnetwork.myshopify.com/products/urban-lights"
+          }
+        },
+        "artwork_5": {
+          "type": "artwork",
+          "settings": {
+            "artwork_title": "Serene Ocean Sunset",
+            "artist_name": "Nina Volkov",
+            "artwork_image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=800&fit=crop&q=80",
+            "artwork_url": "https://247printnetwork.myshopify.com/products/ocean-sunset"
+          }
+        },
+        "artwork_6": {
+          "type": "artwork",
+          "settings": {
+            "artwork_title": "Geometric Minimalism",
+            "artist_name": "Yuki Tanaka",
+            "artwork_image": "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=600&h=800&fit=crop&q=80",
+            "artwork_url": "https://247printnetwork.myshopify.com/products/geometric-minimal"
+          }
+        }
+      },
+      "block_order": [
+        "artwork_1",
+        "artwork_2",
+        "artwork_3",
+        "artwork_4",
+        "artwork_5",
+        "artwork_6"
+      ]
+    },
     "featured_artists": {
       "type": "247-featured-artists",
       "settings": {
@@ -179,6 +251,7 @@
   "order": [
     "homepage_hero",
     "featured_collections",
+    "featured_artworks",
     "featured_artists",
     "trust_badges",
     "artist_cta"

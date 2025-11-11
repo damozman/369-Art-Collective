@@ -95,6 +95,8 @@ export const artworks = pgTable("artworks", {
   seoSlug: text("seo_slug"), // URL-friendly version of title for product pages
   shopifyProductId: text("shopify_product_id"),
   shopifyProductStatus: text("shopify_product_status").default("draft"), // draft, active - tracks Shopify product visibility
+  shopifyTemplate: text("shopify_template"), // Shopify template suffix (e.g., "art", "apparel", "accessories")
+  productType: text("product_type").notNull().default("art_print"), // Product category: art_print, apparel, accessories, etc.
   printifyProductId: text("printify_product_id"), // Printify product ID
   printifyImageId: text("printify_image_id"), // Uploaded image ID in Printify
   lastSaleDate: timestamp("last_sale_date"), // Most recent sale date (tracked from order items) - used to identify inactive artworks

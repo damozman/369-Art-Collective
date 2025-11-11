@@ -2186,8 +2186,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Step 2: Create Shopify product (for storefront) with enhanced marketing content
+      // Automatic template assignment based on product type
+      const productType = artwork.productType || "art_print";
+      let shopifyTemplate = null;
+      
       if (isShopifyConfigured()) {
         try {
+          const { getShopifyTemplate } = await import("./lib/product-types");
+          shopifyTemplate = getShopifyTemplate(productType);
+          
           const shopifyProduct = await createArtworkProduct({
             title: artwork.title,
             description: artwork.description || undefined,
@@ -2200,10 +2207,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             styleTags: artwork.styleTags || undefined,
             suggestedUse: artwork.suggestedUse || undefined,
             seoSlug: artwork.seoSlug || undefined,
+            productType,
           });
 
           shopifyProductId = shopifyProduct.product.id.toString();
-          console.log("Shopify product created with marketing content:", shopifyProductId);
+          console.log(`Shopify product created with template "${shopifyTemplate}" and marketing content:`, shopifyProductId);
         } catch (error: any) {
           console.error("Shopify product creation failed:", error);
           // Continue even if Shopify fails - Printify is the critical part
@@ -2213,6 +2221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updated = await storage.updateArtwork(id, {
         status: "approved",
         shopifyProductId,
+        shopifyTemplate,
         printifyProductId,
         printifyImageId,
       });

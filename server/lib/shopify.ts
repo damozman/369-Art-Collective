@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { getProductTypeConfig, getShopifyTemplate, getProductTypeTags } from "./product-types";
+import { getProductTypeConfig, getShopifyTemplate, getProductTypeTags, getShopifyProductType } from "./product-types";
 
 const shopifyShopUrl = process.env.SHOPIFY_SHOP_URL || "";
 const shopifyAccessToken = process.env.SHOPIFY_ACCESS_TOKEN || "";
@@ -59,6 +59,7 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
     const productType = artwork.productType || "art_print";
     const productTypeConfig = getProductTypeConfig(productType);
     const shopifyTemplate = getShopifyTemplate(productType);
+    const shopifyProductType = getShopifyProductType(productType);
     const productTypeTags = getProductTypeTags(productType);
 
     // Load configuration files
@@ -137,7 +138,7 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
         title: artwork.title,
         body_html: bodyHtml,
         vendor: artwork.artistName,
-        product_type: "Art Print",
+        product_type: shopifyProductType,
         status: "draft",
         tags: tags.join(", "),
         options: [

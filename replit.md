@@ -83,6 +83,18 @@ The platform features a clear separation between frontend and backend.
     - **API Routes:** GET `/api/ai/credits`, POST `/api/ai/generate`, GET `/api/ai/generations`
     - **Frontend:** `/artist/ai-studio` with real-time credit balance, generation form, latest result display, and paginated history
     - **Test Data:** Bootstrap creates test artist with approved status and 10 free credits (dev/test only)
+- **Artwork Archive System:**
+    - **Automated Lifecycle Management:** Identifies inactive artworks (18+ months with zero sales) and automatically archives them to maintain marketplace freshness
+    - **Email Notifications:** Resend-powered email service sends warning notifications 30 days before archiving, plus archive confirmation emails with reactivation instructions
+    - **Database Tracking:** `archivedAt`, `lastSaleDate`, `archiveWarningEmailSentAt` fields on artworks table; Shopify webhook updates lastSaleDate on every order
+    - **Archive Service:** `server/archive-service.ts` class handles warning emails, archiving workflow, and stats aggregation
+    - **Admin Dashboard:** `/admin/archived` page with search/filter, stats (total archived, warnings sent, never sold, avg. days), manual "Run Archive Check" button, and individual reactivate buttons
+    - **Artist Portal:** Dual-tab interface (Active/Archived) in `/artist/dashboard` with grayed-out images, red badges, and confirmation-gated reactivation workflow
+    - **API Routes:** 
+        - Admin: GET `/api/artworks/archived`, POST `/api/artworks/:id/reactivate`, POST `/api/archive/check`
+        - Artist: GET `/api/artworks/my-archived`, POST `/api/artworks/:id/my-reactivate` (ownership-verified)
+    - **Soft Archive Approach:** Database records preserved, Shopify marketplace removal (TODO), reactivation allowed with one-click workflow
+    - **Cache Invalidation:** TanStack Query properly invalidates both active and archived caches on reactivation for instant UI updates
 - **Automated Integrations:**
     - **Printify:** Automatic POD product creation from approved artwork.
     - **Shopify:** Integration for storefront product management, order capture via webhooks, and enriched product creation (rich descriptions, SEO-friendly URLs, enhanced tagging).

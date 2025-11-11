@@ -167,7 +167,7 @@
         "title": "Join 500+ Creators Earning Passive Income",
         "subtitle": "Upload your artwork, we handle printing and shipping. You earn 30-45% royalties on every sale.",
         "button_text": "Start Earning Today",
-        "button_url": "/pages/join",
+        "button_url": "https://247printnetwork.replit.app/register",
         "show_stats": true,
         "stat_1_value": "45%",
         "stat_1_label": "Max Royalty",

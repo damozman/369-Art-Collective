@@ -36,6 +36,7 @@ import {
   Sparkles,
   Trophy,
   Share2,
+  Archive,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -55,6 +56,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           label: "Artwork Review",
           path: "/admin/dashboard",
           icon: CheckCircle,
+        },
+        {
+          label: "Archived Artworks",
+          path: "/admin/archived",
+          icon: Archive,
         },
       ],
     },

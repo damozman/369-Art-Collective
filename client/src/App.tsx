@@ -34,6 +34,7 @@ import AdminEmpire from "@/pages/admin-empire";
 import AdminSettings from "@/pages/admin-settings";
 import AdminInfluencers from "@/pages/admin-influencers";
 import AdminChallenges from "@/pages/admin-challenges";
+import AdminArchivedArtworks from "@/pages/admin-archived-artworks";
 import InfluencerApply from "@/pages/influencer-apply";
 import InfluencerLogin from "@/pages/influencer-login";
 import InfluencerPending from "@/pages/influencer-pending";
@@ -148,6 +149,14 @@ function Router() {
         <ProtectedRoute requiredType="admin">
           <AdminLayout>
             <AdminArtistDetail />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/archived">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminArchivedArtworks />
           </AdminLayout>
         </ProtectedRoute>
       </Route>

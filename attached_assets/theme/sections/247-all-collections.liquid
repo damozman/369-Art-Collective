@@ -1,0 +1,189 @@
+{% comment %}
+247 Print Network - All Collections Section
+Shows only curated main collections
+{% endcomment %}
+
+{{ '247-art.css' | asset_url | stylesheet_tag }}
+
+{% assign curated_collections = "featured,new-arrivals,metal-prints,canvas-prints,posters,framed-prints" | split: ',' %}
+
+<section class="all-collections">
+  <div class="all-collections__container">
+    
+    <div class="all-collections__header">
+      <div class="all-collections__eyebrow">Browse Art</div>
+      <h1 class="all-collections__title">Product Collections</h1>
+      <p class="all-collections__subtitle">Explore our curated collections of original artwork</p>
+    </div>
+
+    <div class="all-collections__grid">
+      {% for handle in curated_collections %}
+        {% assign collection = collections[handle] %}
+        {% if collection %}
+          <a href="{{ collection.url }}" class="collection-card" data-testid="card-collection-{{ handle }}">
+            <div class="collection-card__image">
+              {% if collection.featured_image %}
+                <img 
+                  src="{{ collection.featured_image | img_url: '600x450', crop: 'center' }}" 
+                  alt="{{ collection.title }}"
+                  loading="lazy"
+                >
+              {% elsif collection.products.first %}
+                <img 
+                  src="{{ collection.products.first.featured_image | img_url: '600x450', crop: 'center' }}" 
+                  alt="{{ collection.title }}"
+                  loading="lazy"
+                >
+              {% else %}
+                <div class="collection-card__placeholder"></div>
+              {% endif %}
+              <div class="collection-card__overlay">
+                <h2 class="collection-card__title">{{ collection.title }}</h2>
+                <div class="collection-card__count">{{ collection.products_count }} artworks</div>
+              </div>
+            </div>
+          </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+
+<style>
+.all-collections {
+  background: linear-gradient(135deg, #f7f8f9 0%, #fff 50%, #f7f8f9 100%);
+  padding: 5rem 2rem;
+  min-height: 100vh;
+}
+
+.all-collections__container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.all-collections__header {
+  text-align: center;
+  margin-bottom: 3.5rem;
+}
+
+.all-collections__eyebrow {
+  display: inline-block;
+  padding: 0.625rem 1.5rem;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 24px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6366f1;
+  margin-bottom: 1rem;
+}
+
+.all-collections__title {
+  font-size: 3.25rem;
+  font-weight: 800;
+  color: #0f0f0f;
+  margin: 0 0 1rem;
+  letter-spacing: -0.02em;
+}
+
+.all-collections__subtitle {
+  font-size: 1.25rem;
+  color: #6b7280;
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.all-collections__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+}
+
+.collection-card {
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  display: block;
+  position: relative;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.collection-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+}
+
+.collection-card__image {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 100%);
+}
+
+.collection-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.collection-card:hover .collection-card__image img {
+  transform: scale(1.1);
+}
+
+.collection-card__placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 100%);
+}
+
+.collection-card__overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2rem 1.5rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
+}
+
+.collection-card__title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
+}
+
+.collection-card__count {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .all-collections {
+    padding: 4rem 1.5rem;
+  }
+
+  .all-collections__title {
+    font-size: 2.5rem;
+  }
+
+  .all-collections__grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+</style>
+
+{% schema %}
+{
+  "name": "247 All Collections",
+  "settings": []
+}
+{% endschema %}

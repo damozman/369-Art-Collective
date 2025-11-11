@@ -132,6 +132,24 @@
             "artwork_image": "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=600&h=800&fit=crop&q=80",
             "artwork_url": "https://247printnetwork.myshopify.com/products/geometric-minimal"
           }
+        },
+        "artwork_7": {
+          "type": "artwork",
+          "settings": {
+            "artwork_title": "Cosmic Dreams",
+            "artist_name": "Raj Patel",
+            "artwork_image": "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=600&h=800&fit=crop&q=80",
+            "artwork_url": "https://247printnetwork.myshopify.com/products/cosmic-dreams"
+          }
+        },
+        "artwork_8": {
+          "type": "artwork",
+          "settings": {
+            "artwork_title": "Vintage Botanical",
+            "artist_name": "Amara Johnson",
+            "artwork_image": "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=600&h=800&fit=crop&q=80",
+            "artwork_url": "https://247printnetwork.myshopify.com/products/vintage-botanical"
+          }
         }
       },
       "block_order": [
@@ -140,7 +158,9 @@
         "artwork_3",
         "artwork_4",
         "artwork_5",
-        "artwork_6"
+        "artwork_6",
+        "artwork_7",
+        "artwork_8"
       ]
     },
     "featured_artists": {

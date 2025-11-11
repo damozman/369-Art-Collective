@@ -3,6 +3,9 @@
 ## Overview
 The 247 Print Network is an artist-powered print-on-demand (POD) marketplace. It enables artists to upload artwork, which is then automatically converted into POD products via Printify after administrative approval. The platform manages automated fulfillment, a tiered royalty payout system, and aims to be a creator-powered marketplace. Artists are encouraged to drive product creation, marketing through referrals, and recruitment, supported by automated royalties and a zero-inventory POD model.
 
+## Upcoming Features (Future Development)
+- **Customer Savings Plan / Membership Program**: Build a subscription or membership system for customers (savings plans, member benefits, loyalty rewards, etc.)
+
 ## User Preferences
 I want the agent to adopt an iterative development approach, focusing on delivering functional components incrementally. When making significant changes or architectural decisions, please ask for my approval first. I prefer clear, concise explanations and expect the agent to maintain a high standard of code quality, adhering to the established tech stack and design patterns.
 

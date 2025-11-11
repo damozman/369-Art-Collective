@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth-context";
 import { Sparkles } from "lucide-react";
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -29,6 +30,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function InfluencerLogin() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginForm>({
@@ -55,6 +57,15 @@ export default function InfluencerLogin() {
       }
 
       const influencer = await response.json();
+
+      // Update auth context with logged-in user
+      login({
+        id: influencer.id,
+        email: influencer.email,
+        name: influencer.name,
+        type: "influencer",
+        status: influencer.status,
+      });
 
       toast({
         title: "Welcome back!",

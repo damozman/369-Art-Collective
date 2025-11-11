@@ -49,6 +49,8 @@ export type EmailType =
   | 'portfolio_rejected'
   | 'artwork_approved'
   | 'artwork_rejected'
+  | 'artwork_archive_warning'
+  | 'artwork_archived'
   | 'custom';
 
 export interface EmailData {
@@ -214,6 +216,54 @@ export class EmailService {
       htmlBody,
       textBody,
       metadata: { artistName, artworkTitle, approved, rejectionReason },
+    });
+  }
+
+  async sendArtworkArchiveWarning(
+    artistEmail: string,
+    artistName: string,
+    artworkTitle: string,
+    artworkId: string
+  ) {
+    const subject = `Action Needed: Keep "${artworkTitle}" Live on 247 Print Network`;
+    const archiveDate = new Date();
+    archiveDate.setDate(archiveDate.getDate() + 30);
+    
+    const htmlBody = this.getArtworkArchiveWarningHTML(artistName, artworkTitle, archiveDate, artworkId);
+    const textBody = this.getArtworkArchiveWarningText(artistName, artworkTitle, archiveDate, artworkId);
+
+    return this.sendEmail({
+      recipientEmail: artistEmail,
+      recipientType: 'artist',
+      recipientId: artworkId,
+      emailType: 'artwork_archive_warning',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { artistName, artworkTitle, artworkId, archiveDate },
+    });
+  }
+
+  async sendArtworkArchivedNotification(
+    artistEmail: string,
+    artistName: string,
+    artworkTitle: string,
+    artworkId: string
+  ) {
+    const subject = `"${artworkTitle}" Has Been Archived`;
+    
+    const htmlBody = this.getArtworkArchivedHTML(artistName, artworkTitle, artworkId);
+    const textBody = this.getArtworkArchivedText(artistName, artworkTitle, artworkId);
+
+    return this.sendEmail({
+      recipientEmail: artistEmail,
+      recipientType: 'artist',
+      recipientId: artworkId,
+      emailType: 'artwork_archived',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { artistName, artworkTitle, artworkId },
     });
   }
 
@@ -675,6 +725,230 @@ Upload new artwork: ${process.env.VITE_SITE_URL || 'http://localhost:5000'}/arti
 Best regards,
 247 Print Network Support Team
 
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+  }
+
+  private getArtworkArchiveWarningHTML(artistName: string, artworkTitle: string, archiveDate: Date, artworkId: string): string {
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+    const formattedDate = archiveDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+          .button-secondary { background: #6b7280; }
+          .info { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+          ul { line-height: 1.8; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>⏰ Action Needed</h1>
+            <p style="font-size: 18px; margin: 10px 0 0 0;">Keep "${artworkTitle}" Live</p>
+          </div>
+          <div class="content">
+            <p>Hi ${artistName},</p>
+            
+            <p>We don't want to lose this piece from our marketplace! Your artwork <strong>"${artworkTitle}"</strong> has been inactive for 17 months and is scheduled for archiving on <strong>${formattedDate}</strong> (30 days from now).</p>
+            
+            <div class="info">
+              <strong>📊 Inactivity Summary:</strong><br>
+              No sales recorded in the last 17 months<br>
+              Without activity, this artwork will be removed from the marketplace to maintain our quality standards.
+            </div>
+            
+            <p><strong>🎯 How to keep "${artworkTitle}" live:</strong></p>
+            <ul>
+              <li><strong>Make a sale</strong> - Share this artwork on social media to boost visibility</li>
+              <li><strong>Cross-promote</strong> - Include it in your artist newsletter or portfolio</li>
+              <li><strong>Refresh your listing</strong> - Update tags, description, or add to featured collections</li>
+              <li><strong>Join a campaign</strong> - Participate in seasonal promotions or artist spotlights</li>
+            </ul>
+            
+            <p style="text-align: center; margin: 30px 0;">
+              <a href="${dashboardUrl}" class="button">View Marketing Toolkit</a>
+              <a href="${dashboardUrl}" class="button button-secondary">View in Dashboard</a>
+            </p>
+            
+            <p><strong>What happens if archived?</strong></p>
+            <p>Archived artworks are hidden from the marketplace but remain in your dashboard. You can reactivate them at any time. Your files, ratings, and all data remain intact.</p>
+            
+            <p>We're here to support your success. If you'd like help promoting this artwork or have questions, reply to this email.</p>
+            
+            <p>Best regards,<br>247 Print Network Team</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated notice based on our marketplace quality policy. You can manage your artwork anytime in your dashboard.</p>
+            <p>© 2025 247 Print Network. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private getArtworkArchiveWarningText(artistName: string, artworkTitle: string, archiveDate: Date, artworkId: string): string {
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+    const formattedDate = archiveDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    
+    return `
+⏰ ACTION NEEDED: Keep "${artworkTitle}" Live
+
+Hi ${artistName},
+
+We don't want to lose this piece from our marketplace! Your artwork "${artworkTitle}" has been inactive for 17 months and is scheduled for archiving on ${formattedDate} (30 days from now).
+
+INACTIVITY SUMMARY:
+📊 No sales recorded in the last 17 months
+Without activity, this artwork will be removed from the marketplace to maintain our quality standards.
+
+HOW TO KEEP "${artworkTitle}" LIVE:
+• Make a sale - Share this artwork on social media to boost visibility
+• Cross-promote - Include it in your artist newsletter or portfolio  
+• Refresh your listing - Update tags, description, or add to featured collections
+• Join a campaign - Participate in seasonal promotions or artist spotlights
+
+View Marketing Toolkit: ${dashboardUrl}
+View in Dashboard: ${dashboardUrl}
+
+WHAT HAPPENS IF ARCHIVED?
+Archived artworks are hidden from the marketplace but remain in your dashboard. You can reactivate them at any time. Your files, ratings, and all data remain intact.
+
+We're here to support your success. If you'd like help promoting this artwork or have questions, reply to this email.
+
+Best regards,
+247 Print Network Team
+
+---
+This is an automated notice based on our marketplace quality policy. You can manage your artwork anytime in your dashboard.
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+  }
+
+  private getArtworkArchivedHTML(artistName: string, artworkTitle: string, artworkId: string): string {
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .info { background: #e5e7eb; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; }
+          .reassurance { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+          ul { line-height: 1.8; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📦 Artwork Archived</h1>
+            <p style="font-size: 18px; margin: 10px 0 0 0;">"${artworkTitle}"</p>
+          </div>
+          <div class="content">
+            <p>Hi ${artistName},</p>
+            
+            <p>Your artwork <strong>"${artworkTitle}"</strong> has been archived due to 18 months of inactivity (no sales). This helps us maintain a vibrant, active marketplace for all artists.</p>
+            
+            <div class="info">
+              <strong>📋 What Changed:</strong><br>
+              ✓ Removed from marketplace (no longer visible to shoppers)<br>
+              ✓ Shopify product status set to draft<br>
+              ✓ Moved to your "Archived" section in the dashboard
+            </div>
+            
+            <div class="reassurance">
+              <strong>✅ What's Protected:</strong><br>
+              • Your original artwork files remain intact<br>
+              • All ratings, reviews, and historical data preserved<br>
+              • No deletion - you still own all rights to your work<br>
+              • Can be reactivated anytime
+            </div>
+            
+            <p><strong>🔄 Ready to bring this artwork back?</strong></p>
+            <p>You can reactivate "${artworkTitle}" with one click. When reactivated, it will return to the marketplace, and the Shopify product will be republished.</p>
+            
+            <p style="text-align: center;">
+              <a href="${dashboardUrl}" class="button">Restore This Artwork</a>
+            </p>
+            
+            <p><strong>💡 Tips for Success:</strong></p>
+            <ul>
+              <li>Promote reactivated artworks on social media for maximum visibility</li>
+              <li>Update artwork descriptions and tags to improve discoverability</li>
+              <li>Consider seasonal trends when choosing which pieces to reactivate</li>
+              <li>Join our artist campaigns to showcase your work to new audiences</li>
+            </ul>
+            
+            <p>We value your partnership and are here to help. If you have questions or need marketing support, reply to this email.</p>
+            
+            <p>Best regards,<br>247 Print Network Team</p>
+          </div>
+          <div class="footer">
+            <p>This action was taken in accordance with our marketplace quality policy and terms of service.</p>
+            <p>© 2025 247 Print Network. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private getArtworkArchivedText(artistName: string, artworkTitle: string, artworkId: string): string {
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+    
+    return `
+📦 ARTWORK ARCHIVED: "${artworkTitle}"
+
+Hi ${artistName},
+
+Your artwork "${artworkTitle}" has been archived due to 18 months of inactivity (no sales). This helps us maintain a vibrant, active marketplace for all artists.
+
+WHAT CHANGED:
+✓ Removed from marketplace (no longer visible to shoppers)
+✓ Shopify product status set to draft
+✓ Moved to your "Archived" section in the dashboard
+
+WHAT'S PROTECTED:
+• Your original artwork files remain intact
+• All ratings, reviews, and historical data preserved
+• No deletion - you still own all rights to your work
+• Can be reactivated anytime
+
+READY TO BRING THIS ARTWORK BACK?
+You can reactivate "${artworkTitle}" with one click. When reactivated, it will return to the marketplace, and the Shopify product will be republished.
+
+Restore This Artwork: ${dashboardUrl}
+
+TIPS FOR SUCCESS:
+• Promote reactivated artworks on social media for maximum visibility
+• Update artwork descriptions and tags to improve discoverability
+• Consider seasonal trends when choosing which pieces to reactivate
+• Join our artist campaigns to showcase your work to new audiences
+
+We value your partnership and are here to help. If you have questions or need marketing support, reply to this email.
+
+Best regards,
+247 Print Network Team
+
+---
+This action was taken in accordance with our marketplace quality policy and terms of service.
 © 2025 247 Print Network. All rights reserved.
     `.trim();
   }

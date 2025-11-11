@@ -37,6 +37,7 @@ export default function CreatorStackLogin() {
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -45,6 +46,7 @@ export default function CreatorStackLogin() {
 
   const registerForm = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",

@@ -6,21 +6,95 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
 {{ '247-art.css' | asset_url | stylesheet_tag }}
 
 <section class="247pn-art-product">
-  {%- comment -%} LEFT COLUMN: Product Images {%- endcomment -%}
-  <div class="product__media">
-    {%- if product.featured_image -%}
-      <img 
-        src="{{ product.featured_image | img_url: '1024x1024' }}" 
-        alt="{{ product.featured_image.alt | default: product.title | escape }}"
-        width="1024"
-        height="1024"
-        loading="eager"
-      >
+  {%- comment -%} LEFT COLUMN: Product Image Gallery {%- endcomment -%}
+  <div class="product__media-gallery">
+    {%- if product.images.size > 0 -%}
+      
+      {%- comment -%} Main Image Viewer {%- endcomment -%}
+      <div class="gallery__main">
+        <div class="gallery__main-wrapper" id="main-image-wrapper">
+          {%- for image in product.images -%}
+            <img 
+              src="{{ image | img_url: '1024x1024' }}" 
+              alt="{{ image.alt | default: product.title | escape }}"
+              width="1024"
+              height="1024"
+              loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
+              class="gallery__main-image {% if forloop.first %}active{% endif %}"
+              data-image-id="{{ image.id }}"
+              data-image-index="{{ forloop.index0 }}"
+              {%- if image.attached_to_variant? -%}
+                data-variant-ids="{{ image.variants | map: 'id' | join: ',' }}"
+              {%- endif -%}
+            >
+          {%- endfor -%}
+        </div>
+
+        {%- comment -%} Zoom Overlay {%- endcomment -%}
+        <button class="gallery__zoom-btn" id="zoom-trigger" aria-label="Zoom image">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="8" cy="8" r="6"/>
+            <line x1="13" y1="13" x2="18" y2="18"/>
+            <line x1="8" y1="5" x2="8" y2="11"/>
+            <line x1="5" y1="8" x2="11" y2="8"/>
+          </svg>
+        </button>
+      </div>
+
+      {%- comment -%} Thumbnail Navigation {%- endcomment -%}
+      {%- if product.images.size > 1 -%}
+        <div class="gallery__thumbnails" id="thumbnail-nav">
+          {%- for image in product.images -%}
+            <button 
+              class="gallery__thumbnail {% if forloop.first %}active{% endif %}"
+              data-image-index="{{ forloop.index0 }}"
+              data-image-id="{{ image.id }}"
+              {%- if image.attached_to_variant? -%}
+                data-variant-ids="{{ image.variants | map: 'id' | join: ',' }}"
+              {%- endif -%}
+              aria-label="View image {{ forloop.index }}"
+              aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"
+            >
+              <img 
+                src="{{ image | img_url: '120x120' }}" 
+                alt="{{ image.alt | default: product.title | escape }}"
+                loading="lazy"
+              >
+            </button>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+
     {%- else -%}
       <div class="product__media-placeholder">
         {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
       </div>
     {%- endif -%}
+  </div>
+
+  {%- comment -%} Lightbox Zoom Modal {%- endcomment -%}
+  <div class="lightbox" id="image-lightbox">
+    <button class="lightbox__close" id="lightbox-close" aria-label="Close lightbox">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <div class="lightbox__content">
+      <img src="" alt="" id="lightbox-image">
+    </div>
+    <div class="lightbox__nav">
+      <button class="lightbox__prev" id="lightbox-prev" aria-label="Previous image">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <button class="lightbox__next" id="lightbox-next" aria-label="Next image">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   {%- comment -%} RIGHT COLUMN: Product Info {%- endcomment -%}
@@ -93,17 +167,17 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
     {%- comment -%} Trust Badges {%- endcomment -%}
     <div class="trust-badges">
       <div class="trust-badge">
-        <div class="trust-badge__icon">🎨</div>
+        <div class="trust-badge__icon"></div>
         <div class="trust-badge__title">Artist Royalties</div>
         <div class="trust-badge__description">Support independent artists</div>
       </div>
       <div class="trust-badge">
-        <div class="trust-badge__icon">🚚</div>
+        <div class="trust-badge__icon"></div>
         <div class="trust-badge__title">Fast Shipping</div>
         <div class="trust-badge__description">Ships in 3-5 business days</div>
       </div>
       <div class="trust-badge">
-        <div class="trust-badge__icon">✓</div>
+        <div class="trust-badge__icon"></div>
         <div class="trust-badge__title">Quality Guaranteed</div>
         <div class="trust-badge__description">Premium materials</div>
       </div>
@@ -135,6 +209,11 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
     {% render '247-merch-upsell', product: product %}
   </div>
 </section>
+
+{%- comment -%} Serialize product data for JavaScript variant system {%- endcomment -%}
+<script>
+  window.product = {{ product | json }};
+</script>
 
 <script src="{{ '247-art.js' | asset_url }}" defer></script>
 

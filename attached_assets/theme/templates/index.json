@@ -74,7 +74,7 @@
         "title": "Featured Artists",
         "subtitle": "Discover talented creators from around the world bringing unique visions to life",
         "cta_text": "View All Artists",
-        "cta_url": "/pages/creators"
+        "cta_url": "https://247printnetwork.replit.app/creators"
       },
       "blocks": {
         "artist_1": {

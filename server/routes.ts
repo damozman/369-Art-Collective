@@ -632,6 +632,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PUBLIC: List all approved artists (for creators page)
+  app.get("/api/artists", async (_req, res) => {
+    try {
+      const allArtists = await storage.getAllArtists();
+      
+      // Only return approved artists with essential public info
+      const approvedArtists = allArtists
+        .filter(artist => artist.approved)
+        .map(artist => ({
+          id: artist.id,
+          name: artist.name,
+          bio: artist.bio,
+          royaltyTier: null, // Can add later
+          totalSales: 0, // Can add later
+          shopifyCollectionHandle: null, // Can add later
+        }));
+
+      res.json(approvedArtists);
+    } catch (error: any) {
+      console.error("Error fetching artists:", error);
+      res.status(500).json({ message: "Failed to fetch artists" });
+    }
+  });
+
   // PUBLIC: Get artist profile (for customer-facing artist pages)
   app.get("/api/artists/:id", async (req, res) => {
     try {

@@ -1,0 +1,19 @@
+{
+  "sections": {
+    "creators_hero": {
+      "type": "247-page-hero",
+      "settings": {
+        "title": "Meet the Creators",
+        "subtitle": "Discover talented artists from around the world"
+      }
+    },
+    "creators_grid": {
+      "type": "247-creators-grid",
+      "settings": {}
+    }
+  },
+  "order": [
+    "creators_hero",
+    "creators_grid"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "sections": {
+    "about_hero": {
+      "type": "247-page-hero",
+      "settings": {
+        "title": "About 247 Print Network",
+        "subtitle": "Artist-Powered Print-on-Demand Marketplace"
+      }
+    },
+    "about_content": {
+      "type": "247-about-content",
+      "settings": {}
+    }
+  },
+  "order": [
+    "about_hero",
+    "about_content"
+  ]
+}

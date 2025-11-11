@@ -1,0 +1,24 @@
+{
+  "sections": {
+    "join_hero": {
+      "type": "247-page-hero",
+      "settings": {
+        "title": "Join the Creatorverse",
+        "subtitle": "Start selling your art with automated royalties"
+      }
+    },
+    "join_benefits": {
+      "type": "247-join-benefits",
+      "settings": {}
+    },
+    "join_cta": {
+      "type": "247-join-cta",
+      "settings": {}
+    }
+  },
+  "order": [
+    "join_hero",
+    "join_benefits",
+    "join_cta"
+  ]
+}

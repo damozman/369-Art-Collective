@@ -1,0 +1,175 @@
+{% comment %}
+247 Print Network - About Content Section
+{% endcomment %}
+
+<section class="about-content">
+  <div class="about-content__container">
+    
+    <div class="about-section">
+      <h2 class="about-section__title">Our Mission</h2>
+      <p class="about-section__text">
+        247 Print Network is an artist-powered marketplace that puts creators first. We believe artists deserve fair compensation and complete creative control. Our platform combines premium print-on-demand technology with automated royalty payments, enabling artists to focus on what they do best: creating amazing art.
+      </p>
+    </div>
+
+    <div class="about-section">
+      <h2 class="about-section__title">How It Works</h2>
+      <div class="about-grid">
+        <div class="about-card">
+          <div class="about-card__number">01</div>
+          <h3 class="about-card__title">Artists Upload</h3>
+          <p class="about-card__text">Creators submit their artwork to our platform. Each piece is reviewed for quality and originality.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card__number">02</div>
+          <h3 class="about-card__title">We Produce</h3>
+          <p class="about-card__text">Approved artwork is automatically converted into premium print products using Printify's global network.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card__number">03</div>
+          <h3 class="about-card__title">Customers Buy</h3>
+          <p class="about-card__text">Art lovers purchase prints with confidence knowing they're supporting independent artists directly.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card__number">04</div>
+          <h3 class="about-card__title">Artists Earn</h3>
+          <p class="about-card__text">Automated royalty system ensures artists receive 30-45% of every sale, paid via Stripe Connect.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-section">
+      <h2 class="about-section__title">Why 247 Print Network?</h2>
+      <ul class="about-list">
+        <li><strong>Fair Royalties:</strong> Artists earn 30-45% per sale, with recruitment and referral bonuses</li>
+        <li><strong>Zero Inventory:</strong> Print-on-demand means no upfront costs or storage hassles</li>
+        <li><strong>Global Reach:</strong> Products ship worldwide through Printify's fulfillment network</li>
+        <li><strong>Premium Quality:</strong> Museum-grade paper, vibrant colors, professional finishes</li>
+        <li><strong>Automated Payouts:</strong> Stripe Connect handles payments securely and efficiently</li>
+        <li><strong>Artist Community:</strong> Join a network of creators supporting each other's growth</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<style>
+.about-content {
+  background: #fff;
+  padding: 4rem 2rem;
+}
+
+.about-content__container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.about-section {
+  margin-bottom: 4rem;
+}
+
+.about-section__title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #0f0f0f;
+  margin: 0 0 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.about-section__text {
+  font-size: 1.25rem;
+  line-height: 1.8;
+  color: #4a5568;
+  max-width: 800px;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.about-card {
+  background: #f7f8f9;
+  padding: 2rem;
+  border-radius: 16px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.about-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.about-card__number {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #6366f1;
+  line-height: 1;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+.about-card__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f0f0f;
+  margin: 0 0 0.75rem;
+}
+
+.about-card__text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #6b7280;
+  margin: 0;
+}
+
+.about-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+}
+
+.about-list li {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: #4a5568;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.about-list li:last-child {
+  border-bottom: none;
+}
+
+.about-list strong {
+  color: #0f0f0f;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .about-content {
+    padding: 3rem 1.5rem;
+  }
+
+  .about-section__title {
+    font-size: 2rem;
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+{% schema %}
+{
+  "name": "247 About Content",
+  "presets": [
+    {
+      "name": "247 About Content"
+    }
+  ]
+}
+{% endschema %}

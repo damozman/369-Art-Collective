@@ -1,0 +1,19 @@
+{
+  "sections": {
+    "contact_hero": {
+      "type": "247-page-hero",
+      "settings": {
+        "title": "Contact Us",
+        "subtitle": "We're here to help"
+      }
+    },
+    "contact_form": {
+      "type": "247-contact-form",
+      "settings": {}
+    }
+  },
+  "order": [
+    "contact_hero",
+    "contact_form"
+  ]
+}

@@ -36,6 +36,7 @@ import InfluencerApply from "@/pages/influencer-apply";
 import InfluencerLogin from "@/pages/influencer-login";
 import InfluencerPending from "@/pages/influencer-pending";
 import InfluencerDashboard from "@/pages/influencer-dashboard";
+import PublicLeaderboard from "@/pages/public-leaderboard";
 import SuccessStory from "@/pages/success-story";
 import NotFound from "@/pages/not-found";
 
@@ -43,6 +44,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/leaderboard" component={PublicLeaderboard} />
       <Route path="/success-stories/:slug" component={SuccessStory} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminLogin} />

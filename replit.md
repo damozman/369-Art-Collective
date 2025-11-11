@@ -98,6 +98,7 @@ The platform features a clear separation between frontend and backend.
 - **Automated Integrations:**
     - **Printify:** Automatic POD product creation from approved artwork.
     - **Shopify:** Integration for storefront product management, order capture via webhooks, and enriched product creation (rich descriptions, SEO-friendly URLs, enhanced tagging).
+    - **Shopify Theme Deployment:** Automated CLI-based deployment system (`scripts/deploy-shopify-theme.js`) replaces manual 6-file uploads with single-command deployment (`npm run shopify:deploy`). Includes optional template auto-assignment script via Admin API (`npm run shopify:assign-templates`).
 - **Royalty System:** Tiered royalties (30-45%), referral bonuses (+5% for UTM-tracked sales), and recruitment bonuses (5% of recruited artist's royalties).
 - **Payouts:** Stripe Connect Express for automated artist payouts, including webhook integration for status updates and admin payout management UI.
 - **Security:** Session-based authentication with HTTP-only cookies, session regeneration, CSRF protection, bcrypt password hashing, and separated login architectures. Deployment configuration for Replit's reverse proxy.

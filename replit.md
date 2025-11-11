@@ -35,10 +35,12 @@ The platform employs a clear separation between frontend and backend.
     - **Customer-Facing Pages:** Complete Displate-inspired storefront with modern 2024/2025 aesthetic:
         - **About Page:** Mission statement, how-it-works process (4-step cards), platform benefits, fair royalty system
         - **Meet the Creators:** Artist directory with profile cards, artwork counts, collection links
+        - **Artist Profile Pages:** Public-facing artist profiles at `/artists/:id` with bio, artwork gallery, sales stats, and Shopify collection links (approved artists only)
         - **Contact Us:** Professional contact form with email/response time info, success/error handling
         - **Help/FAQs:** Interactive accordion with categories (Orders, Shipping, Artists, Products)
         - **Join the Creatorverse:** Artist recruitment landing page with royalty tiers, benefits cards, prominent CTAs
         - **Product Pages:** Two-column layout (image left, info right) with multi-image gallery, variant-to-image switching, lightbox zoom
+        - **Homepage Integration:** Shopify homepage links to 4 collections (Abstract Art, Nature & Landscapes, Urban & Street, Pop Culture) and 3 featured artist profiles
 - **Royalty System:** Tiered royalties (30-45%), referral bonuses (+5% for UTM-tracked sales), and recruitment bonuses (5% of recruited artist's royalties).
 - **Payouts:** Stripe Connect Express for automated artist payouts, including webhook integration and admin management UI.
 - **Security:** Session-based authentication with HTTP-only cookies, session regeneration, CSRF protection, bcrypt password hashing, and separated login architectures.

@@ -5,6 +5,9 @@ The 247 Print Network is an artist-powered print-on-demand (POD) marketplace. It
 
 ## Upcoming Features (Future Development)
 - **Customer Savings Plan / Membership Program**: Build a subscription or membership system for customers (savings plans, member benefits, loyalty rewards, etc.)
+- **Customer Product Credits/Incentives**: Offer store credits to customers for products as incentives or contest winnings
+- **Customer Artist Favorites**: Allow customers to save/favorite artists for follow updates and personalized recommendations
+- **Platform Logo Design**: Create professional logo for 247 Print Network branding
 
 ## User Preferences
 I want the agent to adopt an iterative development approach, focusing on delivering functional components incrementally. When making significant changes or architectural decisions, please ask for my approval first. I prefer clear, concise explanations and expect the agent to maintain a high standard of code quality, adhering to the established tech stack and design patterns.

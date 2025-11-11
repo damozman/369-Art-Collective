@@ -29,6 +29,13 @@ The platform features a clear separation between frontend and backend.
         - Getting started guidance section
         - Null-safe rendering with graceful error states and fallback values
         - Session-based authentication integrated with platform-wide auth context
+    - **Gamification System:**
+        - **Leaderboards:** Real-time rankings with metric filters (earnings, conversions, clicks) and period filters (all-time, monthly, weekly). Top 3 performers highlighted with visual badges.
+        - **Achievements/Badges:** 13 seeded achievements across categories (milestone, performance, special) with rarity levels (common, uncommon, rare, epic, legendary). Points system with unlock tracking and tooltips showing progress.
+        - **Challenges:** Time-bound competitions with monetary prizes (1st/2nd/3rd place). Join functionality, participant tracking, and challenge leaderboards.
+        - **Activity Feed:** Public feed of achievement unlocks and notable events to drive engagement.
+        - **Public Leaderboard:** Accessible at `/leaderboard` for competitive visibility and influencer recruitment.
+        - **Database Schema:** achievements, influencerAchievements, challenges, challengeParticipants, activityFeedEvents tables.
 
 **Technical Implementations:**
 - **Artist & Admin Management:** Role-based access control, secure self-service password reset, rate limiting on critical endpoints, and audit logging. Soft-delete system for artist accounts.

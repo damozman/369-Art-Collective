@@ -43,12 +43,14 @@ import PublicLeaderboard from "@/pages/public-leaderboard";
 import SuccessStory from "@/pages/success-story";
 import ArtistProfile from "@/pages/artist-profile";
 import Creators from "@/pages/creators";
+import JoinCreatorverse from "@/pages/join-creatorverse";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/pages/join" component={JoinCreatorverse} />
       <Route path="/creators" component={Creators} />
       <Route path="/leaderboard" component={PublicLeaderboard} />
       <Route path="/success-stories/:slug" component={SuccessStory} />

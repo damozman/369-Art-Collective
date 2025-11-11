@@ -2330,24 +2330,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Run manual archive check (admin only) - sends warnings and archives eligible artworks
   app.post("/api/archive/check", requireAdmin, async (req, res) => {
     try {
-      const { archiveService } = await import('./archive-service');
+      const { ArchiveService } = await import('./archive-service');
+      const { EmailService } = await import('./lib/email-service');
       
-      // Send warnings to artworks that will be archived in 30 days (17 months inactive)
-      const warningResults = await archiveService.sendArchiveWarnings();
+      // Create instances with dependencies
+      const emailService = new EmailService();
+      const archiveService = new ArchiveService(storage, emailService);
       
-      // Archive artworks that have been inactive for 18+ months
-      const archiveResults = await archiveService.archiveEligibleArtworks();
+      // Run the full archive workflow
+      const results = await archiveService.runArchiveWorkflow();
       
       res.json({
         message: "Archive check completed",
-        warningsSent: warningResults.success,
-        warningsFailed: warningResults.failed,
-        artworksArchived: archiveResults.success,
-        archivesFailed: archiveResults.failed,
-        details: {
-          warnings: warningResults.artworks,
-          archived: archiveResults.artworks,
-        },
+        warningsSent: results.warningsSent,
+        artworksArchived: results.artworksArchived,
+        errors: results.errors,
       });
     } catch (error: any) {
       console.error("Archive check error:", error);

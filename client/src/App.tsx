@@ -57,6 +57,9 @@ function Router() {
       <Route path="/admin/forgot-password" component={AdminForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       
+      <Route path="/artist/login" component={Login} />
+      <Route path="/artist" component={Login} />
+      
       <Route path="/artist/pending">
         <ProtectedRoute requiredType="artist">
           <ArtistLayout>

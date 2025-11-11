@@ -20,6 +20,9 @@ import {
   challenges,
   challengeParticipants,
   activityFeedEvents,
+  aiGenerations,
+  aiCredits,
+  aiCreditPurchases,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -48,6 +51,12 @@ import {
   type InsertAffiliateClick,
   type AffiliateConversion,
   type InsertAffiliateConversion,
+  type AiGeneration,
+  type InsertAiGeneration,
+  type AiCredit,
+  type InsertAiCredit,
+  type AiCreditPurchase,
+  type InsertAiCreditPurchase,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
@@ -321,6 +330,29 @@ export interface IStorage {
     message: string;
     createdAt: Date;
   }>>;
+  
+  // ===================================
+  // AI PORTRAIT GENERATION METHODS
+  // ===================================
+  
+  // AI Generation CRUD
+  createAiGeneration(generation: InsertAiGeneration): Promise<AiGeneration>;
+  updateAiGeneration(id: string, updates: Partial<AiGeneration>): Promise<AiGeneration>;
+  getAiGeneration(id: string): Promise<AiGeneration | undefined>;
+  getAiGenerationsByArtist(artistId: string): Promise<AiGeneration[]>;
+  getAllAiGenerations(): Promise<AiGeneration[]>;
+  
+  // AI Credits management
+  getOrCreateAiCredits(userId: string, userType: 'artist' | 'customer'): Promise<AiCredit>;
+  getAiCreditsByArtist(artistId: string): Promise<AiCredit | undefined>;
+  updateAiCredits(id: string, updates: Partial<AiCredit>): Promise<AiCredit>;
+  deductCredit(userId: string, userType: 'artist' | 'customer'): Promise<{ success: boolean; remainingCredits: number; deductedFrom: 'free' | 'paid' }>;
+  
+  // AI Credit Purchases
+  createAiCreditPurchase(purchase: InsertAiCreditPurchase): Promise<AiCreditPurchase>;
+  updateAiCreditPurchase(id: string, updates: Partial<AiCreditPurchase>): Promise<AiCreditPurchase>;
+  getAiCreditPurchasesByArtist(artistId: string): Promise<AiCreditPurchase[]>;
+  getAiCreditPurchaseByStripePaymentIntent(paymentIntentId: string): Promise<AiCreditPurchase | undefined>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -1769,6 +1801,166 @@ class PostgresStorage implements IStorage {
 
     return events;
   }
+  
+  // ===================================
+  // AI PORTRAIT GENERATION METHODS
+  // ===================================
+  
+  async createAiGeneration(generation: InsertAiGeneration): Promise<AiGeneration> {
+    const [created] = await db
+      .insert(aiGenerations)
+      .values(generation)
+      .returning();
+    return created;
+  }
+  
+  async updateAiGeneration(id: string, updates: Partial<AiGeneration>): Promise<AiGeneration> {
+    const [updated] = await db
+      .update(aiGenerations)
+      .set(updates)
+      .where(eq(aiGenerations.id, id))
+      .returning();
+    return updated;
+  }
+  
+  async getAiGeneration(id: string): Promise<AiGeneration | undefined> {
+    const [generation] = await db
+      .select()
+      .from(aiGenerations)
+      .where(eq(aiGenerations.id, id))
+      .limit(1);
+    return generation;
+  }
+  
+  async getAiGenerationsByArtist(artistId: string): Promise<AiGeneration[]> {
+    return await db
+      .select()
+      .from(aiGenerations)
+      .where(eq(aiGenerations.artistId, artistId))
+      .orderBy(desc(aiGenerations.createdAt));
+  }
+  
+  async getAllAiGenerations(): Promise<AiGeneration[]> {
+    return await db
+      .select()
+      .from(aiGenerations)
+      .orderBy(desc(aiGenerations.createdAt));
+  }
+  
+  async getOrCreateAiCredits(userId: string, userType: 'artist' | 'customer'): Promise<AiCredit> {
+    // Try to get existing credits
+    const existing = userType === 'artist'
+      ? await db.select().from(aiCredits).where(eq(aiCredits.artistId, userId)).limit(1)
+      : await db.select().from(aiCredits).where(eq(aiCredits.customerEmail, userId)).limit(1);
+    
+    if (existing.length > 0) {
+      return existing[0];
+    }
+    
+    // Create new credits with free tier (10 for artists, 3 for customers)
+    const freeCreditAmount = userType === 'artist' ? 10 : 3;
+    const [created] = await db
+      .insert(aiCredits)
+      .values({
+        artistId: userType === 'artist' ? userId : null,
+        customerEmail: userType === 'customer' ? userId : null,
+        userType,
+        freeCreditsRemaining: freeCreditAmount,
+        totalFreeCreditsGranted: freeCreditAmount,
+        paidCreditsRemaining: 0,
+      })
+      .returning();
+    
+    return created;
+  }
+  
+  async getAiCreditsByArtist(artistId: string): Promise<AiCredit | undefined> {
+    const [credits] = await db
+      .select()
+      .from(aiCredits)
+      .where(eq(aiCredits.artistId, artistId))
+      .limit(1);
+    return credits;
+  }
+  
+  async updateAiCredits(id: string, updates: Partial<AiCredit>): Promise<AiCredit> {
+    const [updated] = await db
+      .update(aiCredits)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(aiCredits.id, id))
+      .returning();
+    return updated;
+  }
+  
+  async deductCredit(userId: string, userType: 'artist' | 'customer'): Promise<{ success: boolean; remainingCredits: number; deductedFrom: 'free' | 'paid' }> {
+    // Get or create credits
+    const credits = await this.getOrCreateAiCredits(userId, userType);
+    
+    // Check if user has any credits available
+    const totalCredits = credits.freeCreditsRemaining + credits.paidCreditsRemaining;
+    if (totalCredits === 0) {
+      return { success: false, remainingCredits: 0, deductedFrom: 'free' };
+    }
+    
+    // Deduct from free credits first, then paid
+    let newFreeCredits = credits.freeCreditsRemaining;
+    let newPaidCredits = credits.paidCreditsRemaining;
+    let deductedFrom: 'free' | 'paid';
+    
+    if (newFreeCredits > 0) {
+      newFreeCredits -= 1;
+      deductedFrom = 'free';
+    } else {
+      newPaidCredits -= 1;
+      deductedFrom = 'paid';
+    }
+    
+    // Update credits
+    await this.updateAiCredits(credits.id, {
+      freeCreditsRemaining: newFreeCredits,
+      paidCreditsRemaining: newPaidCredits,
+    });
+    
+    return { 
+      success: true, 
+      remainingCredits: newFreeCredits + newPaidCredits,
+      deductedFrom
+    };
+  }
+  
+  async createAiCreditPurchase(purchase: InsertAiCreditPurchase): Promise<AiCreditPurchase> {
+    const [created] = await db
+      .insert(aiCreditPurchases)
+      .values(purchase)
+      .returning();
+    return created;
+  }
+  
+  async updateAiCreditPurchase(id: string, updates: Partial<AiCreditPurchase>): Promise<AiCreditPurchase> {
+    const [updated] = await db
+      .update(aiCreditPurchases)
+      .set(updates)
+      .where(eq(aiCreditPurchases.id, id))
+      .returning();
+    return updated;
+  }
+  
+  async getAiCreditPurchasesByArtist(artistId: string): Promise<AiCreditPurchase[]> {
+    return await db
+      .select()
+      .from(aiCreditPurchases)
+      .where(eq(aiCreditPurchases.artistId, artistId))
+      .orderBy(desc(aiCreditPurchases.createdAt));
+  }
+  
+  async getAiCreditPurchaseByStripePaymentIntent(paymentIntentId: string): Promise<AiCreditPurchase | undefined> {
+    const [purchase] = await db
+      .select()
+      .from(aiCreditPurchases)
+      .where(eq(aiCreditPurchases.stripePaymentIntentId, paymentIntentId))
+      .limit(1);
+    return purchase;
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -2415,6 +2607,21 @@ class MemStorage implements IStorage {
   async joinChallenge(): Promise<void> {}
   async getChallengeLeaderboard(): Promise<Array<any>> { return []; }
   async getActivityFeed(): Promise<Array<any>> { return []; }
+  
+  // AI Portrait Generation stubs
+  async createAiGeneration(): Promise<any> { console.log("MemStorage: createAiGeneration (stub)"); return {} as AiGeneration; }
+  async updateAiGeneration(): Promise<any> { console.log("MemStorage: updateAiGeneration (stub)"); return {} as AiGeneration; }
+  async getAiGeneration(): Promise<any> { console.log("MemStorage: getAiGeneration (stub)"); return undefined; }
+  async getAiGenerationsByArtist(): Promise<Array<any>> { console.log("MemStorage: getAiGenerationsByArtist (stub)"); return []; }
+  async getAllAiGenerations(): Promise<Array<any>> { console.log("MemStorage: getAllAiGenerations (stub)"); return []; }
+  async getOrCreateAiCredits(): Promise<any> { console.log("MemStorage: getOrCreateAiCredits (stub)"); return {} as AiCredit; }
+  async getAiCreditsByArtist(): Promise<any> { console.log("MemStorage: getAiCreditsByArtist (stub)"); return undefined; }
+  async updateAiCredits(): Promise<any> { console.log("MemStorage: updateAiCredits (stub)"); return {} as AiCredit; }
+  async deductCredit(): Promise<{ success: boolean; remainingCredits: number; deductedFrom: 'free' | 'paid' }> { console.log("MemStorage: deductCredit (stub)"); return { success: false, remainingCredits: 0, deductedFrom: 'free' }; }
+  async createAiCreditPurchase(): Promise<any> { console.log("MemStorage: createAiCreditPurchase (stub)"); return {} as AiCreditPurchase; }
+  async updateAiCreditPurchase(): Promise<any> { console.log("MemStorage: updateAiCreditPurchase (stub)"); return {} as AiCreditPurchase; }
+  async getAiCreditPurchasesByArtist(): Promise<Array<any>> { console.log("MemStorage: getAiCreditPurchasesByArtist (stub)"); return []; }
+  async getAiCreditPurchaseByStripePaymentIntent(): Promise<any> { console.log("MemStorage: getAiCreditPurchaseByStripePaymentIntent (stub)"); return undefined; }
 }
 
 export const storage = isDatabaseConfigured() ? new PostgresStorage() : new MemStorage();

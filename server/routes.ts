@@ -36,6 +36,7 @@ import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from ".
 import { emailService } from "./lib/email-service";
 import { generateReferralCode } from "./lib/referral-code-generator";
 import { AchievementService } from "./achievement-service";
+import { generateAiImage, saveAiImage, validatePrompt } from "./ai-service";
 
 // Initialize achievement service
 const achievementService = new AchievementService(storage);
@@ -2989,6 +2990,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Get featured status error:", error);
       res.status(500).json({ message: "Failed to fetch featured status" });
+    }
+  });
+
+  // ==================== AI PORTRAIT GENERATION ROUTES ====================
+  
+  // Artist: Get AI credit balance
+  app.get("/api/ai/credits", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      const credits = await storage.getOrCreateAiCredits(artist.id, 'artist');
+      
+      res.json({
+        freeCreditsRemaining: credits.freeCreditsRemaining,
+        paidCreditsRemaining: credits.paidCreditsRemaining,
+        totalCredits: credits.freeCreditsRemaining + credits.paidCreditsRemaining,
+        totalFreeCreditsGranted: credits.totalFreeCreditsGranted,
+      });
+    } catch (error: any) {
+      console.error("Get AI credits error:", error);
+      res.status(500).json({ message: "Failed to fetch AI credits" });
+    }
+  });
+  
+  // Artist: Generate AI image
+  app.post("/api/ai/generate", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      const { prompt, size = "1024x1024" } = req.body;
+      
+      // Validate prompt
+      if (!prompt || typeof prompt !== 'string') {
+        return res.status(400).json({ message: "Prompt is required" });
+      }
+      
+      const promptValidation = validatePrompt(prompt);
+      if (!promptValidation.valid) {
+        return res.status(400).json({ message: promptValidation.error });
+      }
+      
+      // Validate size
+      if (!["1024x1024", "512x512", "256x256"].includes(size)) {
+        return res.status(400).json({ message: "Invalid image size" });
+      }
+      
+      // Check if user has credits
+      const creditResult = await storage.deductCredit(artist.id, 'artist');
+      if (!creditResult.success) {
+        return res.status(402).json({ 
+          message: "Insufficient credits. Purchase more credits to continue generating images.",
+          remainingCredits: 0
+        });
+      }
+      
+      // Create generation record
+      const generation = await storage.createAiGeneration({
+        artistId: artist.id,
+        prompt,
+        size,
+        model: "gpt-image-1",
+        generationType: "artist_studio",
+      });
+      
+      try {
+        // Generate image using OpenAI
+        const { imageBuffer, costUsd } = await generateAiImage(prompt, size as any);
+        
+        // Save image to disk
+        const imageUrl = await saveAiImage(imageBuffer, artist.id, "artist_studio");
+        
+        // Update generation record with success
+        await storage.updateAiGeneration(generation.id, {
+          imageUrl,
+          status: "completed",
+          costUsd: costUsd.toString(),
+        });
+        
+        res.json({
+          id: generation.id,
+          imageUrl,
+          prompt,
+          size,
+          remainingCredits: creditResult.remainingCredits,
+          status: "completed",
+        });
+      } catch (generationError: any) {
+        // Update generation record with failure
+        await storage.updateAiGeneration(generation.id, {
+          status: "failed",
+          errorMessage: generationError.message,
+        });
+        
+        // Refund the credit to the correct balance based on where it was deducted from
+        const credits = await storage.getOrCreateAiCredits(artist.id, 'artist');
+        
+        if (creditResult.deductedFrom === 'free') {
+          // Refund to free credits
+          await storage.updateAiCredits(credits.id, {
+            freeCreditsRemaining: credits.freeCreditsRemaining + 1,
+          });
+        } else {
+          // Refund to paid credits
+          await storage.updateAiCredits(credits.id, {
+            paidCreditsRemaining: credits.paidCreditsRemaining + 1,
+          });
+        }
+        
+        throw generationError;
+      }
+    } catch (error: any) {
+      console.error("AI generation error:", error);
+      res.status(500).json({ message: error.message || "Failed to generate AI image" });
+    }
+  });
+  
+  // Artist: Get AI generation history
+  app.get("/api/ai/generations", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      const generations = await storage.getAiGenerationsByArtist(artist.id);
+      res.json(generations);
+    } catch (error: any) {
+      console.error("Get AI generations error:", error);
+      res.status(500).json({ message: "Failed to fetch AI generations" });
+    }
+  });
+  
+  // Artist: Get single AI generation
+  app.get("/api/ai/generations/:id", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      const generation = await storage.getAiGeneration(req.params.id);
+      
+      if (!generation) {
+        return res.status(404).json({ message: "Generation not found" });
+      }
+      
+      // Ensure artist owns this generation
+      if (generation.artistId !== artist.id) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      res.json(generation);
+    } catch (error: any) {
+      console.error("Get AI generation error:", error);
+      res.status(500).json({ message: "Failed to fetch AI generation" });
+    }
+  });
+  
+  // Admin: Get all AI generations for monitoring
+  app.get("/api/admin/ai/generations", requireAdmin, async (_req, res) => {
+    try {
+      const generations = await storage.getAllAiGenerations();
+      res.json(generations);
+    } catch (error: any) {
+      console.error("Admin get all AI generations error:", error);
+      res.status(500).json({ message: "Failed to fetch AI generations" });
     }
   });
 

@@ -32,17 +32,72 @@ A digital product platform selling AI-powered kits and tools to busy solopreneur
 - AI prompt generator: Live GPT-4o integration for on-demand content
 - Buyer dashboard: Login to access purchased kits and AI tools
 
-**Frontend Pages (Completed):**
+**MVP Status: ✅ COMPLETED** (November 2025)
+
+**Frontend Pages:**
 - `/creatorstack` - Public landing page showcasing AI kits with hero section, benefits, kit cards ($47 each), testimonials
 - `/creatorstack/login` - Authentication page with login/registration toggle for buyers
 - `/creatorstack/dashboard` - Buyer dashboard showing purchased kits, access to Canva templates and AI prompt libraries
 
-**Backend API (In Progress):**
-- `/api/creatorstack/auth/*` - Registration, login, logout for buyers
-- `/api/creatorstack/buyer/me` - Get authenticated buyer with purchases
-- `/api/creatorstack/webhooks/shopify` - Handle Shopify order webhooks to unlock kit access
-- `/api/creatorstack/purchases/*` - Track kit access and download counts
-- `/api/creatorstack/ai/generate` - GPT-4o prompt generation endpoint
+**Backend API:**
+- `/api/creatorstack/auth/*` - Registration, login, logout for buyers (session-based authentication)
+- `/api/creatorstack/buyer/me` - Get authenticated buyer with purchases (includes eager-loaded kit details)
+- `/api/creatorstack/webhooks/shopify` - HMAC-secured Shopify webhook handler for kit purchases
+- `/api/creatorstack/webhooks/shopify/test` - Development test endpoint (bypasses HMAC for local testing)
+- `/api/creatorstack/purchases/:id/track-access` - Track kit access and download counts
+- `/api/creatorstack/ai/generate` - GPT-4o prompt generation endpoint with retry logic and token tracking
+
+**MVP Features Delivered:**
+1. **Buyer Authentication:**
+   - Registration with password validation
+   - Secure login with bcrypt password hashing
+   - Session management with HTTP-only cookies
+   - Session-isolated from Print Network artists/admins
+
+2. **Shopify Purchase Integration:**
+   - HMAC-verified webhook handler for security
+   - Auto-provisioning of buyer accounts on first purchase
+   - Idempotent purchase creation (prevents duplicates via order ID + line item ID)
+   - Immediate access grant on successful purchase
+   - Production-ready error handling and retry support
+
+3. **AI Content Generator:**
+   - GPT-4o integration via Replit AI Integrations (no API key needed)
+   - Template + context system for flexible prompts
+   - Retry logic with p-retry for rate limiting resilience
+   - Token usage tracking in database
+   - Copy-to-clipboard functionality
+   - Real-time generation with loading states
+
+4. **Database Schema:**
+   - `creatorstack_buyers` - Buyer accounts with passwordless provisioning support
+   - `creatorstack_kits` - Product catalog with Shopify integration
+   - `creatorstack_purchases` - Purchase records with idempotency tracking
+   - `creatorstack_prompt_generations` - AI generation history and analytics
+
+5. **First Kit Launched:**
+   - **Social Media Blitz** ($47)
+   - ID: `6b1c0e1e-c854-4338-8646-7def07957218`
+   - SKU: `KIT-6b1c0e1e-c854-4338-8646-7def07957218`
+   - 50 Canva templates + GPT-4o caption generator
+   - Features: Instagram/Facebook/LinkedIn formats, 30 days content in 5 min/day
+
+**Technical Achievements:**
+- Zero external costs (uses Replit AI Integrations for GPT-4o)
+- Production-grade webhook reliability (HMAC verification, idempotency, retry support)
+- Dual-layer idempotency (Shopify order events + purchase records)
+- Multi-tenant database (shares PostgreSQL with Print Network)
+- Session-isolated authentication (separate from artist/admin sessions)
+
+**Next Steps (Post-MVP):**
+- Email notifications for buyer password setup (auto-provisioned accounts need password reset)
+- Additional kits (Email Launch Rocket, Content Creation Bundle)
+- Pro membership tier ($29/mo) with unlimited AI generations
+- Template library expansion and bonus resources
+
+**Operational Notes:**
+- **Test Endpoint Security:** The `/api/creatorstack/webhooks/shopify/test` endpoint bypasses HMAC verification for development testing. Before production deployment, disable or restrict this endpoint to prevent unauthorized access.
+- **Webhook Monitoring:** Monitor webhook retry logs for failed purchases and set up alerting for repeated failures to ensure reliable order processing.
 
 ## Upcoming Features (Future Development)
 - **Customer Savings Plan / Membership Program**: Build a subscription or membership system for customers (savings plans, member benefits, loyalty rewards, etc.)

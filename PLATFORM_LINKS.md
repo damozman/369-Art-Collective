@@ -3,71 +3,71 @@
 ## Main Application
 
 **Replit App (Development):**
-- Main URL: `https://workspace.texasmediamaste.repl.co`
+- Main URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev`
 - Note: Replace with your actual Replit deployment URL
 
 ## Artist Portal
 
 **Artist Login:**
-- URL: `https://workspace.texasmediamaste.repl.co/artist/login`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artist/login`
 - Test Account: `artist@example.com` / `artist123`
 
 **Artist Dashboard:**
-- URL: `https://workspace.texasmediamaste.repl.co/artist/dashboard`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artist/dashboard`
 - Features: Upload artwork, view earnings, manage products
 
 **AI Art Studio:**
-- URL: `https://workspace.texasmediamaste.repl.co/artist/ai-studio`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artist/ai-studio`
 - Features: Generate artwork with DALL-E 3, manage AI credits
 
 **Artist Registration:**
-- URL: `https://workspace.texasmediamaste.repl.co/artist/register`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artist/register`
 
 **Password Reset:**
-- URL: `https://workspace.texasmediamaste.repl.co/artist/reset-password`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artist/reset-password`
 
 ## Admin Portal
 
 **Admin Login:**
-- URL: `https://workspace.texasmediamaste.repl.co/admin/login`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/admin/login`
 - Test Account: `admin@247pn.com` / `admin123`
 
 **Admin Dashboard:**
-- URL: `https://workspace.texasmediamaste.repl.co/admin/dashboard`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/admin/dashboard`
 
 **Admin Pages:**
-- Artists Management: `https://workspace.texasmediamaste.repl.co/admin/artists`
-- Artworks Management: `https://workspace.texasmediamaste.repl.co/admin/artworks`
-- Archived Artworks: `https://workspace.texasmediamaste.repl.co/admin/archived`
-- Influencer Management: `https://workspace.texasmediamaste.repl.co/admin/influencers`
-- Challenges Management: `https://workspace.texasmediamaste.repl.co/admin/challenges`
-- Payouts Management: `https://workspace.texasmediamaste.repl.co/admin/payouts`
-- Testimonials Management: `https://workspace.texasmediamaste.repl.co/admin/testimonials`
+- Artists Management: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/admin/artists`
+- Artworks Management: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/admin/artworks`
+- Archived Artworks: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/admin/archived`
+- Influencer Management: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/admin/influencers`
+- Challenges Management: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/admin/challenges`
+- Payouts Management: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/admin/payouts`
+- Testimonials Management: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/admin/testimonials`
 
 ## Influencer Portal
 
 **Influencer Login:**
-- URL: `https://workspace.texasmediamaste.repl.co/influencer/login`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/influencer/login`
 
 **Influencer Dashboard:**
-- URL: `https://workspace.texasmediamaste.repl.co/influencer/dashboard`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/influencer/dashboard`
 - Features: Performance metrics, tier progress, affiliate links
 
 **Influencer Application:**
-- URL: `https://workspace.texasmediamaste.repl.co/influencer/apply`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/influencer/apply`
 - Public registration for new influencers
 
 **Pending Status:**
-- URL: `https://workspace.texasmediamaste.repl.co/influencer/pending`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/influencer/pending`
 - Shows while waiting for admin approval
 
 ## Public Pages
 
 **Homepage:**
-- URL: `https://workspace.texasmediamaste.repl.co/`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/`
 
 **Public Leaderboard:**
-- URL: `https://workspace.texasmediamaste.repl.co/leaderboard`
+- URL: `https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/leaderboard`
 - Features: Top influencers, activity feed, rankings
 
 ## Shopify Storefront

@@ -647,15 +647,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Artist not found" });
       }
 
-      // Return public artist info only
+      // Return public artist info only (match PublicArtistProfile type on frontend)
       res.json({
         id: artist.id,
         name: artist.name,
-        bio: artist.bio,
-        tagline: artist.tagline,
-        royaltyTier: artist.royaltyTier,
-        totalSales: artist.totalSales || 0,
-        shopifyCollectionHandle: artist.shopifyCollectionHandle,
+        bio: artist.bio || null,
+        tagline: null, // Not in schema yet
+        royaltyTier: null, // Calculated field - not in schema yet
+        totalSales: 0, // Calculated field - not in schema yet
+        shopifyCollectionHandle: null, // Not in schema yet
       });
     } catch (error) {
       console.error("Error fetching public artist:", error);

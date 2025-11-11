@@ -5,22 +5,24 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ExternalLink, TrendingUp, Package, Award } from "lucide-react";
+import { ExternalLink, Package } from "lucide-react";
 
-type Artist = {
-  id: number;
+// Public artist profile response from API
+type PublicArtistProfile = {
+  id: string;
   name: string;
-  tagline?: string;
-  bio?: string;
-  royaltyTier: string;
-  totalSales: number;
-  shopifyCollectionHandle?: string;
+  bio?: string | null;
+  tagline?: string | null;
+  royaltyTier?: string | null;
+  totalSales?: number;
+  shopifyCollectionHandle?: string | null;
 };
 
-type Artwork = {
-  id: number;
+// Public artwork response from API
+type PublicArtwork = {
+  id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   imageUrl: string;
   status: string;
 };
@@ -29,11 +31,11 @@ export default function ArtistProfile() {
   const params = useParams();
   const artistId = params.id;
 
-  const { data: artist, isLoading } = useQuery<Artist>({
+  const { data: artist, isLoading } = useQuery<PublicArtistProfile>({
     queryKey: [`/api/artists/${artistId}`],
   });
 
-  const { data: artworks, isLoading: artworksLoading } = useQuery<Artwork[]>({
+  const { data: artworks, isLoading: artworksLoading } = useQuery<PublicArtwork[]>({
     queryKey: [`/api/artists/${artistId}/artworks`],
   });
 
@@ -65,11 +67,17 @@ export default function ArtistProfile() {
     );
   }
 
-  const tierColors = {
-    Bronze: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-    Silver: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
-    Gold: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    Platinum: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  const getTierBadgeColor = (tier?: string | null) => {
+    if (!tier) return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200";
+    
+    const tierColors: Record<string, string> = {
+      Bronze: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+      Silver: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+      Gold: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+      Platinum: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    };
+    
+    return tierColors[tier] || tierColors.Bronze;
   };
 
   return (
@@ -89,17 +97,17 @@ export default function ArtistProfile() {
               <p className="text-xl text-muted-foreground mb-4">{artist.tagline || "Independent Artist"}</p>
 
               <div className="flex flex-wrap gap-3 mb-6">
-                <Badge className={tierColors[artist.royaltyTier as keyof typeof tierColors] || tierColors.Bronze}>
-                  <Award className="w-3 h-3 mr-1" />
-                  {artist.royaltyTier} Tier
-                </Badge>
-                <Badge variant="secondary">
+                {artist.royaltyTier && (
+                  <Badge className={getTierBadgeColor(artist.royaltyTier)} data-testid="badge-tier">
+                    {artist.royaltyTier} Tier
+                  </Badge>
+                )}
+                <Badge variant="secondary" data-testid="badge-artwork-count">
                   <Package className="w-3 h-3 mr-1" />
-                  {artworks?.filter((a: any) => a.status === "approved").length || 0} Artworks
+                  {artworks?.filter(a => a.status === "approved").length || 0} Artworks
                 </Badge>
-                {artist.totalSales > 0 && (
-                  <Badge variant="secondary">
-                    <TrendingUp className="w-3 h-3 mr-1" />
+                {artist.totalSales !== undefined && artist.totalSales > 0 && (
+                  <Badge variant="secondary" data-testid="badge-sales">
                     {artist.totalSales} Sales
                   </Badge>
                 )}
@@ -135,8 +143,8 @@ export default function ArtistProfile() {
         ) : artworks && artworks.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {artworks
-              .filter((artwork: any) => artwork.status === "approved")
-              .map((artwork: any) => (
+              .filter(artwork => artwork.status === "approved")
+              .map(artwork => (
                 <Card key={artwork.id} className="overflow-hidden hover-elevate" data-testid={`card-artwork-${artwork.id}`}>
                   <div className="aspect-square bg-muted relative overflow-hidden">
                     <img

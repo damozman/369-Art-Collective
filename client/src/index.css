@@ -17,34 +17,34 @@
   --elevate-2: rgba(0,0,0, .08);
 
   --background: 0 0% 100%;
-  --foreground: 240 5% 12%;
+  --foreground: 240 7% 6%;
   --border: 240 6% 88%;
 
-  --card: 240 5% 98%;
-  --card-foreground: 240 5% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 7% 6%;
   --card-border: 240 6% 92%;
 
   --sidebar: 240 5% 96%;
-  --sidebar-foreground: 240 5% 12%;
+  --sidebar-foreground: 240 7% 6%;
   --sidebar-border: 240 6% 90%;
-  --sidebar-primary: 262 83% 58%;
+  --sidebar-primary: 243 75% 59%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 240 8% 92%;
   --sidebar-accent-foreground: 240 6% 18%;
-  --sidebar-ring: 262 83% 58%;
+  --sidebar-ring: 243 75% 59%;
 
   --popover: 240 5% 95%;
-  --popover-foreground: 240 5% 12%;
+  --popover-foreground: 240 7% 6%;
   --popover-border: 240 6% 88%;
 
-  --primary: 262 83% 58%;
+  --primary: 243 75% 59%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 240 6% 90%;
   --secondary-foreground: 240 6% 18%;
 
   --muted: 240 8% 94%;
-  --muted-foreground: 240 4% 40%;
+  --muted-foreground: 240 4% 46%;
 
   --accent: 240 10% 92%;
   --accent-foreground: 240 6% 18%;
@@ -117,11 +117,11 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 240 6% 8%;
+  --background: 240 7% 6%;
   --foreground: 0 0% 95%;
   --border: 240 5% 18%;
 
-  --card: 240 5% 10%;
+  --card: 240 6% 10%;
   --card-foreground: 0 0% 95%;
   --card-border: 240 5% 16%;
 
@@ -318,4 +318,114 @@
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+}
+
+/* === DISPLATE-INSPIRED PREMIUM DESIGN SYSTEM === */
+
+.premium-gradient-bg {
+  background: linear-gradient(135deg, #f7f8f9 0%, #fff 50%, #f7f8f9 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.dark .premium-gradient-bg {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+}
+
+.premium-gradient-bg::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.03) 0%, transparent 70%);
+  animation: rotate-gradient 30s linear infinite;
+  z-index: 0;
+}
+
+.premium-gradient-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes rotate-gradient {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.premium-card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dark .premium-card {
+  background: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.premium-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+}
+
+.dark .premium-card:hover {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.premium-text-gradient {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.premium-pill-button {
+  border-radius: 28px;
+  padding: 0.875rem 2rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.subtle-float {
+  animation: subtle-float 4s ease-in-out infinite;
+}
+
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+.premium-hero {
+  position: relative;
+  padding: 5rem 2rem;
+  text-align: center;
+}
+
+.premium-eyebrow {
+  display: inline-block;
+  padding: 0.625rem 1.5rem;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 24px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6366f1;
+  margin-bottom: 1rem;
+}
+
+.dark .premium-eyebrow {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.artist-spotlight-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  aspect-ratio: 4/5;
 }

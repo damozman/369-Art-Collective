@@ -1,11 +1,251 @@
+{% comment %}
+247PN Merch Upsell Snippet
+Shows merchandise products (apparel, accessories) for the current artwork
+Keeps art primary while offering cross-sell opportunities
+{% endcomment %}
 
-{%- comment -%}
-Upsell block: link to merch collection filtered by artist or artwork tag.
-Ensure you create a collection handle like 'artist-{{ product.vendor | handle }}-merch'
-{%- endcomment -%}
-<div class="upsell">
-  <h3>Make it yours</h3>
-  <ul>
-    <li><a href="/collections/artist-{{ product.vendor | handle }}-merch">Shop {{ product.vendor }} merch</a></li>
-  </ul>
+{%- comment -%} Only show if this is an art print product {%- endcomment -%}
+{%- if product.type == 'Art Print' -%}
+
+<div class="merch-upsell">
+  <div class="merch-upsell__header">
+    <h2 class="merch-upsell__title">Love this design?</h2>
+    <p class="merch-upsell__subtitle">Also available on apparel & accessories</p>
+  </div>
+
+  <div class="merch-upsell__grid">
+    
+    {%- comment -%} T-Shirt Option {%- endcomment -%}
+    <div class="merch-card">
+      <div class="merch-card__badge">Coming Soon</div>
+      <div class="merch-card__image-placeholder">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <path d="M20 25h40M20 25l-5 5v30h50V30l-5-5M20 25l5-5h30l5 5M40 35v25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="merch-card__info">
+        <h3 class="merch-card__title">Premium T-Shirt</h3>
+        <p class="merch-card__description">100% cotton, sizes S-XXL</p>
+        <div class="merch-card__price">From $28</div>
+      </div>
+      <button class="merch-card__button" disabled>Notify Me</button>
+    </div>
+
+    {%- comment -%} Coffee Mug Option {%- endcomment -%}
+    <div class="merch-card">
+      <div class="merch-card__badge">Coming Soon</div>
+      <div class="merch-card__image-placeholder">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <rect x="20" y="25" width="35" height="30" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M55 35h5c2.76 0 5 2.24 5 5s-2.24 5-5 5h-5" stroke="currentColor" stroke-width="2"/>
+          <line x1="25" y1="55" x2="50" y2="55" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="merch-card__info">
+        <h3 class="merch-card__title">Ceramic Mug</h3>
+        <p class="merch-card__description">11oz, dishwasher safe</p>
+        <div class="merch-card__price">$18</div>
+      </div>
+      <button class="merch-card__button" disabled>Notify Me</button>
+    </div>
+
+    {%- comment -%} Tote Bag Option {%- endcomment -%}
+    <div class="merch-card">
+      <div class="merch-card__badge">Coming Soon</div>
+      <div class="merch-card__image-placeholder">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <rect x="25" y="30" width="30" height="35" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M30 30V25c0-5.52 4.48-10 10-10s10 4.48 10 10v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="merch-card__info">
+        <h3 class="merch-card__title">Tote Bag</h3>
+        <p class="merch-card__description">Canvas, eco-friendly</p>
+        <div class="merch-card__price">$22</div>
+      </div>
+      <button class="merch-card__button" disabled>Notify Me</button>
+    </div>
+
+    {%- comment -%} Phone Case Option {%- endcomment -%}
+    <div class="merch-card">
+      <div class="merch-card__badge">Coming Soon</div>
+      <div class="merch-card__image-placeholder">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <rect x="28" y="15" width="24" height="50" rx="3" stroke="currentColor" stroke-width="2"/>
+          <circle cx="40" cy="60" r="2" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="merch-card__info">
+        <h3 class="merch-card__title">Phone Case</h3>
+        <p class="merch-card__description">Multiple models available</p>
+        <div class="merch-card__price">$24</div>
+      </div>
+      <button class="merch-card__button" disabled>Notify Me</button>
+    </div>
+
+  </div>
+
+  {%- comment -%} CTA to explore all merch {%- endcomment -%}
+  <div class="merch-upsell__footer">
+    <p class="merch-upsell__footer-text">
+      Want to see your favorite artwork on other products? 
+      <a href="/pages/contact" class="merch-upsell__footer-link">Let us know</a>
+    </p>
+  </div>
 </div>
+
+<style>
+.merch-upsell {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.merch-upsell__header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.merch-upsell__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.merch-upsell__subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1rem;
+}
+
+.merch-upsell__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.merch-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.merch-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.merch-card__badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.merch-card__image-placeholder {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 12px;
+  color: #6366f1;
+}
+
+.merch-card__info {
+  margin-bottom: 1rem;
+}
+
+.merch-card__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.merch-card__description {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.5rem;
+}
+
+.merch-card__price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.merch-card__button {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 28px;
+  color: #6366f1;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.merch-card__button:not(:disabled):hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: scale(1.02);
+}
+
+.merch-upsell__footer {
+  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.merch-upsell__footer-text {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+}
+
+.merch-upsell__footer-link {
+  color: #6366f1;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.merch-upsell__footer-link:hover {
+  color: #8b5cf6;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .merch-upsell__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .merch-upsell__title {
+    font-size: 1.5rem;
+  }
+}
+</style>
+
+{%- endif -%}

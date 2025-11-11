@@ -213,6 +213,13 @@
         "artist_3"
       ]
     },
+    "merch_preview": {
+      "type": "247-merch-preview",
+      "settings": {
+        "heading": "Your Favorite Art, Everywhere",
+        "description": "Soon you'll be able to wear and use your favorite artwork. Apparel, accessories, and more."
+      }
+    },
     "trust_badges": {
       "type": "247-trust-badges",
       "blocks": {
@@ -273,6 +280,7 @@
     "featured_collections",
     "featured_artworks",
     "featured_artists",
+    "merch_preview",
     "trust_badges",
     "artist_cta"
   ]

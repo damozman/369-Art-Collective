@@ -74,10 +74,11 @@ async function deploy() {
     'attached_assets/theme/layout/theme.liquid',
     // Config (1 file)
     'attached_assets/theme/config/settings_schema.json',
-    // Sections (19 files)
+    // Sections (20 files)
     'attached_assets/theme/sections/header.liquid',
     'attached_assets/theme/sections/footer.liquid',
     'attached_assets/theme/sections/247-about-content.liquid',
+    'attached_assets/theme/sections/247-all-collections.liquid',
     'attached_assets/theme/sections/247-art-product.liquid',
     'attached_assets/theme/sections/247-artist-cta-banner.liquid',
     'attached_assets/theme/sections/247-collection-grid.liquid',
@@ -101,9 +102,10 @@ async function deploy() {
     // Assets (2 files)
     'attached_assets/theme/assets/247-art.js',
     'attached_assets/theme/assets/247-art.css',
-    // Templates (8 files)
+    // Templates (9 files)
     'attached_assets/theme/templates/index.json',
     'attached_assets/theme/templates/collection.json',
+    'attached_assets/theme/templates/list-collections.json',
     'attached_assets/theme/templates/page.about.json',
     'attached_assets/theme/templates/page.contact.json',
     'attached_assets/theme/templates/page.creators.json',

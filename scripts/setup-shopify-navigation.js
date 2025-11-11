@@ -270,8 +270,10 @@ async function createPages() {
       
       await delay();
     } catch (error) {
-      if (error.message.includes('already exists')) {
+      if (error.message.includes('already exists') || error.message.includes('already been taken') || error.message.includes('handle has already been taken')) {
         log(`⚠ Page "${pageConfig.title}" already exists, skipping`, colors.yellow);
+        // Still count as success since page exists
+        log(`  URL: /pages/${pageConfig.handle}`, colors.cyan);
       } else {
         log(`❌ Failed to create page "${pageConfig.title}": ${error.message}`, colors.red);
       }
@@ -327,17 +329,25 @@ function convertToGraphQLMenuItems(items, resources) {
     const menuItem = {
       title: item.title,
       type: 'HTTP',
-      url: item.url || '#',
+      url: item.url || '/',
     };
     
     // Determine type and resource ID
-    if (item.resource_type === 'page' && item.handle && resources.pages[item.handle]) {
-      menuItem.type = 'PAGE';
-      menuItem.resourceId = `gid://shopify/Page/${resources.pages[item.handle]}`;
+    if (item.resource_type === 'page' && item.handle) {
+      if (resources.pages[item.handle]) {
+        menuItem.type = 'PAGE';
+        menuItem.resourceId = `gid://shopify/Page/${resources.pages[item.handle]}`;
+      } else {
+        log(`  ⚠ Page "${item.handle}" not found, using HTTP link`, colors.yellow);
+      }
       menuItem.url = `/pages/${item.handle}`;
-    } else if (item.resource_type === 'collection' && item.handle && resources.collections[item.handle]) {
-      menuItem.type = 'COLLECTION';
-      menuItem.resourceId = `gid://shopify/Collection/${resources.collections[item.handle]}`;
+    } else if (item.resource_type === 'collection' && item.handle) {
+      if (resources.collections[item.handle]) {
+        menuItem.type = 'COLLECTION';
+        menuItem.resourceId = `gid://shopify/Collection/${resources.collections[item.handle]}`;
+      } else {
+        log(`  ⚠ Collection "${item.handle}" not found, using HTTP link`, colors.yellow);
+      }
       menuItem.url = `/collections/${item.handle}`;
     } else if (item.resource_type === 'frontpage') {
       menuItem.type = 'HTTP';

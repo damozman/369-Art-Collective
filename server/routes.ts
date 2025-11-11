@@ -1626,6 +1626,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ====================
+  // GAMIFICATION ENDPOINTS
+  // ====================
+
+  // Public: Get leaderboard (top influencers)
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      const { metric = 'conversions', period = 'all_time' } = req.query as { metric?: string; period?: string };
+      const leaderboard = await storage.getLeaderboard(metric, period);
+      res.json(leaderboard);
+    } catch (error: any) {
+      console.error("Get leaderboard error:", error);
+      res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+  });
+
+  // Protected: Get influencer's badges/achievements
+  app.get("/api/influencers/badges", requireInfluencer, async (req, res) => {
+    try {
+      const badges = await storage.getInfluencerBadges(req.user!.id);
+      res.json(badges);
+    } catch (error: any) {
+      console.error("Get influencer badges error:", error);
+      res.status(500).json({ message: "Failed to fetch badges" });
+    }
+  });
+
+  // Protected: Get all achievements (catalog)
+  app.get("/api/achievements", requireInfluencer, async (req, res) => {
+    try {
+      const achievements = await storage.getAllAchievements();
+      res.json(achievements);
+    } catch (error: any) {
+      console.error("Get achievements error:", error);
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+
+  // Protected: Get active challenges
+  app.get("/api/challenges", requireInfluencer, async (req, res) => {
+    try {
+      const challenges = await storage.getActiveChallenges();
+      res.json(challenges);
+    } catch (error: any) {
+      console.error("Get challenges error:", error);
+      res.status(500).json({ message: "Failed to fetch challenges" });
+    }
+  });
+
+  // Protected: Join a challenge
+  app.post("/api/challenges/:id/join", requireInfluencer, async (req, res) => {
+    try {
+      const participation = await storage.joinChallenge(req.params.id, req.user!.id);
+      res.json(participation);
+    } catch (error: any) {
+      console.error("Join challenge error:", error);
+      res.status(400).json({ message: error.message || "Failed to join challenge" });
+    }
+  });
+
+  // Protected: Get challenge leaderboard
+  app.get("/api/challenges/:id/leaderboard", requireInfluencer, async (req, res) => {
+    try {
+      const leaderboard = await storage.getChallengeLeaderboard(req.params.id);
+      res.json(leaderboard);
+    } catch (error: any) {
+      console.error("Get challenge leaderboard error:", error);
+      res.status(500).json({ message: "Failed to fetch challenge leaderboard" });
+    }
+  });
+
+  // Protected: Get activity feed
+  app.get("/api/activity-feed", requireInfluencer, async (req, res) => {
+    try {
+      const { limit = 20 } = req.query as { limit?: string };
+      const feed = await storage.getActivityFeed(parseInt(limit as string));
+      res.json(feed);
+    } catch (error: any) {
+      console.error("Get activity feed error:", error);
+      res.status(500).json({ message: "Failed to fetch activity feed" });
+    }
+  });
+
   // Admin: Get all influencers
   app.get("/api/admin/influencers", requireAdmin, async (req, res) => {
     try {

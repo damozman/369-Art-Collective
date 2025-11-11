@@ -2221,7 +2221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updated = await storage.updateArtwork(id, {
         status: "approved",
         shopifyProductId,
-        shopifyTemplate,
+        shopifyTemplate: shopifyTemplate || undefined,
         printifyProductId,
         printifyImageId,
       });

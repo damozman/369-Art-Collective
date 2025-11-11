@@ -1,0 +1,19 @@
+{
+  "sections": {
+    "faq_hero": {
+      "type": "247-page-hero",
+      "settings": {
+        "title": "Help & FAQs",
+        "subtitle": "Find answers to common questions"
+      }
+    },
+    "faq_content": {
+      "type": "247-faq-accordion",
+      "settings": {}
+    }
+  },
+  "order": [
+    "faq_hero",
+    "faq_content"
+  ]
+}

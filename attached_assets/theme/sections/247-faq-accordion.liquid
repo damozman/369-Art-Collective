@@ -1,0 +1,368 @@
+{% comment %}
+247 Print Network - FAQ Accordion Section
+Accordion-style FAQ organized by category
+{% endcomment %}
+
+{{ '247-art.css' | asset_url | stylesheet_tag }}
+
+<section class="faq-accordion">
+  <div class="faq-accordion__container">
+    
+    {% if section.settings.section_title != blank %}
+      <div class="faq-accordion__header">
+        <h2 class="faq-accordion__title">{{ section.settings.section_title }}</h2>
+        {% if section.settings.section_subtitle != blank %}
+          <p class="faq-accordion__subtitle">{{ section.settings.section_subtitle }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="faq-accordion__content">
+      {% for block in section.blocks %}
+        {% if block.type == 'category' %}
+          <div class="faq-category" {{ block.shopify_attributes }}>
+            <h3 class="faq-category__title">{{ block.settings.category_name }}</h3>
+          </div>
+        {% elsif block.type == 'question' %}
+          <div class="faq-item" {{ block.shopify_attributes }}>
+            <button class="faq-item__question" type="button" aria-expanded="false">
+              <span class="faq-item__question-text">{{ block.settings.question }}</span>
+              <svg class="faq-item__icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="faq-item__answer">
+              <div class="faq-item__answer-content">
+                {{ block.settings.answer }}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const faqItems = document.querySelectorAll('.faq-item__question');
+    
+    faqItems.forEach(function(question) {
+      question.addEventListener('click', function() {
+        const isExpanded = this.getAttribute('aria-expanded') === 'true';
+        const answer = this.nextElementSibling;
+        const item = this.closest('.faq-item');
+        
+        // Close all other items
+        document.querySelectorAll('.faq-item__question').forEach(function(otherQuestion) {
+          if (otherQuestion !== question) {
+            otherQuestion.setAttribute('aria-expanded', 'false');
+            otherQuestion.closest('.faq-item').classList.remove('active');
+          }
+        });
+        
+        // Toggle current item
+        this.setAttribute('aria-expanded', !isExpanded);
+        item.classList.toggle('active');
+      });
+    });
+  });
+</script>
+
+<style>
+.faq-accordion {
+  background: #fff;
+  padding: 5rem 2rem;
+}
+
+.faq-accordion__container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.faq-accordion__header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.faq-accordion__title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #0f0f0f;
+  margin: 0 0 1rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.faq-accordion__subtitle {
+  font-size: 1.25rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.faq-accordion__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.faq-category {
+  margin-top: 2rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid #6366f1;
+}
+
+.faq-category:first-child {
+  margin-top: 0;
+}
+
+.faq-category__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f0f0f;
+  margin: 0;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  font-size: 0.9375rem;
+  letter-spacing: 0.08em;
+  color: #6366f1;
+}
+
+.faq-item {
+  background: #f7f8f9;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-item:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.faq-item.active {
+  background: #fff;
+  border-color: #6366f1;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+}
+
+.faq-item__question {
+  width: 100%;
+  padding: 1.5rem 2rem;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+
+.faq-item__question:hover {
+  background: rgba(99, 102, 241, 0.02);
+}
+
+.faq-item.active .faq-item__question {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.faq-item__question-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f0f0f;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  flex: 1;
+}
+
+.faq-item__icon {
+  flex-shrink: 0;
+  color: #6b7280;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-item.active .faq-item__icon {
+  transform: rotate(180deg);
+  color: #6366f1;
+}
+
+.faq-item__answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-item.active .faq-item__answer {
+  max-height: 1000px;
+}
+
+.faq-item__answer-content {
+  padding: 0 2rem 1.5rem 2rem;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #4b5563;
+}
+
+.faq-item__answer-content p {
+  margin: 0 0 1rem 0;
+}
+
+.faq-item__answer-content p:last-child {
+  margin-bottom: 0;
+}
+
+.faq-item__answer-content strong {
+  color: #0f0f0f;
+  font-weight: 600;
+}
+
+.faq-item__answer-content ul,
+.faq-item__answer-content ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.faq-item__answer-content li {
+  margin: 0.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .faq-accordion {
+    padding: 3rem 1.5rem;
+  }
+
+  .faq-accordion__title {
+    font-size: 2.5rem;
+  }
+
+  .faq-item__question {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .faq-item__question-text {
+    font-size: 1rem;
+  }
+
+  .faq-item__answer-content {
+    padding: 0 1.5rem 1.25rem 1.5rem;
+    font-size: 0.9375rem;
+  }
+}
+</style>
+
+{% schema %}
+{
+  "name": "247 FAQ Accordion",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section Title",
+      "default": "Frequently Asked Questions"
+    },
+    {
+      "type": "text",
+      "id": "section_subtitle",
+      "label": "Section Subtitle",
+      "default": "Everything you need to know about 247 Print Network"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "Category Header",
+      "settings": [
+        {
+          "type": "text",
+          "id": "category_name",
+          "label": "Category Name",
+          "default": "Category Name"
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "name": "Question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "Your question here?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>Your answer here.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "247 FAQ Accordion",
+      "blocks": [
+        {
+          "type": "category",
+          "settings": {
+            "category_name": "Artist Royalties"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "How much do artists earn per sale?",
+            "answer": "<p>Artists earn <strong>30-45% royalties</strong> on every sale. Your rate increases based on monthly sales volume: 30% for 0-10 sales, 35% for 11-25 sales, 40% for 26-50 sales, and 45% for 51+ sales.</p>"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "When do I receive my payments?",
+            "answer": "<p>Payments are processed automatically via <strong>Stripe Connect</strong> on the 1st and 15th of each month for all earnings from the previous period.</p>"
+          }
+        },
+        {
+          "type": "category",
+          "settings": {
+            "category_name": "Print-on-Demand"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "Do I need to manage inventory?",
+            "answer": "<p>No! We use a <strong>print-on-demand model</strong> through Printify. Products are only printed when customers order them, so there's zero inventory risk or upfront costs.</p>"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "What's the print quality like?",
+            "answer": "<p>We use <strong>museum-grade paper</strong> and professional printing equipment to ensure vibrant colors and exceptional detail. All prints come with a quality guarantee.</p>"
+          }
+        },
+        {
+          "type": "category",
+          "settings": {
+            "category_name": "Shipping"
+          }
+        },
+        {
+          "type": "question",
+          "settings": {
+            "question": "How long does shipping take?",
+            "answer": "<p>Production takes 2-5 business days, then shipping varies by location: <strong>3-7 days domestic</strong>, <strong>7-14 days international</strong>. Customers receive tracking information once orders ship.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

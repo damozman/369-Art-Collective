@@ -1,0 +1,445 @@
+{% comment %}
+247 Print Network - Artist Benefits Section
+Showcase benefits for artist recruitment
+{% endcomment %}
+
+{{ '247-art.css' | asset_url | stylesheet_tag }}
+
+<section class="join-benefits">
+  <div class="join-benefits__container">
+    
+    {% if section.settings.section_title != blank %}
+      <div class="join-benefits__header">
+        <h2 class="join-benefits__title">{{ section.settings.section_title }}</h2>
+        {% if section.settings.section_subtitle != blank %}
+          <p class="join-benefits__subtitle">{{ section.settings.section_subtitle }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="benefits-grid">
+      {% for block in section.blocks %}
+        {% if block.type == 'benefit' %}
+          <div class="benefit-card" {{ block.shopify_attributes }}>
+            {% if block.settings.icon_emoji != blank %}
+              <div class="benefit-card__icon">{{ block.settings.icon_emoji }}</div>
+            {% endif %}
+            <h3 class="benefit-card__title">{{ block.settings.title }}</h3>
+            <p class="benefit-card__description">{{ block.settings.description }}</p>
+            {% if block.settings.highlight != blank %}
+              <div class="benefit-card__highlight">{{ block.settings.highlight }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if section.settings.show_royalty_tiers %}
+      <div class="royalty-tiers">
+        <h3 class="royalty-tiers__title">Royalty Tier System</h3>
+        <p class="royalty-tiers__subtitle">Earn more as you sell more - your rate increases automatically</p>
+        
+        <div class="royalty-tiers__grid">
+          <div class="tier-card">
+            <div class="tier-card__badge">Bronze</div>
+            <div class="tier-card__rate">30%</div>
+            <div class="tier-card__range">0-10 sales/month</div>
+            <div class="tier-card__example">Example: $100 sale = $30 royalty</div>
+          </div>
+
+          <div class="tier-card tier-card--featured">
+            <div class="tier-card__badge tier-card__badge--featured">Silver</div>
+            <div class="tier-card__rate">35%</div>
+            <div class="tier-card__range">11-25 sales/month</div>
+            <div class="tier-card__example">Example: $100 sale = $35 royalty</div>
+          </div>
+
+          <div class="tier-card">
+            <div class="tier-card__badge">Gold</div>
+            <div class="tier-card__rate">40%</div>
+            <div class="tier-card__range">26-50 sales/month</div>
+            <div class="tier-card__example">Example: $100 sale = $40 royalty</div>
+          </div>
+
+          <div class="tier-card tier-card--premium">
+            <div class="tier-card__badge tier-card__badge--premium">Platinum</div>
+            <div class="tier-card__rate">45%</div>
+            <div class="tier-card__range">51+ sales/month</div>
+            <div class="tier-card__example">Example: $100 sale = $45 royalty</div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<style>
+.join-benefits {
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  padding: 5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.join-benefits::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.join-benefits__container {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.join-benefits__header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.join-benefits__title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 1rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.join-benefits__subtitle {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  line-height: 1.6;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  margin-bottom: 5rem;
+}
+
+.benefit-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.benefit-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.benefit-card:hover {
+  transform: translateY(-8px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.3);
+}
+
+.benefit-card:hover::before {
+  opacity: 1;
+}
+
+.benefit-card__icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  line-height: 1;
+}
+
+.benefit-card__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+}
+
+.benefit-card__description {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+}
+
+.benefit-card__highlight {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #c7d2fe;
+  text-align: center;
+}
+
+.royalty-tiers {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 3rem;
+}
+
+.royalty-tiers__title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.royalty-tiers__subtitle {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  margin: 0 0 3rem;
+}
+
+.royalty-tiers__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.tier-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tier-card:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.tier-card--featured {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.tier-card--premium {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.tier-card__badge {
+  display: inline-block;
+  padding: 0.5rem 1.25rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 1.25rem;
+}
+
+.tier-card__badge--featured {
+  background: rgba(99, 102, 241, 0.25);
+  color: #c7d2fe;
+}
+
+.tier-card__badge--premium {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fde68a;
+}
+
+.tier-card__rate {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.tier-card__range {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1.25rem;
+  font-weight: 500;
+}
+
+.tier-card__example {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+  .join-benefits {
+    padding: 3rem 1.5rem;
+  }
+
+  .join-benefits__title {
+    font-size: 2.5rem;
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .royalty-tiers {
+    padding: 2rem 1.5rem;
+  }
+
+  .royalty-tiers__grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+{% schema %}
+{
+  "name": "247 Join Benefits",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section Title",
+      "default": "Why Join 247 Print Network?"
+    },
+    {
+      "type": "text",
+      "id": "section_subtitle",
+      "label": "Section Subtitle",
+      "default": "Everything you need to turn your art into income"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_royalty_tiers",
+      "label": "Show Royalty Tier System",
+      "default": true
+    }
+  ],
+  "blocks": [
+    {
+      "type": "benefit",
+      "name": "Benefit",
+      "settings": [
+        {
+          "type": "text",
+          "id": "icon_emoji",
+          "label": "Icon Emoji",
+          "default": "💰"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Fair Royalties"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "label": "Description",
+          "default": "Earn 30-45% on every sale with our tiered royalty system. The more you sell, the more you earn."
+        },
+        {
+          "type": "text",
+          "id": "highlight",
+          "label": "Highlight Text",
+          "default": "Up to 45% per sale"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "247 Join Benefits",
+      "blocks": [
+        {
+          "type": "benefit",
+          "settings": {
+            "icon_emoji": "💰",
+            "title": "Fair Royalties",
+            "description": "Earn 30-45% on every sale with our tiered royalty system. The more you sell, the more you earn.",
+            "highlight": "Up to 45% per sale"
+          }
+        },
+        {
+          "type": "benefit",
+          "settings": {
+            "icon_emoji": "📦",
+            "title": "Zero Inventory",
+            "description": "Print-on-demand means no upfront costs, no storage fees, and no inventory risk. We handle everything.",
+            "highlight": "No upfront investment"
+          }
+        },
+        {
+          "type": "benefit",
+          "settings": {
+            "icon_emoji": "🚀",
+            "title": "Automated Payouts",
+            "description": "Stripe Connect handles all payments securely. Get paid twice a month, automatically.",
+            "highlight": "Paid on 1st & 15th"
+          }
+        },
+        {
+          "type": "benefit",
+          "settings": {
+            "icon_emoji": "🌍",
+            "title": "Global Reach",
+            "description": "Your art ships worldwide through Printify's international network. Reach customers everywhere.",
+            "highlight": "Ship to 100+ countries"
+          }
+        },
+        {
+          "type": "benefit",
+          "settings": {
+            "icon_emoji": "⭐",
+            "title": "Premium Quality",
+            "description": "Museum-grade paper, vibrant colors, and professional finishes. Your art deserves the best.",
+            "highlight": "Museum-grade prints"
+          }
+        },
+        {
+          "type": "benefit",
+          "settings": {
+            "icon_emoji": "🎨",
+            "title": "Artist Community",
+            "description": "Join a network of creators, share tips, and grow together. Referral bonuses for bringing in new artists.",
+            "highlight": "10% referral bonus"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

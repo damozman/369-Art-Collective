@@ -168,6 +168,7 @@ async function deploy() {
     'sections/header.liquid',
     'sections/footer.liquid',
     'sections/247-about-content.liquid',
+    'sections/247-all-collections.liquid',
     'sections/247-art-product.liquid',
     'sections/247-artist-cta-banner.liquid',
     'sections/247-collection-grid.liquid',
@@ -194,6 +195,7 @@ async function deploy() {
     // All templates
     'templates/index.json',
     'templates/collection.json',
+    'templates/list-collections.json',
     'templates/page.about.json',
     'templates/page.contact.json',
     'templates/page.creators.json',
@@ -207,7 +209,7 @@ async function deploy() {
   const deployCommand = `shopify theme push --store=${storeUrl} --path attached_assets/theme --development --force --only ${onlyFiles}`;
   
   log('Note: Deploying to development theme. Use --live flag for production.', colors.yellow);
-  const success = runCommand(deployCommand, 'Uploading all 33 theme files (including header & footer)');
+  const success = runCommand(deployCommand, 'Uploading all 36 theme files (including header & footer)');
 
   if (success) {
     logSection('✅ Deployment Successful!');

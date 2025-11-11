@@ -100,6 +100,14 @@ export interface IStorage {
   getAllArtworks(): Promise<ArtworkWithArtist[]>;
   createArtwork(artwork: InsertArtwork): Promise<Artwork>;
   updateArtwork(id: string, updates: Partial<Artwork>): Promise<Artwork>;
+  
+  // Artwork archive methods
+  getArchivedArtworks(): Promise<ArtworkWithArtist[]>;
+  getArtworksEligibleForArchive(monthsInactive: number): Promise<ArtworkWithArtist[]>;
+  getArtworksEligibleForArchiveWarning(monthsInactive: number, warningDaysBefore: number): Promise<ArtworkWithArtist[]>;
+  archiveArtwork(id: string): Promise<Artwork>;
+  reactivateArtwork(id: string): Promise<Artwork>;
+  updateArtworkLastSaleDate(artworkId: string, saleDate: Date): Promise<void>;
 
   // Order methods (MVP)
   createOrder(order: any): Promise<any>;
@@ -618,6 +626,160 @@ class PostgresStorage implements IStorage {
       .returning();
     if (!updatedArtwork) throw new Error("Artwork not found");
     return updatedArtwork;
+  }
+
+  // Artwork archive methods
+  async getArchivedArtworks(): Promise<ArtworkWithArtist[]> {
+    const artworks = await db
+      .select()
+      .from(artworksTable)
+      .where(isNotNull(artworksTable.archivedAt))
+      .orderBy(desc(artworksTable.archivedAt));
+    
+    const artworksWithArtist = await Promise.all(
+      artworks.map(async (artwork) => {
+        const [artist] = await db
+          .select({
+            id: artists.id,
+            name: artists.name,
+            email: artists.email,
+          })
+          .from(artists)
+          .where(eq(artists.id, artwork.artistId))
+          .limit(1);
+        
+        return {
+          ...artwork,
+          artist,
+        };
+      })
+    );
+    
+    return artworksWithArtist as ArtworkWithArtist[];
+  }
+
+  async getArtworksEligibleForArchive(monthsInactive: number): Promise<ArtworkWithArtist[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setMonth(cutoffDate.getMonth() - monthsInactive);
+    
+    const artworks = await db
+      .select()
+      .from(artworksTable)
+      .where(
+        and(
+          eq(artworksTable.status, "approved"),
+          isNull(artworksTable.archivedAt),
+          drizzleSql`(
+            ${artworksTable.lastSaleDate} IS NULL 
+            AND ${artworksTable.createdAt} < ${cutoffDate}
+          ) OR (
+            ${artworksTable.lastSaleDate} < ${cutoffDate}
+          )`
+        )
+      );
+    
+    const artworksWithArtist = await Promise.all(
+      artworks.map(async (artwork) => {
+        const [artist] = await db
+          .select({
+            id: artists.id,
+            name: artists.name,
+            email: artists.email,
+          })
+          .from(artists)
+          .where(eq(artists.id, artwork.artistId))
+          .limit(1);
+        
+        return {
+          ...artwork,
+          artist,
+        };
+      })
+    );
+    
+    return artworksWithArtist as ArtworkWithArtist[];
+  }
+
+  async getArtworksEligibleForArchiveWarning(monthsInactive: number, warningDaysBefore: number): Promise<ArtworkWithArtist[]> {
+    const archiveCutoffDate = new Date();
+    archiveCutoffDate.setMonth(archiveCutoffDate.getMonth() - monthsInactive);
+    
+    const warningCutoffDate = new Date(archiveCutoffDate);
+    warningCutoffDate.setDate(warningCutoffDate.getDate() + warningDaysBefore);
+    
+    const artworks = await db
+      .select()
+      .from(artworksTable)
+      .where(
+        and(
+          eq(artworksTable.status, "approved"),
+          isNull(artworksTable.archivedAt),
+          isNull(artworksTable.archiveWarningEmailSentAt),
+          drizzleSql`(
+            ${artworksTable.lastSaleDate} IS NULL 
+            AND ${artworksTable.createdAt} < ${warningCutoffDate}
+          ) OR (
+            ${artworksTable.lastSaleDate} < ${warningCutoffDate}
+          )`
+        )
+      );
+    
+    const artworksWithArtist = await Promise.all(
+      artworks.map(async (artwork) => {
+        const [artist] = await db
+          .select({
+            id: artists.id,
+            name: artists.name,
+            email: artists.email,
+          })
+          .from(artists)
+          .where(eq(artists.id, artwork.artistId))
+          .limit(1);
+        
+        return {
+          ...artwork,
+          artist,
+        };
+      })
+    );
+    
+    return artworksWithArtist as ArtworkWithArtist[];
+  }
+
+  async archiveArtwork(id: string): Promise<Artwork> {
+    const [archivedArtwork] = await db
+      .update(artworksTable)
+      .set({ 
+        archivedAt: new Date(),
+        shopifyProductStatus: "draft",
+        updatedAt: new Date()
+      })
+      .where(eq(artworksTable.id, id))
+      .returning();
+    if (!archivedArtwork) throw new Error("Artwork not found");
+    return archivedArtwork;
+  }
+
+  async reactivateArtwork(id: string): Promise<Artwork> {
+    const [reactivatedArtwork] = await db
+      .update(artworksTable)
+      .set({ 
+        archivedAt: null,
+        archiveWarningEmailSentAt: null,
+        shopifyProductStatus: "active",
+        updatedAt: new Date()
+      })
+      .where(eq(artworksTable.id, id))
+      .returning();
+    if (!reactivatedArtwork) throw new Error("Artwork not found");
+    return reactivatedArtwork;
+  }
+
+  async updateArtworkLastSaleDate(artworkId: string, saleDate: Date): Promise<void> {
+    await db
+      .update(artworksTable)
+      .set({ lastSaleDate: saleDate, updatedAt: new Date() })
+      .where(eq(artworksTable.id, artworkId));
   }
 
   // Order/Sale/Payout methods
@@ -2173,6 +2335,9 @@ class MemStorage implements IStorage {
       shopifyProductStatus: "draft",
       printifyProductId: null,
       printifyImageId: null,
+      lastSaleDate: null,
+      archivedAt: null,
+      archiveWarningEmailSentAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -2186,6 +2351,120 @@ class MemStorage implements IStorage {
     const updated = { ...artwork, ...updates, updatedAt: new Date() };
     this.artworks.set(id, updated);
     return updated;
+  }
+
+  // Artwork archive methods
+  async getArchivedArtworks(): Promise<ArtworkWithArtist[]> {
+    const artworks = Array.from(this.artworks.values())
+      .filter((a) => a.archivedAt !== null && a.archivedAt !== undefined)
+      .sort((a, b) => (b.archivedAt?.getTime() || 0) - (a.archivedAt?.getTime() || 0));
+    
+    return Promise.all(
+      artworks.map(async (artwork) => {
+        const artist = this.artists.get(artwork.artistId);
+        return {
+          ...artwork,
+          artist: artist ? {
+            id: artist.id,
+            name: artist.name,
+            email: artist.email,
+          } : undefined,
+        };
+      })
+    ) as Promise<ArtworkWithArtist[]>;
+  }
+
+  async getArtworksEligibleForArchive(monthsInactive: number): Promise<ArtworkWithArtist[]> {
+    const cutoffDate = new Date();
+    cutoffDate.setMonth(cutoffDate.getMonth() - monthsInactive);
+    
+    const artworks = Array.from(this.artworks.values()).filter((a) => {
+      if (a.status !== "approved" || a.archivedAt) return false;
+      
+      const referenceDate = a.lastSaleDate || a.createdAt;
+      return referenceDate < cutoffDate;
+    });
+    
+    return Promise.all(
+      artworks.map(async (artwork) => {
+        const artist = this.artists.get(artwork.artistId);
+        return {
+          ...artwork,
+          artist: artist ? {
+            id: artist.id,
+            name: artist.name,
+            email: artist.email,
+          } : undefined,
+        };
+      })
+    ) as Promise<ArtworkWithArtist[]>;
+  }
+
+  async getArtworksEligibleForArchiveWarning(monthsInactive: number, warningDaysBefore: number): Promise<ArtworkWithArtist[]> {
+    const archiveCutoffDate = new Date();
+    archiveCutoffDate.setMonth(archiveCutoffDate.getMonth() - monthsInactive);
+    
+    const warningCutoffDate = new Date(archiveCutoffDate);
+    warningCutoffDate.setDate(warningCutoffDate.getDate() + warningDaysBefore);
+    
+    const artworks = Array.from(this.artworks.values()).filter((a) => {
+      if (a.status !== "approved" || a.archivedAt || a.archiveWarningEmailSentAt) return false;
+      
+      const referenceDate = a.lastSaleDate || a.createdAt;
+      return referenceDate < warningCutoffDate;
+    });
+    
+    return Promise.all(
+      artworks.map(async (artwork) => {
+        const artist = this.artists.get(artwork.artistId);
+        return {
+          ...artwork,
+          artist: artist ? {
+            id: artist.id,
+            name: artist.name,
+            email: artist.email,
+          } : undefined,
+        };
+      })
+    ) as Promise<ArtworkWithArtist[]>;
+  }
+
+  async archiveArtwork(id: string): Promise<Artwork> {
+    const artwork = this.artworks.get(id);
+    if (!artwork) throw new Error("Artwork not found");
+    const updated = {
+      ...artwork,
+      archivedAt: new Date(),
+      shopifyProductStatus: "draft" as const,
+      updatedAt: new Date()
+    };
+    this.artworks.set(id, updated);
+    return updated;
+  }
+
+  async reactivateArtwork(id: string): Promise<Artwork> {
+    const artwork = this.artworks.get(id);
+    if (!artwork) throw new Error("Artwork not found");
+    const updated = {
+      ...artwork,
+      archivedAt: null,
+      archiveWarningEmailSentAt: null,
+      shopifyProductStatus: "active" as const,
+      updatedAt: new Date()
+    };
+    this.artworks.set(id, updated);
+    return updated;
+  }
+
+  async updateArtworkLastSaleDate(artworkId: string, saleDate: Date): Promise<void> {
+    const artwork = this.artworks.get(artworkId);
+    if (artwork) {
+      this.artworks.set(artworkId, {
+        ...artwork,
+        lastSaleDate: saleDate,
+        updatedAt: new Date()
+      });
+    }
   }
 
   // MVP Order/Sale methods - stub implementations (log only)

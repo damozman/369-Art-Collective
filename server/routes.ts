@@ -3888,6 +3888,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CreatorStack AI Prompt Generator
+  app.post("/api/creatorstack/ai/generate", async (req, res) => {
+    try {
+      const buyerId = req.session.creatorstackBuyerId;
+
+      if (!buyerId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const { template, context, kitId } = req.body;
+
+      if (!template || !context) {
+        return res.status(400).json({ message: "Template and context are required" });
+      }
+
+      // Import AI generator
+      const { generatePromptContent } = await import('./lib/creatorstack-ai-generator');
+
+      // Generate content using GPT-5
+      const result = await generatePromptContent({ template, context });
+
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "AI generation failed", 
+          error: result.error 
+        });
+      }
+
+      // Track generation in database
+      await storage.createCreatorstackPromptGeneration({
+        buyerId,
+        kitId: kitId || null,
+        promptType: 'general', // Default type, can be extended based on template analysis
+        userInput: template,
+        aiResponse: result.generatedContent,
+        tokensUsed: result.tokensUsed,
+        model: 'gpt-4o',
+      });
+
+      console.log(`✅ CreatorStack AI: Generated ${result.tokensUsed} tokens for buyer ${buyerId}`);
+
+      res.json({
+        success: true,
+        content: result.generatedContent,
+        tokensUsed: result.tokensUsed,
+      });
+    } catch (error: any) {
+      console.error("CreatorStack AI generation error:", error);
+      res.status(500).json({ message: "AI generation failed" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

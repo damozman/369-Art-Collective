@@ -5,8 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { 
   Sparkles, 
   Package, 
@@ -15,7 +19,9 @@ import {
   LogOut,
   Loader2,
   ExternalLink,
-  Wand2
+  Wand2,
+  Copy,
+  Check
 } from "lucide-react";
 import type { CreatorstackPurchase, CreatorstackKit, CreatorstackBuyer } from "@shared/schema";
 
@@ -30,6 +36,17 @@ type BuyerWithPurchases = CreatorstackBuyer & {
 export default function CreatorStackDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  // AI Generator state
+  const [aiTemplate, setAiTemplate] = useState("");
+  const [aiContext, setAiContext] = useState({
+    businessType: "",
+    targetAudience: "",
+    tone: "",
+    platform: "",
+  });
+  const [generatedContent, setGeneratedContent] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const { data: buyer, isLoading } = useQuery<BuyerWithPurchases>({
     queryKey: ["/api/creatorstack/buyer/me"],
@@ -55,8 +72,63 @@ export default function CreatorStackDashboard() {
     },
   });
 
+  const generateContentMutation = useMutation({
+    mutationFn: async (data: { template: string; context: any }) => {
+      const response = await apiRequest("POST", "/api/creatorstack/ai/generate", data);
+      return response.json();
+    },
+    onSuccess: (result: any) => {
+      if (result.success && result.content) {
+        setGeneratedContent(result.content);
+        toast({
+          title: "Content generated!",
+          description: `Used ${result.tokensUsed} tokens`,
+        });
+      } else {
+        toast({
+          title: "Generation failed",
+          description: "No content was generated",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Generation failed",
+        description: error.message || "Failed to generate content",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAccessKit = (purchase: PurchaseWithKit) => {
     trackAccessMutation.mutate(purchase.id);
+  };
+
+  const handleGenerateContent = () => {
+    if (!aiTemplate.trim()) {
+      toast({
+        title: "Template required",
+        description: "Please enter a content template",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    generateContentMutation.mutate({
+      template: aiTemplate,
+      context: aiContext,
+    });
+  };
+
+  const handleCopyContent = () => {
+    navigator.clipboard.writeText(generatedContent);
+    setCopied(true);
+    toast({
+      title: "Copied!",
+      description: "Content copied to clipboard",
+    });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   if (isLoading) {
@@ -232,26 +304,129 @@ export default function CreatorStackDashboard() {
           )}
         </div>
 
-        {/* Coming Soon: AI Generator */}
-        <Card className="border-primary/50 bg-primary/5" data-testid="card-ai-generator-preview">
+        {/* AI Content Generator */}
+        <Card className="border-primary/50" data-testid="card-ai-generator">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wand2 className="h-5 w-5 text-primary" />
               AI Content Generator
             </CardTitle>
             <CardDescription>
-              Coming Soon: Generate custom content on-demand with GPT-4o
+              Generate custom content on-demand with GPT-4o
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Once live, you'll be able to generate social media captions, email subject lines, 
-              blog intros, and more—directly from this dashboard.
-            </p>
-            <Button variant="outline" disabled data-testid="button-ai-generator-disabled">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Generate Content (Coming Soon)
+          <CardContent className="space-y-6">
+            {/* Template Input */}
+            <div className="space-y-2">
+              <Label htmlFor="ai-template">Content Template</Label>
+              <Textarea
+                id="ai-template"
+                placeholder="Example: Generate 5 engaging Instagram captions for my new product launch"
+                value={aiTemplate}
+                onChange={(e) => setAiTemplate(e.target.value)}
+                rows={4}
+                data-testid="textarea-ai-template"
+              />
+            </div>
+
+            {/* Context Inputs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="business-type">Business Type (optional)</Label>
+                <Input
+                  id="business-type"
+                  placeholder="e.g., Etsy shop, coaching"
+                  value={aiContext.businessType}
+                  onChange={(e) => setAiContext({ ...aiContext, businessType: e.target.value })}
+                  data-testid="input-business-type"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="target-audience">Target Audience (optional)</Label>
+                <Input
+                  id="target-audience"
+                  placeholder="e.g., busy moms, solopreneurs"
+                  value={aiContext.targetAudience}
+                  onChange={(e) => setAiContext({ ...aiContext, targetAudience: e.target.value })}
+                  data-testid="input-target-audience"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tone">Tone (optional)</Label>
+                <Input
+                  id="tone"
+                  placeholder="e.g., professional, casual, fun"
+                  value={aiContext.tone}
+                  onChange={(e) => setAiContext({ ...aiContext, tone: e.target.value })}
+                  data-testid="input-tone"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="platform">Platform (optional)</Label>
+                <Input
+                  id="platform"
+                  placeholder="e.g., Instagram, LinkedIn, Email"
+                  value={aiContext.platform}
+                  onChange={(e) => setAiContext({ ...aiContext, platform: e.target.value })}
+                  data-testid="input-platform"
+                />
+              </div>
+            </div>
+
+            {/* Generate Button */}
+            <Button
+              onClick={handleGenerateContent}
+              disabled={generateContentMutation.isPending || !aiTemplate.trim()}
+              className="w-full"
+              data-testid="button-generate-content"
+            >
+              {generateContentMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generate Content
+                </>
+              )}
             </Button>
+
+            {/* Generated Content */}
+            {generatedContent && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Generated Content</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCopyContent}
+                      data-testid="button-copy-content"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-4 w-4 mr-2" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <div className="p-4 bg-muted rounded-lg border">
+                    <p className="whitespace-pre-wrap text-sm" data-testid="text-generated-content">
+                      {generatedContent}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

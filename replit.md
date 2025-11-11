@@ -1,7 +1,36 @@
-# 247 Print Network - Artist Portal & POD Marketplace
+# 3six9 Media Masters - Creator Platform Ecosystem
 
 ## Overview
-The 247 Print Network is an artist-powered print-on-demand (POD) marketplace. It enables artists to upload artwork, which is then automatically converted into POD products via Printify after administrative approval. The platform manages automated fulfillment, a tiered royalty payout system, and aims to be a creator-powered marketplace. Artists are encouraged to drive product creation, marketing through referrals, and recruitment, supported by automated royalties and a zero-inventory POD model.
+The platform operates two complementary creator-focused businesses under 3six9 Media Masters LLC:
+
+### 247 Print Network (POD Marketplace)
+An artist-powered print-on-demand marketplace enabling artists to upload artwork, which is automatically converted into POD products via Printify after administrative approval. The platform manages automated fulfillment, a tiered royalty payout system (30-45%), and aims to be a creator-powered marketplace. Artists are encouraged to drive product creation, marketing through referrals, and recruitment, supported by automated royalties and a zero-inventory POD model.
+
+### 247 CreatorStack (Digital Products & AI Tools)
+A digital product platform selling AI-powered kits and tools to busy solopreneurs (bloggers, coaches, Etsy sellers) who need to automate content creation, grow audiences, and monetize quickly. Products include ready-to-use Canva templates bundled with AI prompt libraries for social media, email marketing, and content creation.
+
+**Products:**
+- **AI Kits** ($47 one-time): Bundled templates + AI prompts (e.g., "Social Media Blitz" with 50 Canva templates + GPT-powered caption generator, "Email Launch Rocket" with Beehiiv sequences + AI copywriting)
+- **Pro Membership** ($29/mo - planned): All kits + monthly AI updates, community access, custom prompts
+
+**Target Audience:** Time-strapped solopreneurs needing quick wins (30 days of social posts in 5 min/day, email sequences launched in hours)
+
+**Business Model:**
+- Phase 1 (MVP): Single $47 kit to validate demand ($500-1K proof of concept)
+- Phase 2 (Scale): Multiple kits + $29/mo Pro memberships targeting $5K/mo recurring revenue
+- Revenue Split: 80% kits early, shift to memberships for recurring income
+
+**Tech Stack (Ultra-Lean):**
+- Shopify (existing): Digital product sales, payments, delivery
+- Replit (existing): Backend, AI prompt generation, buyer dashboards, webhook handling
+- OpenAI GPT-4o (Replit AI Integrations): Content generation for kits
+- Canva Pro (existing): Template creation
+- Beehiiv (free tier): Email nurturing
+
+**Key Automations:**
+- Shopify purchase → Webhook → Replit unlocks kit access
+- AI prompt generator: Live GPT-4o integration for on-demand content
+- Buyer dashboard: Login to access purchased kits and AI tools
 
 ## Upcoming Features (Future Development)
 - **Customer Savings Plan / Membership Program**: Build a subscription or membership system for customers (savings plans, member benefits, loyalty rewards, etc.)

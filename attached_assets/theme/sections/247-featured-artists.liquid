@@ -23,18 +23,18 @@ Showcase artists with their artwork
         {% if block.type == 'artist' %}
           <article class="artist-feature" data-testid="card-artist-{{ forloop.index }}">
             <div class="artist-feature__content">
-              {% if block.settings.artist_image %}
+              {% if block.settings.artist_image != blank %}
                 <div class="artist-feature__image">
                   <img 
-                    src="{{ block.settings.artist_image | img_url: '800x800' }}" 
+                    src="{{ block.settings.artist_image }}" 
                     alt="{{ block.settings.artist_name }}"
                     loading="lazy"
                   >
                   <div class="artist-feature__overlay">
                     <div class="artist-feature__profile">
-                      {% if block.settings.avatar_image %}
+                      {% if block.settings.avatar_image != blank %}
                         <img 
-                          src="{{ block.settings.avatar_image | img_url: '120x120' }}" 
+                          src="{{ block.settings.avatar_image }}" 
                           alt="{{ block.settings.artist_name }}"
                           class="artist-feature__avatar"
                         >
@@ -397,14 +397,16 @@ Showcase artists with their artwork
           "default": "Digital Artist"
         },
         {
-          "type": "image_picker",
+          "type": "text",
           "id": "artist_image",
-          "label": "Featured Artwork"
+          "label": "Featured Artwork URL",
+          "info": "Direct URL to featured artwork image"
         },
         {
-          "type": "image_picker",
+          "type": "text",
           "id": "avatar_image",
-          "label": "Artist Avatar"
+          "label": "Artist Avatar URL",
+          "info": "Direct URL to artist profile image"
         },
         {
           "type": "text",

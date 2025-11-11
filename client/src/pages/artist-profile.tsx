@@ -82,53 +82,87 @@ export default function ArtistProfile() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Artist Header */}
-      <div className="bg-gradient-to-br from-primary/10 via-background to-background border-b">
-        <div className="container mx-auto px-4 py-12">
+      {/* Premium Artist Header */}
+      <section className="premium-gradient-bg border-b">
+        <div className="max-w-7xl mx-auto px-6 py-16">
           <div className="flex flex-col md:flex-row gap-8 items-start">
-            <Avatar className="w-32 h-32 border-4 border-background shadow-xl">
-              <AvatarFallback className="bg-primary text-primary-foreground text-4xl font-bold">
-                {artist.name?.charAt(0) || "A"}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="w-32 h-32 md:w-40 md:h-40 border-4 border-background shadow-2xl">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground text-5xl font-bold">
+                  {artist.name?.charAt(0) || "A"}
+                </AvatarFallback>
+              </Avatar>
+              {artist.royaltyTier && (
+                <div className="absolute -bottom-2 -right-2 px-3 py-1.5 bg-primary text-primary-foreground rounded-full text-xs font-bold shadow-lg">
+                  {artist.royaltyTier}
+                </div>
+              )}
+            </div>
 
             <div className="flex-1">
-              <h1 className="text-4xl font-bold mb-2">{artist.name}</h1>
-              <p className="text-xl text-muted-foreground mb-4">{artist.tagline || "Independent Artist"}</p>
+              <h1 className="text-4xl md:text-5xl font-bold mb-3">
+                <span className="premium-text-gradient">{artist.name}</span>
+              </h1>
+              
+              {artist.tagline && (
+                <p className="text-xl md:text-2xl text-muted-foreground mb-6">
+                  {artist.tagline}
+                </p>
+              )}
 
-              <div className="flex flex-wrap gap-3 mb-6">
-                {artist.royaltyTier && (
-                  <Badge className={getTierBadgeColor(artist.royaltyTier)} data-testid="badge-tier">
-                    {artist.royaltyTier} Tier
-                  </Badge>
-                )}
-                <Badge variant="secondary" data-testid="badge-artwork-count">
-                  <Package className="w-3 h-3 mr-1" />
-                  {artworks?.filter(a => a.status === "approved").length || 0} Artworks
-                </Badge>
-                {artist.totalSales !== undefined && artist.totalSales > 0 && (
-                  <Badge variant="secondary" data-testid="badge-sales">
-                    {artist.totalSales} Sales
-                  </Badge>
+              {artist.bio && (
+                <p className="text-lg text-muted-foreground max-w-3xl mb-8 leading-relaxed">
+                  {artist.bio}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-4 mb-8">
+                <div className="premium-card flex items-center gap-3 px-5 py-4" data-testid="stat-artworks">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Package className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">
+                      {artworks?.filter(a => a.status === "approved").length || 0}
+                    </div>
+                    <div className="text-sm text-muted-foreground font-medium">Artworks</div>
+                  </div>
+                </div>
+                
+                {artist.totalSales !== undefined && (
+                  <div className="premium-card flex items-center gap-3 px-5 py-4" data-testid="stat-sales">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-3xl font-bold">
+                        {artist.totalSales}
+                      </div>
+                      <div className="text-sm text-muted-foreground font-medium">Sales</div>
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {artist.bio && (
-                <p className="text-muted-foreground max-w-2xl">{artist.bio}</p>
-              )}
-
               {artist.shopifyCollectionHandle && (
-                <Button asChild className="mt-6" data-testid="button-view-collection">
-                  <a href={`https://247printnetwork.myshopify.com/collections/${artist.shopifyCollectionHandle}`} target="_blank" rel="noopener noreferrer">
-                    View Collection on Shopify
-                    <ExternalLink className="w-4 h-4 ml-2" />
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="premium-pill-button" 
+                  data-testid="button-view-collection"
+                >
+                  <a href={`https://247printnetwork.com/collections/${artist.shopifyCollectionHandle}`} target="_blank" rel="noopener noreferrer">
+                    Shop Collection
+                    <ExternalLink className="w-5 h-5 ml-2" />
                   </a>
                 </Button>
               )}
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Artworks Grid */}
       <div className="container mx-auto px-4 py-12">

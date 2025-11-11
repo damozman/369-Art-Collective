@@ -1,5 +1,5 @@
 {% comment %}
-  Header Section with Navigation
+  Header Section with Navigation - Mobile Optimized
 {% endcomment %}
 
 <header class="site-header" role="banner">
@@ -14,7 +14,7 @@
       {% endif %}
     </div>
 
-    <nav class="header-nav" role="navigation">
+    <nav class="header-nav desktop-nav" role="navigation">
       {% if linklists[section.settings.menu].links.size > 0 %}
         <ul class="nav-menu">
           {% for link in linklists[section.settings.menu].links %}
@@ -36,20 +36,73 @@
       {% endif %}
     </nav>
 
-    <div class="header-icons">
+    <div class="header-actions">
       <a href="/cart" class="cart-link">
-        Cart ({{ cart.item_count }})
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 16C4.9 16 4.01 16.9 4.01 18C4.01 19.1 4.9 20 6 20C7.1 20 8 19.1 8 18C8 16.9 7.1 16 6 16ZM0 0V2H2L5.6 9.59L4.24 12.04C4.09 12.32 4 12.65 4 13C4 14.1 4.9 15 6 15H18V13H6.42C6.28 13 6.17 12.89 6.17 12.75L6.2 12.63L7.1 11H14.55C15.3 11 15.96 10.58 16.3 9.97L19.88 3.5C19.95 3.34 20 3.17 20 3C20 2.45 19.55 2 19 2H4.21L3.27 0H0ZM16 16C14.9 16 14.01 16.9 14.01 18C14.01 19.1 14.9 20 16 20C17.1 20 18 19.1 18 18C18 16.9 17.1 16 16 16Z" fill="currentColor"/>
+        </svg>
+        <span class="cart-count">{{ cart.item_count }}</span>
       </a>
+      
+      <button class="mobile-nav-toggle" aria-expanded="false" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
     </div>
   </div>
+
+  <nav class="mobile-nav" role="navigation" aria-label="Mobile navigation">
+    <div class="mobile-nav-overlay"></div>
+    <div class="mobile-nav-drawer">
+      <div class="mobile-nav-header">
+        <span class="mobile-nav-title">Menu</span>
+        <button class="mobile-nav-close" aria-label="Close menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+      
+      {% if linklists[section.settings.menu].links.size > 0 %}
+        <ul class="mobile-nav-menu">
+          {% for link in linklists[section.settings.menu].links %}
+            <li class="mobile-nav-item{% if link.links.size > 0 %} has-submenu{% endif %}">
+              {% if link.links.size > 0 %}
+                <button class="mobile-nav-link mobile-nav-accordion" aria-expanded="false">
+                  {{ link.title }}
+                  <svg class="accordion-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <ul class="mobile-submenu">
+                  {% for child_link in link.links %}
+                    <li>
+                      <a href="{{ child_link.url }}" class="mobile-submenu-link">{{ child_link.title }}</a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <a href="{{ link.url }}" class="mobile-nav-link">{{ link.title }}</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  </nav>
 </header>
 
 <style>
+  /* Base Header Styles */
   .site-header {
     background: #1a1a1a;
     color: #fff;
     padding: 1rem 2rem;
     border-bottom: 1px solid #333;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
   }
   
   .header-wrapper {
@@ -73,8 +126,9 @@
     max-height: 60px;
     width: auto;
   }
-  
-  .header-nav {
+
+  /* Desktop Navigation */
+  .desktop-nav {
     flex: 1;
     margin: 0 2rem;
   }
@@ -100,6 +154,7 @@
     letter-spacing: 1px;
     padding: 0.5rem 0;
     transition: opacity 0.2s;
+    display: block;
   }
   
   .nav-link:hover {
@@ -140,10 +195,20 @@
   .dropdown-item a:hover {
     background: #333;
   }
+
+  /* Header Actions */
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
   
   .cart-link {
     color: #fff;
     text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     padding: 0.5rem 1rem;
     border: 1px solid #fff;
     border-radius: 4px;
@@ -155,29 +220,256 @@
     color: #1a1a1a;
   }
 
+  .cart-count {
+    font-size: 0.9rem;
+    font-weight: bold;
+  }
+
+  /* Mobile Toggle Button */
+  .mobile-nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+  }
+
+  .hamburger-line {
+    width: 24px;
+    height: 2px;
+    background: #fff;
+    transition: all 0.3s;
+  }
+
+  .mobile-nav-toggle[aria-expanded="true"] .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translateY(8px);
+  }
+
+  .mobile-nav-toggle[aria-expanded="true"] .hamburger-line:nth-child(2) {
+    opacity: 0;
+  }
+
+  .mobile-nav-toggle[aria-expanded="true"] .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translateY(-8px);
+  }
+
+  /* Mobile Navigation */
+  .mobile-nav {
+    display: none;
+  }
+
+  .mobile-nav-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  .mobile-nav-drawer {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 85%;
+    max-width: 400px;
+    height: 100vh;
+    background: #1a1a1a;
+    z-index: 1000;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .mobile-nav.active .mobile-nav-overlay {
+    display: block;
+  }
+
+  .mobile-nav.active .mobile-nav-drawer {
+    right: 0;
+  }
+
+  .mobile-nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    border-bottom: 1px solid #333;
+  }
+
+  .mobile-nav-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .mobile-nav-close {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .mobile-nav-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .mobile-nav-item {
+    border-bottom: 1px solid #333;
+  }
+
+  .mobile-nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    color: #fff;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .mobile-nav-link:hover {
+    background: #2a2a2a;
+  }
+
+  .accordion-icon {
+    transition: transform 0.3s;
+  }
+
+  .mobile-nav-accordion[aria-expanded="true"] .accordion-icon {
+    transform: rotate(180deg);
+  }
+
+  .mobile-submenu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: #0d0d0d;
+  }
+
+  .mobile-nav-accordion[aria-expanded="true"] + .mobile-submenu {
+    max-height: 500px;
+  }
+
+  .mobile-submenu-link {
+    display: block;
+    padding: 0.75rem 2.5rem;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  .mobile-submenu-link:hover {
+    background: #1a1a1a;
+    color: #fff;
+    padding-left: 3rem;
+  }
+
+  /* Responsive Breakpoints */
   @media (max-width: 768px) {
-    .header-wrapper {
-      flex-direction: column;
-      gap: 1rem;
+    .site-header {
+      padding: 1rem;
     }
-    
-    .nav-menu {
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
+
+    .desktop-nav {
+      display: none;
     }
-    
-    .dropdown-menu {
-      position: static;
-      opacity: 1;
-      visibility: visible;
-      transform: none;
-      background: transparent;
-      box-shadow: none;
-      padding-left: 1rem;
+
+    .mobile-nav-toggle {
+      display: flex;
+    }
+
+    .mobile-nav {
+      display: block;
+    }
+
+    .cart-link span:not(.cart-count) {
+      display: none;
+    }
+
+    .cart-link {
+      padding: 0.5rem;
+      border: none;
+    }
+
+    .header-logo .site-title {
+      font-size: 1.2rem;
+    }
+
+    .header-logo img {
+      max-height: 40px;
     }
   }
 </style>
+
+<script>
+  (function() {
+    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+    const mobileNav = document.querySelector('.mobile-nav');
+    const mobileNavClose = document.querySelector('.mobile-nav-close');
+    const mobileNavOverlay = document.querySelector('.mobile-nav-overlay');
+    const accordions = document.querySelectorAll('.mobile-nav-accordion');
+
+    function openMobileNav() {
+      mobileNav.classList.add('active');
+      mobileNavToggle.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileNav() {
+      mobileNav.classList.remove('active');
+      mobileNavToggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+
+    if (mobileNavToggle) {
+      mobileNavToggle.addEventListener('click', function() {
+        if (mobileNav.classList.contains('active')) {
+          closeMobileNav();
+        } else {
+          openMobileNav();
+        }
+      });
+    }
+
+    if (mobileNavClose) {
+      mobileNavClose.addEventListener('click', closeMobileNav);
+    }
+
+    if (mobileNavOverlay) {
+      mobileNavOverlay.addEventListener('click', closeMobileNav);
+    }
+
+    accordions.forEach(function(accordion) {
+      accordion.addEventListener('click', function() {
+        const isExpanded = this.getAttribute('aria-expanded') === 'true';
+        this.setAttribute('aria-expanded', !isExpanded);
+      });
+    });
+  })();
+</script>
 
 {% schema %}
 {

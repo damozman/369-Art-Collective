@@ -1,0 +1,49 @@
+============================================================
+  Creating Pages
+============================================================
+
+Creating page: About Us...
+❌ Failed to create page "About Us": Shopify API error (401): {"errors":"[API] Invalid API key or access token (unrecognized login or wrong password)"}
+Creating page: Contact Us...
+❌ Failed to create page "Contact Us": Shopify API error (401): {"errors":"[API] Invalid API key or access token (unrecognized login or wrong password)"}
+Creating page: Meet the Creators...
+❌ Failed to create page "Meet the Creators": Shopify API error (401): {"errors":"[API] Invalid API key or access token (unrecognized login or wrong password)"}
+Creating page: FAQs...
+❌ Failed to create page "FAQs": Shopify API error (401): {"errors":"[API] Invalid API key or access token (unrecognized login or wrong password)"}
+Creating page: Join the Creatorverse...
+❌ Failed to create page "Join the Creatorverse": Shopify API error (401): {"errors":"[API] Invalid API key or access token (unrecognized login or wrong password)"}
+
+✓ Pages created: 0/5
+
+============================================================
+  Fetching Resource IDs
+============================================================
+
+Fetching pages...
+⚠ Warning: Failed to fetch pages: Shopify API error (401): {"errors":"[API] Invalid API key or access token (unrecognized login or wrong password)"}
+Fetching collections...
+⚠ Warning: Failed to fetch collections: Shopify API error (401): {"errors":"[API] Invalid API key or access token (unrecognized login or wrong password)"}
+
+============================================================
+  Creating Menu: Main Menu
+============================================================
+
+Converting menu structure...
+  ⚠ Collection "featured-artists" not found, using HTTP link
+  ⚠ Collection "abstract-art" not found, using HTTP link
+  ⚠ Collection "nature-landscapes" not found, using HTTP link
+  ⚠ Collection "urban-street" not found, using HTTP link
+  ⚠ Collection "pop-culture" not found, using HTTP link
+  ⚠ Collection "abstract-art" not found, using HTTP link
+  ⚠ Collection "nature-landscapes" not found, using HTTP link
+  ⚠ Collection "urban-street" not found, using HTTP link
+  ⚠ Collection "pop-culture" not found, using HTTP link
+  ⚠ Collection "featured" not found, using HTTP link
+  ⚠ Page "about" not found, using HTTP link
+  ⚠ Page "creators" not found, using HTTP link
+  ⚠ Page "contact" not found, using HTTP link
+Creating menu with GraphQL...
+❌ Failed to create menu: Shopify GraphQL error (401): {"errors":"[API] Invalid API key or access token (unrecognized login or wrong password)"}
+
+============================================================
+  ❌ Setup Failed

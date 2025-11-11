@@ -45,9 +45,7 @@ export default function AdminArchivedArtworks() {
 
   const reactivateMutation = useMutation({
     mutationFn: async (artworkId: string) => {
-      return apiRequest(`/api/artworks/${artworkId}/reactivate`, {
-        method: "POST",
-      });
+      return apiRequest("POST", `/api/artworks/${artworkId}/reactivate`);
     },
     onSuccess: (_, artworkId) => {
       toast({
@@ -69,9 +67,7 @@ export default function AdminArchivedArtworks() {
   const runArchiveCheck = async () => {
     setIsRunningCheck(true);
     try {
-      const result = await apiRequest("/api/archive/check", {
-        method: "POST",
-      });
+      const result: any = await apiRequest("POST", "/api/archive/check");
 
       toast({
         title: "Archive check completed",

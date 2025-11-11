@@ -23,9 +23,9 @@ Browse art by category
         {% if block.type == 'collection' %}
           <a href="{{ block.settings.collection_url }}" class="collection-card" data-testid="card-collection-{{ forloop.index }}">
             <div class="collection-card__image">
-              {% if block.settings.collection_image %}
+              {% if block.settings.collection_image != blank %}
                 <img 
-                  src="{{ block.settings.collection_image | img_url: '800x600' }}" 
+                  src="{{ block.settings.collection_image }}" 
                   alt="{{ block.settings.collection_name }}"
                   loading="lazy"
                 >
@@ -208,9 +208,10 @@ Browse art by category
           "default": "Abstract Art"
         },
         {
-          "type": "image_picker",
+          "type": "text",
           "id": "collection_image",
-          "label": "Collection Image"
+          "label": "Collection Image URL",
+          "info": "Direct URL to collection cover image"
         },
         {
           "type": "text",

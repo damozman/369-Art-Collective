@@ -32,7 +32,8 @@
           "settings": {
             "collection_name": "Abstract Art",
             "artwork_count": "120",
-            "collection_url": "https://247printnetwork.myshopify.com/collections/abstract-art"
+            "collection_url": "https://247printnetwork.myshopify.com/collections/abstract-art",
+            "collection_image": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&h=600&fit=crop&q=80"
           }
         },
         "collection_2": {
@@ -40,7 +41,8 @@
           "settings": {
             "collection_name": "Nature & Landscapes",
             "artwork_count": "85",
-            "collection_url": "https://247printnetwork.myshopify.com/collections/nature-landscapes"
+            "collection_url": "https://247printnetwork.myshopify.com/collections/nature-landscapes",
+            "collection_image": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&q=80"
           }
         },
         "collection_3": {
@@ -48,7 +50,8 @@
           "settings": {
             "collection_name": "Urban & Street",
             "artwork_count": "64",
-            "collection_url": "https://247printnetwork.myshopify.com/collections/urban-street"
+            "collection_url": "https://247printnetwork.myshopify.com/collections/urban-street",
+            "collection_image": "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=800&h=600&fit=crop&q=80"
           }
         },
         "collection_4": {
@@ -56,7 +59,8 @@
           "settings": {
             "collection_name": "Pop Culture",
             "artwork_count": "92",
-            "collection_url": "https://247printnetwork.myshopify.com/collections/pop-culture"
+            "collection_url": "https://247printnetwork.myshopify.com/collections/pop-culture",
+            "collection_image": "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=800&h=600&fit=crop&q=80"
           }
         }
       },

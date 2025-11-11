@@ -38,6 +38,11 @@ The platform employs a clear separation between frontend and backend.
     - **Printify:** Automated POD product creation.
     - **Shopify:** Integration for storefront product management, order capture via webhooks, enriched product creation, and automated theme deployment (`scripts/deploy-shopify-theme.js`).
     - **Shopify Theme Design:** Custom `247-art.css` with a Displate-inspired aesthetic (#6366f1 accent, #0f0f0f blacks, pill-shaped buttons, layered shadows), artist spotlight, interactive grid-based option selectors, multi-image gallery system for Printify POD products with variant-to-image mapping, and robust mobile responsiveness.
+    - **Merch Cross-Sell System:** Strategic merchandise promotion maintaining art-first positioning with "Coming Soon" badges for future expansion:
+        - **Product Page Upsell:** `247-merch-upsell.liquid` snippet shows 4 merch products (t-shirts, mugs, tote bags, phone cases) at bottom of art product pages with disabled "Notify Me" buttons
+        - **Homepage Preview:** `247-merch-preview.liquid` section displays 3 merch categories (Apparel, Home & Living, Accessories) with "Join Waitlist" CTA, positioned between Featured Artists and Trust Badges
+        - **Premium Styling:** Consistent gradient text, hover-lift cards, indigo accents matching Displate-inspired aesthetic
+        - **Mobile Responsive:** Auto-fit grids with breakpoints for optimal viewing across devices
     - **Customer-Facing Pages:** Complete Displate-inspired storefront with modern 2024/2025 aesthetic:
         - **About Page:** Mission statement, how-it-works process (4-step cards), platform benefits, fair royalty system
         - **Meet the Creators:** Artist directory with profile cards, artwork counts, collection links

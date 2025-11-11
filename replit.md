@@ -32,6 +32,18 @@ A digital product platform selling AI-powered kits and tools to busy solopreneur
 - AI prompt generator: Live GPT-4o integration for on-demand content
 - Buyer dashboard: Login to access purchased kits and AI tools
 
+**Frontend Pages (Completed):**
+- `/creatorstack` - Public landing page showcasing AI kits with hero section, benefits, kit cards ($47 each), testimonials
+- `/creatorstack/login` - Authentication page with login/registration toggle for buyers
+- `/creatorstack/dashboard` - Buyer dashboard showing purchased kits, access to Canva templates and AI prompt libraries
+
+**Backend API (In Progress):**
+- `/api/creatorstack/auth/*` - Registration, login, logout for buyers
+- `/api/creatorstack/buyer/me` - Get authenticated buyer with purchases
+- `/api/creatorstack/webhooks/shopify` - Handle Shopify order webhooks to unlock kit access
+- `/api/creatorstack/purchases/*` - Track kit access and download counts
+- `/api/creatorstack/ai/generate` - GPT-4o prompt generation endpoint
+
 ## Upcoming Features (Future Development)
 - **Customer Savings Plan / Membership Program**: Build a subscription or membership system for customers (savings plans, member benefits, loyalty rewards, etc.)
 - **Customer Product Credits/Incentives**: Offer store credits to customers for products as incentives or contest winnings

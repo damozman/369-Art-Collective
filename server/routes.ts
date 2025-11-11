@@ -2246,6 +2246,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all archived artworks (admin only)
+  app.get("/api/artworks/archived", requireAdmin, async (req, res) => {
+    try {
+      const archivedArtworks = await storage.getArchivedArtworks();
+      const normalized = archivedArtworks.map(artwork => normalizeArtwork(artwork, req));
+      res.json(normalized);
+    } catch (error: any) {
+      console.error("Get archived artworks error:", error);
+      res.status(500).json({ message: "Failed to fetch archived artworks" });
+    }
+  });
+
+  // Reactivate archived artwork (admin only)
+  app.post("/api/artworks/:id/reactivate", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const artwork = await storage.getArtwork(id);
+      if (!artwork) {
+        return res.status(404).json({ message: "Artwork not found" });
+      }
+
+      if (!artwork.archivedAt) {
+        return res.status(400).json({ message: "Artwork is not archived" });
+      }
+
+      const reactivated = await storage.reactivateArtwork(id);
+      
+      // TODO: Re-publish to Shopify when integration is complete
+      console.log(`Artwork ${id} reactivated, Shopify re-publish to be implemented`);
+      
+      res.json(normalizeArtwork(reactivated, req));
+    } catch (error: any) {
+      console.error("Reactivate artwork error:", error);
+      res.status(500).json({ message: error.message || "Failed to reactivate artwork" });
+    }
+  });
+
+  // Run manual archive check (admin only) - sends warnings and archives eligible artworks
+  app.post("/api/archive/check", requireAdmin, async (req, res) => {
+    try {
+      const { archiveService } = await import('./archive-service');
+      
+      // Send warnings to artworks that will be archived in 30 days (17 months inactive)
+      const warningResults = await archiveService.sendArchiveWarnings();
+      
+      // Archive artworks that have been inactive for 18+ months
+      const archiveResults = await archiveService.archiveEligibleArtworks();
+      
+      res.json({
+        message: "Archive check completed",
+        warningsSent: warningResults.success,
+        warningsFailed: warningResults.failed,
+        artworksArchived: archiveResults.success,
+        archivesFailed: archiveResults.failed,
+        details: {
+          warnings: warningResults.artworks,
+          archived: archiveResults.artworks,
+        },
+      });
+    } catch (error: any) {
+      console.error("Archive check error:", error);
+      res.status(500).json({ message: error.message || "Failed to run archive check" });
+    }
+  });
+
   // Bulk artwork operations (admin only)
   app.post("/api/artworks/bulk", requireAdmin, async (req, res) => {
     try {

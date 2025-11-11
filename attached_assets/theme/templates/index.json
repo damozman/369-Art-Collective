@@ -170,7 +170,7 @@
         "title": "Featured Artists",
         "subtitle": "Discover talented creators from around the world bringing unique visions to life",
         "cta_text": "View All Artists",
-        "cta_url": "https://247printnetwork.replit.app/creators"
+        "cta_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/creators"
       },
       "blocks": {
         "artist_1": {
@@ -179,7 +179,7 @@
             "artist_name": "Sarah Chen",
             "specialty": "Nature & Landscapes",
             "artwork_count": "24",
-            "artist_url": "https://247printnetwork.replit.app/artists/cb8afb09-4d53-4fae-96b5-86d62b8a561a",
+            "artist_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artists/cb8afb09-4d53-4fae-96b5-86d62b8a561a",
             "artist_image": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=1000&fit=crop&q=80",
             "avatar_image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80"
           }
@@ -190,7 +190,7 @@
             "artist_name": "Marcus Rodriguez",
             "specialty": "Abstract Expressionist",
             "artwork_count": "18",
-            "artist_url": "https://247printnetwork.replit.app/artists/c89b4503-ed02-4e48-b371-5d0c9aa2fad2",
+            "artist_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artists/c89b4503-ed02-4e48-b371-5d0c9aa2fad2",
             "artist_image": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&h=1000&fit=crop&q=80",
             "avatar_image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&q=80"
           }
@@ -201,7 +201,7 @@
             "artist_name": "Elena Kowalski",
             "specialty": "Wildlife Photography",
             "artwork_count": "32",
-            "artist_url": "https://247printnetwork.replit.app/artists/5ce6e662-6cd6-4679-af3c-30465accfcd9",
+            "artist_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artists/5ce6e662-6cd6-4679-af3c-30465accfcd9",
             "artist_image": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&h=1000&fit=crop&q=80",
             "avatar_image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&q=80"
           }

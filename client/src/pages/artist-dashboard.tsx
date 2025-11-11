@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
-import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings, Eye, EyeOff, Crown, Sparkles, ExternalLink, BarChart3 } from "lucide-react";
+import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings, Eye, EyeOff, Crown, Sparkles, ExternalLink, BarChart3, Archive, RefreshCw } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Artwork } from "@shared/schema";
 import {
@@ -195,6 +196,10 @@ export default function ArtistDashboard() {
     queryKey: ["/api/artworks/my-artworks"],
   });
 
+  const { data: archivedArtworks, isLoading: isLoadingArchived } = useQuery<Artwork[]>({
+    queryKey: ["/api/artworks/my-archived"],
+  });
+
   const { data: payoutData, isLoading: payoutLoading, isError: payoutError } = useQuery<{ payouts: any[]; unpaidEarnings: number; unpaidSalesCount: number }>({
     queryKey: ["/api/artists/payouts"],
   });
@@ -229,6 +234,7 @@ export default function ArtistDashboard() {
     pending: artworks?.filter(a => a.status === "pending").length || 0,
     approved: artworks?.filter(a => a.status === "approved").length || 0,
     rejected: artworks?.filter(a => a.status === "rejected").length || 0,
+    archived: archivedArtworks?.length || 0,
   };
 
   const deactivateMutation = useMutation({
@@ -272,6 +278,27 @@ export default function ArtistDashboard() {
         variant: "destructive",
       });
       setActionInProgress(null);
+    },
+  });
+
+  const reactivateMutation = useMutation({
+    mutationFn: async (artworkId: string) => {
+      return await apiRequest("POST", `/api/artworks/${artworkId}/my-reactivate`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Artwork reactivated",
+        description: "Your artwork has been returned to the active catalog and will be reviewed for marketplace listing. Consider refreshing your marketing materials to drive traffic.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/artworks/my-artworks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/artworks/my-archived"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Reactivation failed",
+        description: error.message || "Failed to reactivate artwork",
+        variant: "destructive",
+      });
     },
   });
 
@@ -356,7 +383,7 @@ export default function ArtistDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
             <Card>
               <CardHeader className="p-4">
                 <CardDescription>Total Submissions</CardDescription>
@@ -399,6 +426,16 @@ export default function ArtistDashboard() {
             </Card>
             <Card>
               <CardHeader className="p-4">
+                <CardDescription>Archived</CardDescription>
+                {isLoading || isLoadingArchived ? (
+                  <Skeleton className="h-9 w-12" />
+                ) : (
+                  <CardTitle className="text-3xl text-muted-foreground" data-testid="text-archived">{stats.archived}</CardTitle>
+                )}
+              </CardHeader>
+            </Card>
+            <Card>
+              <CardHeader className="p-4">
                 <CardDescription>Unpaid Earnings</CardDescription>
                 {payoutLoading ? (
                   <Skeleton className="h-9 w-24" />
@@ -428,174 +465,264 @@ export default function ArtistDashboard() {
           />
         </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <Card key={i}>
-                <Skeleton className="h-48 rounded-t-xl" />
-                <CardContent className="p-4 space-y-3">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-8 w-20" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : artworks && artworks.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {artworks.map((artwork) => (
-              <Card key={artwork.id} className="overflow-hidden hover-elevate" data-testid={`card-artwork-${artwork.id}`}>
-                <div className="aspect-square relative bg-muted">
-                  <img
-                    src={artwork.imageUrl}
-                    alt={artwork.title}
-                    className="w-full h-full object-cover"
-                    data-testid={`img-artwork-${artwork.id}`}
-                  />
-                </div>
-                <CardContent className="p-6">
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="font-semibold text-lg mb-1" data-testid={`text-title-${artwork.id}`}>{artwork.title}</h3>
-                      {artwork.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2" data-testid={`text-description-${artwork.id}`}>
-                          {artwork.description}
-                        </p>
-                      )}
+        <Tabs defaultValue="active" className="mt-8">
+          <TabsList>
+            <TabsTrigger value="active" data-testid="tab-active">Active Artworks</TabsTrigger>
+            <TabsTrigger value="archived" data-testid="tab-archived">Archived</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="mt-6">
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map(i => (
+                  <Card key={i}>
+                    <Skeleton className="h-48 rounded-t-xl" />
+                    <CardContent className="p-4 space-y-3">
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-8 w-20" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : artworks && artworks.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {artworks.map((artwork) => (
+                  <Card key={artwork.id} className="overflow-hidden hover-elevate" data-testid={`card-artwork-${artwork.id}`}>
+                    <div className="aspect-square relative bg-muted">
+                      <img
+                        src={artwork.imageUrl}
+                        alt={artwork.title}
+                        className="w-full h-full object-cover"
+                        data-testid={`img-artwork-${artwork.id}`}
+                      />
                     </div>
-
-                    {artwork.tags && artwork.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {artwork.tags.slice(0, 3).map((tag, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs" data-testid={`tag-${artwork.id}-${idx}`}>
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between pt-2">
-                      {getStatusBadge(artwork.status)}
-                      <p className="text-xs text-muted-foreground" data-testid={`date-${artwork.id}`}>
-                        {new Date(artwork.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-
-                    {artwork.status === "approved" && artwork.shopifyProductId && (
-                      <div className="mt-3 pt-3 border-t space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">Store Visibility:</span>
-                          {getProductStatusBadge(artwork.shopifyProductStatus)}
+                    <CardContent className="p-6">
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="font-semibold text-lg mb-1" data-testid={`text-title-${artwork.id}`}>{artwork.title}</h3>
+                          {artwork.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-2" data-testid={`text-description-${artwork.id}`}>
+                              {artwork.description}
+                            </p>
+                          )}
                         </div>
 
-                        {artwork.shopifyProductStatus === "active" ? (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full"
-                                disabled={actionInProgress === artwork.id}
-                                data-testid={`button-deactivate-${artwork.id}`}
-                              >
-                                <EyeOff className="mr-2 h-4 w-4" />
-                                Hide from Store
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Hide product from store?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will hide "{artwork.title}" from your storefront. Customers won't be able to see or purchase it. You can reactivate it anytime.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel data-testid="button-cancel-deactivate">Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => {
-                                    setActionInProgress(artwork.id);
-                                    deactivateMutation.mutate(artwork.id);
-                                  }}
-                                  data-testid="button-confirm-deactivate"
-                                >
-                                  Hide Product
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        ) : (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button 
-                                variant="default" 
-                                size="sm" 
-                                className="w-full"
-                                disabled={actionInProgress === artwork.id}
-                                data-testid={`button-activate-${artwork.id}`}
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                Show in Store
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Show product in store?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will make "{artwork.title}" visible on your storefront. Customers will be able to see and purchase it.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel data-testid="button-cancel-activate">Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => {
-                                    setActionInProgress(artwork.id);
-                                    activateMutation.mutate(artwork.id);
-                                  }}
-                                  data-testid="button-confirm-activate"
-                                >
-                                  Show Product
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                        {artwork.tags && artwork.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {artwork.tags.slice(0, 3).map((tag, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs" data-testid={`tag-${artwork.id}-${idx}`}>
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-2">
+                          {getStatusBadge(artwork.status)}
+                          <p className="text-xs text-muted-foreground" data-testid={`date-${artwork.id}`}>
+                            {new Date(artwork.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+
+                        {artwork.status === "approved" && artwork.shopifyProductId && (
+                          <div className="mt-3 pt-3 border-t space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground">Store Visibility:</span>
+                              {getProductStatusBadge(artwork.shopifyProductStatus)}
+                            </div>
+
+                            {artwork.shopifyProductStatus === "active" ? (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="w-full"
+                                    disabled={actionInProgress === artwork.id}
+                                    data-testid={`button-deactivate-${artwork.id}`}
+                                  >
+                                    <EyeOff className="mr-2 h-4 w-4" />
+                                    Hide from Store
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Hide product from store?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will hide "{artwork.title}" from your storefront. Customers won't be able to see or purchase it. You can reactivate it anytime.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel data-testid="button-cancel-deactivate">Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => {
+                                        setActionInProgress(artwork.id);
+                                        deactivateMutation.mutate(artwork.id);
+                                      }}
+                                      data-testid="button-confirm-deactivate"
+                                    >
+                                      Hide Product
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            ) : (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="default" 
+                                    size="sm" 
+                                    className="w-full"
+                                    disabled={actionInProgress === artwork.id}
+                                    data-testid={`button-activate-${artwork.id}`}
+                                  >
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    Show in Store
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Show product in store?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will make "{artwork.title}" visible on your storefront. Customers will be able to see and purchase it.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel data-testid="button-cancel-activate">Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => {
+                                        setActionInProgress(artwork.id);
+                                        activateMutation.mutate(artwork.id);
+                                      }}
+                                      data-testid="button-confirm-activate"
+                                    >
+                                      Show Product
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        )}
+
+                        {artwork.status === "rejected" && artwork.rejectionReason && (
+                          <div className="mt-3 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                            <p className="text-xs font-medium text-destructive mb-1">Rejection Reason:</p>
+                            <p className="text-xs text-muted-foreground" data-testid={`rejection-reason-${artwork.id}`}>
+                              {artwork.rejectionReason}
+                            </p>
+                          </div>
                         )}
                       </div>
-                    )}
-
-                    {artwork.status === "rejected" && artwork.rejectionReason && (
-                      <div className="mt-3 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
-                        <p className="text-xs font-medium text-destructive mb-1">Rejection Reason:</p>
-                        <p className="text-xs text-muted-foreground" data-testid={`rejection-reason-${artwork.id}`}>
-                          {artwork.rejectionReason}
-                        </p>
-                      </div>
-                    )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="p-12">
+                <div className="text-center space-y-4">
+                  <div className="flex justify-center">
+                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                      <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                    </div>
                   </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">No artwork yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Start by uploading your first piece of artwork
+                    </p>
+                    <Button onClick={() => setLocation("/artist/upload")} data-testid="button-upload-empty">
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Your First Artwork
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="archived" className="mt-6">
+            {isLoadingArchived ? (
+              <div className="flex justify-center items-center h-64">
+                <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : !archivedArtworks || archivedArtworks.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Archive className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">No archived artworks</h3>
+                  <p className="text-muted-foreground">
+                    Artworks that haven't sold in 18 months will be automatically archived
+                  </p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="p-12">
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                  <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {archivedArtworks.map((artwork) => (
+                  <Card key={artwork.id} className="overflow-hidden" data-testid={`card-archived-${artwork.id}`}>
+                    <div className="aspect-square relative bg-muted">
+                      <img
+                        src={artwork.imageUrl}
+                        alt={artwork.title}
+                        className="w-full h-full object-cover opacity-60"
+                        data-testid={`img-artwork-${artwork.id}`}
+                      />
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="secondary" className="bg-red-600 text-white">
+                          <Archive className="w-3 h-3 mr-1" />
+                          Archived
+                        </Badge>
+                      </div>
+                    </div>
+                    <CardContent className="p-6">
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="font-semibold text-lg mb-1" data-testid={`text-title-${artwork.id}`}>
+                            {artwork.title}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            Archived: {artwork.archivedAt ? new Date(artwork.archivedAt).toLocaleDateString() : 'Unknown'}
+                          </p>
+                        </div>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="default" 
+                              size="sm" 
+                              className="w-full"
+                              disabled={reactivateMutation.isPending}
+                              data-testid={`button-reactivate-${artwork.id}`}
+                            >
+                              <RefreshCw className="w-4 h-4 mr-2" />
+                              Reactivate
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Reactivate "{artwork.title}"?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This artwork will be returned to your active catalog. It may need re-approval before appearing in the marketplace. 
+                                Consider updating your marketing materials to drive traffic to this piece.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => reactivateMutation.mutate(artwork.id)}>
+                                Reactivate Artwork
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-2">No artwork yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Start by uploading your first piece of artwork
-                </p>
-                <Button onClick={() => setLocation("/artist/upload")} data-testid="button-upload-empty">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Your First Artwork
-                </Button>
-              </div>
-            </div>
-          </Card>
-        )}
+            )}
+          </TabsContent>
+        </Tabs>
 
         {payoutData && payoutData.payouts && payoutData.payouts.length > 0 && (
           <div className="mt-12">

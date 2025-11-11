@@ -2074,6 +2074,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get archived artworks for current artist
+  app.get("/api/artworks/my-archived", requireArtist, async (req, res) => {
+    try {
+      const allArtworks = await storage.getArtworksByArtist(req.user!.id);
+      const archivedArtworks = allArtworks.filter(a => a.archivedAt !== null);
+      res.json(archivedArtworks.map(a => normalizeArtwork(a, req)));
+    } catch (error: any) {
+      console.error("Get my archived artworks error:", error);
+      res.status(500).json({ message: "Failed to fetch archived artworks" });
+    }
+  });
+
+  // Reactivate own archived artwork (artist)
+  app.post("/api/artworks/:id/my-reactivate", requireArtist, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const artwork = await storage.getArtwork(id);
+      if (!artwork) {
+        return res.status(404).json({ message: "Artwork not found" });
+      }
+
+      // Verify artwork belongs to authenticated artist
+      if (artwork.artistId !== req.user!.id) {
+        return res.status(403).json({ message: "Not authorized to reactivate this artwork" });
+      }
+
+      if (!artwork.archivedAt) {
+        return res.status(400).json({ message: "Artwork is not archived" });
+      }
+
+      const reactivated = await storage.reactivateArtwork(id);
+      
+      // TODO: Re-publish to Shopify when integration is complete
+      console.log(`Artwork ${id} reactivated by artist, Shopify re-publish to be implemented`);
+      
+      res.json(normalizeArtwork(reactivated, req));
+    } catch (error: any) {
+      console.error("Reactivate own artwork error:", error);
+      res.status(500).json({ message: error.message || "Failed to reactivate artwork" });
+    }
+  });
+
   // Approve artwork and create Printify + Shopify products (admin only)
   app.post("/api/artworks/:id/approve", requireAdmin, async (req, res) => {
     try {

@@ -30,6 +30,7 @@ import { isPrintifyConfigured } from "./lib/printify";
 import { requireAuth, requireArtist, requireAdmin, requireInfluencer } from "./middleware/auth";
 import { getAffiliateCodeFromCookie } from "./middleware/affiliate-tracking";
 import { processShopifyOrder } from "./lib/order-processor";
+import { processCreatorStackPurchase } from "./lib/creatorstack-webhook-processor";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
 import { validateImageQuality, MIN_WIDTH, MIN_HEIGHT } from "./lib/image-validator";
 import { stripeConnectService } from "./lib/stripe-connect";
@@ -3841,6 +3842,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Track access error:", error);
       res.status(500).json({ message: "Failed to track access" });
+    }
+  });
+
+  // CreatorStack Shopify Webhook - Kit Purchases
+  // SECURED with HMAC verification (reuses existing Shopify webhook security)
+  app.post("/api/creatorstack/webhooks/shopify", async (req: any, res) => {
+    try {
+      const hmac = req.headers['x-shopify-hmac-sha256'] as string;
+      const shop = req.headers['x-shopify-shop-domain'];
+      
+      console.log(`[CreatorStack] Received Shopify webhook from ${shop}`);
+
+      // CRITICAL: Verify HMAC signature using raw body
+      if (!req.rawBody) {
+        console.error("[CreatorStack] ❌ Raw body not available for HMAC verification");
+        return res.status(500).send('Server configuration error');
+      }
+
+      if (!verifyShopifyWebhook(req.rawBody, hmac)) {
+        console.warn("[CreatorStack] ⚠️ HMAC verification failed - rejecting webhook");
+        return res.status(401).send('Unauthorized');
+      }
+
+      console.log("[CreatorStack] ✅ Webhook HMAC verified");
+
+      // Body is already parsed by express.json middleware
+      const shopifyOrder = req.body;
+      
+      // Process kit purchase and await result for reliable delivery
+      const result = await processCreatorStackPurchase(shopifyOrder);
+      
+      if (!result.success) {
+        console.error(`[CreatorStack] Purchase processing failed: ${result.error}`);
+        // Return 500 so Shopify retries the webhook
+        return res.status(500).send('Processing failed');
+      }
+
+      console.log(`[CreatorStack] ✅ Purchase processed: ${result.processedItems.length} items`);
+      // Respond 200 only on success (Shopify won't retry)
+      res.status(200).send('OK');
+    } catch (error: any) {
+      console.error("[CreatorStack] Webhook error:", error);
+      res.status(500).send('Internal Server Error');
     }
   });
 

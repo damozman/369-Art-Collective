@@ -22,45 +22,45 @@
     "featured_collections": {
       "type": "247-featured-collections",
       "settings": {
-        "eyebrow_text": "Browse Collections",
-        "title": "Discover by Style",
-        "subtitle": "Explore curated collections of artwork organized by theme and style"
+        "eyebrow_text": "Print Options",
+        "title": "Choose Your Perfect Finish",
+        "subtitle": "Premium wall art in four stunning finishes. From classic posters to museum-grade metal prints."
       },
       "blocks": {
         "collection_1": {
           "type": "collection",
           "settings": {
-            "collection_name": "Abstract Art",
-            "artwork_count": "85",
-            "collection_url": "https://247printnetwork.myshopify.com/collections/abstract-art",
-            "collection_image": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&h=600&fit=crop&q=80"
+            "collection_name": "Posters",
+            "artwork_count": "88",
+            "collection_url": "/collections/finish-paper",
+            "collection_image": "https://images.unsplash.com/photo-1513519245088-0e12902e35ca?w=800&h=600&fit=crop&q=80"
           }
         },
         "collection_2": {
           "type": "collection",
           "settings": {
-            "collection_name": "Nature & Landscapes",
-            "artwork_count": "120",
-            "collection_url": "https://247printnetwork.myshopify.com/collections/nature-landscapes",
-            "collection_image": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&q=80"
+            "collection_name": "Canvas Prints",
+            "artwork_count": "88",
+            "collection_url": "/collections/finish-canvas",
+            "collection_image": "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&h=600&fit=crop&q=80"
           }
         },
         "collection_3": {
           "type": "collection",
           "settings": {
-            "collection_name": "Urban & Street",
-            "artwork_count": "64",
-            "collection_url": "https://247printnetwork.myshopify.com/collections/urban-street",
-            "collection_image": "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=800&h=600&fit=crop&q=80"
+            "collection_name": "Framed Prints",
+            "artwork_count": "88",
+            "collection_url": "/collections/finish-framed",
+            "collection_image": "https://images.unsplash.com/photo-1582561424167-0946aca8d82e?w=800&h=600&fit=crop&q=80"
           }
         },
         "collection_4": {
           "type": "collection",
           "settings": {
-            "collection_name": "Pop Culture",
-            "artwork_count": "72",
-            "collection_url": "https://247printnetwork.myshopify.com/collections/pop-culture",
-            "collection_image": "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=800&h=600&fit=crop&q=80"
+            "collection_name": "Metal Prints",
+            "artwork_count": "88",
+            "collection_url": "/collections/finish-metal",
+            "collection_image": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop&q=80"
           }
         }
       },

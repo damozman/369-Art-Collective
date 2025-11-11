@@ -1,0 +1,504 @@
+/*
+247 Print Network - Premium Art Product Styles
+Displate-inspired clean, artist-centric design
+*/
+
+/* ===== LAYOUT & GRID ===== */
+.247pn-art-product {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+@media (max-width: 1024px) {
+  .247pn-art-product {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* ===== PRODUCT IMAGE ===== */
+.product__media {
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+}
+
+.product__media img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  transition: transform 0.3s ease;
+}
+
+.product__media img:hover {
+  transform: scale(1.02);
+}
+
+/* ===== PRODUCT INFO ===== */
+.product__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.product__title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  color: #1a1a1a;
+  letter-spacing: -0.02em;
+}
+
+.product__vendor {
+  font-size: 1.125rem;
+  color: #666;
+  font-weight: 500;
+  margin-top: -1rem;
+}
+
+.product__vendor::before {
+  content: "by ";
+  color: #999;
+  font-weight: 400;
+}
+
+/* ===== ARTIST SPOTLIGHT ===== */
+.artist-spotlight {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid #000;
+  margin: 1rem 0;
+}
+
+.artist-spotlight__header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.artist-spotlight__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.artist-spotlight__name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.artist-spotlight__bio {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #555;
+  margin: 0;
+}
+
+/* ===== PRODUCT DESCRIPTION ===== */
+.product__description {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #444;
+}
+
+.product__description h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.75rem;
+  color: #1a1a1a;
+}
+
+/* ===== OPTION SELECTORS ===== */
+.art-options {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.art-options__section {
+  margin-bottom: 1.5rem;
+}
+
+.art-options__section:last-child {
+  margin-bottom: 0;
+}
+
+.art-options__label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+  margin-bottom: 0.75rem;
+}
+
+.art-options__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.art-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.art-option:hover {
+  border-color: #999;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.art-option.selected {
+  border-color: #000;
+  background: #000;
+  color: #fff;
+}
+
+.art-option__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.art-option__subtitle {
+  font-size: 0.8125rem;
+  opacity: 0.7;
+  margin-top: 0.25rem;
+}
+
+.art-option.selected .art-option__subtitle {
+  opacity: 0.8;
+}
+
+.art-option__price {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  color: #666;
+}
+
+.art-option.selected .art-option__price {
+  color: #fff;
+}
+
+/* ===== FRAME OPTIONS ===== */
+.frame-options {
+  border-top: 1px solid #e5e5e5;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.frame-toggle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.frame-toggle:hover {
+  border-color: #999;
+  background: #f8f9fa;
+}
+
+.frame-toggle.selected {
+  border-color: #000;
+  background: #f8f9fa;
+}
+
+.frame-checkbox {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.frame-info {
+  flex: 1;
+}
+
+.frame-info__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.frame-info__description {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0;
+}
+
+.frame-price {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #000;
+}
+
+/* ===== PRICE DISPLAY ===== */
+.product__price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #000;
+  margin: 1.5rem 0;
+}
+
+.product__price-compare {
+  font-size: 1.25rem;
+  color: #999;
+  text-decoration: line-through;
+  margin-left: 0.75rem;
+}
+
+/* ===== ADD TO CART ===== */
+.add-to-cart-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.button--add-to-cart {
+  width: 100%;
+  padding: 1.25rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.button--add-to-cart:hover {
+  background: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.button--add-to-cart:active {
+  transform: translateY(0);
+}
+
+/* ===== SIZE GUIDE ===== */
+.size-guide {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.size-guide__title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: #1a1a1a;
+}
+
+.size-guide__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.size-guide__table th,
+.size-guide__table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.size-guide__table th {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.size-guide__table td {
+  font-size: 0.9375rem;
+  color: #444;
+}
+
+/* ===== PRODUCT DETAILS ===== */
+.product-details {
+  border-top: 1px solid #e5e5e5;
+  padding-top: 2rem;
+  margin-top: 2rem;
+}
+
+.product-details__item {
+  display: flex;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.product-details__item:last-child {
+  border-bottom: none;
+}
+
+.product-details__label {
+  flex: 0 0 140px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.product-details__value {
+  flex: 1;
+  font-size: 0.9375rem;
+  color: #444;
+}
+
+/* ===== UPSELL SECTION ===== */
+.merch-upsell {
+  background: linear-gradient(135deg, #fff9e6 0%, #fff3cc 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #ffe699;
+  margin-top: 2rem;
+}
+
+.merch-upsell__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  color: #1a1a1a;
+}
+
+.merch-upsell__description {
+  font-size: 0.9375rem;
+  color: #666;
+  margin: 0 0 1rem 0;
+  line-height: 1.6;
+}
+
+.merch-upsell__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 0.75rem;
+}
+
+.merch-item {
+  text-align: center;
+  padding: 0.75rem;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #e5e5e5;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.merch-item:hover {
+  border-color: #999;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.merch-item__icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.merch-item__name {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* ===== TRUST BADGES ===== */
+.trust-badges {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid #e5e5e5;
+  margin-top: 2rem;
+}
+
+.trust-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+
+.trust-badge__icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #000;
+}
+
+.trust-badge__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: #1a1a1a;
+}
+
+.trust-badge__description {
+  font-size: 0.75rem;
+  color: #666;
+  margin: 0;
+}
+
+/* ===== UTILITY CLASSES ===== */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mb-small {
+  margin-bottom: 0.5rem;
+}
+
+.mb-medium {
+  margin-bottom: 1rem;
+}
+
+.mb-large {
+  margin-bottom: 2rem;
+}

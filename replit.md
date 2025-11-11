@@ -11,7 +11,15 @@ The platform features a clear separation between frontend and backend.
 
 **UI/UX:**
 - **Frontend:** React with TypeScript, Wouter for routing, TanStack Query for data fetching, React Hook Form for forms, and Tailwind CSS with Shadcn UI components for styling.
-- **Artist Workflow:** Multi-step artwork upload wizard, product deactivation/activation.
+- **Artist Workflow:** Multi-step artwork upload wizard, product deactivation/activation, AI Art Studio for generating artwork using OpenAI DALL-E.
+- **AI Art Studio (Artist Portal):**
+    - **Credit System:** 10 free generations per artist, option to purchase additional credits at $0.50/generation
+    - **Generation Interface:** Prompt-based artwork creation with size selection (256×256 to 1792×1792)
+    - **Credit Management:** Dual-balance system (free credits used first, then paid credits)
+    - **History Tracking:** Complete generation history with thumbnails, prompts, dimensions, and status
+    - **Download & Upload:** Generated images can be downloaded locally or uploaded directly as artist submissions
+    - **Error Resilience:** Automatic credit refunds on generation failures, graceful API error handling
+    - **Bootstrap:** Test artist (artist@example.com / artist123) auto-created in dev/test with approved status and 10 free credits
 - **Admin Workflow:** Enhanced dashboards for artwork and artist management with advanced search, filtering, sorting, bulk operations (approve/reject artists/artworks, send emails), and CSV export for artist data. Admin CRM notes for artist relationship management.
 - **Featured Testimonials:** A hybrid system for homepage placement combining manual overrides, premium paid placements via Stripe Checkout, and merit-based rotation. Includes legal consent tracking and audit trails.
 - **Influencer Affiliate Program:** 
@@ -67,6 +75,14 @@ The platform features a clear separation between frontend and backend.
 
 **Technical Implementations:**
 - **Artist & Admin Management:** Role-based access control, secure self-service password reset, rate limiting on critical endpoints, and audit logging. Soft-delete system for artist accounts.
+- **AI Generation System:**
+    - **OpenAI Integration:** DALL-E 3 model via Replit AI Integrations (auto-configured API keys)
+    - **Credit Architecture:** `aiCredits` table with dual-balance tracking (freeCredits, paidCredits), `aiGenerations` table for history
+    - **Generation Service:** `server/ai-service.ts` handles OpenAI API calls, image storage (base64 → data URLs), error handling, and automatic credit refunds
+    - **Smart Refunds:** When generation fails, credits are returned to the same balance they were deducted from (free vs paid)
+    - **API Routes:** GET `/api/ai/credits`, POST `/api/ai/generate`, GET `/api/ai/generations`
+    - **Frontend:** `/artist/ai-studio` with real-time credit balance, generation form, latest result display, and paginated history
+    - **Test Data:** Bootstrap creates test artist with approved status and 10 free credits (dev/test only)
 - **Automated Integrations:**
     - **Printify:** Automatic POD product creation from approved artwork.
     - **Shopify:** Integration for storefront product management, order capture via webhooks, and enriched product creation (rich descriptions, SEO-friendly URLs, enhanced tagging).
@@ -84,6 +100,7 @@ The platform features a clear separation between frontend and backend.
 
 ## External Dependencies
 - **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered) for persistent storage.
+- **OpenAI API:** DALL-E 3 for AI image generation via Replit AI Integrations (auto-configured via `AI_INTEGRATIONS_OPENAI_BASE_URL` and `AI_INTEGRATIONS_OPENAI_API_KEY`).
 - **Printify API:** For creating POD products and managing fulfillment.
 - **Shopify Admin API:** For storefront product management and order capture via webhooks.
 - **Stripe Connect:** For automated artist payouts, subscription management for featured placements, and webhook integration for status updates.

@@ -177,18 +177,18 @@ const MAIN_MENU = {
       url: '#',
       children: [
         { title: 'All Artwork', url: '/collections' },
-        { title: 'New Arrivals', url: '/collections/new-arrivals' },
-        { title: 'Featured', url: '/collections/featured' },
+        { title: 'New Arrivals', resource_type: 'collection', handle: 'new-arrivals' },
+        { title: 'Featured', resource_type: 'collection', handle: 'featured' },
       ],
     },
     {
       title: 'Print Options',
       url: '#',
       children: [
-        { title: 'Metal Prints', url: '/collections/metal-prints' },
-        { title: 'Canvas Prints', url: '/collections/canvas-prints' },
-        { title: 'Posters', url: '/collections/posters' },
-        { title: 'Framed Prints', url: '/collections/framed-prints' },
+        { title: 'Metal Prints', resource_type: 'collection', handle: 'metal-prints' },
+        { title: 'Canvas Prints', resource_type: 'collection', handle: 'canvas-prints' },
+        { title: 'Posters', resource_type: 'collection', handle: 'posters' },
+        { title: 'Framed Prints', resource_type: 'collection', handle: 'framed-prints' },
       ],
     },
     {
@@ -214,10 +214,10 @@ const FOOTER_MENU = {
       url: '#',
       children: [
         { title: 'All Artwork', url: '/collections' },
-        { title: 'New Arrivals', url: '/collections/new-arrivals' },
-        { title: 'Featured', url: '/collections/featured' },
-        { title: 'Metal Prints', url: '/collections/metal-prints' },
-        { title: 'Canvas Prints', url: '/collections/canvas-prints' },
+        { title: 'New Arrivals', resource_type: 'collection', handle: 'new-arrivals' },
+        { title: 'Featured', resource_type: 'collection', handle: 'featured' },
+        { title: 'Metal Prints', resource_type: 'collection', handle: 'metal-prints' },
+        { title: 'Canvas Prints', resource_type: 'collection', handle: 'canvas-prints' },
       ],
     },
     {

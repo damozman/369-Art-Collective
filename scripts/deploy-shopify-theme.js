@@ -70,17 +70,44 @@ async function deploy() {
   // Step 1: Verify all theme files exist
   log('Step 1: Verifying theme files...', colors.bright);
   const themeFiles = [
+    // Sections (17 files)
+    'attached_assets/theme/sections/247-about-content.liquid',
     'attached_assets/theme/sections/247-art-product.liquid',
+    'attached_assets/theme/sections/247-artist-cta-banner.liquid',
+    'attached_assets/theme/sections/247-collection-grid.liquid',
+    'attached_assets/theme/sections/247-collection-header.liquid',
+    'attached_assets/theme/sections/247-contact-form.liquid',
+    'attached_assets/theme/sections/247-creators-grid.liquid',
+    'attached_assets/theme/sections/247-faq-accordion.liquid',
+    'attached_assets/theme/sections/247-featured-artists.liquid',
+    'attached_assets/theme/sections/247-featured-artworks.liquid',
+    'attached_assets/theme/sections/247-featured-collections.liquid',
+    'attached_assets/theme/sections/247-homepage-hero.liquid',
+    'attached_assets/theme/sections/247-join-benefits.liquid',
+    'attached_assets/theme/sections/247-join-cta.liquid',
+    'attached_assets/theme/sections/247-merch-preview.liquid',
+    'attached_assets/theme/sections/247-page-hero.liquid',
+    'attached_assets/theme/sections/247-trust-badges.liquid',
+    // Snippets (3 files)
     'attached_assets/theme/snippets/247-art-options.liquid',
     'attached_assets/theme/snippets/247-art-lineitem-properties.liquid',
     'attached_assets/theme/snippets/247-merch-upsell.liquid',
+    // Assets (2 files)
     'attached_assets/theme/assets/247-art.js',
     'attached_assets/theme/assets/247-art.css',
+    // Templates (8 files)
+    'attached_assets/theme/templates/index.json',
+    'attached_assets/theme/templates/collection.json',
+    'attached_assets/theme/templates/page.about.json',
+    'attached_assets/theme/templates/page.contact.json',
+    'attached_assets/theme/templates/page.creators.json',
+    'attached_assets/theme/templates/page.faq.json',
+    'attached_assets/theme/templates/page.join.json',
     'attached_assets/theme/templates/product.art.json',
   ];
 
   themeFiles.forEach(checkFileExists);
-  log('\n✓ All theme files verified!', colors.green);
+  log(`\n✓ All ${themeFiles.length} theme files verified!`, colors.green);
 
   // Step 2: Check Shopify CLI authentication
   logSection('Step 2: Checking Shopify Authentication');
@@ -123,12 +150,50 @@ async function deploy() {
 
   log(`Deploying to store: ${storeUrl}`, colors.blue);
   
+  // Build --only parameter with all files
+  const onlyFiles = [
+    // All sections
+    'sections/247-about-content.liquid',
+    'sections/247-art-product.liquid',
+    'sections/247-artist-cta-banner.liquid',
+    'sections/247-collection-grid.liquid',
+    'sections/247-collection-header.liquid',
+    'sections/247-contact-form.liquid',
+    'sections/247-creators-grid.liquid',
+    'sections/247-faq-accordion.liquid',
+    'sections/247-featured-artists.liquid',
+    'sections/247-featured-artworks.liquid',
+    'sections/247-featured-collections.liquid',
+    'sections/247-homepage-hero.liquid',
+    'sections/247-join-benefits.liquid',
+    'sections/247-join-cta.liquid',
+    'sections/247-merch-preview.liquid',
+    'sections/247-page-hero.liquid',
+    'sections/247-trust-badges.liquid',
+    // All snippets
+    'snippets/247-art-options.liquid',
+    'snippets/247-art-lineitem-properties.liquid',
+    'snippets/247-merch-upsell.liquid',
+    // All assets
+    'assets/247-art.js',
+    'assets/247-art.css',
+    // All templates
+    'templates/index.json',
+    'templates/collection.json',
+    'templates/page.about.json',
+    'templates/page.contact.json',
+    'templates/page.creators.json',
+    'templates/page.faq.json',
+    'templates/page.join.json',
+    'templates/product.art.json',
+  ].join(' ');
+  
   // Use --development flag to push to development theme (auto-creates if needed)
   // Use --force to skip confirmation prompts in non-interactive mode
-  const deployCommand = `shopify theme push --store=${storeUrl} --path attached_assets/theme --development --force --only sections/247-art-product.liquid snippets/247-art-options.liquid snippets/247-art-lineitem-properties.liquid snippets/247-merch-upsell.liquid assets/247-art.js assets/247-art.css templates/product.art.json`;
+  const deployCommand = `shopify theme push --store=${storeUrl} --path attached_assets/theme --development --force --only ${onlyFiles}`;
   
   log('Note: Deploying to development theme. Use --live flag for production.', colors.yellow);
-  const success = runCommand(deployCommand, 'Uploading theme files');
+  const success = runCommand(deployCommand, 'Uploading all 30 theme files');
 
   if (success) {
     logSection('✅ Deployment Successful!');

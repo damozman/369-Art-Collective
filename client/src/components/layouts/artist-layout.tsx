@@ -37,7 +37,6 @@ import {
   ChevronDown,
   Sparkles,
   Image as ImageIcon,
-  Clock,
 } from "lucide-react";
 import type { Artwork } from "@shared/schema";
 
@@ -76,11 +75,6 @@ export function ArtistLayout({ children }: ArtistLayoutProps) {
           label: "AI Studio",
           path: "/artist/ai-studio",
           icon: Sparkles,
-        },
-        {
-          label: "Pending Review",
-          path: "/artist/pending",
-          icon: Clock,
         },
       ],
     },

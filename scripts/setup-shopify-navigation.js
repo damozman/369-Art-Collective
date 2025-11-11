@@ -278,6 +278,80 @@ async function createPages() {
   return createdPages;
 }
 
+// Step 1b: Verify and update page templates
+async function verifyPageTemplates() {
+  logSection('Verifying Page Templates');
+  
+  let updatedCount = 0;
+  let verifiedCount = 0;
+  
+  try {
+    // Fetch all existing pages
+    log('Fetching existing pages...', colors.blue);
+    const pagesData = await shopifyRequest('pages.json?limit=250');
+    
+    if (!pagesData.pages) {
+      log('No pages found to verify', colors.yellow);
+      return;
+    }
+    
+    // Create a map of existing pages by handle
+    const existingPages = {};
+    pagesData.pages.forEach(page => {
+      existingPages[page.handle] = page;
+    });
+    
+    log(`Found ${pagesData.pages.length} existing pages\n`, colors.green);
+    
+    // Check each required page
+    for (const pageConfig of PAGES) {
+      const existingPage = existingPages[pageConfig.handle];
+      
+      if (!existingPage) {
+        log(`⚠ Page "${pageConfig.handle}" not found, will be created`, colors.yellow);
+        continue;
+      }
+      
+      // Check if template matches
+      if (existingPage.template_suffix !== pageConfig.template_suffix) {
+        log(`Updating template for "${pageConfig.title}"...`, colors.blue);
+        log(`  Current: ${existingPage.template_suffix || 'default'}`, colors.yellow);
+        log(`  Expected: ${pageConfig.template_suffix}`, colors.cyan);
+        
+        try {
+          const result = await shopifyRequest(`pages/${existingPage.id}.json`, 'PUT', {
+            page: {
+              id: existingPage.id,
+              template_suffix: pageConfig.template_suffix,
+            },
+          });
+          
+          if (result.page) {
+            log(`✓ Updated: ${result.page.title} → template: page.${result.page.template_suffix}`, colors.green);
+            updatedCount++;
+          }
+          
+          await delay();
+        } catch (error) {
+          log(`❌ Failed to update template for "${pageConfig.title}": ${error.message}`, colors.red);
+        }
+      } else {
+        log(`✓ Verified: ${pageConfig.title} → template: page.${existingPage.template_suffix}`, colors.green);
+        verifiedCount++;
+      }
+    }
+    
+    log(`\n✓ Templates verified: ${verifiedCount}/${PAGES.length}`, colors.green);
+    if (updatedCount > 0) {
+      log(`✓ Templates updated: ${updatedCount}`, colors.green);
+    }
+    
+  } catch (error) {
+    log(`⚠ Warning: Failed to verify templates: ${error.message}`, colors.yellow);
+    log(`  Pages may not have correct templates assigned`, colors.yellow);
+  }
+}
+
 // Step 2: Get resource IDs for menu linking
 async function getResourceIds() {
   logSection('Fetching Resource IDs');
@@ -557,6 +631,9 @@ async function main() {
     
     // Step 1: Create pages
     const createdPages = await createPages();
+    
+    // Step 1b: Verify page templates
+    await verifyPageTemplates();
     
     // Step 2: Get resource IDs
     const resources = await getResourceIds();

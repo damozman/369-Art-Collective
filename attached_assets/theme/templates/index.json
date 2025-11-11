@@ -11,11 +11,11 @@
         "secondary_button_text": "Become an Artist",
         "secondary_button_url": "/pages/join",
         "show_stats": true,
-        "stat_1_value": "500+",
+        "stat_1_value": "10+",
         "stat_1_label": "Active Artists",
-        "stat_2_value": "10,000+",
+        "stat_2_value": "100+",
         "stat_2_label": "Artworks",
-        "stat_3_value": "45%",
+        "stat_3_value": "30-45%",
         "stat_3_label": "Artist Royalty"
       }
     },
@@ -31,7 +31,7 @@
           "type": "collection",
           "settings": {
             "collection_name": "Abstract Art",
-            "artwork_count": "120",
+            "artwork_count": "24",
             "collection_url": "https://247printnetwork.myshopify.com/collections/abstract-art",
             "collection_image": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&h=600&fit=crop&q=80"
           }
@@ -40,7 +40,7 @@
           "type": "collection",
           "settings": {
             "collection_name": "Nature & Landscapes",
-            "artwork_count": "85",
+            "artwork_count": "18",
             "collection_url": "https://247printnetwork.myshopify.com/collections/nature-landscapes",
             "collection_image": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&q=80"
           }
@@ -49,7 +49,7 @@
           "type": "collection",
           "settings": {
             "collection_name": "Urban & Street",
-            "artwork_count": "64",
+            "artwork_count": "32",
             "collection_url": "https://247printnetwork.myshopify.com/collections/urban-street",
             "collection_image": "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=800&h=600&fit=crop&q=80"
           }
@@ -58,7 +58,7 @@
           "type": "collection",
           "settings": {
             "collection_name": "Pop Culture",
-            "artwork_count": "92",
+            "artwork_count": "15",
             "collection_url": "https://247printnetwork.myshopify.com/collections/pop-culture",
             "collection_image": "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=800&h=600&fit=crop&q=80"
           }
@@ -164,15 +164,15 @@
       "type": "247-artist-cta-banner",
       "settings": {
         "eyebrow_text": "Calling All Artists",
-        "title": "Join 500+ Creators Earning Passive Income",
+        "title": "Turn Your Art Into Passive Income",
         "subtitle": "Upload your artwork, we handle printing and shipping. You earn 30-45% royalties on every sale.",
         "button_text": "Start Earning Today",
         "button_url": "https://247printnetwork.replit.app/register",
         "show_stats": true,
-        "stat_1_value": "45%",
-        "stat_1_label": "Max Royalty",
+        "stat_1_value": "30-45%",
+        "stat_1_label": "Royalty Range",
         "stat_2_value": "$0",
-        "stat_2_label": "Upfront Cost"
+        "stat_2_label": "Setup Fee"
       }
     }
   },

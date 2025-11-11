@@ -1,0 +1,259 @@
+{% comment %}
+247 Print Network - Artist CTA Banner
+Encourage artists to join the platform
+{% endcomment %}
+
+{{ '247-art.css' | asset_url | stylesheet_tag }}
+
+<section class="artist-cta-banner">
+  <div class="artist-cta-banner__container">
+    
+    <div class="artist-cta-banner__content">
+      <div class="artist-cta-banner__text">
+        {% if section.settings.eyebrow_text != blank %}
+          <div class="artist-cta-banner__eyebrow">{{ section.settings.eyebrow_text }}</div>
+        {% endif %}
+        
+        <h2 class="artist-cta-banner__title">{{ section.settings.title }}</h2>
+        
+        {% if section.settings.subtitle != blank %}
+          <p class="artist-cta-banner__subtitle">{{ section.settings.subtitle }}</p>
+        {% endif %}
+        
+        {% if section.settings.button_text != blank and section.settings.button_url != blank %}
+          <a href="{{ section.settings.button_url }}" class="artist-cta-banner__button" data-testid="button-join-artists">
+            {{ section.settings.button_text }}
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        {% endif %}
+      </div>
+      
+      {% if section.settings.show_stats %}
+        <div class="artist-cta-banner__stats">
+          <div class="artist-cta-banner__stat">
+            <div class="artist-cta-banner__stat-value">{{ section.settings.stat_1_value }}</div>
+            <div class="artist-cta-banner__stat-label">{{ section.settings.stat_1_label }}</div>
+          </div>
+          <div class="artist-cta-banner__stat">
+            <div class="artist-cta-banner__stat-value">{{ section.settings.stat_2_value }}</div>
+            <div class="artist-cta-banner__stat-label">{{ section.settings.stat_2_label }}</div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+
+<style>
+.artist-cta-banner {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  padding: 5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.artist-cta-banner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.artist-cta-banner__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.artist-cta-banner__content {
+  text-align: center;
+}
+
+.artist-cta-banner__eyebrow {
+  display: inline-block;
+  padding: 0.625rem 1.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border-radius: 24px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #fff;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.artist-cta-banner__title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 1.25rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.artist-cta-banner__subtitle {
+  font-size: 1.375rem;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.7;
+  max-width: 700px;
+  margin: 0 auto 2.5rem;
+}
+
+.artist-cta-banner__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.125rem 2.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #6366f1;
+  background: #fff;
+  border-radius: 32px;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.artist-cta-banner__button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.artist-cta-banner__button svg {
+  transition: transform 0.3s ease;
+}
+
+.artist-cta-banner__button:hover svg {
+  transform: translateX(3px);
+}
+
+.artist-cta-banner__stats {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.artist-cta-banner__stat {
+  text-align: center;
+}
+
+.artist-cta-banner__stat-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.artist-cta-banner__stat-label {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .artist-cta-banner {
+    padding: 4rem 1.5rem;
+  }
+
+  .artist-cta-banner__title {
+    font-size: 2.5rem;
+  }
+
+  .artist-cta-banner__subtitle {
+    font-size: 1.125rem;
+  }
+
+  .artist-cta-banner__stats {
+    flex-direction: column;
+    gap: 2rem;
+  }
+}
+</style>
+
+{% schema %}
+{
+  "name": "247 Artist CTA Banner",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow_text",
+      "label": "Eyebrow Text",
+      "default": "Calling All Artists"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Join 500+ Creators Earning Passive Income"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Upload your artwork, we handle printing and shipping. You earn 30-45% royalties on every sale."
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Start Earning Today"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "Button URL"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_stats",
+      "label": "Show Statistics",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "stat_1_value",
+      "label": "Stat 1 Value",
+      "default": "45%"
+    },
+    {
+      "type": "text",
+      "id": "stat_1_label",
+      "label": "Stat 1 Label",
+      "default": "Max Royalty"
+    },
+    {
+      "type": "text",
+      "id": "stat_2_value",
+      "label": "Stat 2 Value",
+      "default": "$0"
+    },
+    {
+      "type": "text",
+      "id": "stat_2_label",
+      "label": "Stat 2 Label",
+      "default": "Upfront Cost"
+    }
+  ],
+  "presets": [
+    {
+      "name": "247 Artist CTA Banner"
+    }
+  ]
+}
+{% endschema %}

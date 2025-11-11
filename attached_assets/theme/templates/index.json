@@ -19,6 +19,54 @@
         "stat_3_label": "Artist Royalty"
       }
     },
+    "featured_collections": {
+      "type": "247-featured-collections",
+      "settings": {
+        "eyebrow_text": "Browse Collections",
+        "title": "Discover by Style",
+        "subtitle": "Explore curated collections of artwork organized by theme and style"
+      },
+      "blocks": {
+        "collection_1": {
+          "type": "collection",
+          "settings": {
+            "collection_name": "Abstract Art",
+            "artwork_count": "120",
+            "collection_url": "/collections/all"
+          }
+        },
+        "collection_2": {
+          "type": "collection",
+          "settings": {
+            "collection_name": "Nature & Landscapes",
+            "artwork_count": "85",
+            "collection_url": "/collections/all"
+          }
+        },
+        "collection_3": {
+          "type": "collection",
+          "settings": {
+            "collection_name": "Urban & Street",
+            "artwork_count": "64",
+            "collection_url": "/collections/all"
+          }
+        },
+        "collection_4": {
+          "type": "collection",
+          "settings": {
+            "collection_name": "Pop Culture",
+            "artwork_count": "92",
+            "collection_url": "/collections/all"
+          }
+        }
+      },
+      "block_order": [
+        "collection_1",
+        "collection_2",
+        "collection_3",
+        "collection_4"
+      ]
+    },
     "featured_artists": {
       "type": "247-featured-artists",
       "settings": {
@@ -62,10 +110,67 @@
         "artist_2",
         "artist_3"
       ]
+    },
+    "trust_badges": {
+      "type": "247-trust-badges",
+      "blocks": {
+        "badge_1": {
+          "type": "badge",
+          "settings": {
+            "title": "Premium Quality",
+            "description": "Museum-grade prints with vibrant colors and professional finishes"
+          }
+        },
+        "badge_2": {
+          "type": "badge",
+          "settings": {
+            "title": "Fair Artist Royalties",
+            "description": "Artists earn 30-45% of every sale, paid automatically"
+          }
+        },
+        "badge_3": {
+          "type": "badge",
+          "settings": {
+            "title": "Fast Worldwide Shipping",
+            "description": "Global fulfillment via Printify in 5-7 business days"
+          }
+        },
+        "badge_4": {
+          "type": "badge",
+          "settings": {
+            "title": "Satisfaction Guaranteed",
+            "description": "100% money-back guarantee on all orders"
+          }
+        }
+      },
+      "block_order": [
+        "badge_1",
+        "badge_2",
+        "badge_3",
+        "badge_4"
+      ]
+    },
+    "artist_cta": {
+      "type": "247-artist-cta-banner",
+      "settings": {
+        "eyebrow_text": "Calling All Artists",
+        "title": "Join 500+ Creators Earning Passive Income",
+        "subtitle": "Upload your artwork, we handle printing and shipping. You earn 30-45% royalties on every sale.",
+        "button_text": "Start Earning Today",
+        "button_url": "/pages/join",
+        "show_stats": true,
+        "stat_1_value": "45%",
+        "stat_1_label": "Max Royalty",
+        "stat_2_value": "$0",
+        "stat_2_label": "Upfront Cost"
+      }
     }
   },
   "order": [
     "homepage_hero",
-    "featured_artists"
+    "featured_collections",
+    "featured_artists",
+    "trust_badges",
+    "artist_cta"
   ]
 }

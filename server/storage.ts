@@ -388,6 +388,7 @@ export interface IStorage {
   getCreatorstackPurchaseById(id: string): Promise<any | undefined>;
   getCreatorstackPurchasesByBuyerId(buyerId: string): Promise<any[]>;
   getCreatorstackPurchaseByOrderId(shopifyOrderId: string): Promise<any | undefined>;
+  getCreatorstackPurchaseByShopifyOrderLineItem(shopifyOrderId: string, shopifyLineItemId: string): Promise<any | undefined>;
   createCreatorstackPurchase(purchase: any): Promise<any>;
   updateCreatorstackPurchase(id: string, updates: any): Promise<any>;
   updateCreatorstackPurchaseAccess(purchaseId: string): Promise<void>;
@@ -2307,6 +2308,20 @@ class PostgresStorage implements IStorage {
     return purchase;
   }
 
+  async getCreatorstackPurchaseByShopifyOrderLineItem(shopifyOrderId: string, shopifyLineItemId: string): Promise<any | undefined> {
+    const [purchase] = await db
+      .select()
+      .from(creatorstackPurchases)
+      .where(
+        and(
+          eq(creatorstackPurchases.shopifyOrderId, shopifyOrderId),
+          eq(creatorstackPurchases.shopifyLineItemId, shopifyLineItemId)
+        )
+      )
+      .limit(1);
+    return purchase;
+  }
+
   async createCreatorstackPurchase(purchase: any): Promise<any> {
     const [created] = await db
       .insert(creatorstackPurchases)
@@ -3143,6 +3158,7 @@ class MemStorage implements IStorage {
   async getCreatorstackPurchaseById(): Promise<any> { console.log("MemStorage: getCreatorstackPurchaseById (stub)"); return undefined; }
   async getCreatorstackPurchasesByBuyerId(): Promise<Array<any>> { console.log("MemStorage: getCreatorstackPurchasesByBuyerId (stub)"); return []; }
   async getCreatorstackPurchaseByOrderId(): Promise<any> { console.log("MemStorage: getCreatorstackPurchaseByOrderId (stub)"); return undefined; }
+  async getCreatorstackPurchaseByShopifyOrderLineItem(): Promise<any> { console.log("MemStorage: getCreatorstackPurchaseByShopifyOrderLineItem (stub)"); return undefined; }
   async createCreatorstackPurchase(): Promise<any> { console.log("MemStorage: createCreatorstackPurchase (stub)"); return {}; }
   async updateCreatorstackPurchase(): Promise<any> { console.log("MemStorage: updateCreatorstackPurchase (stub)"); return {}; }
   async updateCreatorstackPurchaseAccess(): Promise<void> { console.log("MemStorage: updateCreatorstackPurchaseAccess (stub)"); }

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer, decimal, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, decimal, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -940,6 +940,7 @@ export const creatorstackPurchases = pgTable("creatorstack_purchases", {
   
   // Purchase details
   shopifyOrderId: text("shopify_order_id").notNull(), // Shopify order ID for webhook tracking
+  shopifyLineItemId: text("shopify_line_item_id").notNull(), // Line item ID for idempotency
   shopifyOrderNumber: text("shopify_order_number"), // Human-readable order # (e.g., "#1001")
   amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }).notNull(), // Actual amount paid
   
@@ -952,7 +953,10 @@ export const creatorstackPurchases = pgTable("creatorstack_purchases", {
   lastAccessedAt: timestamp("last_accessed_at"), // Last time buyer accessed this kit
   
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  // Unique constraint for idempotent webhook processing
+  shopifyLineItemUnique: uniqueIndex("creatorstack_purchase_shopify_line").on(table.shopifyOrderId, table.shopifyLineItemId),
+}));
 
 // CreatorStack Prompt Generations - Track AI prompt usage
 export const creatorstackPromptGenerations = pgTable("creatorstack_prompt_generations", {
@@ -1007,6 +1011,7 @@ export const insertCreatorstackPurchaseSchema = createInsertSchema(creatorstackP
   buyerId: z.string().uuid(),
   kitId: z.string().uuid(),
   shopifyOrderId: z.string().min(1, "Shopify order ID is required"),
+  shopifyLineItemId: z.string().min(1, "Shopify line item ID is required"),
   amountPaid: z.string().regex(/^\d+(\.\d{1,2})?$/, "Amount must be a valid number"),
 });
 

@@ -3656,6 +3656,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // 247 CreatorStack API Routes
+  // ============================================
+
+  // CreatorStack Authentication - Register
+  app.post("/api/creatorstack/auth/register", async (req, res) => {
+    try {
+      const { email, password, name } = req.body;
+
+      // Validate input
+      if (!email || !password || !name) {
+        return res.status(400).json({ message: "Email, password, and name are required" });
+      }
+
+      // Check if buyer already exists
+      const existingBuyer = await storage.getCreatorstackBuyerByEmail(email);
+      if (existingBuyer) {
+        return res.status(400).json({ message: "An account with this email already exists" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create buyer account
+      const buyer = await storage.createCreatorstackBuyer({
+        email,
+        password: hashedPassword,
+        name,
+        isPro: false,
+      });
+
+      // Set up session (using creatorstack-specific session key)
+      req.session.creatorstackBuyerId = buyer.id;
+      req.session.save((err: Error | undefined) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Failed to create session" });
+        }
+        
+        console.log(`✅ CreatorStack buyer registered: ${email}`);
+        res.json({ 
+          message: "Account created successfully",
+          buyer: {
+            id: buyer.id,
+            email: buyer.email,
+            name: buyer.name,
+            isPro: buyer.isPro,
+          }
+        });
+      });
+    } catch (error: any) {
+      console.error("CreatorStack registration error:", error);
+      res.status(500).json({ message: "Registration failed" });
+    }
+  });
+
+  // CreatorStack Authentication - Login
+  app.post("/api/creatorstack/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      // Find buyer
+      const buyer = await storage.getCreatorstackBuyerByEmail(email);
+      if (!buyer) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, buyer.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Set up session
+      req.session.creatorstackBuyerId = buyer.id;
+      req.session.save((err: Error | undefined) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Failed to create session" });
+        }
+
+        console.log(`✅ CreatorStack buyer logged in: ${email}`);
+        res.json({
+          message: "Login successful",
+          buyer: {
+            id: buyer.id,
+            email: buyer.email,
+            name: buyer.name,
+            isPro: buyer.isPro,
+          }
+        });
+      });
+    } catch (error: any) {
+      console.error("CreatorStack login error:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  // CreatorStack Authentication - Logout
+  app.post("/api/creatorstack/auth/logout", async (req, res) => {
+    try {
+      const buyerId = req.session.creatorstackBuyerId;
+      
+      req.session.destroy((err: Error | null) => {
+        if (err) {
+          console.error("Session destroy error:", err);
+          return res.status(500).json({ message: "Failed to logout" });
+        }
+
+        console.log(`✅ CreatorStack buyer logged out: ${buyerId}`);
+        res.json({ message: "Logged out successfully" });
+      });
+    } catch (error: any) {
+      console.error("CreatorStack logout error:", error);
+      res.status(500).json({ message: "Logout failed" });
+    }
+  });
+
+  // CreatorStack - Get Current Buyer with Purchases
+  app.get("/api/creatorstack/buyer/me", async (req, res) => {
+    try {
+      const buyerId = req.session.creatorstackBuyerId;
+      
+      if (!buyerId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // Get buyer
+      const buyer = await storage.getCreatorstackBuyerById(buyerId);
+      if (!buyer) {
+        return res.status(404).json({ message: "Buyer not found" });
+      }
+
+      // Get purchases with kit details
+      const purchases = await storage.getCreatorstackPurchasesByBuyerId(buyerId);
+      
+      // Attach kit details to each purchase
+      const purchasesWithKits = await Promise.all(
+        purchases.map(async (purchase) => {
+          const kit = await storage.getCreatorstackKitById(purchase.kitId);
+          return {
+            ...purchase,
+            kit,
+          };
+        })
+      );
+
+      res.json({
+        ...buyer,
+        password: undefined, // Don't send password hash
+        purchases: purchasesWithKits,
+      });
+    } catch (error: any) {
+      console.error("Get buyer error:", error);
+      res.status(500).json({ message: "Failed to get buyer information" });
+    }
+  });
+
+  // CreatorStack - Track Kit Access
+  app.post("/api/creatorstack/purchases/:purchaseId/track-access", async (req, res) => {
+    try {
+      const buyerId = req.session.creatorstackBuyerId;
+      const { purchaseId } = req.params;
+
+      if (!buyerId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      // Verify purchase belongs to buyer
+      const purchase = await storage.getCreatorstackPurchaseById(purchaseId);
+      if (!purchase || purchase.buyerId !== buyerId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Update last accessed timestamp
+      await storage.updateCreatorstackPurchaseAccess(purchaseId);
+
+      res.json({ message: "Access tracked successfully" });
+    } catch (error: any) {
+      console.error("Track access error:", error);
+      res.status(500).json({ message: "Failed to track access" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

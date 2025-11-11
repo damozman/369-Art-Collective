@@ -84,13 +84,7 @@ export default function AdminChallenges() {
 
   const createChallengeMutation = useMutation({
     mutationFn: async (data: ChallengeFormData) => {
-      return await apiRequest("/api/admin/challenges", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      return await apiRequest("POST", "/api/admin/challenges", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/challenges"] });
@@ -112,13 +106,7 @@ export default function AdminChallenges() {
 
   const updateChallengeStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      return await apiRequest(`/api/admin/challenges/${id}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      return await apiRequest("PATCH", `/api/admin/challenges/${id}/status`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/challenges"] });

@@ -1764,7 +1764,7 @@ class PostgresStorage implements IStorage {
       .from(activityFeedEvents)
       .innerJoin(influencers, eq(activityFeedEvents.influencerId, influencers.id))
       .where(eq(activityFeedEvents.isPublic, true))
-      .orderBy(activityFeedEvents.createdAt)
+      .orderBy(desc(activityFeedEvents.createdAt))
       .limit(limit);
 
     return events;

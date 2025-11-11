@@ -80,28 +80,28 @@
         "artist_1": {
           "type": "artist",
           "settings": {
-            "artist_name": "Featured Artist",
-            "specialty": "Digital Art",
+            "artist_name": "Sarah Chen",
+            "specialty": "Nature & Landscapes",
             "artwork_count": "24",
-            "artist_url": "/collections/all"
+            "artist_url": "https://247printnetwork.replit.app/artists/cb8afb09-4d53-4fae-96b5-86d62b8a561a"
           }
         },
         "artist_2": {
           "type": "artist",
           "settings": {
-            "artist_name": "Creative Vision",
-            "specialty": "Abstract Art",
+            "artist_name": "Marcus Rodriguez",
+            "specialty": "Abstract Expressionist",
             "artwork_count": "18",
-            "artist_url": "/collections/all"
+            "artist_url": "https://247printnetwork.replit.app/artists/c89b4503-ed02-4e48-b371-5d0c9aa2fad2"
           }
         },
         "artist_3": {
           "type": "artist",
           "settings": {
-            "artist_name": "Modern Master",
-            "specialty": "Contemporary",
+            "artist_name": "Elena Kowalski",
+            "specialty": "Wildlife Photography",
             "artwork_count": "32",
-            "artist_url": "/collections/all"
+            "artist_url": "https://247printnetwork.replit.app/artists/5ce6e662-6cd6-4679-af3c-30465accfcd9"
           }
         }
       },

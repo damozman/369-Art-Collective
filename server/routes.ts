@@ -643,7 +643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Only show approved artists
-      if (artist.approvalStatus !== "approved") {
+      if (!artist.approved) {
         return res.status(404).json({ message: "Artist not found" });
       }
 
@@ -669,7 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const artist = await storage.getArtist(id);
 
-      if (!artist || artist.approvalStatus !== "approved") {
+      if (!artist || !artist.approved) {
         return res.status(404).json({ message: "Artist not found" });
       }
 

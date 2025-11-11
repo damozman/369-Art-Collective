@@ -41,6 +41,7 @@ import InfluencerPending from "@/pages/influencer-pending";
 import InfluencerDashboard from "@/pages/influencer-dashboard";
 import PublicLeaderboard from "@/pages/public-leaderboard";
 import SuccessStory from "@/pages/success-story";
+import ArtistProfile from "@/pages/artist-profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/leaderboard" component={PublicLeaderboard} />
       <Route path="/success-stories/:slug" component={SuccessStory} />
+      <Route path="/artists/:id" component={ArtistProfile} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/login" component={AdminLogin} />

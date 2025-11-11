@@ -34,8 +34,8 @@ export default function AdminArtists() {
   const [emailSubject, setEmailSubject] = useState("");
   const [emailMessage, setEmailMessage] = useState("");
 
-  const { data: artists, isLoading } = useQuery<Artist[]>({
-    queryKey: ["/api/artists"],
+  const { data: artists, isLoading} = useQuery<Artist[]>({
+    queryKey: ["/api/admin/artists"],
   });
 
   const approveMutation = useMutation({
@@ -43,7 +43,7 @@ export default function AdminArtists() {
       return apiRequest("POST", `/api/artists/${artistId}/approve`, {});
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/artists"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artists"] });
       toast({
         title: "Artist approved",
         description: "The artist can now log in and upload artwork",
@@ -65,7 +65,7 @@ export default function AdminArtists() {
       return res.json();
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/artists"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artists"] });
       toast({
         title: "Bulk approval complete",
         description: `${data.successCount} artists approved, ${data.failureCount} failed`,
@@ -87,7 +87,7 @@ export default function AdminArtists() {
       return res.json();
     },
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/artists"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artists"] });
       toast({
         title: "Bulk rejection complete",
         description: `${data.successCount} artists rejected, ${data.failureCount} failed`,

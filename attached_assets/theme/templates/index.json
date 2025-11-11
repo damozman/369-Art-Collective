@@ -32,7 +32,7 @@
           "settings": {
             "collection_name": "Abstract Art",
             "artwork_count": "120",
-            "collection_url": "/collections/all"
+            "collection_url": "https://247printnetwork.myshopify.com/collections/abstract-art"
           }
         },
         "collection_2": {
@@ -40,7 +40,7 @@
           "settings": {
             "collection_name": "Nature & Landscapes",
             "artwork_count": "85",
-            "collection_url": "/collections/all"
+            "collection_url": "https://247printnetwork.myshopify.com/collections/nature-landscapes"
           }
         },
         "collection_3": {
@@ -48,7 +48,7 @@
           "settings": {
             "collection_name": "Urban & Street",
             "artwork_count": "64",
-            "collection_url": "/collections/all"
+            "collection_url": "https://247printnetwork.myshopify.com/collections/urban-street"
           }
         },
         "collection_4": {
@@ -56,7 +56,7 @@
           "settings": {
             "collection_name": "Pop Culture",
             "artwork_count": "92",
-            "collection_url": "/collections/all"
+            "collection_url": "https://247printnetwork.myshopify.com/collections/pop-culture"
           }
         }
       },

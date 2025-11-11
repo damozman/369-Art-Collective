@@ -403,7 +403,6 @@ async function createMenu(menuConfig, resources) {
             id
             handle
             title
-            itemsCount
           }
           userErrors {
             field
@@ -430,7 +429,6 @@ async function createMenu(menuConfig, resources) {
     log(`✓ Menu created successfully!`, colors.green);
     log(`  ID: ${menu.id}`, colors.cyan);
     log(`  Handle: ${menu.handle}`, colors.cyan);
-    log(`  Items: ${menu.itemsCount}`, colors.cyan);
     
     // Log menu structure
     log('\nMenu structure:', colors.bright);

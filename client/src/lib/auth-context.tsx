@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useLocation } from "wouter";
 
-type UserType = "artist" | "admin" | null;
+type UserType = "artist" | "admin" | "influencer" | null;
 
 interface AuthUser {
   id: string;
@@ -9,6 +9,7 @@ interface AuthUser {
   name: string;
   type: UserType;
   approved?: boolean;
+  status?: string;
 }
 
 interface AuthContextType {

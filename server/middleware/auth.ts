@@ -76,29 +76,11 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
 }
 
 export function requireInfluencer(req: Request, res: Response, next: NextFunction) {
-  console.log("requireInfluencer middleware:", {
-    path: req.path,
-    sessionID: req.sessionID,
-    hasSession: !!req.session,
-    hasUser: !!req.session?.user,
-    userType: req.session?.user?.type,
-    status: req.session?.user?.status,
-    cookies: req.headers.cookie ? "present" : "missing",
-  });
-  
   if (!req.session?.user || req.session.user.type !== "influencer") {
-    console.error("Influencer access denied:", {
-      path: req.path,
-      sessionData: req.session?.user,
-    });
     return res.status(403).json({ message: "Influencer access required" });
   }
   
   if (req.session.user.status !== "active") {
-    console.error("Influencer not active:", {
-      path: req.path,
-      status: req.session.user.status,
-    });
     return res.status(403).json({ message: "Account pending approval or suspended" });
   }
   

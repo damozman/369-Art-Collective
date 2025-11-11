@@ -1,0 +1,390 @@
+{% comment %}
+247 Print Network - Homepage Hero Section
+Displate-inspired hero with featured artwork
+{% endcomment %}
+
+{{ '247-art.css' | asset_url | stylesheet_tag }}
+
+<section class="homepage-hero">
+  <div class="homepage-hero__container">
+    
+    <div class="homepage-hero__content">
+      <div class="homepage-hero__text">
+        {% if section.settings.eyebrow_text != blank %}
+          <div class="homepage-hero__eyebrow">{{ section.settings.eyebrow_text }}</div>
+        {% endif %}
+        
+        <h1 class="homepage-hero__title">{{ section.settings.title }}</h1>
+        
+        {% if section.settings.subtitle != blank %}
+          <p class="homepage-hero__subtitle">{{ section.settings.subtitle }}</p>
+        {% endif %}
+        
+        <div class="homepage-hero__actions">
+          {% if section.settings.primary_button_text != blank %}
+            <a href="{{ section.settings.primary_button_url }}" class="homepage-hero__btn homepage-hero__btn--primary" data-testid="button-shop-now">
+              {{ section.settings.primary_button_text }}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          {% endif %}
+          
+          {% if section.settings.secondary_button_text != blank %}
+            <a href="{{ section.settings.secondary_button_url }}" class="homepage-hero__btn homepage-hero__btn--secondary" data-testid="button-become-artist">
+              {{ section.settings.secondary_button_text }}
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      
+      {% if section.settings.featured_image %}
+        <div class="homepage-hero__image">
+          <img 
+            src="{{ section.settings.featured_image | img_url: '1200x1200' }}" 
+            alt="{{ section.settings.title }}"
+            loading="eager"
+          >
+        </div>
+      {% endif %}
+    </div>
+
+    {% if section.settings.show_stats %}
+      <div class="homepage-hero__stats">
+        {% if section.settings.stat_1_value != blank %}
+          <div class="homepage-hero__stat">
+            <div class="homepage-hero__stat-value">{{ section.settings.stat_1_value }}</div>
+            <div class="homepage-hero__stat-label">{{ section.settings.stat_1_label }}</div>
+          </div>
+        {% endif %}
+        
+        {% if section.settings.stat_2_value != blank %}
+          <div class="homepage-hero__stat">
+            <div class="homepage-hero__stat-value">{{ section.settings.stat_2_value }}</div>
+            <div class="homepage-hero__stat-label">{{ section.settings.stat_2_label }}</div>
+          </div>
+        {% endif %}
+        
+        {% if section.settings.stat_3_value != blank %}
+          <div class="homepage-hero__stat">
+            <div class="homepage-hero__stat-value">{{ section.settings.stat_3_value }}</div>
+            <div class="homepage-hero__stat-label">{{ section.settings.stat_3_label }}</div>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div>
+</section>
+
+<style>
+.homepage-hero {
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  padding: 6rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.homepage-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.homepage-hero__container {
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.homepage-hero__content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  margin-bottom: 4rem;
+}
+
+.homepage-hero__eyebrow {
+  display: inline-block;
+  padding: 0.625rem 1.5rem;
+  background: rgba(99, 102, 241, 0.15);
+  backdrop-filter: blur(8px);
+  border-radius: 24px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #a5b4fc;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.homepage-hero__title {
+  font-size: 4.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 1.5rem;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.homepage-hero__subtitle {
+  font-size: 1.375rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+  margin: 0 0 2.5rem;
+  max-width: 540px;
+}
+
+.homepage-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.homepage-hero__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.125rem 2.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 32px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: none;
+  letter-spacing: -0.01em;
+}
+
+.homepage-hero__btn--primary {
+  background: #6366f1;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+}
+
+.homepage-hero__btn--primary:hover {
+  background: #4f46e5;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5);
+}
+
+.homepage-hero__btn--primary svg {
+  transition: transform 0.3s ease;
+}
+
+.homepage-hero__btn--primary:hover svg {
+  transform: translateX(3px);
+}
+
+.homepage-hero__btn--secondary {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.homepage-hero__btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px);
+}
+
+.homepage-hero__image {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  aspect-ratio: 1 / 1;
+}
+
+.homepage-hero__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.homepage-hero__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.homepage-hero__stat {
+  text-align: center;
+}
+
+.homepage-hero__stat-value {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.homepage-hero__stat-label {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+@media (max-width: 968px) {
+  .homepage-hero__content {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .homepage-hero__title {
+    font-size: 3.5rem;
+  }
+
+  .homepage-hero__stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .homepage-hero {
+    padding: 4rem 1.5rem 3rem;
+  }
+
+  .homepage-hero__title {
+    font-size: 2.75rem;
+  }
+
+  .homepage-hero__subtitle {
+    font-size: 1.125rem;
+  }
+
+  .homepage-hero__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .homepage-hero__btn {
+    justify-content: center;
+  }
+
+  .homepage-hero__stats {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .homepage-hero__stat-value {
+    font-size: 2.5rem;
+  }
+}
+</style>
+
+{% schema %}
+{
+  "name": "247 Homepage Hero",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow_text",
+      "label": "Eyebrow Text",
+      "default": "Artist-Powered Marketplace"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Discover Art That Speaks"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Premium print-on-demand artwork from independent creators. Every purchase supports artists directly with fair royalties."
+    },
+    {
+      "type": "text",
+      "id": "primary_button_text",
+      "label": "Primary Button Text",
+      "default": "Shop Art"
+    },
+    {
+      "type": "url",
+      "id": "primary_button_url",
+      "label": "Primary Button URL"
+    },
+    {
+      "type": "text",
+      "id": "secondary_button_text",
+      "label": "Secondary Button Text",
+      "default": "Become an Artist"
+    },
+    {
+      "type": "url",
+      "id": "secondary_button_url",
+      "label": "Secondary Button URL"
+    },
+    {
+      "type": "image_picker",
+      "id": "featured_image",
+      "label": "Featured Image"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_stats",
+      "label": "Show Statistics",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "stat_1_value",
+      "label": "Stat 1 Value",
+      "default": "500+"
+    },
+    {
+      "type": "text",
+      "id": "stat_1_label",
+      "label": "Stat 1 Label",
+      "default": "Active Artists"
+    },
+    {
+      "type": "text",
+      "id": "stat_2_value",
+      "label": "Stat 2 Value",
+      "default": "10,000+"
+    },
+    {
+      "type": "text",
+      "id": "stat_2_label",
+      "label": "Stat 2 Label",
+      "default": "Artworks"
+    },
+    {
+      "type": "text",
+      "id": "stat_3_value",
+      "label": "Stat 3 Value",
+      "default": "45%"
+    },
+    {
+      "type": "text",
+      "id": "stat_3_label",
+      "label": "Stat 3 Label",
+      "default": "Artist Royalty"
+    }
+  ],
+  "presets": [
+    {
+      "name": "247 Homepage Hero"
+    }
+  ]
+}
+{% endschema %}

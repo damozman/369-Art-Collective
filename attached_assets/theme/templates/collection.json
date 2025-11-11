@@ -1,0 +1,17 @@
+{
+  "sections": {
+    "collection_header": {
+      "type": "247-collection-header"
+    },
+    "collection_grid": {
+      "type": "247-collection-grid",
+      "settings": {
+        "show_view_toggle": true
+      }
+    }
+  },
+  "order": [
+    "collection_header",
+    "collection_grid"
+  ]
+}

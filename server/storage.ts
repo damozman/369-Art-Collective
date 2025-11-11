@@ -15,6 +15,11 @@ import {
   influencers,
   affiliateClicks,
   affiliateConversions,
+  achievements,
+  influencerAchievements,
+  challenges,
+  challengeParticipants,
+  activityFeedEvents,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -215,6 +220,81 @@ export interface IStorage {
     monthlySalesCount: number; // For tier calculation
     currentTier: string;
   }>;
+  
+  // ===================================
+  // GAMIFICATION METHODS
+  // ===================================
+  
+  // Leaderboard
+  getLeaderboard(metric: string, period: string): Promise<Array<{
+    influencerId: string;
+    influencerName: string;
+    avatarUrl?: string;
+    currentTier: string;
+    score: number;
+    rank: number;
+  }>>;
+  
+  // Achievements/Badges
+  getInfluencerBadges(influencerId: string): Promise<Array<{
+    achievementId: string;
+    code: string;
+    name: string;
+    description: string;
+    icon: string;
+    category: string;
+    rarity: string;
+    points: number;
+    unlockedAt: Date;
+  }>>;
+  getAllAchievements(): Promise<Array<{
+    id: string;
+    code: string;
+    name: string;
+    description: string;
+    icon: string;
+    category: string;
+    rarity: string;
+    points: number;
+    criteria: any;
+  }>>;
+  unlockAchievement(influencerId: string, achievementCode: string): Promise<void>;
+  
+  // Challenges
+  getActiveChallenges(): Promise<Array<{
+    id: string;
+    name: string;
+    description: string;
+    challengeType: string;
+    metric: string;
+    goal?: string;
+    startDate: Date;
+    endDate: Date;
+    firstPlacePrize: string;
+    secondPlacePrize?: string;
+    thirdPlacePrize?: string;
+    prizeDescription?: string;
+    status: string;
+    participantCount: number;
+  }>>;
+  joinChallenge(challengeId: string, influencerId: string): Promise<void>;
+  getChallengeLeaderboard(challengeId: string): Promise<Array<{
+    influencerId: string;
+    influencerName: string;
+    currentScore: string;
+    rank?: number;
+  }>>;
+  
+  // Activity Feed
+  getActivityFeed(limit: number): Promise<Array<{
+    id: string;
+    influencerId: string;
+    influencerName: string;
+    eventType: string;
+    eventData: any;
+    message: string;
+    createdAt: Date;
+  }>>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -1295,6 +1375,292 @@ class PostgresStorage implements IStorage {
       currentTier: influencer.currentTier,
     };
   }
+
+  // ====================
+  // GAMIFICATION METHODS
+  // ====================
+
+  async getLeaderboard(metric: string, period: string): Promise<Array<{
+    influencerId: string;
+    influencerName: string;
+    avatarUrl?: string;
+    currentTier: string;
+    score: number;
+    rank: number;
+  }>> {
+    // Build query based on metric and period
+    let periodFilter;
+    if (period === 'monthly') {
+      const firstOfMonth = new Date();
+      firstOfMonth.setDate(1);
+      firstOfMonth.setHours(0, 0, 0, 0);
+      periodFilter = gte(affiliateConversions.createdAt, firstOfMonth);
+    } else if (period === 'weekly') {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      periodFilter = gte(affiliateConversions.createdAt, weekAgo);
+    }
+
+    const results = await db
+      .select({
+        influencerId: influencers.id,
+        influencerName: influencers.name,
+        currentTier: influencers.currentTier,
+        score: metric === 'earnings' 
+          ? sum(affiliateConversions.totalPayout)
+          : drizzleSql<number>`count(*)::int`
+      })
+      .from(influencers)
+      .leftJoin(affiliateConversions, eq(influencers.id, affiliateConversions.influencerId))
+      .where(and(
+        eq(influencers.status, 'active'),
+        periodFilter ? periodFilter : undefined
+      ))
+      .groupBy(influencers.id, influencers.name, influencers.currentTier)
+      .orderBy(drizzleSql`${metric === 'earnings' ? sum(affiliateConversions.totalPayout) : drizzleSql<number>`count(*)`} DESC NULLS LAST`)
+      .limit(100);
+
+    return results.map((r, index) => ({
+      influencerId: r.influencerId,
+      influencerName: r.influencerName,
+      currentTier: r.currentTier,
+      score: typeof r.score === 'string' ? parseFloat(r.score) : r.score || 0,
+      rank: index + 1
+    }));
+  }
+
+  async getInfluencerBadges(influencerId: string): Promise<Array<{
+    achievementId: string;
+    code: string;
+    name: string;
+    description: string;
+    icon: string;
+    category: string;
+    rarity: string;
+    points: number;
+    unlockedAt: Date;
+  }>> {
+    const badges = await db
+      .select({
+        achievementId: achievements.id,
+        code: achievements.code,
+        name: achievements.name,
+        description: achievements.description,
+        icon: achievements.icon,
+        category: achievements.category,
+        rarity: achievements.rarity,
+        points: achievements.points,
+        unlockedAt: influencerAchievements.unlockedAt
+      })
+      .from(influencerAchievements)
+      .innerJoin(achievements, eq(influencerAchievements.achievementId, achievements.id))
+      .where(eq(influencerAchievements.influencerId, influencerId))
+      .orderBy(influencerAchievements.unlockedAt);
+
+    return badges;
+  }
+
+  async getAllAchievements(): Promise<Array<{
+    id: string;
+    code: string;
+    name: string;
+    description: string;
+    icon: string;
+    category: string;
+    rarity: string;
+    points: number;
+    criteria: any;
+  }>> {
+    const allAchievements = await db
+      .select()
+      .from(achievements)
+      .where(eq(achievements.isActive, true))
+      .orderBy(achievements.points);
+
+    return allAchievements;
+  }
+
+  async unlockAchievement(influencerId: string, achievementCode: string): Promise<void> {
+    const [achievement] = await db
+      .select()
+      .from(achievements)
+      .where(eq(achievements.code, achievementCode))
+      .limit(1);
+
+    if (!achievement) {
+      throw new Error("Achievement not found");
+    }
+
+    // Check if already unlocked
+    const [existing] = await db
+      .select()
+      .from(influencerAchievements)
+      .where(and(
+        eq(influencerAchievements.influencerId, influencerId),
+        eq(influencerAchievements.achievementId, achievement.id)
+      ))
+      .limit(1);
+
+    if (existing) {
+      return; // Already unlocked
+    }
+
+    // Unlock the achievement
+    await db.insert(influencerAchievements).values({
+      influencerId,
+      achievementId: achievement.id
+    });
+
+    // Create activity feed event
+    const influencer = await this.getInfluencer(influencerId);
+    if (influencer) {
+      await db.insert(activityFeedEvents).values({
+        influencerId,
+        eventType: 'achievement_unlocked',
+        eventData: { achievementCode, achievementName: achievement.name },
+        message: `${achievement.icon} ${influencer.name} unlocked "${achievement.name}"!`,
+        isPublic: true
+      });
+    }
+  }
+
+  async getActiveChallenges(): Promise<Array<{
+    id: string;
+    name: string;
+    description: string;
+    challengeType: string;
+    metric: string;
+    goal?: string;
+    startDate: Date;
+    endDate: Date;
+    firstPlacePrize: string;
+    secondPlacePrize?: string;
+    thirdPlacePrize?: string;
+    prizeDescription?: string;
+    status: string;
+    participantCount: number;
+  }>> {
+    const activeChallenges = await db
+      .select({
+        id: challenges.id,
+        name: challenges.name,
+        description: challenges.description,
+        challengeType: challenges.challengeType,
+        metric: challenges.metric,
+        goal: challenges.goal,
+        startDate: challenges.startDate,
+        endDate: challenges.endDate,
+        firstPlacePrize: challenges.firstPlacePrize,
+        secondPlacePrize: challenges.secondPlacePrize,
+        thirdPlacePrize: challenges.thirdPlacePrize,
+        prizeDescription: challenges.prizeDescription,
+        status: challenges.status,
+        participantCount: drizzleSql<number>`count(${challengeParticipants.id})::int`
+      })
+      .from(challenges)
+      .leftJoin(challengeParticipants, eq(challenges.id, challengeParticipants.challengeId))
+      .where(drizzleSql`${challenges.status} IN ('upcoming', 'active')`)
+      .groupBy(
+        challenges.id,
+        challenges.name,
+        challenges.description,
+        challenges.challengeType,
+        challenges.metric,
+        challenges.goal,
+        challenges.startDate,
+        challenges.endDate,
+        challenges.firstPlacePrize,
+        challenges.secondPlacePrize,
+        challenges.thirdPlacePrize,
+        challenges.prizeDescription,
+        challenges.status
+      )
+      .orderBy(challenges.startDate);
+
+    return activeChallenges.map(c => ({
+      ...c,
+      goal: c.goal?.toString(),
+      firstPlacePrize: c.firstPlacePrize.toString(),
+      secondPlacePrize: c.secondPlacePrize?.toString(),
+      thirdPlacePrize: c.thirdPlacePrize?.toString(),
+      participantCount: c.participantCount || 0
+    }));
+  }
+
+  async joinChallenge(challengeId: string, influencerId: string): Promise<void> {
+    // Check if already joined
+    const [existing] = await db
+      .select()
+      .from(challengeParticipants)
+      .where(and(
+        eq(challengeParticipants.challengeId, challengeId),
+        eq(challengeParticipants.influencerId, influencerId)
+      ))
+      .limit(1);
+
+    if (existing) {
+      throw new Error("Already joined this challenge");
+    }
+
+    // Join the challenge
+    await db.insert(challengeParticipants).values({
+      challengeId,
+      influencerId,
+      currentScore: '0'
+    });
+  }
+
+  async getChallengeLeaderboard(challengeId: string): Promise<Array<{
+    influencerId: string;
+    influencerName: string;
+    currentScore: string;
+    rank?: number;
+  }>> {
+    const participants = await db
+      .select({
+        influencerId: challengeParticipants.influencerId,
+        influencerName: influencers.name,
+        currentScore: challengeParticipants.currentScore,
+        rank: challengeParticipants.rank
+      })
+      .from(challengeParticipants)
+      .innerJoin(influencers, eq(challengeParticipants.influencerId, influencers.id))
+      .where(eq(challengeParticipants.challengeId, challengeId))
+      .orderBy(challengeParticipants.currentScore);
+
+    return participants.map(p => ({
+      ...p,
+      currentScore: p.currentScore.toString()
+    }));
+  }
+
+  async getActivityFeed(limit: number): Promise<Array<{
+    id: string;
+    influencerId: string;
+    influencerName: string;
+    eventType: string;
+    eventData: any;
+    message: string;
+    createdAt: Date;
+  }>> {
+    const events = await db
+      .select({
+        id: activityFeedEvents.id,
+        influencerId: activityFeedEvents.influencerId,
+        influencerName: influencers.name,
+        eventType: activityFeedEvents.eventType,
+        eventData: activityFeedEvents.eventData,
+        message: activityFeedEvents.message,
+        createdAt: activityFeedEvents.createdAt
+      })
+      .from(activityFeedEvents)
+      .innerJoin(influencers, eq(activityFeedEvents.influencerId, influencers.id))
+      .where(eq(activityFeedEvents.isPublic, true))
+      .orderBy(activityFeedEvents.createdAt)
+      .limit(limit);
+
+    return events;
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -1905,6 +2271,16 @@ class MemStorage implements IStorage {
       currentTier: 'bronze',
     };
   }
+
+  // Gamification stubs
+  async getLeaderboard(): Promise<Array<any>> { return []; }
+  async getInfluencerBadges(): Promise<Array<any>> { return []; }
+  async getAllAchievements(): Promise<Array<any>> { return []; }
+  async unlockAchievement(): Promise<void> {}
+  async getActiveChallenges(): Promise<Array<any>> { return []; }
+  async joinChallenge(): Promise<void> {}
+  async getChallengeLeaderboard(): Promise<Array<any>> { return []; }
+  async getActivityFeed(): Promise<Array<any>> { return []; }
 }
 
 export const storage = isDatabaseConfigured() ? new PostgresStorage() : new MemStorage();

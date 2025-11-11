@@ -173,29 +173,33 @@ const MAIN_MENU = {
   items: [
     { title: 'Home', resource_type: 'frontpage', url: '/' },
     {
-      title: 'Shop by Artist',
+      title: 'Shop',
       url: '#',
       children: [
-        { title: 'Featured Artists', resource_type: 'collection', handle: 'featured-artists' },
-        { title: 'Abstract Artists', resource_type: 'collection', handle: 'abstract-art' },
-        { title: 'Nature Artists', resource_type: 'collection', handle: 'nature-landscapes' },
-        { title: 'Urban Artists', resource_type: 'collection', handle: 'urban-street' },
-        { title: 'Pop Culture Artists', resource_type: 'collection', handle: 'pop-culture' },
+        { title: 'All Artwork', url: '/collections' },
+        { title: 'New Arrivals', url: '/collections/new-arrivals' },
+        { title: 'Featured', url: '/collections/featured' },
       ],
     },
     {
-      title: 'Shop by Style',
+      title: 'Print Options',
       url: '#',
       children: [
-        { title: 'Abstract Art', resource_type: 'collection', handle: 'abstract-art' },
-        { title: 'Nature & Landscapes', resource_type: 'collection', handle: 'nature-landscapes' },
-        { title: 'Urban & Street', resource_type: 'collection', handle: 'urban-street' },
-        { title: 'Pop Culture', resource_type: 'collection', handle: 'pop-culture' },
+        { title: 'Metal Prints', url: '/collections/metal-prints' },
+        { title: 'Canvas Prints', url: '/collections/canvas-prints' },
+        { title: 'Posters', url: '/collections/posters' },
+        { title: 'Framed Prints', url: '/collections/framed-prints' },
       ],
     },
-    { title: 'Featured', resource_type: 'collection', handle: 'featured' },
-    { title: 'About', resource_type: 'page', handle: 'about' },
-    { title: 'Meet the Creators', resource_type: 'page', handle: 'creators' },
+    {
+      title: 'About',
+      url: '#',
+      children: [
+        { title: 'About Us', resource_type: 'page', handle: 'about' },
+        { title: 'Meet the Creators', resource_type: 'page', handle: 'creators' },
+        { title: 'Join as an Artist', resource_type: 'page', handle: 'join' },
+      ],
+    },
     { title: 'Contact', resource_type: 'page', handle: 'contact' },
   ],
 };
@@ -209,11 +213,11 @@ const FOOTER_MENU = {
       title: 'Shop',
       url: '#',
       children: [
-        { title: 'All Art', resource_type: 'collection', handle: 'all' },
-        { title: 'Featured', resource_type: 'collection', handle: 'featured' },
-        { title: 'Abstract Art', resource_type: 'collection', handle: 'abstract-art' },
-        { title: 'Nature & Landscapes', resource_type: 'collection', handle: 'nature-landscapes' },
-        { title: 'Urban & Street', resource_type: 'collection', handle: 'urban-street' },
+        { title: 'All Artwork', url: '/collections' },
+        { title: 'New Arrivals', url: '/collections/new-arrivals' },
+        { title: 'Featured', url: '/collections/featured' },
+        { title: 'Metal Prints', url: '/collections/metal-prints' },
+        { title: 'Canvas Prints', url: '/collections/canvas-prints' },
       ],
     },
     {
@@ -231,17 +235,7 @@ const FOOTER_MENU = {
       url: '#',
       children: [
         { title: 'Contact Us', resource_type: 'page', handle: 'contact' },
-        { title: 'Shipping Policy', resource_type: 'policy', handle: 'shipping-policy' },
-        { title: 'Refund Policy', resource_type: 'policy', handle: 'refund-policy' },
-        { title: 'Privacy Policy', resource_type: 'policy', handle: 'privacy-policy' },
-      ],
-    },
-    {
-      title: 'Legal',
-      url: '#',
-      children: [
-        { title: 'Terms of Service', resource_type: 'policy', handle: 'terms-of-service' },
-        { title: 'Privacy Policy', resource_type: 'policy', handle: 'privacy-policy' },
+        { title: 'FAQs', resource_type: 'page', handle: 'faq' },
       ],
     },
   ],

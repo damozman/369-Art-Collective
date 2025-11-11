@@ -309,22 +309,37 @@ async function getResourceIds() {
   }
   
   try {
-    // Fetch all collections
+    // Fetch all collections using GraphQL (REST API deprecated in 2025-01)
     log('Fetching collections...', colors.blue);
-    const collectionsData = await shopifyRequest('collections.json?limit=250');
-    if (collectionsData.collections) {
-      collectionsData.collections.forEach(collection => {
-        resources.collections[collection.handle] = collection.id;
+    const query = `
+      {
+        collections(first: 250) {
+          edges {
+            node {
+              id
+              handle
+              title
+            }
+          }
+        }
+      }
+    `;
+    
+    const data = await shopifyGraphQL(query);
+    if (data.collections && data.collections.edges) {
+      data.collections.edges.forEach(edge => {
+        const collection = edge.node;
+        // Extract numeric ID from GID (gid://shopify/Collection/123456)
+        const numericId = collection.id.split('/').pop();
+        resources.collections[collection.handle] = numericId;
       });
-      log(`✓ Found ${collectionsData.collections.length} collections`, colors.green);
+      log(`✓ Found ${data.collections.edges.length} collections`, colors.green);
     }
+    
+    await delay();
   } catch (error) {
-    if (error.message.includes('read_content')) {
-      log(`⚠ Warning: API token lacks 'read_content' scope, skipping collection fetch`, colors.yellow);
-      log(`  Menu items will use HTTP links instead of resource IDs`, colors.yellow);
-    } else {
-      log(`⚠ Warning: Failed to fetch collections: ${error.message}`, colors.yellow);
-    }
+    log(`⚠ Warning: Failed to fetch collections: ${error.message}`, colors.yellow);
+    log(`  Collections will be created if needed`, colors.yellow);
   }
   
   return resources;

@@ -16,6 +16,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { changePasswordSchema, updateArtistProfileSchema, deleteAccountSchema } from "@shared/schema";
 import type { Artist } from "@shared/schema";
 import { Lock, User, Mail, Type, ArrowLeft, LogOut, Image as ImageIcon, Settings as SettingsIcon, AlertTriangle, Crown, Sparkles, Zap, Check, X } from "lucide-react";
+import { useSubscriptionStatus, getTrialStatusText } from "@/hooks/use-subscription-status";
 import { Badge } from "@/components/ui/badge";
 import { loadStripe } from "@stripe/stripe-js";
 import { nanoid } from "nanoid";
@@ -185,14 +186,7 @@ export default function ArtistSettings() {
     },
   });
 
-  const { data: subscriptionDetails, isLoading: isLoadingSubscription } = useQuery<{
-    tier: "free" | "pro" | "elite";
-    status: string | null;
-    subscriptionPeriodEnd: string | null;
-  }>({
-    queryKey: ["/api/artists/subscription"],
-    enabled: !!user,
-  });
+  const { subscriptionDetails, isLoading: isLoadingSubscription } = useSubscriptionStatus();
 
   const upgradeSubscriptionMutation = useMutation({
     mutationFn: async (tier: "pro" | "elite") => {
@@ -777,18 +771,26 @@ export default function ArtistSettings() {
                           </p>
                         )}
                       </div>
-                      <Badge variant={subscriptionDetails.status === "active" ? "default" : "outline"} className="capitalize">
-                        {subscriptionDetails.status || "free"}
-                      </Badge>
+                      {subscriptionDetails.isOnTrial ? (
+                        <Badge variant="default" className="bg-blue-600 dark:bg-blue-500" data-testid="badge-trial-status">
+                          Trial: {getTrialStatusText(subscriptionDetails)}
+                        </Badge>
+                      ) : (
+                        <Badge variant={subscriptionDetails.status === "active" ? "default" : "outline"} className="capitalize" data-testid="badge-subscription-status">
+                          {subscriptionDetails.status || "free"}
+                        </Badge>
+                      )}
                     </div>
 
                     {/* Subscription status info */}
-                    {subscriptionDetails.tier !== "free" && subscriptionDetails.subscriptionPeriodEnd && (
+                    {subscriptionDetails.tier !== "free" && (subscriptionDetails.trialEndDate || subscriptionDetails.subscriptionPeriodEnd) && (
                       <div className="border-t pt-3">
                         <p className="text-xs text-muted-foreground">
-                          {subscriptionDetails.status === "canceled" 
-                            ? `Access until ${new Date(subscriptionDetails.subscriptionPeriodEnd).toLocaleDateString()}`
-                            : `Renews on ${new Date(subscriptionDetails.subscriptionPeriodEnd).toLocaleDateString()}`
+                          {subscriptionDetails.isOnTrial && subscriptionDetails.trialEndDate
+                            ? `Trial ends ${subscriptionDetails.trialEndDate.toLocaleDateString()} • No charge until then`
+                            : subscriptionDetails.status === "canceled" 
+                            ? `Access until ${new Date(subscriptionDetails.subscriptionPeriodEnd!).toLocaleDateString()}`
+                            : `Renews on ${new Date(subscriptionDetails.subscriptionPeriodEnd!).toLocaleDateString()}`
                           }
                         </p>
                       </div>
@@ -866,7 +868,7 @@ export default function ArtistSettings() {
                   <div className="space-y-2">
                     {subscriptionDetails.tier === "free" && (
                       <div className="space-y-2">
-                        <p className="text-sm font-medium">Upgrade to unlock more features:</p>
+                        <p className="text-sm font-medium">Try risk-free with a free trial:</p>
                         <div className="flex gap-2">
                           <Button
                             variant="default"
@@ -875,7 +877,7 @@ export default function ArtistSettings() {
                             className="flex-1"
                             data-testid="button-upgrade-pro"
                           >
-                            {upgradeSubscriptionMutation.isPending ? "Processing..." : "Upgrade to Pro ($15/mo)"}
+                            {upgradeSubscriptionMutation.isPending ? "Processing..." : "Start 14-Day Trial (Pro)"}
                           </Button>
                           <Button
                             variant="default"
@@ -884,9 +886,12 @@ export default function ArtistSettings() {
                             className="flex-1"
                             data-testid="button-upgrade-elite"
                           >
-                            {upgradeSubscriptionMutation.isPending ? "Processing..." : "Upgrade to Elite ($40/mo)"}
+                            {upgradeSubscriptionMutation.isPending ? "Processing..." : "Start 7-Day Trial (Elite)"}
                           </Button>
                         </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Cancel anytime. Only charged after trial ends.
+                        </p>
                       </div>
                     )}
 
@@ -898,8 +903,11 @@ export default function ArtistSettings() {
                           disabled={upgradeSubscriptionMutation.isPending}
                           data-testid="button-upgrade-elite"
                         >
-                          {upgradeSubscriptionMutation.isPending ? "Processing..." : "Upgrade to Elite ($40/mo)"}
+                          {upgradeSubscriptionMutation.isPending ? "Processing..." : "Start 7-Day Elite Trial"}
                         </Button>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Upgrade to Elite tier with a 7-day free trial
+                        </p>
                       </div>
                     )}
 

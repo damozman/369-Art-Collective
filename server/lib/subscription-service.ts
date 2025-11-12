@@ -126,7 +126,7 @@ export class SubscriptionService {
 
     // Check for existing subscriptions
     if (artist.stripeSubscriptionId) {
-      const existingSub: any = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId, {
+      const existingSub = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId, {
         expand: ['latest_invoice.payment_intent']
       });
       
@@ -137,15 +137,25 @@ export class SubscriptionService {
       
       // If subscription is incomplete or past_due, return existing payment intent for retry
       if (['incomplete', 'past_due'].includes(existingSub.status)) {
-        const latestInvoice: any = existingSub.latest_invoice;
-        const paymentIntent: any = latestInvoice?.payment_intent;
-        
-        if (paymentIntent && paymentIntent.client_secret) {
-          return {
-            subscriptionId: existingSub.id,
-            clientSecret: paymentIntent.client_secret
-          };
+        // Type guard: expanded fields are objects, unexpanded are string IDs
+        if (typeof existingSub.latest_invoice !== 'string' && existingSub.latest_invoice) {
+          const invoice = existingSub.latest_invoice as Stripe.Invoice;
+          
+          if (typeof invoice.payment_intent !== 'string' && invoice.payment_intent) {
+            const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+            
+            if (paymentIntent.client_secret) {
+              return {
+                subscriptionId: existingSub.id,
+                clientSecret: paymentIntent.client_secret
+              };
+            }
+          }
         }
+        
+        // Edge case: subscription is incomplete but has no payment intent
+        console.error(`Subscription ${existingSub.id} is ${existingSub.status} but missing payment intent`);
+        throw new Error('Cannot retry payment - subscription is in invalid state. Please contact support.');
       }
     }
 
@@ -154,7 +164,7 @@ export class SubscriptionService {
     const priceId = await getOrCreatePriceId(tier);
 
     // Use client-provided idempotency key to ensure retries are safely deduplicated by Stripe
-    const subscription: any = await stripe.subscriptions.create({
+    const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],
       payment_behavior: 'default_incomplete',
@@ -168,20 +178,36 @@ export class SubscriptionService {
       idempotencyKey
     });
 
-    const latestInvoice: any = subscription.latest_invoice;
-    const paymentIntent: any = latestInvoice.payment_intent;
+    // Type guard: expanded fields are objects, unexpanded are string IDs
+    if (typeof subscription.latest_invoice !== 'string' && subscription.latest_invoice) {
+      const invoice = subscription.latest_invoice as Stripe.Invoice;
+      
+      if (typeof invoice.payment_intent !== 'string' && invoice.payment_intent) {
+        const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
 
-    await storage.updateArtist(artistId, {
-      stripeSubscriptionId: subscription.id,
-      subscriptionStatus: subscription.status,
-      subscriptionTier: tier,
-      subscriptionPeriodEnd: new Date(subscription.current_period_end * 1000) as any
-    });
+        const periodEnd = typeof subscription.current_period_end === 'number'
+          ? new Date(subscription.current_period_end * 1000)
+          : new Date();
 
-    return {
-      subscriptionId: subscription.id,
-      clientSecret: paymentIntent.client_secret!
-    };
+        await storage.updateArtist(artistId, {
+          stripeSubscriptionId: subscription.id,
+          subscriptionStatus: subscription.status,
+          subscriptionTier: tier,
+          subscriptionPeriodEnd: periodEnd as any
+        });
+
+        if (!paymentIntent.client_secret) {
+          throw new Error('Payment intent missing client secret');
+        }
+
+        return {
+          subscriptionId: subscription.id,
+          clientSecret: paymentIntent.client_secret
+        };
+      }
+    }
+    
+    throw new Error('Failed to create subscription - missing payment intent');
   }
 
   async upgradeSubscription(artistId: string, newTier: 'pro' | 'elite', idempotencyKey: string): Promise<void> {
@@ -264,22 +290,36 @@ export class SubscriptionService {
     switch (event.type) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
-        const subscription: any = event.data.object;
-        const artistId = subscription.metadata.artistId;
-        const tier = subscription.metadata.tier as SubscriptionTier;
+        const subscription = event.data.object as Stripe.Subscription;
+        const artistId = subscription.metadata?.artistId;
+        const tier = subscription.metadata?.tier as SubscriptionTier;
+        
+        if (!artistId) {
+          console.error('Subscription created/updated but missing artistId metadata');
+          break;
+        }
+
+        const periodEnd = typeof subscription.current_period_end === 'number'
+          ? new Date(subscription.current_period_end * 1000)
+          : new Date();
 
         await storage.updateArtist(artistId, {
           stripeSubscriptionId: subscription.id,
           subscriptionStatus: subscription.status,
           subscriptionTier: tier,
-          subscriptionPeriodEnd: new Date(subscription.current_period_end * 1000) as any
+          subscriptionPeriodEnd: periodEnd as any
         });
         break;
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
-        const artistId = subscription.metadata.artistId;
+        const artistId = subscription.metadata?.artistId;
+        
+        if (!artistId) {
+          console.error('Subscription deleted but missing artistId metadata');
+          break;
+        }
 
         await storage.updateArtist(artistId, {
           subscriptionStatus: 'canceled',
@@ -289,24 +329,40 @@ export class SubscriptionService {
       }
 
       case 'invoice.payment_succeeded': {
-        const invoice: any = event.data.object;
-        if (invoice.subscription) {
-          const subscription: any = await stripe.subscriptions.retrieve(invoice.subscription as string);
-          const artistId = subscription.metadata.artistId;
+        const invoice = event.data.object as Stripe.Invoice;
+        
+        if (typeof invoice.subscription === 'string' && invoice.subscription) {
+          const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+          const artistId = subscription.metadata?.artistId;
+          
+          if (!artistId) {
+            console.error('Invoice payment succeeded but subscription missing artistId metadata');
+            break;
+          }
+
+          const periodEnd = typeof subscription.current_period_end === 'number'
+            ? new Date(subscription.current_period_end * 1000)
+            : new Date();
 
           await storage.updateArtist(artistId, {
             subscriptionStatus: 'active',
-            subscriptionPeriodEnd: new Date(subscription.current_period_end * 1000) as any
+            subscriptionPeriodEnd: periodEnd as any
           });
         }
         break;
       }
 
       case 'invoice.payment_failed': {
-        const invoice: any = event.data.object;
-        if (invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
-          const artistId = subscription.metadata.artistId;
+        const invoice = event.data.object as Stripe.Invoice;
+        
+        if (typeof invoice.subscription === 'string' && invoice.subscription) {
+          const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+          const artistId = subscription.metadata?.artistId;
+          
+          if (!artistId) {
+            console.error('Invoice payment failed but subscription missing artistId metadata');
+            break;
+          }
 
           await storage.updateArtist(artistId, {
             subscriptionStatus: 'past_due'
@@ -343,15 +399,19 @@ export class SubscriptionService {
       };
     }
 
-    const subscription: any = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId);
-    const tier = subscription.metadata.tier as SubscriptionTier;
+    const subscription = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId);
+    const tier = subscription.metadata?.tier as SubscriptionTier;
     const config = tier === 'pro' ? SUBSCRIPTION_CONFIG.pro : SUBSCRIPTION_CONFIG.elite;
+
+    const periodEnd = typeof subscription.current_period_end === 'number'
+      ? new Date(subscription.current_period_end * 1000)
+      : new Date();
 
     return {
       tier: artist.subscriptionTier || tier,
       status: subscription.status,
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      currentPeriodEnd: periodEnd,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end ?? false,
       features: config.features,
       priceMonthly: config.priceMonthly / 100
     };

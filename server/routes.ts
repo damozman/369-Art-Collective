@@ -38,7 +38,7 @@ import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from ".
 import { emailService } from "./lib/email-service";
 import { generateReferralCode } from "./lib/referral-code-generator";
 import { AchievementService } from "./achievement-service";
-import { generateAiImage, saveAiImage, validatePrompt } from "./ai-service";
+import { generateAiImage, saveAiImage, validatePrompt, generateArtworkContent } from "./ai-service";
 import { subscriptionService } from "./lib/subscription-service";
 import Stripe from "stripe";
 
@@ -3633,6 +3633,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Get AI credits error:", error);
       res.status(500).json({ message: "Failed to fetch AI credits" });
+    }
+  });
+
+  // Artist: Generate AI content (titles, descriptions, tags, stories)
+  app.post("/api/ai/generate-content", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      const { contentType, artworkTitle, existingDescription, style, medium, colors } = req.body;
+      
+      // Validate content type
+      const validTypes = ['title', 'description', 'tags', 'artworkStory', 'suggestedUse'];
+      if (!contentType || !validTypes.includes(contentType)) {
+        return res.status(400).json({ 
+          message: `Invalid content type. Must be one of: ${validTypes.join(', ')}` 
+        });
+      }
+
+      // Check subscription tier - content generation is free for all tiers
+      // (it's much cheaper than image generation)
+      const artistData = await storage.getArtistById(artist.id);
+      if (!artistData) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Generate content using GPT-4o
+      const { content, tokensUsed } = await generateArtworkContent({
+        contentType,
+        artworkTitle,
+        existingDescription,
+        style,
+        medium,
+        colors,
+      });
+
+      console.log(`[SUCCESS][AI_CONTENT] Generated ${contentType} for artist ${artist.id} (${tokensUsed} tokens)`);
+
+      res.json({
+        content,
+        tokensUsed,
+        contentType,
+      });
+    } catch (error: any) {
+      console.error("[ERROR][AI_CONTENT] Content generation failed:", error.message);
+      res.status(500).json({ message: "Failed to generate content. Please try again." });
     }
   });
   

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -29,16 +29,26 @@ export default function UploadArtwork() {
   const [isUploading, setIsUploading] = useState(false);
 
   // Fetch subscription data
-  const { data: subscription, isLoading: subscriptionLoading } = useQuery<SubscriptionData>({
+  const { data: subscription, isLoading: subscriptionLoading, error: subscriptionError } = useQuery<SubscriptionData>({
     queryKey: ["/api/artists/subscription"],
     retry: 1,
   });
 
   // Fetch artwork stats
-  const { data: stats, isLoading: statsLoading } = useQuery<ArtworkStats>({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery<ArtworkStats>({
     queryKey: ["/api/artists/stats"],
     retry: 1,
   });
+
+  // Redirect to login if not authenticated (check error message for "401")
+  useEffect(() => {
+    if (subscriptionError || statsError) {
+      const error = subscriptionError || statsError;
+      if (error && error.message && error.message.includes('401')) {
+        setLocation("/artist/login");
+      }
+    }
+  }, [subscriptionError, statsError, setLocation]);
 
   // Check if user has reached upload limit
   const isFree = subscription?.tier === "free";

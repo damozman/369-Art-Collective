@@ -15,7 +15,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   login: (user: AuthUser) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -43,7 +43,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("auth_user", JSON.stringify(newUser));
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      // Call backend logout endpoint to destroy session and clear cookie
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (error) {
+      console.error("Logout API call failed:", error);
+      // Continue with client-side cleanup even if API call fails
+    }
+    
+    // Clear client-side state
     setUser(null);
     localStorage.removeItem("auth_user");
     setLocation("/login");

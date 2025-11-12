@@ -420,7 +420,7 @@ export class EmailService {
             <p>We typically review portfolios within 24-48 hours. You'll receive an email notification once your portfolio has been reviewed.</p>
             
             <div class="info">
-              <strong>💡 Three Ways to Grow With Us:</strong><br>
+              <strong>Three Ways to Grow With Us:</strong><br>
               • <strong>Free:</strong> Start earning 30% royalties with up to 20 artworks<br>
               • <strong>Pro:</strong> Unlock 35% royalties, unlimited uploads, AI Art Studio, and homepage featured rotation<br>
               • <strong>Elite:</strong> Get 45% royalties, unlimited AI tools, guaranteed homepage placement, and priority support<br><br>
@@ -458,7 +458,7 @@ NEXT STEPS:
 
 We typically review portfolios within 24-48 hours. You'll receive an email notification once your portfolio has been reviewed.
 
-💡 THREE WAYS TO GROW WITH US:
+THREE WAYS TO GROW WITH US:
 • Free: Start earning 30% royalties with up to 20 artworks
 • Pro: Unlock 35% royalties, unlimited uploads, AI Art Studio, and homepage featured rotation
 • Elite: Get 45% royalties, unlimited AI tools, guaranteed homepage placement, and priority support
@@ -565,7 +565,7 @@ Best regards,
       <body>
         <div class="container">
           <div class="header">
-            <h1>🎉 Portfolio Approved!</h1>
+            <h1>Portfolio Approved!</h1>
           </div>
           <div class="content">
             <p>Hi ${artistName},</p>
@@ -576,14 +576,14 @@ Best regards,
             
             <p><strong>Your Free Tier Includes:</strong></p>
             <ul>
-              <li>✅ <strong>30% royalty</strong> on all sales</li>
-              <li>✅ Upload up to <strong>20 artworks</strong></li>
-              <li>✅ Automatic print-on-demand product creation</li>
-              <li>✅ Professional artist dashboard</li>
+              <li><strong>30% royalty</strong> on all sales</li>
+              <li>Upload up to <strong>20 artworks</strong></li>
+              <li>Automatic print-on-demand product creation</li>
+              <li>Professional artist dashboard</li>
             </ul>
             
             <div class="warning">
-              <strong>📊 Free Tier Limit:</strong> You can upload up to 20 artworks on the Free tier. Need more? Upgrade to Pro for unlimited uploads!
+              <strong>Free Tier Limit:</strong> You can upload up to 20 artworks on the Free tier. Need more? Upgrade to Pro for unlimited uploads!
             </div>
             
             <p><strong>What's Next:</strong></p>
@@ -595,27 +595,27 @@ Best regards,
             </ol>
             
             <div class="tier-comparison">
-              <h3 style="margin-top: 0; color: #667eea;">🚀 Ready to Unlock More?</h3>
+              <h3 style="margin-top: 0; color: #667eea;">Ready to Unlock More?</h3>
               
               <p><strong>Pro Tier ($15-20/mo):</strong></p>
               <ul>
-                <li>✨ <strong>35% minimum royalty</strong> (guaranteed!)</li>
-                <li>🎨 <strong>Unlimited artwork uploads</strong></li>
-                <li>🤖 <strong>AI Art Studio access</strong> - Generate new designs with DALL-E 3</li>
-                <li>⭐ <strong>Homepage featured rotation</strong> - Fair exposure for all Pro artists</li>
+                <li><strong>35% minimum royalty</strong> (guaranteed!)</li>
+                <li><strong>Unlimited artwork uploads</strong></li>
+                <li><strong>AI Art Studio access</strong> - Generate new designs with DALL-E 3</li>
+                <li><strong>Homepage featured rotation</strong> - Fair exposure for all Pro artists</li>
               </ul>
               
               <p><strong>Elite Tier ($40-50/mo):</strong></p>
               <ul>
-                <li>💎 <strong>45% royalty guarantee</strong> (max tier immediately!)</li>
-                <li>🎨 <strong>Unlimited uploads + AI Studio</strong></li>
-                <li>🏆 <strong>Guaranteed homepage placement</strong> via hybrid rotation</li>
-                <li>⚡ <strong>Priority artwork review</strong></li>
-                <li>🎯 <strong>Full profile customization</strong></li>
+                <li><strong>45% royalty guarantee</strong> (max tier immediately!)</li>
+                <li><strong>Unlimited uploads + AI Studio</strong></li>
+                <li><strong>Guaranteed homepage placement</strong> via hybrid rotation</li>
+                <li><strong>Priority artwork review</strong></li>
+                <li><strong>Full profile customization</strong></li>
               </ul>
               
               <div class="info">
-                <strong>💡 Featured Artist System:</strong> Pro and Elite members get fair homepage rotation (2 performance slots for top sellers + 2 rotation slots ensuring everyone gets exposure). Your work will be seen!
+                <strong>Featured Artist System:</strong> Pro and Elite members get fair homepage rotation (2 performance slots for top sellers + 2 rotation slots ensuring everyone gets exposure). Your work will be seen!
               </div>
               
               <a href="${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/settings" class="button-secondary">Upgrade to Pro</a>
@@ -638,19 +638,19 @@ Best regards,
 
   private getPortfolioApprovedEmailText(artistName: string): string {
     return `
-🎉 Portfolio Approved!
+Portfolio Approved!
 
 Hi ${artistName},
 
 Congratulations! Your portfolio has been approved. You're now a 247 Print Network artist!
 
 YOUR FREE TIER INCLUDES:
-✅ 30% royalty on all sales
-✅ Upload up to 20 artworks
-✅ Automatic print-on-demand product creation
-✅ Professional artist dashboard
+• 30% royalty on all sales
+• Upload up to 20 artworks
+• Automatic print-on-demand product creation
+• Professional artist dashboard
 
-📊 FREE TIER LIMIT: You can upload up to 20 artworks on the Free tier. Need more? Upgrade to Pro for unlimited uploads!
+FREE TIER LIMIT: You can upload up to 20 artworks on the Free tier. Need more? Upgrade to Pro for unlimited uploads!
 
 WHAT'S NEXT:
 1. Upload your first artwork through your dashboard
@@ -658,22 +658,22 @@ WHAT'S NEXT:
 3. Your artwork goes live on our Shopify marketplace
 4. Start earning 30% royalties immediately!
 
-🚀 READY TO UNLOCK MORE?
+READY TO UNLOCK MORE?
 
 PRO TIER ($15-20/mo):
-✨ 35% minimum royalty (guaranteed!)
-🎨 Unlimited artwork uploads
-🤖 AI Art Studio access - Generate new designs with DALL-E 3
-⭐ Homepage featured rotation - Fair exposure for all Pro artists
+• 35% minimum royalty (guaranteed!)
+• Unlimited artwork uploads
+• AI Art Studio access - Generate new designs with DALL-E 3
+• Homepage featured rotation - Fair exposure for all Pro artists
 
 ELITE TIER ($40-50/mo):
-💎 45% royalty guarantee (max tier immediately!)
-🎨 Unlimited uploads + AI Studio
-🏆 Guaranteed homepage placement via hybrid rotation
-⚡ Priority artwork review
-🎯 Full profile customization
+• 45% royalty guarantee (max tier immediately!)
+• Unlimited uploads + AI Studio
+• Guaranteed homepage placement via hybrid rotation
+• Priority artwork review
+• Full profile customization
 
-💡 FEATURED ARTIST SYSTEM: Pro and Elite members get fair homepage rotation (2 performance slots for top sellers + 2 rotation slots ensuring everyone gets exposure). Your work will be seen!
+FEATURED ARTIST SYSTEM: Pro and Elite members get fair homepage rotation (2 performance slots for top sellers + 2 rotation slots ensuring everyone gets exposure). Your work will be seen!
 
 Upgrade to Pro: ${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/settings
 
@@ -795,7 +795,7 @@ Best regards,
       <body>
         <div class="container">
           <div class="header">
-            <h1>💡 Maximize Your Earnings</h1>
+            <h1>Maximize Your Earnings</h1>
             <p style="margin: 10px 0 0 0; font-size: 18px;">Understanding Your Growth Path</p>
           </div>
           <div class="content">
@@ -803,12 +803,12 @@ Best regards,
             
             <!-- Section 1: Executive Summary -->
             <div class="success">
-              <strong>🎯 Quick Summary:</strong> You're currently on the Free tier earning 30% royalties. Ready to scale? Pro and Elite tiers offer higher royalties, unlimited uploads, AI tools, and guaranteed homepage exposure that can 3-5x your earnings.
+              <strong>Quick Summary:</strong> You're currently on the Free tier earning 30% royalties. Ready to scale? Pro and Elite tiers offer higher royalties, unlimited uploads, AI tools, and guaranteed homepage exposure that can 3-5x your earnings.
             </div>
             
             <!-- Section 2: Tier Comparison Table -->
             <div class="section">
-              <h3>📊 Complete Tier Comparison</h3>
+              <h3>Complete Tier Comparison</h3>
               <table class="tier-table">
                 <thead>
                   <tr>
@@ -839,27 +839,27 @@ Best regards,
                   </tr>
                   <tr>
                     <td><strong>AI Art Studio</strong></td>
-                    <td>❌ Not available</td>
-                    <td>✅ 50 credits/month</td>
-                    <td>✅ <strong>Unlimited</strong></td>
+                    <td>Not available</td>
+                    <td>50 credits/month</td>
+                    <td><strong>Unlimited</strong></td>
                   </tr>
                   <tr>
                     <td><strong>Homepage Featured</strong></td>
-                    <td>❌ Manual approval only</td>
-                    <td>✅ Fair rotation eligible</td>
-                    <td>✅ <strong>Guaranteed placement</strong></td>
+                    <td>Manual approval only</td>
+                    <td>Fair rotation eligible</td>
+                    <td><strong>Guaranteed placement</strong></td>
                   </tr>
                   <tr>
                     <td><strong>Review Speed</strong></td>
                     <td>Standard (24-48h)</td>
                     <td>Standard (24-48h)</td>
-                    <td>⚡ Priority (12-24h)</td>
+                    <td>Priority (12-24h)</td>
                   </tr>
                   <tr>
                     <td><strong>Profile Customization</strong></td>
                     <td>Basic</td>
                     <td>Basic</td>
-                    <td>🎯 <strong>Full control</strong></td>
+                    <td><strong>Full control</strong></td>
                   </tr>
                 </tbody>
               </table>
@@ -867,7 +867,7 @@ Best regards,
             
             <!-- Section 3: Hybrid Rotation Walkthrough -->
             <div class="section">
-              <h3>🏆 Homepage Featured Artist System</h3>
+              <h3>Homepage Featured Artist System</h3>
               <p><strong>How Our Hybrid Rotation Works:</strong></p>
               
               <div class="info">
@@ -888,7 +888,7 @@ Best regards,
               </ul>
               
               <details>
-                <summary>🔍 Learn More: Rotation Mechanics</summary>
+                <summary>Learn More: Rotation Mechanics</summary>
                 <div style="padding: 15px;">
                   <p><strong>Rotation Frequency:</strong> Every 14 days for fair rotation slots</p>
                   <p><strong>Priority System:</strong></p>
@@ -906,26 +906,26 @@ Best regards,
             
             <!-- Section 4: AI Studio Use Cases -->
             <div class="section">
-              <h3>🤖 AI Art Studio: Real Use Cases</h3>
+              <h3>AI Art Studio: Real Use Cases</h3>
               <p><strong>Generate new artwork 10x faster with DALL-E 3:</strong></p>
               
               <div class="use-case">
-                <strong>📱 "I need seasonal variations"</strong><br>
+                <strong>"I need seasonal variations"</strong><br>
                 Example: You have a popular abstract design. Use AI Studio to generate spring, summer, fall, winter color variants - expand 1 artwork into 4 seasonal products in minutes.
               </div>
               
               <div class="use-case">
-                <strong>🎨 "I want to explore new styles"</strong><br>
+                <strong>"I want to explore new styles"</strong><br>
                 Example: Prompt "minimalist mountain landscape, earth tones, geometric shapes" to test concepts before committing to manual creation. Save hours of exploration.
               </div>
               
               <div class="use-case">
-                <strong>🚀 "I need to fill my catalog fast"</strong><br>
+                <strong>"I need to fill my catalog fast"</strong><br>
                 Example: Elite members with unlimited credits can generate 20-30 AI artworks/month, approve the best 10, and keep their marketplace fresh without burnout.
               </div>
               
               <div class="use-case">
-                <strong>💡 "I'm stuck creatively"</strong><br>
+                <strong>"I'm stuck creatively"</strong><br>
                 Example: Use AI to generate 5 variations of a theme, pick the most inspiring, then refine it in your preferred tool. AI as creative jumpstart, not replacement.
               </div>
               
@@ -939,17 +939,17 @@ Best regards,
             
             <!-- Section 5: Upgrade Pathways -->
             <div class="section">
-              <h3>🚀 Ready to Upgrade?</h3>
+              <h3>Ready to Upgrade?</h3>
               
               <div class="warning">
-                <strong>📈 ROI Calculator:</strong><br>
+                <strong>ROI Calculator:</strong><br>
                 If you sell just 3-4 products per month, the Pro tier pays for itself through the 5% royalty increase alone. Everything else (unlimited uploads, AI Studio, featured rotation) is pure upside.
               </div>
               
               <p><strong>Choose Your Path:</strong></p>
               
               <div style="background: #dbeafe; padding: 15px; margin: 10px 0; border-radius: 8px;">
-                <strong>✨ Pro Tier - Best for Growing Artists</strong><br>
+                <strong>Pro Tier - Best for Growing Artists</strong><br>
                 → Perfect if you're hitting the 20-artwork limit<br>
                 → Need AI tools to scale faster<br>
                 → Want homepage rotation exposure<br>
@@ -957,7 +957,7 @@ Best regards,
               </div>
               
               <div style="background: #fce7f3; padding: 15px; margin: 10px 0; border-radius: 8px;">
-                <strong>💎 Elite Tier - For Serious Creators</strong><br>
+                <strong>Elite Tier - For Serious Creators</strong><br>
                 → Maximum 45% royalty from day one<br>
                 → Unlimited AI generation (no creative bottlenecks)<br>
                 → Guaranteed homepage placement<br>
@@ -970,7 +970,7 @@ Best regards,
             </div>
             
             <div class="info">
-              <strong>💬 Questions?</strong> Reply to this email and we'll help you choose the right tier for your goals. We want you to succeed!
+              <strong>Questions?</strong> Reply to this email and we'll help you choose the right tier for your goals. We want you to succeed!
             </div>
             
             <p>Keep creating amazing art!</p>
@@ -991,14 +991,14 @@ Best regards,
     const settingsUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/settings`;
     
     return `
-💡 Maximize Your Earnings - Understanding Your Growth Path
+Maximize Your Earnings - Understanding Your Growth Path
 
 Hi ${artistName},
 
-🎯 QUICK SUMMARY:
+QUICK SUMMARY:
 You're currently on the Free tier earning 30% royalties. Ready to scale? Pro and Elite tiers offer higher royalties, unlimited uploads, AI tools, and guaranteed homepage exposure that can 3-5x your earnings.
 
-📊 COMPLETE TIER COMPARISON:
+COMPLETE TIER COMPARISON:
 
 FEATURE                 | FREE          | PRO              | ELITE
 -----------------------|---------------|------------------|------------------
@@ -1010,7 +1010,7 @@ Homepage Featured      | Manual only   | Fair rotation    | Guaranteed
 Review Speed           | 24-48 hours   | 24-48 hours      | 12-24 hours (priority)
 Profile Customization  | Basic         | Basic            | Full control
 
-🏆 HOMEPAGE FEATURED ARTIST SYSTEM:
+HOMEPAGE FEATURED ARTIST SYSTEM:
 How Our Hybrid Rotation Works:
 
 4-SLOT SYSTEM = MERITOCRACY + FAIRNESS
@@ -1034,18 +1034,18 @@ ROTATION MECHANICS:
 - Tiebreaker Logic: Earlier lastFeaturedAt gets priority
 - Downgrade Protection: Eligibility updates immediately on tier changes
 
-🤖 AI ART STUDIO: REAL USE CASES
+AI ART STUDIO: REAL USE CASES
 
-📱 "I need seasonal variations"
+"I need seasonal variations"
 Example: You have a popular abstract design. Use AI Studio to generate spring, summer, fall, winter color variants - expand 1 artwork into 4 seasonal products in minutes.
 
-🎨 "I want to explore new styles"
+"I want to explore new styles"
 Example: Prompt "minimalist mountain landscape, earth tones, geometric shapes" to test concepts before committing to manual creation. Save hours of exploration.
 
-🚀 "I need to fill my catalog fast"
+"I need to fill my catalog fast"
 Example: Elite members with unlimited credits can generate 20-30 AI artworks/month, approve the best 10, and keep their marketplace fresh without burnout.
 
-💡 "I'm stuck creatively"
+"I'm stuck creatively"
 Example: Use AI to generate 5 variations of a theme, pick the most inspiring, then refine it in your preferred tool. AI as creative jumpstart, not replacement.
 
 CREDIT SYSTEM:
@@ -1053,20 +1053,20 @@ CREDIT SYSTEM:
 • Elite: Unlimited credits (generate as much as you need)
 • Each AI image can be transformed into 16 product variants (4 sizes × 4 finishes)
 
-🚀 READY TO UPGRADE?
+READY TO UPGRADE?
 
-📈 ROI CALCULATOR:
+ROI CALCULATOR:
 If you sell just 3-4 products per month, the Pro tier pays for itself through the 5% royalty increase alone. Everything else (unlimited uploads, AI Studio, featured rotation) is pure upside.
 
 CHOOSE YOUR PATH:
 
-✨ PRO TIER - BEST FOR GROWING ARTISTS
+PRO TIER - BEST FOR GROWING ARTISTS
 → Perfect if you're hitting the 20-artwork limit
 → Need AI tools to scale faster
 → Want homepage rotation exposure
 → $15-20/month investment
 
-💎 ELITE TIER - FOR SERIOUS CREATORS
+ELITE TIER - FOR SERIOUS CREATORS
 → Maximum 45% royalty from day one
 → Unlimited AI generation (no creative bottlenecks)
 → Guaranteed homepage placement
@@ -1076,7 +1076,7 @@ CHOOSE YOUR PATH:
 Upgrade to Pro: ${settingsUrl}
 Explore Elite: ${settingsUrl}
 
-💬 QUESTIONS?
+QUESTIONS?
 Reply to this email and we'll help you choose the right tier for your goals. We want you to succeed!
 
 Keep creating amazing art!
@@ -1107,7 +1107,7 @@ Best regards,
       <body>
         <div class="container">
           <div class="header">
-            <h1>🎨 Your Artwork is Live!</h1>
+            <h1>Your Artwork is Live!</h1>
           </div>
           <div class="content">
             <p>Hi ${artistName},</p>
@@ -1143,7 +1143,7 @@ Best regards,
 
   private getArtworkApprovedEmailText(artistName: string, artworkTitle: string): string {
     return `
-🎨 Your Artwork is Live!
+Your Artwork is Live!
 
 Hi ${artistName},
 
@@ -1275,7 +1275,7 @@ Best regards,
       <body>
         <div class="container">
           <div class="header">
-            <h1>⏰ Action Needed</h1>
+            <h1>Action Needed</h1>
             <p style="font-size: 18px; margin: 10px 0 0 0;">Keep "${artworkTitle}" Live</p>
           </div>
           <div class="content">
@@ -1284,12 +1284,12 @@ Best regards,
             <p>We don't want to lose this piece from our marketplace! Your artwork <strong>"${artworkTitle}"</strong> has been inactive for 17 months and is scheduled for archiving on <strong>${formattedDate}</strong> (30 days from now).</p>
             
             <div class="info">
-              <strong>📊 Inactivity Summary:</strong><br>
+              <strong>Inactivity Summary:</strong><br>
               No sales recorded in the last 17 months<br>
               Without activity, this artwork will be removed from the marketplace to maintain our quality standards.
             </div>
             
-            <p><strong>🎯 How to keep "${artworkTitle}" live:</strong></p>
+            <p><strong>How to keep "${artworkTitle}" live:</strong></p>
             <ul>
               <li><strong>Make a sale</strong> - Share this artwork on social media to boost visibility</li>
               <li><strong>Cross-promote</strong> - Include it in your artist newsletter or portfolio</li>
@@ -1324,14 +1324,14 @@ Best regards,
     const formattedDate = archiveDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     
     return `
-⏰ ACTION NEEDED: Keep "${artworkTitle}" Live
+ACTION NEEDED: Keep "${artworkTitle}" Live
 
 Hi ${artistName},
 
 We don't want to lose this piece from our marketplace! Your artwork "${artworkTitle}" has been inactive for 17 months and is scheduled for archiving on ${formattedDate} (30 days from now).
 
 INACTIVITY SUMMARY:
-📊 No sales recorded in the last 17 months
+No sales recorded in the last 17 months
 Without activity, this artwork will be removed from the marketplace to maintain our quality standards.
 
 HOW TO KEEP "${artworkTitle}" LIVE:
@@ -1380,7 +1380,7 @@ This is an automated notice based on our marketplace quality policy. You can man
       <body>
         <div class="container">
           <div class="header">
-            <h1>📦 Artwork Archived</h1>
+            <h1>Artwork Archived</h1>
             <p style="font-size: 18px; margin: 10px 0 0 0;">"${artworkTitle}"</p>
           </div>
           <div class="content">
@@ -1396,7 +1396,7 @@ This is an automated notice based on our marketplace quality policy. You can man
             </div>
             
             <div class="reassurance">
-              <strong>✅ What's Protected:</strong><br>
+              <strong>What's Protected:</strong><br>
               • Your original artwork files remain intact<br>
               • All ratings, reviews, and historical data preserved<br>
               • No deletion - you still own all rights to your work<br>
@@ -1410,7 +1410,7 @@ This is an automated notice based on our marketplace quality policy. You can man
               <a href="${dashboardUrl}" class="button">Restore This Artwork</a>
             </p>
             
-            <p><strong>💡 Tips for Success:</strong></p>
+            <p><strong>Tips for Success:</strong></p>
             <ul>
               <li>Promote reactivated artworks on social media for maximum visibility</li>
               <li>Update artwork descriptions and tags to improve discoverability</li>
@@ -1436,7 +1436,7 @@ This is an automated notice based on our marketplace quality policy. You can man
     const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
     
     return `
-📦 ARTWORK ARCHIVED: "${artworkTitle}"
+ARTWORK ARCHIVED: "${artworkTitle}"
 
 Hi ${artistName},
 
@@ -1745,15 +1745,15 @@ Best regards,
       
       <p><strong>Your ${tierName} Benefits:</strong></p>
       <ul>
-        <li>💰 <strong>${tierRoyalty} minimum royalty</strong> on all sales${tier === 'elite' ? ' (guaranteed max tier!)' : ''}</li>
-        <li>🎨 <strong>Unlimited artwork uploads</strong> - no monthly limits</li>
-        ${tier === 'pro' ? '<li>🤖 <strong>50 AI Art Studio credits/month</strong> for generating new artwork with DALL-E 3</li>' : '<li>🤖 <strong>Unlimited AI Art Studio access</strong> - generate as many designs as you need</li>'}
-        ${tier === 'elite' ? '<li>⚡ <strong>Priority review</strong> for artwork submissions</li>' : ''}
-        ${tier === 'elite' ? '<li>🎯 <strong>Full profile customization</strong> - make your artist page stand out</li>' : ''}
+        <li><strong>${tierRoyalty} minimum royalty</strong> on all sales${tier === 'elite' ? ' (guaranteed max tier!)' : ''}</li>
+        <li><strong>Unlimited artwork uploads</strong> - no monthly limits</li>
+        ${tier === 'pro' ? '<li><strong>50 AI Art Studio credits/month</strong> for generating new artwork with DALL-E 3</li>' : '<li><strong>Unlimited AI Art Studio access</strong> - generate as many designs as you need</li>'}
+        ${tier === 'elite' ? '<li><strong>Priority review</strong> for artwork submissions</li>' : ''}
+        ${tier === 'elite' ? '<li><strong>Full profile customization</strong> - make your artist page stand out</li>' : ''}
       </ul>
       
       <div class="info">
-        <strong>🏆 Homepage Featured Artist System${tier === 'elite' ? ' (Guaranteed!)' : ''}:</strong><br>
+        <strong>Homepage Featured Artist System${tier === 'elite' ? ' (Guaranteed!)' : ''}:</strong><br>
         ${tier === 'elite' 
           ? 'As an Elite member, you\'re guaranteed homepage placement through our hybrid rotation system:<br><br><strong>2 Performance Slots:</strong> Reserved for top sellers (you can compete for constant visibility)<br><strong>2 Rotation Slots:</strong> Fair cycling ensures all Elite artists get homepage time<br><br>Your artwork will be prominently featured to every visitor!' 
           : 'As a Pro member, you\'re eligible for our fair homepage rotation system:<br><br><strong>2 Performance Slots:</strong> Top sellers by tier + monthly sales (compete with other artists)<br><strong>2 Rotation Slots:</strong> Fair cycling ensures all Pro artists get homepage exposure<br><br>We track when you\'re last featured and rotate fairly - everyone gets their turn!'
@@ -1778,7 +1778,7 @@ Best regards,
       
       ${tier === 'pro' ? `
       <div class="info">
-        <strong>💡 Want Even More?</strong><br>
+        <strong>Want Even More?</strong><br>
         Elite tier offers 45% royalty guarantee, unlimited AI Studio, priority review, and guaranteed homepage placement. <a href="${dashboardUrl}#settings">Explore Elite benefits</a>
       </div>
       ` : ''}
@@ -1798,13 +1798,13 @@ Hi ${artistName},
 Your ${tierName} subscription is now active! Thank you for upgrading your 247 Print Network account.
 
 YOUR ${tierName.toUpperCase()} BENEFITS:
-💰 ${tierRoyalty} minimum royalty on all sales${tier === 'elite' ? ' (guaranteed max tier!)' : ''}
-🎨 Unlimited artwork uploads - no monthly limits
-${tier === 'pro' ? '🤖 50 AI Art Studio credits/month for generating new artwork with DALL-E 3' : '🤖 Unlimited AI Art Studio access - generate as many designs as you need'}
-${tier === 'elite' ? '⚡ Priority review for artwork submissions' : ''}
-${tier === 'elite' ? '🎯 Full profile customization - make your artist page stand out' : ''}
+• ${tierRoyalty} minimum royalty on all sales${tier === 'elite' ? ' (guaranteed max tier!)' : ''}
+• Unlimited artwork uploads - no monthly limits
+${tier === 'pro' ? '• 50 AI Art Studio credits/month for generating new artwork with DALL-E 3' : '• Unlimited AI Art Studio access - generate as many designs as you need'}
+${tier === 'elite' ? '• Priority review for artwork submissions' : ''}
+${tier === 'elite' ? '• Full profile customization - make your artist page stand out' : ''}
 
-🏆 HOMEPAGE FEATURED ARTIST SYSTEM${tier === 'elite' ? ' (GUARANTEED!)' : ''}:
+HOMEPAGE FEATURED ARTIST SYSTEM${tier === 'elite' ? ' (GUARANTEED!)' : ''}:
 ${tier === 'elite' 
   ? 'As an Elite member, you\'re guaranteed homepage placement through our hybrid rotation system:\n\n2 PERFORMANCE SLOTS: Reserved for top sellers (you can compete for constant visibility)\n2 ROTATION SLOTS: Fair cycling ensures all Elite artists get homepage time\n\nYour artwork will be prominently featured to every visitor!' 
   : 'As a Pro member, you\'re eligible for our fair homepage rotation system:\n\n2 PERFORMANCE SLOTS: Top sellers by tier + monthly sales (compete with other artists)\n2 ROTATION SLOTS: Fair cycling ensures all Pro artists get homepage exposure\n\nWe track when you\'re last featured and rotate fairly - everyone gets their turn!'
@@ -1822,7 +1822,7 @@ WHAT'S NEXT:
 4. Watch your royalty earnings grow at ${tierRoyalty}${tier === 'elite' ? '' : '+'}
 5. Track your performance in your enhanced dashboard
 
-${tier === 'pro' ? `💡 WANT EVEN MORE?
+${tier === 'pro' ? `WANT EVEN MORE?
 Elite tier offers 45% royalty guarantee, unlimited AI Studio, priority review, and guaranteed homepage placement. Explore Elite benefits: ${dashboardUrl}#settings
 
 ` : ''}Go to Your Dashboard: ${dashboardUrl}

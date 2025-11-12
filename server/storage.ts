@@ -12,6 +12,7 @@ import {
   testimonials,
   featuredSubscriptions,
   featuredRotationLog,
+  subscriptionTrials,
   influencers,
   affiliateClicks,
   affiliateConversions,
@@ -49,6 +50,8 @@ import {
   type InsertFeaturedSubscription,
   type FeaturedRotationLog,
   type FeaturedTier,
+  type SubscriptionTrial,
+  type InsertSubscriptionTrial,
   type Influencer,
   type InsertInfluencer,
   type AffiliateClick,
@@ -183,6 +186,11 @@ export interface IStorage {
     }>;
     nextRotationDate?: Date;
   }>;
+
+  // Subscription Trial methods
+  createSubscriptionTrial(trial: InsertSubscriptionTrial): Promise<SubscriptionTrial>;
+  getSubscriptionTrialsByArtist(artistId: string): Promise<SubscriptionTrial[]>;
+  updateSubscriptionTrial(id: string, updates: Partial<SubscriptionTrial>): Promise<SubscriptionTrial>;
   
   // Featured testimonials display with tier info
   getFeaturedTestimonials(): Promise<Array<{
@@ -1525,6 +1533,29 @@ class PostgresStorage implements IStorage {
       }));
 
     return eligibleArtists;
+  }
+
+  // Subscription Trial methods
+  async createSubscriptionTrial(trial: InsertSubscriptionTrial): Promise<SubscriptionTrial> {
+    const [created] = await db.insert(subscriptionTrials).values([trial]).returning();
+    return created;
+  }
+
+  async getSubscriptionTrialsByArtist(artistId: string): Promise<SubscriptionTrial[]> {
+    return await db
+      .select()
+      .from(subscriptionTrials)
+      .where(eq(subscriptionTrials.artistId, artistId))
+      .orderBy(desc(subscriptionTrials.trialStartedAt));
+  }
+
+  async updateSubscriptionTrial(id: string, updates: Partial<SubscriptionTrial>): Promise<SubscriptionTrial> {
+    const [updated] = await db
+      .update(subscriptionTrials)
+      .set(updates)
+      .where(eq(subscriptionTrials.id, id))
+      .returning();
+    return updated;
   }
 
   // ===================================

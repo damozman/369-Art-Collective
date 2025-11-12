@@ -213,16 +213,23 @@ export class SubscriptionService {
 
     const priceId = await getOrCreatePriceId(tier);
 
+    // Configure trial period: 14 days for Pro, 7 days for Elite
+    const trialPeriodDays = tier === 'pro' ? 14 : 7;
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + trialPeriodDays);
+
     // Use client-provided idempotency key to ensure retries are safely deduplicated by Stripe
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],
       payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
+      trial_period_days: trialPeriodDays, // Add trial period (14 days Pro, 7 days Elite)
       expand: ['latest_invoice.payment_intent'],
       metadata: {
         artistId,
-        tier
+        tier,
+        trialDays: trialPeriodDays.toString()
       }
     }, {
       idempotencyKey
@@ -239,11 +246,25 @@ export class SubscriptionService {
           ? new Date(subscription.current_period_end * 1000)
           : new Date();
 
+        // Update artist with subscription and trial info
         await storage.updateArtist(artistId, {
           stripeSubscriptionId: subscription.id,
           subscriptionStatus: subscription.status,
           subscriptionTier: tier,
-          subscriptionPeriodEnd: periodEnd as any
+          subscriptionPeriodEnd: periodEnd as any,
+          trialEndsAt: trialEnd as any
+        });
+
+        // Create trial analytics record
+        await storage.createSubscriptionTrial({
+          artistId,
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: subscription.id,
+          tier,
+          status: 'active',
+          trialSource: 'dashboard_upgrade', // Default source, can be customized later
+          trialStartedAt: new Date(),
+          scheduledTrialEnd: trialEnd,
         });
 
         if (!paymentIntent.client_secret) {

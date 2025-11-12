@@ -53,6 +53,10 @@ export type EmailType =
   | 'artwork_archived'
   | 'influencer_application'
   | 'influencer_approved'
+  | 'subscription_confirmed'
+  | 'subscription_canceled'
+  | 'payment_failed'
+  | 'payout_notification'
   | 'custom';
 
 export interface EmailData {
@@ -67,6 +71,47 @@ export interface EmailData {
 }
 
 export class EmailService {
+  private renderEmailLayout(params: {
+    title: string;
+    headerColor?: string;
+    bodyHtml: string;
+  }): string {
+    const headerColor = params.headerColor || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: ${headerColor}; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .success { background: #d1fae5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
+          .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+          .danger { background: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; }
+          .info { background: #e0e7ff; border-left: 4px solid #667eea; padding: 15px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>${params.title}</h1>
+          </div>
+          <div class="content">
+            ${params.bodyHtml}
+          </div>
+          <div class="footer">
+            <p>© 2025 247 Print Network. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
   private async logEmail(data: EmailData, resendId?: string, status: string = 'pending', errorMessage?: string) {
     try {
       await db.insert(emailLogs).values({
@@ -1238,6 +1283,314 @@ Best regards,
 
 © 2025 247 Print Network. All rights reserved.
     `.trim();
+  }
+
+  async sendSubscriptionConfirmation(
+    artistEmail: string,
+    artistName: string,
+    artistId: string,
+    tier: 'pro' | 'elite',
+    periodEnd: Date
+  ) {
+    const tierName = tier === 'pro' ? 'Pro' : 'Elite';
+    const tierPrice = tier === 'pro' ? '$15-20' : '$40-50';
+    const tierRoyalty = tier === 'pro' ? '35%' : '45%';
+    const nextBillingDate = periodEnd.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+
+    const subject = `Welcome to ${tierName} - Your Subscription is Active!`;
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+
+    const bodyHtml = `
+      <p>Hi ${artistName},</p>
+      
+      <div class="success">
+        <strong>Your ${tierName} subscription is now active!</strong> Thank you for upgrading your 247 Print Network account.
+      </div>
+      
+      <p><strong>Your ${tierName} Benefits:</strong></p>
+      <ul>
+        <li><strong>${tierRoyalty} minimum royalty</strong> on all sales${tier === 'elite' ? ' (guaranteed!)' : ''}</li>
+        <li><strong>Unlimited artwork uploads</strong> - no monthly limits</li>
+        ${tier === 'pro' ? '<li><strong>50 AI Art Studio credits/month</strong> for generating new artwork</li>' : '<li><strong>Unlimited AI Art Studio access</strong> for generating artwork</li>'}
+        ${tier === 'elite' ? '<li><strong>Priority review</strong> for artwork submissions</li>' : ''}
+        ${tier === 'elite' ? '<li><strong>Full profile customization</strong> and featured artist placement</li>' : ''}
+      </ul>
+      
+      <div class="info">
+        <strong>Billing Information:</strong><br>
+        Plan: ${tierName} - ${tierPrice}/month<br>
+        Next billing date: ${nextBillingDate}<br>
+        Payment method: Card ending in your saved payment method
+      </div>
+      
+      <p><strong>What's Next:</strong></p>
+      <ol>
+        <li>Upload unlimited artwork to maximize your earnings</li>
+        <li>Use AI Art Studio to create new designs faster</li>
+        <li>Watch your royalty earnings grow at ${tierRoyalty}+</li>
+        <li>Track your performance in your enhanced dashboard</li>
+      </ol>
+      
+      <a href="${dashboardUrl}" class="button">Go to Your Dashboard</a>
+      
+      <p>Questions about your subscription? Just reply to this email and we'll help!</p>
+      
+      <p>Best regards,<br>247 Print Network Team</p>
+    `;
+
+    const textBody = `
+Welcome to ${tierName} - Your Subscription is Active!
+
+Hi ${artistName},
+
+Your ${tierName} subscription is now active! Thank you for upgrading your 247 Print Network account.
+
+YOUR ${tierName.toUpperCase()} BENEFITS:
+• ${tierRoyalty} minimum royalty on all sales${tier === 'elite' ? ' (guaranteed!)' : ''}
+• Unlimited artwork uploads - no monthly limits
+${tier === 'pro' ? '• 50 AI Art Studio credits/month for generating new artwork' : '• Unlimited AI Art Studio access for generating artwork'}
+${tier === 'elite' ? '• Priority review for artwork submissions' : ''}
+${tier === 'elite' ? '• Full profile customization and featured artist placement' : ''}
+
+BILLING INFORMATION:
+Plan: ${tierName} - ${tierPrice}/month
+Next billing date: ${nextBillingDate}
+Payment method: Card ending in your saved payment method
+
+WHAT'S NEXT:
+1. Upload unlimited artwork to maximize your earnings
+2. Use AI Art Studio to create new designs faster
+3. Watch your royalty earnings grow at ${tierRoyalty}+
+4. Track your performance in your enhanced dashboard
+
+Go to Your Dashboard: ${dashboardUrl}
+
+Questions about your subscription? Just reply to this email and we'll help!
+
+Best regards,
+247 Print Network Team
+
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+
+    const htmlBody = this.renderEmailLayout({
+      title: `Welcome to ${tierName}!`,
+      headerColor: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+      bodyHtml
+    });
+
+    return this.sendEmail({
+      recipientEmail: artistEmail,
+      recipientType: 'artist',
+      recipientId: artistId,
+      emailType: 'subscription_confirmed',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { artistName, tier, periodEnd: periodEnd.toISOString() },
+    });
+  }
+
+  async sendPaymentFailed(
+    artistEmail: string,
+    artistName: string,
+    artistId: string,
+    tier: 'pro' | 'elite',
+    subscriptionId?: string,
+    invoiceId?: string
+  ) {
+    const tierName = tier === 'pro' ? 'Pro' : 'Elite';
+    const subject = 'Payment Failed - Action Required for Your Subscription';
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+
+    const bodyHtml = `
+      <p>Hi ${artistName},</p>
+      
+      <div class="warning">
+        <strong>Payment Unsuccessful:</strong> We were unable to process your payment for your ${tierName} subscription.
+      </div>
+      
+      <p><strong>What This Means:</strong></p>
+      <ul>
+        <li>Your ${tierName} benefits are currently on hold</li>
+        <li>You still have access to free tier features</li>
+        <li>We'll retry payment automatically over the next few days</li>
+      </ul>
+      
+      <p><strong>How to Fix This:</strong></p>
+      <ol>
+        <li>Update your payment method in your dashboard</li>
+        <li>Make sure your card has sufficient funds</li>
+        <li>Check that your billing address is correct</li>
+      </ol>
+      
+      <div class="info">
+        <strong>Need Help?</strong><br>
+        Common issues include expired cards, insufficient funds, or incorrect billing information. Updating your payment method will immediately restore your ${tierName} benefits.
+      </div>
+      
+      <a href="${dashboardUrl}" class="button">Update Payment Method</a>
+      
+      <p>If you're experiencing financial difficulty, please reply to this email to discuss options. We're here to help!</p>
+      
+      <p>Best regards,<br>247 Print Network Team</p>
+    `;
+
+    const textBody = `
+Payment Failed - Action Required for Your Subscription
+
+Hi ${artistName},
+
+We were unable to process your payment for your ${tierName} subscription.
+
+WHAT THIS MEANS:
+• Your ${tierName} benefits are currently on hold
+• You still have access to free tier features
+• We'll retry payment automatically over the next few days
+
+HOW TO FIX THIS:
+1. Update your payment method in your dashboard
+2. Make sure your card has sufficient funds
+3. Check that your billing address is correct
+
+NEED HELP?
+Common issues include expired cards, insufficient funds, or incorrect billing information. Updating your payment method will immediately restore your ${tierName} benefits.
+
+Update Payment Method: ${dashboardUrl}
+
+If you're experiencing financial difficulty, please reply to this email to discuss options. We're here to help!
+
+Best regards,
+247 Print Network Team
+
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+
+    const htmlBody = this.renderEmailLayout({
+      title: 'Payment Failed',
+      headerColor: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+      bodyHtml
+    });
+
+    return this.sendEmail({
+      recipientEmail: artistEmail,
+      recipientType: 'artist',
+      recipientId: artistId,
+      emailType: 'payment_failed',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { 
+        artistName, 
+        tier, 
+        subscriptionId, 
+        invoiceId 
+      },
+    });
+  }
+
+  async sendPayoutNotification(
+    artistEmail: string,
+    artistName: string,
+    artistId: string,
+    amount: number,
+    payoutId: string
+  ) {
+    const formattedAmount = (amount / 100).toFixed(2);
+    const subject = `Payout Sent - $${formattedAmount} On Its Way!`;
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+
+    const bodyHtml = `
+      <p>Hi ${artistName},</p>
+      
+      <div class="success">
+        <strong>Great news!</strong> Your royalty payout has been sent to your Stripe Connect account.
+      </div>
+      
+      <p><strong>Payout Details:</strong></p>
+      <div class="info">
+        Amount: $${formattedAmount}<br>
+        Payout ID: ${payoutId}<br>
+        Status: Processing<br>
+        Expected in your bank: 2-3 business days
+      </div>
+      
+      <p><strong>What Happens Next:</strong></p>
+      <ol>
+        <li>Stripe processes the payout (usually instant)</li>
+        <li>Your bank receives the funds (1-3 business days)</li>
+        <li>Funds appear in your connected bank account</li>
+      </ol>
+      
+      <p><strong>Track Your Earnings:</strong></p>
+      <ul>
+        <li>View detailed sales breakdowns in your dashboard</li>
+        <li>See which artworks are earning the most</li>
+        <li>Monitor your royalty tier progress</li>
+        <li>Access complete payout history</li>
+      </ul>
+      
+      <a href="${dashboardUrl}" class="button">View Earnings Dashboard</a>
+      
+      <p>Keep creating amazing artwork! Every sale earns you 30-45% royalties.</p>
+      
+      <p>Best regards,<br>247 Print Network Team</p>
+    `;
+
+    const textBody = `
+Payout Sent - $${formattedAmount} On Its Way!
+
+Hi ${artistName},
+
+Great news! Your royalty payout has been sent to your Stripe Connect account.
+
+PAYOUT DETAILS:
+Amount: $${formattedAmount}
+Payout ID: ${payoutId}
+Status: Processing
+Expected in your bank: 2-3 business days
+
+WHAT HAPPENS NEXT:
+1. Stripe processes the payout (usually instant)
+2. Your bank receives the funds (1-3 business days)
+3. Funds appear in your connected bank account
+
+TRACK YOUR EARNINGS:
+• View detailed sales breakdowns in your dashboard
+• See which artworks are earning the most
+• Monitor your royalty tier progress
+• Access complete payout history
+
+View Earnings Dashboard: ${dashboardUrl}
+
+Keep creating amazing artwork! Every sale earns you 30-45% royalties.
+
+Best regards,
+247 Print Network Team
+
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+
+    const htmlBody = this.renderEmailLayout({
+      title: 'Payout Sent!',
+      headerColor: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+      bodyHtml
+    });
+
+    return this.sendEmail({
+      recipientEmail: artistEmail,
+      recipientType: 'artist',
+      recipientId: artistId,
+      emailType: 'payout_notification',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { artistName, amount, payoutId },
+    });
   }
 }
 

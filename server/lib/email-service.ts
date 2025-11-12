@@ -369,6 +369,7 @@ export class EmailService {
           .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
           .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
           .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .info { background: #e0e7ff; border-left: 4px solid #667eea; padding: 15px; margin: 20px 0; }
           .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
         </style>
       </head>
@@ -380,17 +381,25 @@ export class EmailService {
           <div class="content">
             <p>Hi ${artistName},</p>
             
-            <p>Welcome to the artist community! We're excited to have you join our platform.</p>
+            <p>Welcome to the artist community! We're excited to have you join our platform where you'll earn <strong>30-45% royalties</strong> on every sale.</p>
             
             <p><strong>Next Steps:</strong></p>
             <ol>
               <li>Your portfolio is currently under review by our team</li>
               <li>Once approved, you'll be able to upload your artwork</li>
               <li>We'll automatically create print-on-demand products from your approved art</li>
-              <li>Start earning royalties on every sale (30-45% based on performance!)</li>
+              <li>Start earning royalties immediately!</li>
             </ol>
             
             <p>We typically review portfolios within 24-48 hours. You'll receive an email notification once your portfolio has been reviewed.</p>
+            
+            <div class="info">
+              <strong>💡 Three Ways to Grow With Us:</strong><br>
+              • <strong>Free:</strong> Start earning 30% royalties with up to 20 artworks<br>
+              • <strong>Pro:</strong> Unlock 35% royalties, unlimited uploads, AI Art Studio, and homepage featured rotation<br>
+              • <strong>Elite:</strong> Get 45% royalties, unlimited AI tools, guaranteed homepage placement, and priority support<br><br>
+              You'll learn more about tier options once your portfolio is approved!
+            </div>
             
             <a href="${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard" class="button">View Your Dashboard</a>
             
@@ -413,15 +422,22 @@ Welcome to 247 Print Network!
 
 Hi ${artistName},
 
-Welcome to the artist community! We're excited to have you join our platform.
+Welcome to the artist community! We're excited to have you join our platform where you'll earn 30-45% royalties on every sale.
 
-Next Steps:
+NEXT STEPS:
 1. Your portfolio is currently under review by our team
 2. Once approved, you'll be able to upload your artwork
 3. We'll automatically create print-on-demand products from your approved art
-4. Start earning royalties on every sale (30-45% based on performance!)
+4. Start earning royalties immediately!
 
 We typically review portfolios within 24-48 hours. You'll receive an email notification once your portfolio has been reviewed.
+
+💡 THREE WAYS TO GROW WITH US:
+• Free: Start earning 30% royalties with up to 20 artworks
+• Pro: Unlock 35% royalties, unlimited uploads, AI Art Studio, and homepage featured rotation
+• Elite: Get 45% royalties, unlimited AI tools, guaranteed homepage placement, and priority support
+
+You'll learn more about tier options once your portfolio is approved!
 
 Visit your dashboard: ${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard
 
@@ -510,7 +526,13 @@ Best regards,
           .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
           .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
           .button { display: inline-block; background: #10b981; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .button-secondary { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 10px 10px 0; }
           .success { background: #d1fae5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
+          .info { background: #e0e7ff; border-left: 4px solid #667eea; padding: 15px; margin: 20px 0; }
+          .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+          .tier-comparison { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0; }
+          .tier-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+          .tier-label { font-weight: bold; color: #667eea; }
           .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
         </style>
       </head>
@@ -523,28 +545,59 @@ Best regards,
             <p>Hi ${artistName},</p>
             
             <div class="success">
-              <strong>Congratulations!</strong> Your portfolio has been approved. You're now ready to start uploading artwork!
+              <strong>Congratulations!</strong> Your portfolio has been approved. You're now a 247 Print Network artist!
+            </div>
+            
+            <p><strong>Your Free Tier Includes:</strong></p>
+            <ul>
+              <li>✅ <strong>30% royalty</strong> on all sales</li>
+              <li>✅ Upload up to <strong>20 artworks</strong></li>
+              <li>✅ Automatic print-on-demand product creation</li>
+              <li>✅ Professional artist dashboard</li>
+            </ul>
+            
+            <div class="warning">
+              <strong>📊 Free Tier Limit:</strong> You can upload up to 20 artworks on the Free tier. Need more? Upgrade to Pro for unlimited uploads!
             </div>
             
             <p><strong>What's Next:</strong></p>
             <ol>
               <li>Upload your first artwork through your dashboard</li>
               <li>We'll review it and create print-on-demand products</li>
-              <li>Your artwork goes live on our marketplace</li>
-              <li>Start earning 30-45% royalties on every sale!</li>
+              <li>Your artwork goes live on our Shopify marketplace</li>
+              <li>Start earning 30% royalties immediately!</li>
             </ol>
             
-            <p><strong>Royalty Tiers:</strong></p>
-            <ul>
-              <li>30% base royalty on all sales</li>
-              <li>35% when you hit $500/month</li>
-              <li>40% at $1,000/month</li>
-              <li>45% at $2,500/month</li>
-            </ul>
+            <div class="tier-comparison">
+              <h3 style="margin-top: 0; color: #667eea;">🚀 Ready to Unlock More?</h3>
+              
+              <p><strong>Pro Tier ($15-20/mo):</strong></p>
+              <ul>
+                <li>✨ <strong>35% minimum royalty</strong> (guaranteed!)</li>
+                <li>🎨 <strong>Unlimited artwork uploads</strong></li>
+                <li>🤖 <strong>AI Art Studio access</strong> - Generate new designs with DALL-E 3</li>
+                <li>⭐ <strong>Homepage featured rotation</strong> - Fair exposure for all Pro artists</li>
+              </ul>
+              
+              <p><strong>Elite Tier ($40-50/mo):</strong></p>
+              <ul>
+                <li>💎 <strong>45% royalty guarantee</strong> (max tier immediately!)</li>
+                <li>🎨 <strong>Unlimited uploads + AI Studio</strong></li>
+                <li>🏆 <strong>Guaranteed homepage placement</strong> via hybrid rotation</li>
+                <li>⚡ <strong>Priority artwork review</strong></li>
+                <li>🎯 <strong>Full profile customization</strong></li>
+              </ul>
+              
+              <div class="info">
+                <strong>💡 Featured Artist System:</strong> Pro and Elite members get fair homepage rotation (2 performance slots for top sellers + 2 rotation slots ensuring everyone gets exposure). Your work will be seen!
+              </div>
+              
+              <a href="${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/settings" class="button-secondary">Upgrade to Pro</a>
+            </div>
             
             <a href="${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard" class="button">Upload Your First Artwork</a>
             
-            <p>We can't wait to see what you create!</p>
+            <p>We can't wait to see what you create! Questions about tiers or features? Just reply to this email.</p>
             
             <p>Best regards,<br>247 Print Network Team</p>
           </div>
@@ -563,23 +616,44 @@ Best regards,
 
 Hi ${artistName},
 
-Congratulations! Your portfolio has been approved. You're now ready to start uploading artwork!
+Congratulations! Your portfolio has been approved. You're now a 247 Print Network artist!
 
-What's Next:
+YOUR FREE TIER INCLUDES:
+✅ 30% royalty on all sales
+✅ Upload up to 20 artworks
+✅ Automatic print-on-demand product creation
+✅ Professional artist dashboard
+
+📊 FREE TIER LIMIT: You can upload up to 20 artworks on the Free tier. Need more? Upgrade to Pro for unlimited uploads!
+
+WHAT'S NEXT:
 1. Upload your first artwork through your dashboard
 2. We'll review it and create print-on-demand products
-3. Your artwork goes live on our marketplace
-4. Start earning 30-45% royalties on every sale!
+3. Your artwork goes live on our Shopify marketplace
+4. Start earning 30% royalties immediately!
 
-Royalty Tiers:
-- 30% base royalty on all sales
-- 35% when you hit $500/month
-- 40% at $1,000/month
-- 45% at $2,500/month
+🚀 READY TO UNLOCK MORE?
+
+PRO TIER ($15-20/mo):
+✨ 35% minimum royalty (guaranteed!)
+🎨 Unlimited artwork uploads
+🤖 AI Art Studio access - Generate new designs with DALL-E 3
+⭐ Homepage featured rotation - Fair exposure for all Pro artists
+
+ELITE TIER ($40-50/mo):
+💎 45% royalty guarantee (max tier immediately!)
+🎨 Unlimited uploads + AI Studio
+🏆 Guaranteed homepage placement via hybrid rotation
+⚡ Priority artwork review
+🎯 Full profile customization
+
+💡 FEATURED ARTIST SYSTEM: Pro and Elite members get fair homepage rotation (2 performance slots for top sellers + 2 rotation slots ensuring everyone gets exposure). Your work will be seen!
+
+Upgrade to Pro: ${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/settings
 
 Upload your first artwork: ${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard
 
-We can't wait to see what you create!
+We can't wait to see what you create! Questions about tiers or features? Just reply to this email.
 
 Best regards,
 247 Print Network Team
@@ -1313,12 +1387,20 @@ Best regards,
       
       <p><strong>Your ${tierName} Benefits:</strong></p>
       <ul>
-        <li><strong>${tierRoyalty} minimum royalty</strong> on all sales${tier === 'elite' ? ' (guaranteed!)' : ''}</li>
-        <li><strong>Unlimited artwork uploads</strong> - no monthly limits</li>
-        ${tier === 'pro' ? '<li><strong>50 AI Art Studio credits/month</strong> for generating new artwork</li>' : '<li><strong>Unlimited AI Art Studio access</strong> for generating artwork</li>'}
-        ${tier === 'elite' ? '<li><strong>Priority review</strong> for artwork submissions</li>' : ''}
-        ${tier === 'elite' ? '<li><strong>Full profile customization</strong> and featured artist placement</li>' : ''}
+        <li>💰 <strong>${tierRoyalty} minimum royalty</strong> on all sales${tier === 'elite' ? ' (guaranteed max tier!)' : ''}</li>
+        <li>🎨 <strong>Unlimited artwork uploads</strong> - no monthly limits</li>
+        ${tier === 'pro' ? '<li>🤖 <strong>50 AI Art Studio credits/month</strong> for generating new artwork with DALL-E 3</li>' : '<li>🤖 <strong>Unlimited AI Art Studio access</strong> - generate as many designs as you need</li>'}
+        ${tier === 'elite' ? '<li>⚡ <strong>Priority review</strong> for artwork submissions</li>' : ''}
+        ${tier === 'elite' ? '<li>🎯 <strong>Full profile customization</strong> - make your artist page stand out</li>' : ''}
       </ul>
+      
+      <div class="info">
+        <strong>🏆 Homepage Featured Artist System${tier === 'elite' ? ' (Guaranteed!)' : ''}:</strong><br>
+        ${tier === 'elite' 
+          ? 'As an Elite member, you\'re guaranteed homepage placement through our hybrid rotation system:<br><br><strong>2 Performance Slots:</strong> Reserved for top sellers (you can compete for constant visibility)<br><strong>2 Rotation Slots:</strong> Fair cycling ensures all Elite artists get homepage time<br><br>Your artwork will be prominently featured to every visitor!' 
+          : 'As a Pro member, you\'re eligible for our fair homepage rotation system:<br><br><strong>2 Performance Slots:</strong> Top sellers by tier + monthly sales (compete with other artists)<br><strong>2 Rotation Slots:</strong> Fair cycling ensures all Pro artists get homepage exposure<br><br>We track when you\'re last featured and rotate fairly - everyone gets their turn!'
+        }
+      </div>
       
       <div class="info">
         <strong>Billing Information:</strong><br>
@@ -1330,14 +1412,22 @@ Best regards,
       <p><strong>What's Next:</strong></p>
       <ol>
         <li>Upload unlimited artwork to maximize your earnings</li>
-        <li>Use AI Art Studio to create new designs faster</li>
-        <li>Watch your royalty earnings grow at ${tierRoyalty}+</li>
+        <li>Use AI Art Studio to create new designs faster (${tier === 'pro' ? '50 credits/month' : 'unlimited'})</li>
+        <li>Watch your homepage rotation bring in new customers</li>
+        <li>Watch your royalty earnings grow at ${tierRoyalty}${tier === 'elite' ? '' : '+'}</li>
         <li>Track your performance in your enhanced dashboard</li>
       </ol>
       
+      ${tier === 'pro' ? `
+      <div class="info">
+        <strong>💡 Want Even More?</strong><br>
+        Elite tier offers 45% royalty guarantee, unlimited AI Studio, priority review, and guaranteed homepage placement. <a href="${dashboardUrl}#settings">Explore Elite benefits</a>
+      </div>
+      ` : ''}
+      
       <a href="${dashboardUrl}" class="button">Go to Your Dashboard</a>
       
-      <p>Questions about your subscription? Just reply to this email and we'll help!</p>
+      <p>Questions about your subscription or featured rotation? Just reply to this email and we'll help!</p>
       
       <p>Best regards,<br>247 Print Network Team</p>
     `;
@@ -1350,11 +1440,17 @@ Hi ${artistName},
 Your ${tierName} subscription is now active! Thank you for upgrading your 247 Print Network account.
 
 YOUR ${tierName.toUpperCase()} BENEFITS:
-• ${tierRoyalty} minimum royalty on all sales${tier === 'elite' ? ' (guaranteed!)' : ''}
-• Unlimited artwork uploads - no monthly limits
-${tier === 'pro' ? '• 50 AI Art Studio credits/month for generating new artwork' : '• Unlimited AI Art Studio access for generating artwork'}
-${tier === 'elite' ? '• Priority review for artwork submissions' : ''}
-${tier === 'elite' ? '• Full profile customization and featured artist placement' : ''}
+💰 ${tierRoyalty} minimum royalty on all sales${tier === 'elite' ? ' (guaranteed max tier!)' : ''}
+🎨 Unlimited artwork uploads - no monthly limits
+${tier === 'pro' ? '🤖 50 AI Art Studio credits/month for generating new artwork with DALL-E 3' : '🤖 Unlimited AI Art Studio access - generate as many designs as you need'}
+${tier === 'elite' ? '⚡ Priority review for artwork submissions' : ''}
+${tier === 'elite' ? '🎯 Full profile customization - make your artist page stand out' : ''}
+
+🏆 HOMEPAGE FEATURED ARTIST SYSTEM${tier === 'elite' ? ' (GUARANTEED!)' : ''}:
+${tier === 'elite' 
+  ? 'As an Elite member, you\'re guaranteed homepage placement through our hybrid rotation system:\n\n2 PERFORMANCE SLOTS: Reserved for top sellers (you can compete for constant visibility)\n2 ROTATION SLOTS: Fair cycling ensures all Elite artists get homepage time\n\nYour artwork will be prominently featured to every visitor!' 
+  : 'As a Pro member, you\'re eligible for our fair homepage rotation system:\n\n2 PERFORMANCE SLOTS: Top sellers by tier + monthly sales (compete with other artists)\n2 ROTATION SLOTS: Fair cycling ensures all Pro artists get homepage exposure\n\nWe track when you\'re last featured and rotate fairly - everyone gets their turn!'
+}
 
 BILLING INFORMATION:
 Plan: ${tierName} - ${tierPrice}/month
@@ -1363,13 +1459,17 @@ Payment method: Card ending in your saved payment method
 
 WHAT'S NEXT:
 1. Upload unlimited artwork to maximize your earnings
-2. Use AI Art Studio to create new designs faster
-3. Watch your royalty earnings grow at ${tierRoyalty}+
-4. Track your performance in your enhanced dashboard
+2. Use AI Art Studio to create new designs faster (${tier === 'pro' ? '50 credits/month' : 'unlimited'})
+3. Watch your homepage rotation bring in new customers
+4. Watch your royalty earnings grow at ${tierRoyalty}${tier === 'elite' ? '' : '+'}
+5. Track your performance in your enhanced dashboard
 
-Go to Your Dashboard: ${dashboardUrl}
+${tier === 'pro' ? `💡 WANT EVEN MORE?
+Elite tier offers 45% royalty guarantee, unlimited AI Studio, priority review, and guaranteed homepage placement. Explore Elite benefits: ${dashboardUrl}#settings
 
-Questions about your subscription? Just reply to this email and we'll help!
+` : ''}Go to Your Dashboard: ${dashboardUrl}
+
+Questions about your subscription or featured rotation? Just reply to this email and we'll help!
 
 Best regards,
 247 Print Network Team

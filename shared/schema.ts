@@ -40,6 +40,7 @@ export const artists = pgTable("artists", {
   isFeaturedEligible: boolean("is_featured_eligible").notNull().default(false), // Can be featured on homepage (auto-true for Elite, perf-based for Pro, manual for Free)
   featuredPriority: integer("featured_priority").notNull().default(0), // Higher = more likely to be featured (Elite=100, Pro=50, Free=0, +manual boost)
   featuredPinnedUntil: timestamp("featured_pinned_until"), // If set, artist is guaranteed featured until this date (for campaigns/promotions)
+  lastFeaturedAt: timestamp("last_featured_at"), // Last time artist appeared in featured rotation (for fair rotation)
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ({

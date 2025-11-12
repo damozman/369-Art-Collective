@@ -37,6 +37,7 @@ import {
   Trophy,
   Share2,
   Archive,
+  Calculator,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -101,6 +102,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           label: "Empire Analytics",
           path: "/admin/empire",
           icon: BarChart3,
+        },
+        {
+          label: "Financial Dashboard",
+          path: "/admin/financial",
+          icon: Calculator,
         },
         {
           label: "Payouts",

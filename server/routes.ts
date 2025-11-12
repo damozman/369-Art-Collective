@@ -4349,6 +4349,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // FINANCIAL ANALYTICS & TOOLS (Admin Only)
+  // ============================================
+
+  // Get comprehensive revenue metrics across all streams
+  app.get("/api/admin/financial/revenue", requireAdmin, async (req, res) => {
+    try {
+      const { calculateRevenueMetrics } = await import('./lib/financial-service');
+      const metrics = await calculateRevenueMetrics();
+      res.json(metrics);
+    } catch (error: any) {
+      console.error("Revenue metrics error:", error);
+      res.status(500).json({ message: "Failed to calculate revenue metrics" });
+    }
+  });
+
+  // Calculate product margins for different scenarios
+  app.post("/api/admin/financial/margins", requireAdmin, async (req, res) => {
+    try {
+      const { calculateProductMargin, isValidRoyaltyTier } = await import('./lib/financial-service');
+      const { retailPrice, printifyCost, shipping, artistRoyaltyPercent } = req.body;
+
+      if (!retailPrice || !printifyCost || !shipping || !artistRoyaltyPercent) {
+        return res.status(400).json({ message: "Missing required parameters" });
+      }
+
+      // ENFORCE: Royalty must be 30%, 35%, or 45% (replit.md policy)
+      if (!isValidRoyaltyTier(artistRoyaltyPercent)) {
+        return res.status(400).json({ 
+          message: `Invalid royalty percentage. Must be 30%, 35%, or 45% per replit.md policy. Received: ${artistRoyaltyPercent}%`
+        });
+      }
+
+      const margin = calculateProductMargin(
+        retailPrice,
+        printifyCost,
+        shipping,
+        artistRoyaltyPercent
+      );
+
+      res.json(margin);
+    } catch (error: any) {
+      console.error("Margin calculation error:", error);
+      res.status(500).json({ message: error.message || "Failed to calculate margins" });
+    }
+  });
+
+  // Generate pricing strategy recommendations
+  app.post("/api/admin/financial/pricing-strategy", requireAdmin, async (req, res) => {
+    try {
+      const { generatePricingStrategy } = await import('./lib/financial-service');
+      const { productType, currentPrice, printifyCost, shipping } = req.body;
+
+      if (!productType || !currentPrice || !printifyCost || !shipping) {
+        return res.status(400).json({ message: "Missing required parameters" });
+      }
+
+      const strategy = await generatePricingStrategy(
+        productType,
+        currentPrice,
+        printifyCost,
+        shipping
+      );
+
+      res.json(strategy);
+    } catch (error: any) {
+      console.error("Pricing strategy error:", error);
+      res.status(500).json({ message: "Failed to generate pricing strategy" });
+    }
+  });
+
+  // Calculate artist break-even analysis
+  app.get("/api/admin/financial/artist-breakeven", requireAdmin, async (req, res) => {
+    try {
+      const { calculateArtistBreakEven } = await import('./lib/financial-service');
+      const { tier, averageOrderValue } = req.query;
+
+      const subscriptionTier = (tier as 'free' | 'pro' | 'elite') || 'pro';
+      const avgOrderValue = averageOrderValue ? parseFloat(averageOrderValue as string) : 89.99;
+
+      const breakeven = calculateArtistBreakEven(subscriptionTier, avgOrderValue);
+      res.json(breakeven);
+    } catch (error: any) {
+      console.error("Break-even calculation error:", error);
+      res.status(500).json({ message: "Failed to calculate break-even" });
+    }
+  });
+
+  // Get all artist break-even scenarios (all tiers)
+  app.get("/api/admin/financial/all-breakeven", requireAdmin, async (req, res) => {
+    try {
+      const { calculateArtistBreakEven } = await import('./lib/financial-service');
+      const { averageOrderValue } = req.query;
+      const avgOrderValue = averageOrderValue ? parseFloat(averageOrderValue as string) : 89.99;
+
+      const breakevens = {
+        free: calculateArtistBreakEven('free', avgOrderValue),
+        pro: calculateArtistBreakEven('pro', avgOrderValue),
+        elite: calculateArtistBreakEven('elite', avgOrderValue),
+      };
+
+      res.json(breakevens);
+    } catch (error: any) {
+      console.error("All break-even calculation error:", error);
+      res.status(500).json({ message: "Failed to calculate break-even scenarios" });
+    }
+  });
+
+  // Get Printify product costs (live or estimated)
+  app.get("/api/admin/financial/printify-costs", requireAdmin, async (req, res) => {
+    try {
+      const { getPrintifyProductCost, WALL_ART_BLUEPRINTS } = await import('./lib/financial-service');
+      const { blueprintId } = req.query;
+
+      if (!blueprintId) {
+        // Return all product costs
+        const costs = await Promise.all([
+          getPrintifyProductCost(WALL_ART_BLUEPRINTS.POSTER),
+          getPrintifyProductCost(WALL_ART_BLUEPRINTS.CANVAS),
+          getPrintifyProductCost(WALL_ART_BLUEPRINTS.FRAMED),
+          getPrintifyProductCost(WALL_ART_BLUEPRINTS.METAL),
+        ]);
+
+        res.json({
+          poster: costs[0],
+          canvas: costs[1],
+          framed: costs[2],
+          metal: costs[3],
+        });
+      } else {
+        const cost = await getPrintifyProductCost(parseInt(blueprintId as string));
+        res.json(cost);
+      }
+    } catch (error: any) {
+      console.error("Printify costs error:", error);
+      res.status(500).json({ message: "Failed to fetch Printify costs" });
+    }
+  });
+
   // CreatorStack Shopify Webhook TEST endpoint (NO HMAC verification - dev only!)
   // Use this for local testing without needing to calculate HMAC signatures
   app.post("/api/creatorstack/webhooks/shopify/test", async (req, res) => {

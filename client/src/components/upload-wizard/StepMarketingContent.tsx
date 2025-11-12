@@ -3,6 +3,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
+import { AIAssistButton } from "@/components/AIAssistButton";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { X } from "lucide-react";
 import type { WizardFormData } from "./ArtworkUploadWizard";
 
@@ -26,6 +29,7 @@ const PREDEFINED_STYLES = [
 ];
 
 export function StepMarketingContent({ form }: StepMarketingContentProps) {
+  const { toast } = useToast();
   const selectedStyles = form.watch("styleTags") || [];
 
   const toggleStyle = (style: string) => {
@@ -37,6 +41,41 @@ export function StepMarketingContent({ form }: StepMarketingContentProps) {
     }
   };
 
+  const generateContent = async (contentType: string) => {
+    try {
+      const formValues = form.getValues();
+      const response = await apiRequest('POST', '/api/ai/generate-content', {
+        contentType,
+        artworkTitle: formValues.title,
+        existingDescription: formValues.description,
+        style: formValues.styleTags?.join(', '),
+      });
+
+      const data = await response.json();
+
+      // Update the form field with generated content
+      if (contentType === 'artworkStory') {
+        form.setValue('artworkStory', data.content);
+      } else if (contentType === 'suggestedUse') {
+        form.setValue('suggestedUse', data.content);
+      }
+
+      toast({
+        title: "✨ Content generated!",
+        description: `AI has created ${contentType === 'artworkStory' ? 'a story' : 'suggested uses'} for your artwork.`,
+      });
+    } catch (error: any) {
+      const isAuthError = error.message?.includes('401') || error.message?.includes('Artist access required');
+      toast({
+        variant: "destructive",
+        title: isAuthError ? "Login required" : "Generation failed",
+        description: isAuthError 
+          ? "Please log in as an artist to use AI content assistance."
+          : error.message || "Failed to generate content. Please try again.",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <FormField
@@ -44,7 +83,13 @@ export function StepMarketingContent({ form }: StepMarketingContentProps) {
         name="artworkStory"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Artwork Story (Optional)</FormLabel>
+            <div className="flex items-center justify-between">
+              <FormLabel>Artwork Story (Optional)</FormLabel>
+              <AIAssistButton
+                onGenerate={() => generateContent('artworkStory')}
+                tooltip="Generate an engaging story with AI"
+              />
+            </div>
             <FormControl>
               <Textarea
                 {...field}
@@ -103,7 +148,13 @@ export function StepMarketingContent({ form }: StepMarketingContentProps) {
         name="suggestedUse"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Suggested Use (Optional)</FormLabel>
+            <div className="flex items-center justify-between">
+              <FormLabel>Suggested Use (Optional)</FormLabel>
+              <AIAssistButton
+                onGenerate={() => generateContent('suggestedUse')}
+                tooltip="Generate suggested placements with AI"
+              />
+            </div>
             <FormControl>
               <Textarea
                 {...field}

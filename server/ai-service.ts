@@ -122,3 +122,79 @@ export function validatePrompt(prompt: string): { valid: boolean; error?: string
 
   return { valid: true };
 }
+
+/**
+ * Generate marketing content for artwork using GPT-4o
+ * This helps artists write compelling titles, descriptions, tags, and stories
+ */
+export async function generateArtworkContent(params: {
+  contentType: 'title' | 'description' | 'tags' | 'artworkStory' | 'suggestedUse';
+  artworkTitle?: string;
+  existingDescription?: string;
+  style?: string;
+  medium?: string;
+  colors?: string;
+}): Promise<{ content: string; tokensUsed: number }> {
+  try {
+    const { contentType, artworkTitle, existingDescription, style, medium, colors } = params;
+
+    // Build context from existing information
+    const context = [];
+    if (artworkTitle) context.push(`Artwork title: "${artworkTitle}"`);
+    if (existingDescription) context.push(`Description: "${existingDescription}"`);
+    if (style) context.push(`Style: ${style}`);
+    if (medium) context.push(`Medium: ${medium}`);
+    if (colors) context.push(`Colors: ${colors}`);
+
+    const contextString = context.length > 0 ? context.join('\n') : '';
+
+    // Generate prompts based on content type
+    let systemPrompt = "You are a professional art curator and copywriter helping artists sell their artwork online. Write compelling, authentic, and engaging content that helps customers connect with the art.";
+    let userPrompt = '';
+
+    switch (contentType) {
+      case 'title':
+        userPrompt = `Generate a compelling, SEO-friendly title for this artwork. The title should be concise (3-7 words), descriptive, and evocative. It should capture the essence of the piece without being generic.\n\n${contextString}\n\nProvide ONLY the title, nothing else.`;
+        break;
+
+      case 'description':
+        userPrompt = `Write a compelling product description for this artwork (2-3 sentences, 30-50 words). Focus on what makes it special, the emotions it evokes, and why customers would want it in their space. Be authentic and avoid marketing clichés.\n\n${contextString}\n\nProvide ONLY the description, nothing else.`;
+        break;
+
+      case 'tags':
+        userPrompt = `Generate 5-8 relevant search tags for this artwork. Tags should include style, mood, color themes, and potential use cases. Separate with commas.\n\n${contextString}\n\nProvide ONLY the comma-separated tags, nothing else.`;
+        break;
+
+      case 'artworkStory':
+        userPrompt = `Write an engaging artwork story (4-6 sentences, 60-100 words) that helps customers connect with the piece. Include: the inspiration behind it, the creative process, or the meaning/emotion it conveys. Write in a warm, personal tone as if the artist is speaking directly to the buyer.\n\n${contextString}\n\nProvide ONLY the story, nothing else.`;
+        break;
+
+      case 'suggestedUse':
+        userPrompt = `Suggest 2-3 ideal room placements or use cases for this artwork (1 sentence, 20-30 words). Be specific about environments where it would shine (e.g., "Perfect statement piece for modern living rooms or inspiring home offices").\n\n${contextString}\n\nProvide ONLY the suggested use text, nothing else.`;
+        break;
+    }
+
+    // Call GPT-4o for content generation
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.7, // Balanced creativity
+      max_tokens: 200, // Enough for content but not excessive
+    });
+
+    const content = response.choices[0]?.message?.content?.trim() || '';
+    const tokensUsed = response.usage?.total_tokens || 0;
+
+    if (!content) {
+      throw new Error("No content generated from GPT-4o");
+    }
+
+    return { content, tokensUsed };
+  } catch (error: any) {
+    console.error("[ERROR][AI_CONTENT] Failed to generate content:", error.message);
+    throw new Error(`Failed to generate content: ${error.message}`);
+  }
+}

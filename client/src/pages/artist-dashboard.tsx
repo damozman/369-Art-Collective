@@ -24,6 +24,153 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+// Subscription Tier Card Component
+function SubscriptionTierCard({ 
+  subscription, 
+  isLoading,
+  artworkCount
+}: { 
+  subscription: { tier: "free" | "pro" | "elite"; status: string; currentPeriodEnd: string | null } | undefined;
+  isLoading: boolean;
+  artworkCount: number;
+}) {
+  const [, setLocation] = useLocation();
+  
+  if (isLoading) {
+    return (
+      <Card className="mb-8" data-testid="card-subscription-loading">
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-3/4" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const tier = subscription?.tier || "free";
+  const tierName = tier === "free" ? "Free" : tier === "pro" ? "Pro" : "Elite";
+  const tierColor = tier === "free" ? "secondary" : tier === "pro" ? "default" : "default";
+  const royaltyRate = tier === "free" ? "30%" : tier === "pro" ? "35% minimum" : "45% guaranteed";
+  const FREE_TIER_LIMIT = 20;
+  const remainingUploads = tier === "free" ? Math.max(0, FREE_TIER_LIMIT - artworkCount) : null;
+
+  // Free tier
+  if (tier === "free") {
+    return (
+      <Card className="mb-8 border-primary/20" data-testid="card-subscription-free">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-muted-foreground" />
+              <CardTitle>Subscription: {tierName}</CardTitle>
+            </div>
+            <Badge variant={tierColor} data-testid="badge-tier-free">
+              {tierName}
+            </Badge>
+          </div>
+          <CardDescription>
+            Upgrade to unlock unlimited uploads and premium features
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="flex items-start gap-2">
+                <Upload className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="font-medium">{remainingUploads}/{FREE_TIER_LIMIT} Uploads Left</p>
+                  <p className="text-muted-foreground text-xs">Limited artwork</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <DollarSign className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="font-medium">{royaltyRate} Royalty</p>
+                  <p className="text-muted-foreground text-xs">Base tier rate</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <XCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="font-medium">No AI Tools</p>
+                  <p className="text-muted-foreground text-xs">Upgrade to unlock</p>
+                </div>
+              </div>
+            </div>
+            <Button onClick={() => setLocation("/artist/settings")} className="w-full" data-testid="button-upgrade-subscription">
+              <Crown className="mr-2 h-4 w-4" />
+              Upgrade to Pro or Elite
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Pro/Elite tier
+  return (
+    <Card className="mb-8 border-primary/40 bg-primary/5" data-testid={`card-subscription-${tier}`}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-primary" />
+            <CardTitle>Subscription: {tierName}</CardTitle>
+          </div>
+          <Badge variant={tierColor} className="bg-primary" data-testid={`badge-tier-${tier}`}>
+            <Sparkles className="w-3 h-3 mr-1" />
+            {tierName}
+          </Badge>
+        </div>
+        <CardDescription>
+          {tier === "pro" ? "Unlimited uploads and AI Art Studio access" : "Full access with guaranteed 45% royalty"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Artwork Limit</span>
+            <span className="font-medium text-primary">Unlimited</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Royalty Rate</span>
+            <span className="font-medium text-primary">{royaltyRate}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">AI Art Studio</span>
+            <span className="font-medium text-primary flex items-center gap-1">
+              <CheckCircle className="w-3 h-3" />
+              Enabled
+            </span>
+          </div>
+          {subscription?.currentPeriodEnd && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Renews</span>
+              <span className="font-medium">
+                {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+              </span>
+            </div>
+          )}
+          <div className="pt-2 border-t">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setLocation("/artist/settings")} 
+              className="w-full"
+              data-testid="button-manage-subscription"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Manage Subscription
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // Featured Status Card Component
 function FeaturedStatusCard({ 
   featuredStatus, 
@@ -202,6 +349,15 @@ export default function ArtistDashboard() {
 
   const { data: payoutData, isLoading: payoutLoading, isError: payoutError } = useQuery<{ payouts: any[]; unpaidEarnings: number; unpaidSalesCount: number }>({
     queryKey: ["/api/artists/payouts"],
+  });
+
+  const { data: subscription, isLoading: subscriptionLoading } = useQuery<{
+    tier: "free" | "pro" | "elite";
+    status: "active" | "canceled" | "past_due";
+    currentPeriodEnd: string | null;
+  }>({
+    queryKey: ["/api/artists/subscription"],
+    retry: 1,
   });
 
   const { data: featuredStatus, isLoading: featuredLoading } = useQuery<{
@@ -456,6 +612,13 @@ export default function ArtistDashboard() {
               </CardHeader>
             </Card>
           </div>
+
+          {/* Subscription Tier Section */}
+          <SubscriptionTierCard
+            subscription={subscription}
+            isLoading={subscriptionLoading}
+            artworkCount={stats.total}
+          />
 
           {/* Featured Status Section */}
           <FeaturedStatusCard

@@ -130,7 +130,7 @@ export default function AdminLogin() {
                   <button
                     type="button"
                     onClick={() => setLocation("/admin/forgot-password")}
-                    className="text-sm text-muted-foreground hover:text-primary"
+                    className="min-h-11 py-3 text-sm text-muted-foreground hover:text-primary"
                     data-testid="link-forgot-password"
                   >
                     Forgot password?

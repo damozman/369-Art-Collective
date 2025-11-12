@@ -130,7 +130,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setLocation("/forgot-password")}
-                    className="text-sm text-muted-foreground hover:text-primary"
+                    className="min-h-11 py-3 text-sm text-muted-foreground hover:text-primary"
                     data-testid="link-forgot-password"
                   >
                     Forgot password?
@@ -151,11 +151,11 @@ export default function Login() {
             </Form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                New artist?{" "}
+              <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+                <span>New artist?</span>
                 <button
                   onClick={() => setLocation("/register")}
-                  className="text-primary hover:underline font-medium"
+                  className="min-h-11 py-3 text-primary hover:underline font-medium"
                   data-testid="link-register"
                 >
                   Create an account

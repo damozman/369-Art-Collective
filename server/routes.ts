@@ -4093,23 +4093,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
-      // Set up session
-      req.session.creatorstackBuyerId = buyer.id;
-      req.session.save((err: Error | undefined) => {
+      // Regenerate session to prevent session fixation
+      req.session.regenerate((err) => {
         if (err) {
-          console.error("Session save error:", err);
-          return res.status(500).json({ message: "Failed to create session" });
+          console.error("Session regeneration error:", err);
+          return res.status(500).json({ message: "Login failed" });
         }
 
-        console.log(`✅ CreatorStack buyer logged in: ${email}`);
-        res.json({
-          message: "Login successful",
-          buyer: {
-            id: buyer.id,
-            email: buyer.email,
-            name: buyer.name,
-            isPro: buyer.isPro,
+        // Set up session
+        req.session.creatorstackBuyerId = buyer.id;
+        req.session.save((saveErr: Error | undefined) => {
+          if (saveErr) {
+            console.error("Session save error:", saveErr);
+            return res.status(500).json({ message: "Failed to create session" });
           }
+
+          console.log(`✅ CreatorStack buyer logged in: ${email}`);
+          res.json({
+            message: "Login successful",
+            buyer: {
+              id: buyer.id,
+              email: buyer.email,
+              name: buyer.name,
+              isPro: buyer.isPro,
+            }
+          });
         });
       });
     } catch (error: any) {

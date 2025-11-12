@@ -954,6 +954,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single artist details (admin only)
+  app.get("/api/admin/artists/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const artist = await storage.getArtist(id);
+      
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      // Return full artist data (excluding password) for admin view
+      const { password, ...artistData } = artist;
+      res.json(artistData);
+    } catch (error: any) {
+      console.error("Get artist details error:", error);
+      res.status(500).json({ message: "Failed to fetch artist details" });
+    }
+  });
+
   // Approve artist (admin only)
   app.post("/api/artists/:id/approve", requireAdmin, async (req, res) => {
     try {

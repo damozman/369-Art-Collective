@@ -459,9 +459,8 @@ export default function AdminArtists() {
                           {new Date(artist.createdAt || "").toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex gap-2 justify-end">
+                          <div className="flex gap-2 justify-end flex-wrap">
                             <Button
-                              size="sm"
                               variant="outline"
                               onClick={() => setLocation(`/admin/artists/${artist.id}`)}
                               data-testid={`button-view-${artist.id}`}
@@ -471,7 +470,6 @@ export default function AdminArtists() {
                             </Button>
                             {!artist.approved && (
                               <Button
-                                size="sm"
                                 onClick={() => approveMutation.mutate(artist.id)}
                                 disabled={approveMutation.isPending}
                                 className="bg-green-600 hover:bg-green-700"

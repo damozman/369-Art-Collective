@@ -12,6 +12,11 @@ export const artists = pgTable("artists", {
   artistShort: text("artist_short").notNull(), // Initials for SKU generation (e.g., "JH")
   approved: boolean("approved").notNull().default(false),
   monthlySales: decimal("monthly_sales", { precision: 10, scale: 2 }).notNull().default('0'), // Current month sales for tier calculation
+  subscriptionTier: text("subscription_tier").notNull().default('free'), // free, pro, elite
+  stripeCustomerId: text("stripe_customer_id"), // Stripe Customer ID for subscription billing
+  stripeSubscriptionId: text("stripe_subscription_id"), // Active Stripe subscription ID
+  subscriptionStatus: text("subscription_status"), // active, canceled, past_due, trialing, incomplete
+  subscriptionPeriodEnd: timestamp("subscription_period_end"), // When current billing period ends
   stripeAccountId: text("stripe_account_id"), // Stripe Connect account ID for payouts
   stripeAccountStatus: text("stripe_account_status"), // pending, active, restricted, complete
   stripeOnboardingComplete: boolean("stripe_onboarding_complete").notNull().default(false), // Has completed Stripe onboarding

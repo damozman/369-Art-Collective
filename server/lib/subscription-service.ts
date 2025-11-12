@@ -374,14 +374,12 @@ export class SubscriptionService {
   }
 
   async getSubscriptionDetails(artistId: string) {
-    console.log("[SubscriptionService] getSubscriptionDetails called with artistId:", artistId);
     const artist = await storage.getArtist(artistId);
-    console.log("[SubscriptionService] storage.getArtist returned:", artist ? `Artist found: ${artist.email}` : 'undefined/null');
     
     // Defensive: If artist not found in database, return Free tier as default
     // This prevents breaking the subscription flow when session/storage has data drift
     if (!artist) {
-      console.warn("[SubscriptionService] Artist not found in DB, returning Free tier default for ID:", artistId);
+      console.warn(`[WARN][SUBSCRIPTION_ARTIST_NOT_FOUND] artistId=${artistId} - returning Free tier default`);
       return {
         tier: 'free',
         status: 'active',

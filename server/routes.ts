@@ -1485,12 +1485,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/artists/subscription", subscriptionReadLimiter, requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
-      console.log("[Subscription] Fetching details for artist:", artist.id, artist.email);
       const details = await subscriptionService.getSubscriptionDetails(artist.id);
-      console.log("[Subscription] Details retrieved:", details);
       res.json(details);
     } catch (error: any) {
-      console.error("[Subscription] Get subscription details error:", error.message, error);
+      console.error(`[ERROR][SUBSCRIPTION_GET_FAILED] artistId=${req.user?.id}`, error);
       res.status(500).json({ message: "Failed to get subscription details" });
     }
   });
@@ -1519,12 +1517,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       const duration = Date.now() - startTime;
-      console.log(`✅ [SUBSCRIPTION_CREATE_SUCCESS] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`);
+      console.log(`[SUCCESS][SUBSCRIPTION_CREATE_SUCCESS] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`);
 
       res.json(result);
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.error(`❌ [SUBSCRIPTION_CREATE_FAILED] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`, error);
+      console.error(`[ERROR][SUBSCRIPTION_CREATE_FAILED] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`, error);
       res.status(500).json({ message: error.message || "Failed to create subscription" });
     }
   });
@@ -1547,12 +1545,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await subscriptionService.upgradeSubscription(artist.id, tier, idempotencyKey);
       
       const duration = Date.now() - startTime;
-      console.log(`✅ [SUBSCRIPTION_UPGRADE_SUCCESS] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`);
+      console.log(`[SUCCESS][SUBSCRIPTION_UPGRADE_SUCCESS] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`);
       
       res.json({ message: "Subscription upgraded successfully" });
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.error(`❌ [SUBSCRIPTION_UPGRADE_FAILED] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`, error);
+      console.error(`[ERROR][SUBSCRIPTION_UPGRADE_FAILED] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`, error);
       res.status(500).json({ message: error.message || "Failed to upgrade subscription" });
     }
   });
@@ -1566,12 +1564,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await subscriptionService.cancelSubscription(artist.id);
       
       const duration = Date.now() - startTime;
-      console.log(`✅ [SUBSCRIPTION_CANCEL_SUCCESS] artistId=${artist.id} email=${artist.email} duration=${duration}ms`);
+      console.log(`[SUCCESS][SUBSCRIPTION_CANCEL_SUCCESS] artistId=${artist.id} email=${artist.email} duration=${duration}ms`);
       
       res.json({ message: "Subscription will be canceled at the end of the billing period" });
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.error(`❌ [SUBSCRIPTION_CANCEL_FAILED] artistId=${artist.id} email=${artist.email} duration=${duration}ms`, error);
+      console.error(`[ERROR][SUBSCRIPTION_CANCEL_FAILED] artistId=${artist.id} email=${artist.email} duration=${duration}ms`, error);
       res.status(500).json({ message: error.message || "Failed to cancel subscription" });
     }
   });
@@ -1585,12 +1583,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await subscriptionService.reactivateSubscription(artist.id);
       
       const duration = Date.now() - startTime;
-      console.log(`✅ [SUBSCRIPTION_REACTIVATE_SUCCESS] artistId=${artist.id} email=${artist.email} duration=${duration}ms`);
+      console.log(`[SUCCESS][SUBSCRIPTION_REACTIVATE_SUCCESS] artistId=${artist.id} email=${artist.email} duration=${duration}ms`);
       
       res.json({ message: "Subscription reactivated successfully" });
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.error(`❌ [SUBSCRIPTION_REACTIVATE_FAILED] artistId=${artist.id} email=${artist.email} duration=${duration}ms`, error);
+      console.error(`[ERROR][SUBSCRIPTION_REACTIVATE_FAILED] artistId=${artist.id} email=${artist.email} duration=${duration}ms`, error);
       res.status(500).json({ message: error.message || "Failed to reactivate subscription" });
     }
   });

@@ -47,6 +47,7 @@ export type EmailType =
   | 'password_reset'
   | 'portfolio_approved'
   | 'portfolio_rejected'
+  | 'tier_explainer'
   | 'artwork_approved'
   | 'artwork_rejected'
   | 'artwork_archive_warning'
@@ -231,6 +232,27 @@ export class EmailService {
       htmlBody,
       textBody,
       metadata: { artistName, approved, rejectionReason },
+    });
+  }
+
+  async sendTierExplainerEmail(
+    artistEmail: string,
+    artistName: string,
+    artistId: string
+  ) {
+    const subject = 'Maximize Your Earnings: Understanding 247 Print Network Tiers';
+    const htmlBody = this.getTierExplainerEmailHTML(artistName);
+    const textBody = this.getTierExplainerEmailText(artistName);
+
+    return this.sendEmail({
+      recipientEmail: artistEmail,
+      recipientType: 'artist',
+      recipientId: artistId,
+      emailType: 'tier_explainer',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { artistName },
     });
   }
 
@@ -722,6 +744,338 @@ ${reason ? `Feedback: ${reason}` : ''}
 We encourage you to continue developing your portfolio and consider reapplying in the future once you've addressed the feedback above.
 
 We appreciate your interest and wish you the best in your artistic journey!
+
+Best regards,
+247 Print Network Team
+
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+  }
+
+  private getTierExplainerEmailHTML(artistName: string): string {
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+    const settingsUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/settings`;
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 10px 10px 0; }
+          .button-ghost { background: transparent; border: 2px solid #667eea; color: #667eea; }
+          .success { background: #d1fae5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
+          .info { background: #e0e7ff; border-left: 4px solid #667eea; padding: 15px; margin: 20px 0; }
+          .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+          .tier-table { width: 100%; border-collapse: collapse; margin: 20px 0; background: white; border-radius: 8px; overflow: hidden; }
+          .tier-table th { background: #667eea; color: white; padding: 12px; text-align: left; }
+          .tier-table td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
+          .tier-table tr:last-child td { border-bottom: none; }
+          .tier-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+          .tier-free { background: #e5e7eb; color: #374151; }
+          .tier-pro { background: #dbeafe; color: #1e40af; }
+          .tier-elite { background: #fce7f3; color: #9f1239; }
+          .section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border: 1px solid #e5e7eb; }
+          .section h3 { margin-top: 0; color: #667eea; }
+          .use-case { background: #f9fafb; padding: 15px; margin: 10px 0; border-left: 3px solid #667eea; border-radius: 4px; }
+          .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+          details { margin: 10px 0; }
+          summary { cursor: pointer; font-weight: bold; padding: 10px; background: #f3f4f6; border-radius: 4px; }
+          summary:hover { background: #e5e7eb; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>💡 Maximize Your Earnings</h1>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Understanding Your Growth Path</p>
+          </div>
+          <div class="content">
+            <p>Hi ${artistName},</p>
+            
+            <!-- Section 1: Executive Summary -->
+            <div class="success">
+              <strong>🎯 Quick Summary:</strong> You're currently on the Free tier earning 30% royalties. Ready to scale? Pro and Elite tiers offer higher royalties, unlimited uploads, AI tools, and guaranteed homepage exposure that can 3-5x your earnings.
+            </div>
+            
+            <!-- Section 2: Tier Comparison Table -->
+            <div class="section">
+              <h3>📊 Complete Tier Comparison</h3>
+              <table class="tier-table">
+                <thead>
+                  <tr>
+                    <th>Feature</th>
+                    <th><span class="tier-badge tier-free">FREE</span></th>
+                    <th><span class="tier-badge tier-pro">PRO</span></th>
+                    <th><span class="tier-badge tier-elite">ELITE</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Royalty Rate</strong></td>
+                    <td>30%</td>
+                    <td><strong>35% minimum</strong></td>
+                    <td><strong>45% guaranteed</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Monthly Cost</strong></td>
+                    <td>$0</td>
+                    <td>$15-20</td>
+                    <td>$40-50</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Artwork Uploads</strong></td>
+                    <td>Up to 20 artworks</td>
+                    <td><strong>Unlimited</strong></td>
+                    <td><strong>Unlimited</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>AI Art Studio</strong></td>
+                    <td>❌ Not available</td>
+                    <td>✅ 50 credits/month</td>
+                    <td>✅ <strong>Unlimited</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Homepage Featured</strong></td>
+                    <td>❌ Manual approval only</td>
+                    <td>✅ Fair rotation eligible</td>
+                    <td>✅ <strong>Guaranteed placement</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Review Speed</strong></td>
+                    <td>Standard (24-48h)</td>
+                    <td>Standard (24-48h)</td>
+                    <td>⚡ Priority (12-24h)</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Profile Customization</strong></td>
+                    <td>Basic</td>
+                    <td>Basic</td>
+                    <td>🎯 <strong>Full control</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Section 3: Hybrid Rotation Walkthrough -->
+            <div class="section">
+              <h3>🏆 Homepage Featured Artist System</h3>
+              <p><strong>How Our Hybrid Rotation Works:</strong></p>
+              
+              <div class="info">
+                <strong>4-Slot System = Meritocracy + Fairness</strong><br><br>
+                <strong>Slots 1-2 (Performance):</strong> Top earners by tier + monthly sales<br>
+                → Rewards high performers with constant visibility<br>
+                → Creates healthy competition<br><br>
+                <strong>Slots 3-4 (Fair Rotation):</strong> Cycles through all eligible artists<br>
+                → Tracks lastFeaturedAt to ensure everyone gets turns<br>
+                → Guarantees exposure for paying members
+              </div>
+              
+              <p><strong>What This Means for You:</strong></p>
+              <ul>
+                <li><strong>Pro Artists:</strong> Get guaranteed rotation time among slots 3-4, plus can compete for performance slots 1-2</li>
+                <li><strong>Elite Artists:</strong> Same benefits as Pro, PLUS priority 100 (vs Pro priority 50) means more frequent rotation placement</li>
+                <li><strong>Free Tier:</strong> No automatic rotation eligibility (can request manual approval from admin)</li>
+              </ul>
+              
+              <details>
+                <summary>🔍 Learn More: Rotation Mechanics</summary>
+                <div style="padding: 15px;">
+                  <p><strong>Rotation Frequency:</strong> Every 14 days for fair rotation slots</p>
+                  <p><strong>Priority System:</strong></p>
+                  <ul>
+                    <li>Elite members: Priority 100 (highest)</li>
+                    <li>Pro members: Priority 50 (standard)</li>
+                    <li>Free tier (manual approval): Priority 0-25</li>
+                  </ul>
+                  <p><strong>Tiebreaker Logic:</strong> If multiple artists haven't been featured recently, the one with earlier lastFeaturedAt gets priority</p>
+                  <p><strong>Admin Pinning:</strong> Occasionally we may pin specific artists for campaigns (but rotation continues normally after pin expires)</p>
+                  <p><strong>Downgrade Protection:</strong> If you downgrade, your featuredEligibility updates immediately to reflect your new tier</p>
+                </div>
+              </details>
+            </div>
+            
+            <!-- Section 4: AI Studio Use Cases -->
+            <div class="section">
+              <h3>🤖 AI Art Studio: Real Use Cases</h3>
+              <p><strong>Generate new artwork 10x faster with DALL-E 3:</strong></p>
+              
+              <div class="use-case">
+                <strong>📱 "I need seasonal variations"</strong><br>
+                Example: You have a popular abstract design. Use AI Studio to generate spring, summer, fall, winter color variants - expand 1 artwork into 4 seasonal products in minutes.
+              </div>
+              
+              <div class="use-case">
+                <strong>🎨 "I want to explore new styles"</strong><br>
+                Example: Prompt "minimalist mountain landscape, earth tones, geometric shapes" to test concepts before committing to manual creation. Save hours of exploration.
+              </div>
+              
+              <div class="use-case">
+                <strong>🚀 "I need to fill my catalog fast"</strong><br>
+                Example: Elite members with unlimited credits can generate 20-30 AI artworks/month, approve the best 10, and keep their marketplace fresh without burnout.
+              </div>
+              
+              <div class="use-case">
+                <strong>💡 "I'm stuck creatively"</strong><br>
+                Example: Use AI to generate 5 variations of a theme, pick the most inspiring, then refine it in your preferred tool. AI as creative jumpstart, not replacement.
+              </div>
+              
+              <div class="info">
+                <strong>Credit System:</strong><br>
+                • Pro: 50 credits/month (enough for 10-15 high-quality generations)<br>
+                • Elite: Unlimited credits (generate as much as you need)<br>
+                • Each AI image can be transformed into 16 product variants (4 sizes × 4 finishes)
+              </div>
+            </div>
+            
+            <!-- Section 5: Upgrade Pathways -->
+            <div class="section">
+              <h3>🚀 Ready to Upgrade?</h3>
+              
+              <div class="warning">
+                <strong>📈 ROI Calculator:</strong><br>
+                If you sell just 3-4 products per month, the Pro tier pays for itself through the 5% royalty increase alone. Everything else (unlimited uploads, AI Studio, featured rotation) is pure upside.
+              </div>
+              
+              <p><strong>Choose Your Path:</strong></p>
+              
+              <div style="background: #dbeafe; padding: 15px; margin: 10px 0; border-radius: 8px;">
+                <strong>✨ Pro Tier - Best for Growing Artists</strong><br>
+                → Perfect if you're hitting the 20-artwork limit<br>
+                → Need AI tools to scale faster<br>
+                → Want homepage rotation exposure<br>
+                → $15-20/month investment
+              </div>
+              
+              <div style="background: #fce7f3; padding: 15px; margin: 10px 0; border-radius: 8px;">
+                <strong>💎 Elite Tier - For Serious Creators</strong><br>
+                → Maximum 45% royalty from day one<br>
+                → Unlimited AI generation (no creative bottlenecks)<br>
+                → Guaranteed homepage placement<br>
+                → Priority review means faster launches<br>
+                → $40-50/month investment
+              </div>
+              
+              <a href="${settingsUrl}" class="button" data-testid="button-upgrade-pro">Upgrade to Pro ($15-20/mo)</a>
+              <a href="${settingsUrl}" class="button button-ghost" data-testid="link-elite-consult">Explore Elite ($40-50/mo)</a>
+            </div>
+            
+            <div class="info">
+              <strong>💬 Questions?</strong> Reply to this email and we'll help you choose the right tier for your goals. We want you to succeed!
+            </div>
+            
+            <p>Keep creating amazing art!</p>
+            
+            <p>Best regards,<br>247 Print Network Team</p>
+          </div>
+          <div class="footer">
+            <p>© 2025 247 Print Network. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private getTierExplainerEmailText(artistName: string): string {
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+    const settingsUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/settings`;
+    
+    return `
+💡 Maximize Your Earnings - Understanding Your Growth Path
+
+Hi ${artistName},
+
+🎯 QUICK SUMMARY:
+You're currently on the Free tier earning 30% royalties. Ready to scale? Pro and Elite tiers offer higher royalties, unlimited uploads, AI tools, and guaranteed homepage exposure that can 3-5x your earnings.
+
+📊 COMPLETE TIER COMPARISON:
+
+FEATURE                 | FREE          | PRO              | ELITE
+-----------------------|---------------|------------------|------------------
+Royalty Rate           | 30%           | 35% minimum      | 45% guaranteed
+Monthly Cost           | $0            | $15-20           | $40-50
+Artwork Uploads        | Up to 20      | Unlimited        | Unlimited
+AI Art Studio          | Not available | 50 credits/month | Unlimited
+Homepage Featured      | Manual only   | Fair rotation    | Guaranteed
+Review Speed           | 24-48 hours   | 24-48 hours      | 12-24 hours (priority)
+Profile Customization  | Basic         | Basic            | Full control
+
+🏆 HOMEPAGE FEATURED ARTIST SYSTEM:
+How Our Hybrid Rotation Works:
+
+4-SLOT SYSTEM = MERITOCRACY + FAIRNESS
+
+SLOTS 1-2 (PERFORMANCE): Top earners by tier + monthly sales
+→ Rewards high performers with constant visibility
+→ Creates healthy competition
+
+SLOTS 3-4 (FAIR ROTATION): Cycles through all eligible artists
+→ Tracks lastFeaturedAt to ensure everyone gets turns
+→ Guarantees exposure for paying members
+
+WHAT THIS MEANS FOR YOU:
+• Pro Artists: Get guaranteed rotation time among slots 3-4, plus can compete for performance slots 1-2
+• Elite Artists: Same benefits as Pro, PLUS priority 100 (vs Pro priority 50) means more frequent rotation placement
+• Free Tier: No automatic rotation eligibility (can request manual approval from admin)
+
+ROTATION MECHANICS:
+- Rotation Frequency: Every 14 days for fair rotation slots
+- Priority System: Elite (100), Pro (50), Free/Manual (0-25)
+- Tiebreaker Logic: Earlier lastFeaturedAt gets priority
+- Downgrade Protection: Eligibility updates immediately on tier changes
+
+🤖 AI ART STUDIO: REAL USE CASES
+
+📱 "I need seasonal variations"
+Example: You have a popular abstract design. Use AI Studio to generate spring, summer, fall, winter color variants - expand 1 artwork into 4 seasonal products in minutes.
+
+🎨 "I want to explore new styles"
+Example: Prompt "minimalist mountain landscape, earth tones, geometric shapes" to test concepts before committing to manual creation. Save hours of exploration.
+
+🚀 "I need to fill my catalog fast"
+Example: Elite members with unlimited credits can generate 20-30 AI artworks/month, approve the best 10, and keep their marketplace fresh without burnout.
+
+💡 "I'm stuck creatively"
+Example: Use AI to generate 5 variations of a theme, pick the most inspiring, then refine it in your preferred tool. AI as creative jumpstart, not replacement.
+
+CREDIT SYSTEM:
+• Pro: 50 credits/month (enough for 10-15 high-quality generations)
+• Elite: Unlimited credits (generate as much as you need)
+• Each AI image can be transformed into 16 product variants (4 sizes × 4 finishes)
+
+🚀 READY TO UPGRADE?
+
+📈 ROI CALCULATOR:
+If you sell just 3-4 products per month, the Pro tier pays for itself through the 5% royalty increase alone. Everything else (unlimited uploads, AI Studio, featured rotation) is pure upside.
+
+CHOOSE YOUR PATH:
+
+✨ PRO TIER - BEST FOR GROWING ARTISTS
+→ Perfect if you're hitting the 20-artwork limit
+→ Need AI tools to scale faster
+→ Want homepage rotation exposure
+→ $15-20/month investment
+
+💎 ELITE TIER - FOR SERIOUS CREATORS
+→ Maximum 45% royalty from day one
+→ Unlimited AI generation (no creative bottlenecks)
+→ Guaranteed homepage placement
+→ Priority review means faster launches
+→ $40-50/month investment
+
+Upgrade to Pro: ${settingsUrl}
+Explore Elite: ${settingsUrl}
+
+💬 QUESTIONS?
+Reply to this email and we'll help you choose the right tier for your goals. We want you to succeed!
+
+Keep creating amazing art!
 
 Best regards,
 247 Print Network Team

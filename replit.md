@@ -35,12 +35,18 @@ The system employs a client-server architecture with distinct frontend and backe
 - **Artwork Management:** Automated archiving of inactive artworks, product type assignment with smart tagging.
 - **Royalty System:** Dual-tier royalty structure combining performance and subscription tiers using Math.max logic. Performance tiers: Tier 1 ($0-999) = 30%, Tier 2 ($1K-5K) = 35%, Tier 3 ($5K-10K) = 40%, Tier 4 ($10K+) = 45%. Subscription tiers: Free = 30%, Pro = 35% minimum, Elite = 45% guaranteed. Artists receive whichever percentage is higher between their performance and subscription tier. Referral bonuses (+5%) and recruitment bonuses (5% of recruited artist's royalties) apply on top.
 - **Artist Subscription Tiers:** Three-tier monetization system with recurring billing via Stripe. Free ($0/mo, 30% royalty, 20 artwork limit), Pro ($15-20/mo, 35% minimum royalty, unlimited uploads, AI Art Studio access, homepage featured eligibility), Elite ($40-50/mo, 45% guaranteed royalty, unlimited uploads, full AI tools, profile customization, guaranteed homepage featured placement). Database tracks subscriptionTier, stripeCustomerId, stripeSubscriptionId, subscriptionStatus, subscriptionPeriodEnd, isFeaturedEligible, featuredPriority (0-100), and featuredPinnedUntil.
+  - **Free Trial System:** Industry-leading trial conversion strategy with tier-specific durations (Pro: 14 days, Elite: 7 days) to validate sustainable artist royalties through subscription MRR
+    - **Trial Lifecycle Management:** subscription_trials table tracks status (active/converted/canceled/expired), trial start/end dates, conversion timestamps, and activation source (signup/settings/ai-studio/dashboard)
+    - **Stripe Webhook Automation:** trial_will_end event triggers 3-day pre-expiry emails; subscription.updated handler tracks trial→paid conversions and auto-downgrades expired trials to Free tier
+    - **Strategic Email Funnel:** Four automated trial emails drive 25% conversion target: (1) Day 3 check-in with usage stats, (2) Pre-expiry warning 3 days before end, (3) Last chance urgency on final day, (4) Post-trial re-engagement for churned trials
+    - **Unified Trial UI:** useSubscriptionStatus hook provides centralized trial logic; trial CTAs replace direct subscription buttons; countdown badges on dashboard/AI Studio show days remaining; loading states prevent UI flashing
+    - **Trial Analytics Dashboard:** Admin metrics track trial start rate, trial→paid conversion %, MRR impact by tier, conversion funnel (Free→Trial→Paid), and source-level performance breakdowns with time range filtering (7d/30d/90d/all)
   - **Production-Ready Features:** 
-    - Database optimization: Unique indexes on stripeCustomerId/stripeSubscriptionId, regular indexes on tier/status for high-volume lookups
+    - Database optimization: Unique indexes on stripeCustomerId/stripeSubscriptionId, regular indexes on tier/status for high-volume lookups, composite index on tier+converted for trial analytics
     - Rate limiting: 10 mutations/hour, 100 reads/15min per IP to prevent abuse
-    - Idempotency: Client-side key generation with useRef, reused across retries, Stripe 24-hour deduplication
-    - Type safety: Proper Stripe types (Subscription, Invoice, PaymentIntent) with runtime guards, no `any` casts
-    - Error logging: Structured [SUCCESS]/[ERROR]/[WARN] format with context (artistId, email, tier, duration), stack traces preserved
+    - Idempotency: Client-side key generation with useRef, reused across retries, Stripe 24-hour deduplication, email idempotency via subscriptionId/invoiceId metadata
+    - Type safety: Proper Stripe types (Subscription, Invoice, PaymentIntent) with runtime guards, no `any` casts, TrialAnalyticsData interface for frontend
+    - Error logging: Structured [SUCCESS]/[ERROR]/[WARN] format with context (artistId, email, tier, duration), stack traces preserved, trial webhook events logged
     - Route ordering: Subscription routes before parameterized routes to prevent conflicts (backend: line 667 vs 800+, frontend: line 252)
     - Secure logout: Backend destroys session + clears cookie, frontend calls API endpoint before navigation
     - Automated featured artist rotation: Tier changes automatically update featured eligibility and priority via Stripe webhooks

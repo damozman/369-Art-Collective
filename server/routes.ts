@@ -199,6 +199,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Health check endpoint - Verify all integrations
+  app.get("/api/health", async (_req, res) => {
+    const health = {
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      services: {} as Record<string, { status: string; message?: string; }>
+    };
+
+    let allHealthy = true;
+
+    // Check Database
+    try {
+      await storage.getAllArtists(); // Simple DB query
+      health.services.database = { status: "healthy" };
+    } catch (error: any) {
+      allHealthy = false;
+      health.services.database = { status: "unhealthy", message: error.message };
+    }
+
+    // Check Stripe
+    try {
+      if (!process.env.STRIPE_SECRET_KEY) {
+        health.services.stripe = { status: "not_configured" };
+      } else {
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        await stripe.balance.retrieve(); // Simple API call
+        health.services.stripe = { status: "healthy" };
+      }
+    } catch (error: any) {
+      allHealthy = false;
+      health.services.stripe = { status: "unhealthy", message: error.message };
+    }
+
+    // Check Shopify
+    try {
+      if (!isShopifyConfigured()) {
+        health.services.shopify = { status: "not_configured" };
+      } else {
+        health.services.shopify = { status: "configured" };
+      }
+    } catch (error: any) {
+      health.services.shopify = { status: "error", message: error.message };
+    }
+
+    // Check Printify
+    try {
+      if (!isPrintifyConfigured()) {
+        health.services.printify = { status: "not_configured" };
+      } else {
+        health.services.printify = { status: "configured" };
+      }
+    } catch (error: any) {
+      health.services.printify = { status: "error", message: error.message };
+    }
+
+    // Check OpenAI
+    try {
+      if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
+        health.services.openai = { status: "not_configured" };
+      } else {
+        health.services.openai = { status: "configured" };
+      }
+    } catch (error: any) {
+      health.services.openai = { status: "error", message: error.message };
+    }
+
+    // Check Email Service (Resend)
+    try {
+      if (!process.env.REPLIT_CONNECTORS_HOSTNAME) {
+        health.services.email = { status: "not_configured" };
+      } else {
+        health.services.email = { status: "configured" };
+      }
+    } catch (error: any) {
+      health.services.email = { status: "error", message: error.message };
+    }
+
+    // Set overall status
+    health.status = allHealthy ? "healthy" : "degraded";
+
+    // Return appropriate status code
+    const statusCode = allHealthy ? 200 : 503;
+    res.status(statusCode).json(health);
+  });
+
   // Stripe webhook endpoint - SECURED with signature verification
   // Raw body is captured by global express.json verify function in index.ts
   app.post("/api/webhooks/stripe", async (req: any, res) => {
@@ -483,11 +568,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } else {
       res.status(404).json({ error: "File not found" });
     }
-  });
-
-  // Health check
-  app.get("/api/health", (_req, res) => {
-    res.json({ ok: true });
   });
 
   // Get current user session

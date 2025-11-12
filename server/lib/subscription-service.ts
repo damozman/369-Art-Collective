@@ -283,9 +283,20 @@ export class SubscriptionService {
   }
 
   async getSubscriptionDetails(artistId: string) {
+    console.log("[SubscriptionService] getSubscriptionDetails called with artistId:", artistId);
     const artist = await storage.getArtist(artistId);
+    console.log("[SubscriptionService] storage.getArtist returned:", artist ? `Artist found: ${artist.email}` : 'undefined/null');
+    
+    // Defensive: If artist not found in database, return Free tier as default
+    // This prevents breaking the subscription flow when session/storage has data drift
     if (!artist) {
-      throw new Error('Artist not found');
+      console.warn("[SubscriptionService] Artist not found in DB, returning Free tier default for ID:", artistId);
+      return {
+        tier: 'free',
+        status: 'active',
+        features: ['Upload up to 20 artworks', '30% royalty rate', 'Basic profile'],
+        cancelAtPeriodEnd: false
+      };
     }
 
     if (!artist.stripeSubscriptionId) {

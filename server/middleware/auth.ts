@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { storage } from "../storage";
 
 declare global {
   namespace Express {
@@ -23,7 +24,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-export function requireArtist(req: Request, res: Response, next: NextFunction) {
+export async function requireArtist(req: Request, res: Response, next: NextFunction) {
   console.log("requireArtist middleware:", {
     path: req.path,
     sessionID: req.sessionID,
@@ -50,8 +51,26 @@ export function requireArtist(req: Request, res: Response, next: NextFunction) {
     return res.status(403).json({ message: "Account pending approval" });
   }
   
-  req.user = req.session.user;
-  next();
+  try {
+    const artist = await storage.getArtist(req.session.user.id);
+    if (artist) {
+      req.user = {
+        id: artist.id,
+        email: artist.email,
+        name: artist.name,
+        type: "artist",
+        approved: artist.approved
+      };
+    } else {
+      console.warn("Artist lookup failed, falling back to session data:", req.session.user.id);
+      req.user = req.session.user;
+    }
+    next();
+  } catch (error) {
+    console.error("Error loading artist:", error);
+    req.user = req.session.user;
+    next();
+  }
 }
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {

@@ -1459,10 +1459,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/artists/subscription", requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
+      console.log("[Subscription] Fetching details for artist:", artist.id, artist.email);
       const details = await subscriptionService.getSubscriptionDetails(artist.id);
+      console.log("[Subscription] Details retrieved:", details);
       res.json(details);
     } catch (error: any) {
-      console.error("Get subscription details error:", error);
+      console.error("[Subscription] Get subscription details error:", error.message, error);
       res.status(500).json({ message: "Failed to get subscription details" });
     }
   });

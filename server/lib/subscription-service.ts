@@ -4,6 +4,7 @@ import { emailService } from './email-service';
 import { db } from './db';
 import { emailLogs } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { updateFeaturedStatusForTier } from './featured-artists-service';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -358,6 +359,12 @@ export class SubscriptionService {
           subscriptionTier: tier,
           subscriptionPeriodEnd: periodEnd as any
         });
+        
+        // Auto-update featured artist status based on new tier
+        if (tier) {
+          await updateFeaturedStatusForTier(artistId, tier);
+        }
+        
         break;
       }
 
@@ -374,6 +381,10 @@ export class SubscriptionService {
           subscriptionStatus: 'canceled',
           subscriptionTier: 'free'
         });
+        
+        // Reset featured status to free tier (not eligible)
+        await updateFeaturedStatusForTier(artistId, 'free');
+        
         break;
       }
 

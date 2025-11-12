@@ -3873,6 +3873,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public: Get featured artists for homepage (tier-based + performance)
+  app.get("/api/featured-artists", async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 4;
+      const { getFeaturedArtists } = await import("./lib/featured-artists-service");
+      const artists = await getFeaturedArtists(limit);
+      res.json(artists);
+    } catch (error: any) {
+      console.error("Get featured artists error:", error);
+      res.status(500).json({ message: "Failed to fetch featured artists" });
+    }
+  });
+
   // Admin: Get all testimonials (including inactive) with artist referral codes
   app.get("/api/admin/testimonials", requireAdmin, async (_req, res) => {
     try {

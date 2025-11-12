@@ -1,5 +1,9 @@
 import Stripe from "stripe";
 import { storage } from "../storage";
+import { emailService } from './email-service';
+import { db } from './db';
+import { emailLogs } from '@shared/schema';
+import { eq, and, desc } from 'drizzle-orm';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -77,6 +81,51 @@ async function getOrCreatePriceId(tier: 'pro' | 'elite'): Promise<string> {
   });
 
   return price.id;
+}
+
+// Helper to check if email was already sent (idempotency guard)
+async function hasEmailBeenSent(
+  artistId: string,
+  emailType: string,
+  metadata?: Record<string, any>
+): Promise<boolean> {
+  const logs = await db.select()
+    .from(emailLogs)
+    .where(
+      and(
+        eq(emailLogs.recipientId, artistId),
+        eq(emailLogs.emailType, emailType as any),
+        eq(emailLogs.status, 'sent')
+      )
+    )
+    .orderBy(desc(emailLogs.sentAt))
+    .limit(10); // Get last 10 to check for matches
+  
+  // If no logs found, email hasn't been sent
+  if (logs.length === 0) {
+    return false;
+  }
+  
+  // If metadata provided, check if we've sent an email for this specific event
+  if (metadata) {
+    for (const log of logs) {
+      const existingMetadata = log.metadata as Record<string, any> | null;
+      if (existingMetadata) {
+        // For subscription confirmations, check subscriptionId
+        if (metadata.subscriptionId && existingMetadata.subscriptionId === metadata.subscriptionId) {
+          return true;
+        }
+        // For payment failures, check invoiceId (critical for preventing spam)
+        if (metadata.invoiceId && existingMetadata.invoiceId === metadata.invoiceId) {
+          return true;
+        }
+      }
+    }
+    return false; // No matching metadata found
+  }
+  
+  // If no metadata specified, just check if any email of this type was sent
+  return true;
 }
 
 export class SubscriptionService {
@@ -334,6 +383,7 @@ export class SubscriptionService {
         if (typeof invoice.subscription === 'string' && invoice.subscription) {
           const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
           const artistId = subscription.metadata?.artistId;
+          const tier = subscription.metadata?.tier as 'pro' | 'elite' | undefined;
           
           if (!artistId) {
             console.error('Invoice payment succeeded but subscription missing artistId metadata');
@@ -348,6 +398,32 @@ export class SubscriptionService {
             subscriptionStatus: 'active',
             subscriptionPeriodEnd: periodEnd as any
           });
+
+          // Send subscription confirmation email (only on first payment, not renewals)
+          // Check if this is the first invoice using billing_reason
+          if (invoice.billing_reason === 'subscription_create' && tier) {
+            const artist = await storage.getArtist(artistId);
+            if (artist) {
+              const alreadySent = await hasEmailBeenSent(
+                artistId,
+                'subscription_confirmed',
+                { subscriptionId: subscription.id }
+              );
+
+              if (!alreadySent) {
+                console.log(`[SUCCESS][SUBSCRIPTION_CONFIRMED] Sending confirmation email to ${artist.email} for ${tier} subscription`);
+                await emailService.sendSubscriptionConfirmation(
+                  artist.email,
+                  artist.artistName,
+                  artistId,
+                  tier,
+                  periodEnd
+                ).catch((error) => {
+                  console.error(`[ERROR][SUBSCRIPTION_EMAIL] Failed to send confirmation: ${error.message}`);
+                });
+              }
+            }
+          }
         }
         break;
       }
@@ -358,6 +434,7 @@ export class SubscriptionService {
         if (typeof invoice.subscription === 'string' && invoice.subscription) {
           const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
           const artistId = subscription.metadata?.artistId;
+          const tier = subscription.metadata?.tier as 'pro' | 'elite' | undefined;
           
           if (!artistId) {
             console.error('Invoice payment failed but subscription missing artistId metadata');
@@ -367,6 +444,35 @@ export class SubscriptionService {
           await storage.updateArtist(artistId, {
             subscriptionStatus: 'past_due'
           });
+
+          // Send payment failed email to help artist fix the issue (with idempotency guard)
+          if (tier && invoice.id) {
+            const artist = await storage.getArtist(artistId);
+            if (artist) {
+              // Check if we already sent an email for this specific invoice
+              const alreadySent = await hasEmailBeenSent(
+                artistId,
+                'payment_failed',
+                { invoiceId: invoice.id, subscriptionId: subscription.id }
+              );
+
+              if (!alreadySent) {
+                console.log(`[WARN][PAYMENT_FAILED] Sending payment failed email to ${artist.email} for ${tier} subscription (invoice: ${invoice.id})`);
+                await emailService.sendPaymentFailed(
+                  artist.email,
+                  artist.artistName,
+                  artistId,
+                  tier,
+                  subscription.id,
+                  invoice.id
+                ).catch((error) => {
+                  console.error(`[ERROR][PAYMENT_FAILED_EMAIL] Failed to send payment failed notification: ${error.message}`);
+                });
+              } else {
+                console.log(`[INFO][PAYMENT_FAILED] Email already sent for invoice ${invoice.id}, skipping duplicate`);
+              }
+            }
+          }
         }
         break;
       }

@@ -10,7 +10,8 @@
     "shopify:auth": "shopify auth login",
     "shopify:deploy": "node scripts/deploy-shopify-theme.js",
     "shopify:assign-templates": "node scripts/assign-art-template.js",
-    "shopify:watch": "shopify theme dev"
+    "shopify:watch": "shopify theme dev",
+    "shopify:populate-homepage": "node scripts/populate-homepage-products.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

@@ -1536,9 +1536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe subscription webhook
   app.post("/api/webhooks/stripe/subscription", async (req, res) => {
     try {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-        apiVersion: "2025-10-29.clover",
-      });
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
       const sig = req.headers['stripe-signature'];
       if (!sig) {

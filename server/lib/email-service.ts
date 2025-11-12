@@ -58,6 +58,10 @@ export type EmailType =
   | 'subscription_canceled'
   | 'payment_failed'
   | 'payout_notification'
+  | 'trial_day3_checkin'
+  | 'trial_ending_soon'
+  | 'trial_last_chance'
+  | 'trial_expired_reengage'
   | 'custom';
 
 export interface EmailData {
@@ -2044,6 +2048,407 @@ Best regards,
       htmlBody,
       textBody,
       metadata: { artistName, amount, payoutId },
+    });
+  }
+
+  async sendTrialDay3CheckIn(
+    artistEmail: string,
+    artistName: string,
+    artistId: string,
+    tier: 'pro' | 'elite',
+    daysRemaining: number,
+    artworksUploaded: number,
+    aiCreditsUsed: number
+  ) {
+    const tierName = tier === 'pro' ? 'Pro' : 'Elite';
+    const totalCredits = tier === 'pro' ? 50 : 100;
+    const subject = `How's Your ${tierName} Trial Going? Day 3 Check-In`;
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+
+    const bodyHtml = `
+      <p>Hi ${artistName},</p>
+      
+      <p>You're 3 days into your <strong>${tierName} trial</strong> – hope you're enjoying the premium features! Here's a quick snapshot of your progress:</p>
+      
+      <div class="info">
+        <strong>Your Trial Progress:</strong><br>
+        <strong>${artworksUploaded} artwork${artworksUploaded === 1 ? '' : 's'}</strong> uploaded<br>
+        <strong>${aiCreditsUsed}/${totalCredits} AI credits</strong> used${aiCreditsUsed === 0 ? ' - give it a try!' : ''}<br>
+        <strong>${daysRemaining} days remaining</strong> in your trial
+      </div>
+      
+      <p><strong>Make the Most of Your Trial:</strong></p>
+      <ul>
+        ${artworksUploaded === 0 ? '<li><strong>Upload unlimited artwork</strong> - No monthly limits on your trial!</li>' : ''}
+        ${aiCreditsUsed === 0 ? `<li><strong>Try the AI Art Studio</strong> - You have ${totalCredits} credits to experiment with DALL-E 3</li>` : ''}
+        <li><strong>Your ${tier === 'pro' ? '35%' : '45%'} royalty rate</strong> is already active on any sales</li>
+        <li><strong>Check your dashboard</strong> for real-time analytics and insights</li>
+        ${tier === 'elite' ? '<li><strong>Featured artist placement</strong> - Your work could be showcased on our homepage!</li>' : ''}
+      </ul>
+      
+      <a href="${dashboardUrl}" class="button" data-testid="button-visit-dashboard">Visit Your Dashboard</a>
+      
+      <p><strong>Questions or Need Help?</strong></p>
+      <p>Reply to this email or visit our FAQ section. We're here to help you succeed!</p>
+      
+      <p>Best regards,<br>247 Print Network Team</p>
+    `;
+
+    const textBody = `
+How's Your ${tierName} Trial Going? Day 3 Check-In
+
+Hi ${artistName},
+
+You're 3 days into your ${tierName} trial – hope you're enjoying the premium features! Here's a quick snapshot of your progress:
+
+YOUR TRIAL PROGRESS:
+${artworksUploaded} artwork${artworksUploaded === 1 ? '' : 's'} uploaded
+${aiCreditsUsed}/${totalCredits} AI credits used${aiCreditsUsed === 0 ? ' - give it a try!' : ''}
+${daysRemaining} days remaining in your trial
+
+MAKE THE MOST OF YOUR TRIAL:
+${artworksUploaded === 0 ? '• Upload unlimited artwork - No monthly limits on your trial!' : ''}
+${aiCreditsUsed === 0 ? `• Try the AI Art Studio - You have ${totalCredits} credits to experiment with DALL-E 3` : ''}
+• Your ${tier === 'pro' ? '35%' : '45%'} royalty rate is already active on any sales
+• Check your dashboard for real-time analytics and insights
+${tier === 'elite' ? '• Featured artist placement - Your work could be showcased on our homepage!' : ''}
+
+Visit Your Dashboard: ${dashboardUrl}
+
+QUESTIONS OR NEED HELP?
+Reply to this email or visit our FAQ section. We're here to help you succeed!
+
+Best regards,
+247 Print Network Team
+
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+
+    const htmlBody = this.renderEmailLayout({
+      title: `Day 3 Check-In: ${tierName} Trial`,
+      headerColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      bodyHtml
+    });
+
+    return this.sendEmail({
+      recipientEmail: artistEmail,
+      recipientType: 'artist',
+      recipientId: artistId,
+      emailType: 'trial_day3_checkin',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { 
+        artistName, 
+        tier, 
+        daysRemaining, 
+        artworksUploaded, 
+        aiCreditsUsed 
+      },
+    });
+  }
+
+  async sendTrialEndingSoon(
+    artistEmail: string,
+    artistName: string,
+    artistId: string,
+    tier: 'pro' | 'elite',
+    daysRemaining: number
+  ) {
+    const tierName = tier === 'pro' ? 'Pro' : 'Elite';
+    const tierPrice = tier === 'pro' ? '$15-20' : '$40-50';
+    const tierRoyalty = tier === 'pro' ? '35%' : '45%';
+    const subject = `Your ${tierName} Trial Ends in ${daysRemaining} Days - Don't Lose Access!`;
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+
+    const bodyHtml = `
+      <p>Hi ${artistName},</p>
+      
+      <div class="warning">
+        <strong>Heads up!</strong> Your ${tierName} trial ends in <strong>${daysRemaining} days</strong>.
+      </div>
+      
+      <p><strong>What You'll Lose After Your Trial:</strong></p>
+      <ul>
+        <li>Your <strong>${tierRoyalty} minimum royalty</strong> drops back to 30% (Free tier)</li>
+        <li><strong>Unlimited uploads</strong> - Free tier is limited to 20 artworks</li>
+        <li><strong>AI Art Studio access</strong> - No more AI-generated designs</li>
+        ${tier === 'elite' ? '<li><strong>Featured artist placement</strong> - No more homepage exposure</li>' : ''}
+        <li><strong>Priority support</strong> - Back to standard support queue</li>
+      </ul>
+      
+      <div class="info">
+        <strong>Keep Your Benefits - Only ${tierPrice}/month</strong><br>
+        Upgrade now and lock in your ${tierRoyalty} royalty rate permanently!
+      </div>
+      
+      <a href="${dashboardUrl}" class="button" data-testid="button-upgrade-now">Upgrade to ${tierName}</a>
+      
+      <p><strong>Why Artists Love ${tierName}:</strong></p>
+      <ul>
+        <li><strong>Higher earnings</strong> - Every sale pays you ${tierRoyalty} instead of 30%</li>
+        <li><strong>Unlimited growth</strong> - No artwork limits means more sales opportunities</li>
+        <li><strong>AI-powered creativity</strong> - Generate seasonal variations, explore new styles</li>
+        ${tier === 'pro' ? '<li><strong>Pro features</strong> - Everything you need to grow your art business</li>' : '<li><strong>Elite status</strong> - Maximum royalties and guaranteed homepage placement</li>'}
+      </ul>
+      
+      <p>Don't wait until the last minute! Secure your ${tierName} benefits today.</p>
+      
+      <p>Best regards,<br>247 Print Network Team</p>
+    `;
+
+    const textBody = `
+Your ${tierName} Trial Ends in ${daysRemaining} Days - Don't Lose Access!
+
+Hi ${artistName},
+
+Heads up! Your ${tierName} trial ends in ${daysRemaining} days.
+
+WHAT YOU'LL LOSE AFTER YOUR TRIAL:
+• Your ${tierRoyalty} minimum royalty drops back to 30% (Free tier)
+• Unlimited uploads - Free tier is limited to 20 artworks
+• AI Art Studio access - No more AI-generated designs
+${tier === 'elite' ? '• Featured artist placement - No more homepage exposure' : ''}
+• Priority support - Back to standard support queue
+
+KEEP YOUR BENEFITS - ONLY ${tierPrice}/MONTH
+Upgrade now and lock in your ${tierRoyalty} royalty rate permanently!
+
+Upgrade to ${tierName}: ${dashboardUrl}
+
+WHY ARTISTS LOVE ${tierName}:
+• Higher earnings - Every sale pays you ${tierRoyalty} instead of 30%
+• Unlimited growth - No artwork limits means more sales opportunities
+• AI-powered creativity - Generate seasonal variations, explore new styles
+${tier === 'pro' ? '• Pro features - Everything you need to grow your art business' : '• Elite status - Maximum royalties and guaranteed homepage placement'}
+
+Don't wait until the last minute! Secure your ${tierName} benefits today.
+
+Best regards,
+247 Print Network Team
+
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+
+    const htmlBody = this.renderEmailLayout({
+      title: `${tierName} Trial Ending Soon`,
+      headerColor: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+      bodyHtml
+    });
+
+    return this.sendEmail({
+      recipientEmail: artistEmail,
+      recipientType: 'artist',
+      recipientId: artistId,
+      emailType: 'trial_ending_soon',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { artistName, tier, daysRemaining },
+    });
+  }
+
+  async sendTrialLastChance(
+    artistEmail: string,
+    artistName: string,
+    artistId: string,
+    tier: 'pro' | 'elite'
+  ) {
+    const tierName = tier === 'pro' ? 'Pro' : 'Elite';
+    const tierPrice = tier === 'pro' ? '$15-20' : '$40-50';
+    const tierRoyalty = tier === 'pro' ? '35%' : '45%';
+    const subject = `LAST CHANCE: Your ${tierName} Trial Expires Tomorrow`;
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+
+    const bodyHtml = `
+      <p>Hi ${artistName},</p>
+      
+      <div class="danger">
+        <strong>URGENT:</strong> Your ${tierName} trial expires in less than 24 hours!
+      </div>
+      
+      <p><strong>This is Your Final Chance to Keep:</strong></p>
+      <ul>
+        <li><strong>${tierRoyalty} royalty rate</strong> - That's ${tier === 'pro' ? '+5%' : '+15%'} more per sale!</li>
+        <li><strong>Unlimited artwork uploads</strong> - Grow your catalog without limits</li>
+        <li><strong>AI Art Studio</strong> - Generate unique designs with cutting-edge AI</li>
+        ${tier === 'elite' ? '<li><strong>Featured artist placement</strong> - Prime homepage real estate for your work</li>' : ''}
+        <li><strong>Priority support</strong> - Get help when you need it most</li>
+      </ul>
+      
+      <div class="warning">
+        <strong>After Your Trial Ends Tomorrow:</strong><br>
+        You'll be downgraded to Free tier (30% royalty, 20 artwork limit)<br>
+        No AI credits, no priority support, no featured placement<br>
+        You'll need to remove artworks if you're over the 20-artwork limit
+      </div>
+      
+      <a href="${dashboardUrl}" class="button" data-testid="button-upgrade-final">Upgrade Now - Only ${tierPrice}/mo</a>
+      
+      <p><strong>Quick Math:</strong></p>
+      <p>If you sell just <strong>${tier === 'pro' ? '3-4 artworks' : '2-3 artworks'}</strong> per month at our average price point, the ${tierName} subscription pays for itself through higher royalties alone!</p>
+      
+      <div class="success">
+        <strong>Act Now:</strong> Upgrade in the next 24 hours to keep all your ${tierName} benefits!
+      </div>
+      
+      <p>Don't let this opportunity slip away. Your future self will thank you!</p>
+      
+      <p>Best regards,<br>247 Print Network Team</p>
+    `;
+
+    const textBody = `
+LAST CHANCE: Your ${tierName} Trial Expires Tomorrow
+
+Hi ${artistName},
+
+URGENT: Your ${tierName} trial expires in less than 24 hours!
+
+THIS IS YOUR FINAL CHANCE TO KEEP:
+• ${tierRoyalty} royalty rate - That's ${tier === 'pro' ? '+5%' : '+15%'} more per sale!
+• Unlimited artwork uploads - Grow your catalog without limits
+• AI Art Studio - Generate unique designs with cutting-edge AI
+${tier === 'elite' ? '• Featured artist placement - Prime homepage real estate for your work' : ''}
+• Priority support - Get help when you need it most
+
+AFTER YOUR TRIAL ENDS TOMORROW:
+• You'll be downgraded to Free tier (30% royalty, 20 artwork limit)
+• No AI credits, no priority support, no featured placement
+• You'll need to remove artworks if you're over the 20-artwork limit
+
+Upgrade Now - Only ${tierPrice}/mo: ${dashboardUrl}
+
+QUICK MATH:
+If you sell just ${tier === 'pro' ? '3-4 artworks' : '2-3 artworks'} per month at our average price point, the ${tierName} subscription pays for itself through higher royalties alone!
+
+Act Now: Upgrade in the next 24 hours to keep all your ${tierName} benefits!
+
+Don't let this opportunity slip away. Your future self will thank you!
+
+Best regards,
+247 Print Network Team
+
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+
+    const htmlBody = this.renderEmailLayout({
+      title: `Last Chance: ${tierName} Trial`,
+      headerColor: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+      bodyHtml
+    });
+
+    return this.sendEmail({
+      recipientEmail: artistEmail,
+      recipientType: 'artist',
+      recipientId: artistId,
+      emailType: 'trial_last_chance',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { artistName, tier },
+    });
+  }
+
+  async sendTrialExpiredReengage(
+    artistEmail: string,
+    artistName: string,
+    artistId: string,
+    tier: 'pro' | 'elite'
+  ) {
+    const tierName = tier === 'pro' ? 'Pro' : 'Elite';
+    const tierPrice = tier === 'pro' ? '$15-20' : '$40-50';
+    const tierRoyalty = tier === 'pro' ? '35%' : '45%';
+    const subject = `We Miss You! Come Back to ${tierName} (Limited-Time Offer)`;
+    const dashboardUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard`;
+
+    const bodyHtml = `
+      <p>Hi ${artistName},</p>
+      
+      <p>Your ${tierName} trial ended recently, and we noticed you haven't upgraded yet. We'd love to have you back!</p>
+      
+      <div class="info">
+        <strong>Special Comeback Offer:</strong><br>
+        We've saved your ${tierName} trial experience. All your uploaded artwork, settings, and preferences are still here waiting for you!
+      </div>
+      
+      <p><strong>What You're Missing Right Now:</strong></p>
+      <ul>
+        <li><strong>Lower royalties</strong> - You're earning 30% instead of ${tierRoyalty} on every sale</li>
+        <li><strong>Upload limits</strong> - Stuck at 20 artworks when you could showcase unlimited work</li>
+        <li><strong>No AI tools</strong> - Missing out on AI-powered design variations and seasonal updates</li>
+        ${tier === 'elite' ? '<li><strong>Less visibility</strong> - No featured homepage placement means fewer eyes on your art</li>' : ''}
+      </ul>
+      
+      <p><strong>Here's Why Artists Upgrade After Their Trial:</strong></p>
+      <ul>
+        <li><strong>"I'm earning ${tier === 'pro' ? '15%' : '25%'} more per sale now"</strong> - Higher royalties add up fast</li>
+        <li><strong>"Unlimited uploads let me test what sells"</strong> - More artwork = more revenue streams</li>
+        <li><strong>"AI Studio paid for itself in week 1"</strong> - Generate variations of bestsellers quickly</li>
+        ${tier === 'pro' ? '<li><strong>"Pro gives me everything I need"</strong> - Perfect balance of features and price</li>' : '<li><strong>"Elite status brings serious buyers"</strong> - Homepage placement drives high-value sales</li>'}
+      </ul>
+      
+      <a href="${dashboardUrl}" class="button" data-testid="button-resubscribe">Upgrade to ${tierName} - ${tierPrice}/mo</a>
+      
+      <div class="warning">
+        <strong>Still Deciding?</strong><br>
+        That's okay! You can always upgrade when you're ready. Your Free tier account gives you access to our marketplace with 30% royalties on 20 artworks.
+      </div>
+      
+      <p>We're here whenever you need us. Reply to this email if you have any questions!</p>
+      
+      <p>Best regards,<br>247 Print Network Team</p>
+    `;
+
+    const textBody = `
+We Miss You! Come Back to ${tierName} (Limited-Time Offer)
+
+Hi ${artistName},
+
+Your ${tierName} trial ended recently, and we noticed you haven't upgraded yet. We'd love to have you back!
+
+SPECIAL COMEBACK OFFER:
+We've saved your ${tierName} trial experience. All your uploaded artwork, settings, and preferences are still here waiting for you!
+
+WHAT YOU'RE MISSING RIGHT NOW:
+• Lower royalties - You're earning 30% instead of ${tierRoyalty} on every sale
+• Upload limits - Stuck at 20 artworks when you could showcase unlimited work
+• No AI tools - Missing out on AI-powered design variations and seasonal updates
+${tier === 'elite' ? '• Less visibility - No featured homepage placement means fewer eyes on your art' : ''}
+
+HERE'S WHY ARTISTS UPGRADE AFTER THEIR TRIAL:
+• "I'm earning ${tier === 'pro' ? '15%' : '25%'} more per sale now" - Higher royalties add up fast
+• "Unlimited uploads let me test what sells" - More artwork = more revenue streams
+• "AI Studio paid for itself in week 1" - Generate variations of bestsellers quickly
+${tier === 'pro' ? '• "Pro gives me everything I need" - Perfect balance of features and price' : '• "Elite status brings serious buyers" - Homepage placement drives high-value sales'}
+
+Upgrade to ${tierName} - ${tierPrice}/mo: ${dashboardUrl}
+
+STILL DECIDING?
+That's okay! You can always upgrade when you're ready. Your Free tier account gives you access to our marketplace with 30% royalties on 20 artworks.
+
+We're here whenever you need us. Reply to this email if you have any questions!
+
+Best regards,
+247 Print Network Team
+
+© 2025 247 Print Network. All rights reserved.
+    `.trim();
+
+    const htmlBody = this.renderEmailLayout({
+      title: 'Come Back to Premium',
+      headerColor: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+      bodyHtml
+    });
+
+    return this.sendEmail({
+      recipientEmail: artistEmail,
+      recipientType: 'artist',
+      recipientId: artistId,
+      emailType: 'trial_expired_reengage',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { artistName, tier },
     });
   }
 }

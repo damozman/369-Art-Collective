@@ -1,7 +1,10 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer, decimal, jsonb, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, decimal, jsonb, uniqueIndex, index, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Trial status enum - enforces valid status values at database level
+export const trialStatusEnum = pgEnum('trial_status', ['active', 'canceled', 'converted', 'expired']);
 
 // Artists table - users who can upload artwork
 export const artists = pgTable("artists", {
@@ -17,6 +20,7 @@ export const artists = pgTable("artists", {
   stripeSubscriptionId: text("stripe_subscription_id"), // Active Stripe subscription ID
   subscriptionStatus: text("subscription_status"), // active, canceled, past_due, trialing, incomplete
   subscriptionPeriodEnd: timestamp("subscription_period_end"), // When current billing period ends
+  trialEndsAt: timestamp("trial_ends_at"), // When free trial ends (computed from Stripe, null if not trialing)
   stripeAccountId: text("stripe_account_id"), // Stripe Connect account ID for payouts
   stripeAccountStatus: text("stripe_account_status"), // pending, active, restricted, complete
   stripeOnboardingComplete: boolean("stripe_onboarding_complete").notNull().default(false), // Has completed Stripe onboarding
@@ -51,6 +55,33 @@ export const artists = pgTable("artists", {
   // Regular indexes for filtering (many artists share same tier/status)
   subscriptionTierIdx: index("artists_subscription_tier_idx").on(table.subscriptionTier),
   subscriptionStatusIdx: index("artists_subscription_status_idx").on(table.subscriptionStatus),
+}));
+
+// Subscription Trials - Analytics for trial conversion tracking
+export const subscriptionTrials = pgTable("subscription_trials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artistId: varchar("artist_id").notNull().references(() => artists.id),
+  stripeCustomerId: text("stripe_customer_id"), // For cross-table joins with Stripe data
+  stripeSubscriptionId: text("stripe_subscription_id"), // Associated Stripe subscription
+  tier: text("tier").notNull(), // pro, elite
+  status: trialStatusEnum("status").notNull().default("active"), // active, canceled, converted, expired
+  trialSource: text("trial_source"), // How trial was activated (homepage_cta, dashboard_upgrade, admin_grant)
+  trialStartedAt: timestamp("trial_started_at").notNull(),
+  scheduledTrialEnd: timestamp("scheduled_trial_end").notNull(), // When trial was supposed to end (14 or 7 days)
+  convertedAt: timestamp("converted_at"), // When they converted to paid subscription
+  canceledAt: timestamp("canceled_at"), // When they explicitly canceled trial
+  expiredAt: timestamp("expired_at"), // When trial expired without conversion
+  downgradedAt: timestamp("downgraded_at"), // Post-trial churn (converted then downgraded)
+  cancellationReason: text("cancellation_reason"), // Why they didn't convert (user-provided or inferred)
+  emailsSent: integer("emails_sent").notNull().default(0), // How many trial emails we sent
+  emailTemplatesSent: text("email_templates_sent").array().default(sql`ARRAY[]::text[]`), // Which templates sent (for A/B testing)
+  lastEmailSentAt: timestamp("last_email_sent_at"), // Last reminder email sent
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  artistIdx: index("subscription_trials_artist_id_idx").on(table.artistId),
+  statusIdx: index("subscription_trials_status_idx").on(table.status),
+  tierConvertedIdx: index("subscription_trials_tier_converted_idx").on(table.tier, table.status), // Composite for analytics
+  trialStartedIdx: index("subscription_trials_started_at_idx").on(table.trialStartedAt), // Time-series queries
 }));
 
 // Admins table - users who can approve/reject
@@ -138,6 +169,19 @@ export const insertArtistSchema = createInsertSchema(artists).omit({
   artistShort: z.string().min(1).max(10).regex(/^[A-Z0-9]+$/, "Must be uppercase letters/numbers only"),
 });
 
+export const insertSubscriptionTrialSchema = createInsertSchema(subscriptionTrials).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  artistId: z.string().min(1),
+  tier: z.enum(['pro', 'elite']),
+  status: z.enum(['active', 'canceled', 'converted', 'expired']).default('active'),
+  trialStartedAt: z.date(),
+  scheduledTrialEnd: z.date(),
+  stripeSubscriptionId: z.string().optional(),
+  trialSource: z.string().optional(),
+});
+
 export const insertAdminSchema = createInsertSchema(admins).omit({
   id: true,
   createdAt: true,
@@ -186,6 +230,9 @@ export const updateArtworkSchema = z.object({
 // Types
 export type InsertArtist = z.infer<typeof insertArtistSchema>;
 export type Artist = typeof artists.$inferSelect;
+
+export type InsertSubscriptionTrial = z.infer<typeof insertSubscriptionTrialSchema>;
+export type SubscriptionTrial = typeof subscriptionTrials.$inferSelect;
 
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
 export type Admin = typeof admins.$inferSelect;

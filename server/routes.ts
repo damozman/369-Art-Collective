@@ -1499,17 +1499,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/artists/subscription/create", subscriptionMutationLimiter, requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
-      const { tier } = req.body;
+      const { tier, idempotencyKey } = req.body;
 
       if (tier !== 'pro' && tier !== 'elite') {
         return res.status(400).json({ message: "Invalid tier. Must be 'pro' or 'elite'" });
+      }
+
+      if (!idempotencyKey || typeof idempotencyKey !== 'string') {
+        return res.status(400).json({ message: "Idempotency key is required" });
       }
 
       const result = await subscriptionService.createSubscription(
         artist.id,
         tier,
         artist.email,
-        artist.name
+        artist.name,
+        idempotencyKey
       );
 
       res.json(result);
@@ -1523,13 +1528,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/artists/subscription/upgrade", subscriptionMutationLimiter, requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
-      const { tier } = req.body;
+      const { tier, idempotencyKey } = req.body;
 
       if (tier !== 'pro' && tier !== 'elite') {
         return res.status(400).json({ message: "Invalid tier. Must be 'pro' or 'elite'" });
       }
 
-      await subscriptionService.upgradeSubscription(artist.id, tier);
+      if (!idempotencyKey || typeof idempotencyKey !== 'string') {
+        return res.status(400).json({ message: "Idempotency key is required" });
+      }
+
+      await subscriptionService.upgradeSubscription(artist.id, tier, idempotencyKey);
       res.json({ message: "Subscription upgraded successfully" });
     } catch (error: any) {
       console.error("Upgrade subscription error:", error);

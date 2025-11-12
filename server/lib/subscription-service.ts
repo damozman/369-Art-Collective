@@ -5,15 +5,14 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-10-29.clover",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export type SubscriptionTier = 'free' | 'pro' | 'elite';
 
 const SUBSCRIPTION_CONFIG = {
   pro: {
     priceMonthly: 1500,
+    priceId: process.env.STRIPE_PRO_PRICE_ID,
     name: '247 Print Network Pro',
     features: [
       'Unlimited artwork uploads',
@@ -24,6 +23,7 @@ const SUBSCRIPTION_CONFIG = {
   },
   elite: {
     priceMonthly: 4000,
+    priceId: process.env.STRIPE_ELITE_PRICE_ID,
     name: '247 Print Network Elite',
     features: [
       'Unlimited artwork uploads',
@@ -35,6 +35,49 @@ const SUBSCRIPTION_CONFIG = {
     ]
   }
 };
+
+async function getOrCreatePriceId(tier: 'pro' | 'elite'): Promise<string> {
+  const config = SUBSCRIPTION_CONFIG[tier];
+  
+  if (config.priceId) {
+    return config.priceId;
+  }
+
+  const products = await stripe.products.search({
+    query: `metadata['tier']:'${tier}' AND metadata['platform']:'247-print-network'`,
+  });
+
+  let product;
+  if (products.data.length > 0) {
+    product = products.data[0];
+  } else {
+    product = await stripe.products.create({
+      name: config.name,
+      metadata: {
+        tier,
+        platform: '247-print-network'
+      }
+    });
+  }
+
+  const prices = await stripe.prices.list({
+    product: product.id,
+    active: true,
+  });
+
+  if (prices.data.length > 0) {
+    return prices.data[0].id;
+  }
+
+  const price = await stripe.prices.create({
+    product: product.id,
+    unit_amount: config.priceMonthly,
+    currency: 'usd',
+    recurring: { interval: 'month' }
+  });
+
+  return price.id;
+}
 
 export class SubscriptionService {
   
@@ -84,23 +127,11 @@ export class SubscriptionService {
 
     const customerId = await this.getOrCreateStripeCustomer(artistId, email, name);
 
-    const config = SUBSCRIPTION_CONFIG[tier];
-    
-    const product = await stripe.products.create({
-      name: config.name,
-      metadata: { tier }
-    });
-
-    const price = await stripe.prices.create({
-      product: product.id,
-      unit_amount: config.priceMonthly,
-      currency: 'usd',
-      recurring: { interval: 'month' }
-    });
+    const priceId = await getOrCreatePriceId(tier);
 
     const subscription: any = await stripe.subscriptions.create({
       customer: customerId,
-      items: [{ price: price.id }],
+      items: [{ price: priceId }],
       payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
@@ -138,24 +169,12 @@ export class SubscriptionService {
 
     const subscription = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId);
     
-    const config = SUBSCRIPTION_CONFIG[newTier];
-    
-    const product = await stripe.products.create({
-      name: config.name,
-      metadata: { tier: newTier }
-    });
-
-    const price = await stripe.prices.create({
-      product: product.id,
-      unit_amount: config.priceMonthly,
-      currency: 'usd',
-      recurring: { interval: 'month' }
-    });
+    const priceId = await getOrCreatePriceId(newTier);
 
     await stripe.subscriptions.update(artist.stripeSubscriptionId, {
       items: [{
         id: subscription.items.data[0].id,
-        price: price.id,
+        price: priceId,
       }],
       proration_behavior: 'create_prorations',
       metadata: {

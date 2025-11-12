@@ -166,7 +166,7 @@ const PAGES = [
   },
 ];
 
-// Main navigation menu structure
+// Main navigation menu structure (Displate/Redbubble inspired)
 const MAIN_MENU = {
   title: 'Main Menu',
   handle: 'main-menu',
@@ -177,8 +177,42 @@ const MAIN_MENU = {
       url: '#',
       children: [
         { title: 'All Artwork', url: '/collections' },
+        { title: 'Abstract', resource_type: 'collection', handle: 'abstract' },
+        { title: 'Landscape', resource_type: 'collection', handle: 'landscape' },
+        { title: 'Nature', resource_type: 'collection', handle: 'nature' },
+        { title: 'Urban', resource_type: 'collection', handle: 'urban' },
+        { title: 'Portrait', resource_type: 'collection', handle: 'portrait' },
+        { title: 'Modern', resource_type: 'collection', handle: 'modern' },
+        { title: 'Minimalist', resource_type: 'collection', handle: 'minimalist' },
+        { title: 'Colorful', resource_type: 'collection', handle: 'colorful' },
+        { title: 'Wildlife', resource_type: 'collection', handle: 'wildlife' },
+        { title: 'Botanical', resource_type: 'collection', handle: 'botanical' },
+      ],
+    },
+    {
+      title: 'Shop by Artist',
+      url: '#',
+      children: [
+        { title: 'All Artists', url: '/collections' },
+        { title: 'Sarah Chen', resource_type: 'collection', handle: 'art-by-sarah-chen' },
+        { title: 'Marcus Rodriguez', resource_type: 'collection', handle: 'art-by-marcus-rodriguez' },
+        { title: 'Yuki Tanaka', resource_type: 'collection', handle: 'art-by-yuki-tanaka' },
+        { title: 'Elena Kowalski', resource_type: 'collection', handle: 'art-by-elena-kowalski' },
+        { title: 'Nina Volkov', resource_type: 'collection', handle: 'art-by-nina-volkov' },
+        { title: 'Raj Patel', resource_type: 'collection', handle: 'art-by-raj-patel' },
+        { title: 'Liam Anderson', resource_type: 'collection', handle: 'art-by-liam-anderson' },
+        { title: 'Amara Johnson', resource_type: 'collection', handle: 'art-by-amara-johnson' },
+        { title: 'Sofia Martinez', resource_type: 'collection', handle: 'art-by-sofia-martinez' },
+        { title: 'David O\'Connor', resource_type: 'collection', handle: 'art-by-david-oconnor' },
+      ],
+    },
+    {
+      title: 'Featured',
+      url: '#',
+      children: [
         { title: 'New Arrivals', resource_type: 'collection', handle: 'new-arrivals' },
-        { title: 'Featured', resource_type: 'collection', handle: 'featured' },
+        { title: 'Best Sellers', resource_type: 'collection', handle: 'best-sellers' },
+        { title: 'Featured Collection', resource_type: 'collection', handle: 'featured' },
       ],
     },
     {
@@ -188,13 +222,14 @@ const MAIN_MENU = {
         { title: 'About Us', resource_type: 'page', handle: 'about' },
         { title: 'Meet the Creators', resource_type: 'page', handle: 'creators' },
         { title: 'Join as an Artist', resource_type: 'page', handle: 'join' },
+        { title: 'FAQs', resource_type: 'page', handle: 'faq' },
       ],
     },
     { title: 'Contact', resource_type: 'page', handle: 'contact' },
   ],
 };
 
-// Footer navigation menu structure
+// Footer navigation menu structure (Comprehensive like Displate/Redbubble)
 const FOOTER_MENU = {
   title: 'Footer Menu',
   handle: 'footer',
@@ -205,17 +240,29 @@ const FOOTER_MENU = {
       children: [
         { title: 'All Artwork', url: '/collections' },
         { title: 'New Arrivals', resource_type: 'collection', handle: 'new-arrivals' },
+        { title: 'Best Sellers', resource_type: 'collection', handle: 'best-sellers' },
         { title: 'Featured', resource_type: 'collection', handle: 'featured' },
       ],
     },
     {
-      title: 'About',
+      title: 'Popular Styles',
       url: '#',
       children: [
-        { title: 'About Us', resource_type: 'page', handle: 'about' },
+        { title: 'Abstract', resource_type: 'collection', handle: 'abstract' },
+        { title: 'Landscape', resource_type: 'collection', handle: 'landscape' },
+        { title: 'Nature', resource_type: 'collection', handle: 'nature' },
+        { title: 'Urban', resource_type: 'collection', handle: 'urban' },
+        { title: 'Modern', resource_type: 'collection', handle: 'modern' },
+        { title: 'Minimalist', resource_type: 'collection', handle: 'minimalist' },
+      ],
+    },
+    {
+      title: 'Artists',
+      url: '#',
+      children: [
         { title: 'Meet the Creators', resource_type: 'page', handle: 'creators' },
         { title: 'Join as an Artist', resource_type: 'page', handle: 'join' },
-        { title: 'FAQs', resource_type: 'page', handle: 'faq' },
+        { title: 'Browse Artists', url: '/collections' },
       ],
     },
     {
@@ -224,6 +271,7 @@ const FOOTER_MENU = {
       children: [
         { title: 'Contact Us', resource_type: 'page', handle: 'contact' },
         { title: 'FAQs', resource_type: 'page', handle: 'faq' },
+        { title: 'About Us', resource_type: 'page', handle: 'about' },
       ],
     },
   ],

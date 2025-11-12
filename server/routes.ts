@@ -4374,6 +4374,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get trial analytics (trial conversion metrics and revenue impact)
+  app.get("/api/admin/analytics/trials", requireAdmin, async (req, res) => {
+    try {
+      const { calculateTrialAnalytics } = await import('./lib/trial-analytics-service');
+      const { range, tier } = req.query;
+      
+      // Validate range parameter
+      const validRanges = ['7d', '30d', '90d', 'all'];
+      const selectedRange = validRanges.includes(range as string) 
+        ? (range as '7d' | '30d' | '90d' | 'all')
+        : 'all';
+      
+      // Validate tier parameter
+      const selectedTier = (tier === 'pro' || tier === 'elite') 
+        ? tier 
+        : undefined;
+      
+      const analytics = await calculateTrialAnalytics(selectedRange, selectedTier);
+      res.json(analytics);
+    } catch (error: any) {
+      console.error("Trial analytics error:", error);
+      res.status(500).json({ message: "Failed to calculate trial analytics" });
+    }
+  });
+
   // CreatorStack Shopify Webhook TEST endpoint (NO HMAC verification - dev only!)
   // Use this for local testing without needing to calculate HMAC signatures
   app.post("/api/creatorstack/webhooks/shopify/test", async (req, res) => {

@@ -51,9 +51,11 @@ export async function requireArtist(req: Request, res: Response, next: NextFunct
     return res.status(403).json({ message: "Account pending approval" });
   }
   
+  console.log("[requireArtist] Session user ID:", req.session.user.id, "Email:", req.session.user.email);
   try {
     const artist = await storage.getArtist(req.session.user.id);
     if (artist) {
+      console.log("[requireArtist] Artist found in DB, using fresh data");
       req.user = {
         id: artist.id,
         email: artist.email,
@@ -62,12 +64,12 @@ export async function requireArtist(req: Request, res: Response, next: NextFunct
         approved: artist.approved
       };
     } else {
-      console.warn("Artist lookup failed, falling back to session data:", req.session.user.id);
+      console.warn("[requireArtist] Artist lookup failed! Falling back to session data. Session ID:", req.session.user.id);
       req.user = req.session.user;
     }
     next();
   } catch (error) {
-    console.error("Error loading artist:", error);
+    console.error("[requireArtist] Error loading artist:", error);
     req.user = req.session.user;
     next();
   }

@@ -5,14 +5,23 @@ import { eq, and, desc, or, isNull, gte, sql } from "drizzle-orm";
 /**
  * Featured Artists Service
  * 
- * Automatically manages which artists appear on the homepage featured section
- * based on subscription tier, performance, and admin overrides.
+ * Hybrid Performance + Fair Rotation System
+ * Manages homepage featured artists with a balanced approach:
  * 
- * Business Rules:
- * - Elite members: Always eligible (priority 100)
- * - Pro members: Eligible if approved (priority 50 + performance boost)
- * - Free members: Only if manually approved by admin (priority 0-25)
+ * SLOT ALLOCATION:
+ * - Slots 1-2: Performance-based (top sellers by tier + sales)
+ * - Slots 3-4: Fair rotation (all eligible artists get turns)
+ * 
+ * BUSINESS RULES:
+ * - Elite members: Auto-eligible (priority 100) + guaranteed rotation time
+ * - Pro members: Eligible (priority 50) + fair rotation
+ * - Free members: Manual admin approval only (priority 0-25)
  * - Pinned artists: Guaranteed featured until featuredPinnedUntil date
+ * 
+ * ROTATION LOGIC:
+ * - Performance slots reward top earners (motivation)
+ * - Rotation slots ensure fairness (all paying members get exposure)
+ * - lastFeaturedAt tracks rotation to prevent repeats
  */
 
 export interface FeaturedArtist {
@@ -28,16 +37,17 @@ export interface FeaturedArtist {
 
 /**
  * Get featured artists for homepage display
- * Returns 4-8 artists sorted by priority and performance
+ * Hybrid system: Performance slots (1-2) + Rotation slots (3-4)
  */
 export async function getFeaturedArtists(limit: number = 4): Promise<FeaturedArtist[]> {
   const now = new Date();
   
-  // Get artists who are:
-  // 1. Approved
-  // 2. Not deleted
-  // 3. Either: eligible OR pinned until future date
-  const featuredArtists = await db
+  // Calculate slot allocation based on limit
+  const performanceSlots = Math.ceil(limit / 2); // Half for top performers
+  const rotationSlots = Math.floor(limit / 2);   // Half for fair rotation
+  
+  // Get all eligible artists
+  const eligibleArtists = await db
     .select({
       id: artists.id,
       name: artists.name,
@@ -46,8 +56,7 @@ export async function getFeaturedArtists(limit: number = 4): Promise<FeaturedArt
       subscriptionTier: artists.subscriptionTier,
       monthlySales: artists.monthlySales,
       featuredPriority: artists.featuredPriority,
-      featuredPinnedUntil: artists.featuredPinnedUntil,
-      isFeaturedEligible: artists.isFeaturedEligible,
+      lastFeaturedAt: artists.lastFeaturedAt,
     })
     .from(artists)
     .where(
@@ -60,16 +69,50 @@ export async function getFeaturedArtists(limit: number = 4): Promise<FeaturedArt
         )
       )
     )
-    .orderBy(
-      desc(artists.featuredPriority),
-      desc(artists.monthlySales)
-    )
-    .limit(Math.max(limit, 4)) // Always get at least 4
     .execute();
 
-  // For each artist, count their approved artworks
-  const artistsWithCounts = await Promise.all(
-    featuredArtists.map(async (artist) => {
+  if (eligibleArtists.length === 0) {
+    return [];
+  }
+
+  // SLOT 1-2: Performance-based (top sellers by tier + sales)
+  const performanceArtists = [...eligibleArtists]
+    .sort((a, b) => {
+      // First by priority (Elite=100 > Pro=50 > Free=0-25)
+      if (a.featuredPriority !== b.featuredPriority) {
+        return b.featuredPriority - a.featuredPriority;
+      }
+      // Then by monthly sales
+      return Number(b.monthlySales) - Number(a.monthlySales);
+    })
+    .slice(0, performanceSlots);
+
+  // SLOT 3-4: Fair rotation (oldest lastFeaturedAt first)
+  const rotationArtists = [...eligibleArtists]
+    .filter(a => !performanceArtists.find(p => p.id === a.id)) // Exclude performance artists
+    .sort((a, b) => {
+      // Artists never featured go first (null lastFeaturedAt)
+      if (!a.lastFeaturedAt && !b.lastFeaturedAt) {
+        // Both never featured: sort by tier then sales
+        if (a.featuredPriority !== b.featuredPriority) {
+          return b.featuredPriority - a.featuredPriority;
+        }
+        return Number(b.monthlySales) - Number(a.monthlySales);
+      }
+      if (!a.lastFeaturedAt) return -1; // Never featured goes first
+      if (!b.lastFeaturedAt) return 1;
+      
+      // Both have been featured: oldest goes first
+      return a.lastFeaturedAt.getTime() - b.lastFeaturedAt.getTime();
+    })
+    .slice(0, rotationSlots);
+
+  // Combine performance + rotation artists
+  const selectedArtists = [...performanceArtists, ...rotationArtists];
+
+  // Enrich with artwork counts and specialty
+  const enrichedArtists = await Promise.all(
+    selectedArtists.map(async (artist) => {
       const artworkCount = await db
         .select({ count: sql<number>`count(*)` })
         .from(artworks)
@@ -81,14 +124,13 @@ export async function getFeaturedArtists(limit: number = 4): Promise<FeaturedArt
         )
         .execute();
 
-      // Determine specialty based on tier or bio
+      // Determine specialty based on tier
       let specialty = "Featured Artist";
       if (artist.subscriptionTier === "elite") {
         specialty = "Elite Creator";
       } else if (artist.subscriptionTier === "pro") {
         specialty = "Pro Artist";
       } else if (artist.bio) {
-        // Extract first sentence or phrase from bio
         const bioSnippet = artist.bio.split(".")[0].substring(0, 50);
         if (bioSnippet.length > 10) {
           specialty = bioSnippet;
@@ -108,9 +150,10 @@ export async function getFeaturedArtists(limit: number = 4): Promise<FeaturedArt
     })
   );
 
-  // Return all featured artists regardless of artwork count
-  // Artists can be featured even without approved artworks yet
-  return artistsWithCounts;
+  // Update lastFeaturedAt for rotation tracking
+  await trackFeaturedDisplay(selectedArtists.map(a => a.id));
+
+  return enrichedArtists;
 }
 
 /**
@@ -227,4 +270,25 @@ export async function unpinArtist(artistId: string): Promise<void> {
     .execute();
 
   console.log(`[Featured] Unpinned artist ${artistId}, reset to tier defaults`);
+}
+
+/**
+ * Track when artists are displayed in featured rotation
+ * Updates lastFeaturedAt timestamp for fair rotation
+ */
+export async function trackFeaturedDisplay(artistIds: string[]): Promise<void> {
+  if (artistIds.length === 0) return;
+  
+  const now = new Date();
+  
+  // Update all featured artists' lastFeaturedAt timestamp
+  for (const artistId of artistIds) {
+    await db
+      .update(artists)
+      .set({ lastFeaturedAt: now })
+      .where(eq(artists.id, artistId))
+      .execute();
+  }
+  
+  console.log(`[Featured] Tracked ${artistIds.length} artists in rotation`);
 }

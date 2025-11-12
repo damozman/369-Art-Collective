@@ -874,7 +874,7 @@ export default function ArtistSettings() {
                             variant="default"
                             onClick={() => handleUpgradeToTier("pro")}
                             disabled={upgradeSubscriptionMutation.isPending}
-                            className="flex-1"
+                            className="flex-1 min-h-11"
                             data-testid="button-upgrade-pro"
                           >
                             {upgradeSubscriptionMutation.isPending ? "Processing..." : "Start 14-Day Trial (Pro)"}
@@ -883,7 +883,7 @@ export default function ArtistSettings() {
                             variant="default"
                             onClick={() => handleUpgradeToTier("elite")}
                             disabled={upgradeSubscriptionMutation.isPending}
-                            className="flex-1"
+                            className="flex-1 min-h-11"
                             data-testid="button-upgrade-elite"
                           >
                             {upgradeSubscriptionMutation.isPending ? "Processing..." : "Start 7-Day Trial (Elite)"}
@@ -901,6 +901,7 @@ export default function ArtistSettings() {
                           variant="default"
                           onClick={() => handleUpgradeToTier("elite")}
                           disabled={upgradeSubscriptionMutation.isPending}
+                          className="min-h-11 w-full"
                           data-testid="button-upgrade-elite"
                         >
                           {upgradeSubscriptionMutation.isPending ? "Processing..." : "Start 7-Day Elite Trial"}

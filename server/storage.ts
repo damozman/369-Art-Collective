@@ -402,14 +402,18 @@ export interface IStorage {
 // PostgreSQL storage implementation using Drizzle ORM
 class PostgresStorage implements IStorage {
   async getArtist(id: string): Promise<Artist | undefined> {
+    console.log("[Storage.getArtist] Called with ID:", id, "Type:", typeof id);
     const [artist] = await db
       .select()
       .from(artists)
       .where(eq(artists.id, id))
       .limit(1);
     
+    console.log("[Storage.getArtist] Query result:", artist ? `Found artist: ${artist.email} (deleted: ${artist.deletedAt ? 'yes' : 'no'})` : 'NOT FOUND');
+    
     // Filter out deleted artists
     if (artist?.deletedAt) {
+      console.log("[Storage.getArtist] Artist is soft-deleted, returning undefined");
       return undefined;
     }
     return artist;

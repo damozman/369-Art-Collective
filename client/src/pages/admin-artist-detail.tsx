@@ -332,6 +332,7 @@ export default function AdminArtistDetail() {
                 variant="destructive"
                 onClick={() => setShowResetDialog(true)}
                 disabled={resetPasswordMutation.isPending}
+                className="min-h-11"
                 data-testid="button-reset-password"
               >
                 {resetPasswordMutation.isPending ? "Resetting..." : "Reset Password"}
@@ -418,6 +419,7 @@ export default function AdminArtistDetail() {
               variant="destructive"
               onClick={() => setShowDeleteDialog(true)}
               disabled={deleteArtistMutation.isPending}
+              className="min-h-11"
               data-testid="button-delete-artist"
             >
               <Trash2 className="w-4 h-4 mr-2" />

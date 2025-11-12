@@ -532,6 +532,7 @@ export default function ArtistSettings() {
                   <Button
                     type="submit"
                     disabled={updateProfileMutation.isPending}
+                    className="min-h-11"
                     data-testid="button-update-profile"
                   >
                     {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
@@ -556,6 +557,7 @@ export default function ArtistSettings() {
               <Button
                 variant="outline"
                 onClick={() => setIsChangingPassword(true)}
+                className="min-h-11"
                 data-testid="button-change-password-toggle"
               >
                 Change Password
@@ -678,6 +680,7 @@ export default function ArtistSettings() {
                   <Button
                     onClick={() => createStripeOnboardingLinkMutation.mutate()}
                     disabled={createStripeOnboardingLinkMutation.isPending}
+                    className="min-h-11"
                     data-testid="button-setup-stripe"
                   >
                     {createStripeOnboardingLinkMutation.isPending ? "Creating link..." : "Set Up Stripe Account"}

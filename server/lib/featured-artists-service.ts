@@ -108,8 +108,9 @@ export async function getFeaturedArtists(limit: number = 4): Promise<FeaturedArt
     })
   );
 
-  // Filter out artists with no artworks
-  return artistsWithCounts.filter(a => a.artworkCount > 0);
+  // Return all featured artists regardless of artwork count
+  // Artists can be featured even without approved artworks yet
+  return artistsWithCounts;
 }
 
 /**
@@ -141,12 +142,24 @@ export async function updateFeaturedStatusForTier(
       break;
   }
 
+  // When downgrading to free tier, clear any pinned status
+  // unless admin explicitly wants to keep them pinned
+  const updateData: {
+    featuredPriority: number;
+    isFeaturedEligible: boolean;
+    featuredPinnedUntil?: Date | null;
+  } = {
+    featuredPriority: priority,
+    isFeaturedEligible: eligible,
+  };
+  
+  if (newTier === "free") {
+    updateData.featuredPinnedUntil = null;
+  }
+
   await db
     .update(artists)
-    .set({
-      featuredPriority: priority,
-      isFeaturedEligible: eligible,
-    })
+    .set(updateData)
     .where(eq(artists.id, artistId))
     .execute();
 }

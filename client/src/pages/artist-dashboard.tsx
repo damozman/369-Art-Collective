@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
 import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings, Eye, EyeOff, Crown, Sparkles, ExternalLink, BarChart3, Archive, RefreshCw } from "lucide-react";
+import { useSubscriptionStatus, getTrialStatusText, type SubscriptionStatus } from "@/hooks/use-subscription-status";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Artwork } from "@shared/schema";
 import {
@@ -30,7 +31,7 @@ function SubscriptionTierCard({
   isLoading,
   artworkCount
 }: { 
-  subscription: { tier: "free" | "pro" | "elite"; status: string; currentPeriodEnd: string | null } | undefined;
+  subscription: SubscriptionStatus | null;
   isLoading: boolean;
   artworkCount: number;
 }) {
@@ -102,8 +103,11 @@ function SubscriptionTierCard({
             </div>
             <Button onClick={() => setLocation("/artist/settings")} className="w-full" data-testid="button-upgrade-subscription">
               <Crown className="mr-2 h-4 w-4" />
-              Upgrade to Pro or Elite
+              Start Free Trial
             </Button>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              14-day Pro trial or 7-day Elite trial • No charge until trial ends
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -119,13 +123,22 @@ function SubscriptionTierCard({
             <Crown className="h-5 w-5 text-primary" />
             <CardTitle>Subscription: {tierName}</CardTitle>
           </div>
-          <Badge variant={tierColor} className="bg-primary" data-testid={`badge-tier-${tier}`}>
-            <Sparkles className="w-3 h-3 mr-1" />
-            {tierName}
-          </Badge>
+          {subscription?.isOnTrial ? (
+            <Badge variant="default" className="bg-blue-600 dark:bg-blue-500" data-testid="badge-trial-status">
+              Trial: {getTrialStatusText(subscription)}
+            </Badge>
+          ) : (
+            <Badge variant={tierColor} className="bg-primary" data-testid={`badge-tier-${tier}`}>
+              <Sparkles className="w-3 h-3 mr-1" />
+              {tierName}
+            </Badge>
+          )}
         </div>
         <CardDescription>
-          {tier === "pro" ? "Unlimited uploads and AI Art Studio access" : "Full access with guaranteed 45% royalty"}
+          {subscription?.isOnTrial 
+            ? `${tierName} trial active • Full access to all features`
+            : tier === "pro" ? "Unlimited uploads and AI Art Studio access" : "Full access with guaranteed 45% royalty"
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -145,11 +158,18 @@ function SubscriptionTierCard({
               Enabled
             </span>
           </div>
-          {subscription?.currentPeriodEnd && (
+          {subscription?.isOnTrial && subscription?.trialEndDate ? (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Trial Ends</span>
+              <span className="font-medium">
+                {subscription.trialEndDate.toLocaleDateString()}
+              </span>
+            </div>
+          ) : subscription?.subscriptionPeriodEnd && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Renews</span>
               <span className="font-medium">
-                {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                {new Date(subscription.subscriptionPeriodEnd).toLocaleDateString()}
               </span>
             </div>
           )}
@@ -351,14 +371,7 @@ export default function ArtistDashboard() {
     queryKey: ["/api/artists/payouts"],
   });
 
-  const { data: subscription, isLoading: subscriptionLoading } = useQuery<{
-    tier: "free" | "pro" | "elite";
-    status: "active" | "canceled" | "past_due";
-    currentPeriodEnd: string | null;
-  }>({
-    queryKey: ["/api/artists/subscription"],
-    retry: 1,
-  });
+  const { subscriptionDetails: subscription, isLoading: subscriptionLoading } = useSubscriptionStatus();
 
   const { data: featuredStatus, isLoading: featuredLoading } = useQuery<{
     hasActiveSubscription: boolean;

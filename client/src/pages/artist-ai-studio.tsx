@@ -14,6 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Sparkles, Zap, Clock, ImageIcon, Download, Loader2, ShoppingCart, Lock, Crown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/lib/auth-context";
+import { useSubscriptionStatus, getTrialCTAText } from "@/hooks/use-subscription-status";
 
 interface AiCredits {
   freeCreditsRemaining: number;
@@ -41,12 +42,6 @@ interface GenerationResult {
   status: string;
 }
 
-interface SubscriptionData {
-  tier: "free" | "pro" | "elite";
-  status: "active" | "canceled" | "past_due";
-  currentPeriodEnd: string | null;
-}
-
 export default function ArtistAiStudio() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -55,16 +50,12 @@ export default function ArtistAiStudio() {
   const [size, setSize] = useState<"1024x1024" | "512x512" | "256x256">("1024x1024");
   const [currentGeneration, setCurrentGeneration] = useState<GenerationResult | null>(null);
 
-  // Fetch subscription data
+  // Fetch subscription data using shared hook
   const { 
-    data: subscription, 
+    subscriptionDetails: subscription, 
     isLoading: subscriptionLoading,
-    isError: subscriptionError,
-    error: subscriptionErrorData
-  } = useQuery<SubscriptionData>({
-    queryKey: ["/api/artists/subscription"],
-    retry: 1,
-  });
+    error: subscriptionError
+  } = useSubscriptionStatus();
 
   // Fetch AI credits
   const { 
@@ -150,9 +141,9 @@ export default function ArtistAiStudio() {
   const isPro = subscription?.tier === "pro";
   const isElite = subscription?.tier === "elite";
   const isFree = subscription?.tier === "free";
-  // If subscription query errors, allow access (don't lock out paying users)
-  // Only restrict if we successfully determined the user is on Free tier
-  const hasAccess = subscriptionError || isPro || isElite;
+  // Only grant access to confirmed Pro/Elite tiers
+  // Deny access to Free tier OR if subscription fetch errors
+  const hasAccess = isPro || isElite;
 
   // Show loading state while checking subscription
   if (subscriptionLoading) {
@@ -175,8 +166,50 @@ export default function ArtistAiStudio() {
     );
   }
 
-  // Show upgrade prompt ONLY for confirmed Free tier users (not for errors)
-  if (!hasAccess && isFree) {
+  // Show error state if subscription fetch failed (don't lock out paid users with upgrade prompt)
+  if (subscriptionError) {
+    return (
+      <div className="p-6 space-y-6" data-testid="page-ai-studio">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <h1 className="text-3xl font-bold">AI Art Studio</h1>
+          </div>
+        </div>
+        <Card data-testid="card-error-state">
+          <CardContent className="py-12">
+            <div className="max-w-md mx-auto text-center space-y-6">
+              <div className="flex justify-center">
+                <div className="rounded-full bg-destructive/10 p-4">
+                  <Sparkles className="h-12 w-12 text-destructive" />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold" data-testid="text-error-title">
+                  Unable to Load Subscription
+                </h2>
+                <p className="text-muted-foreground" data-testid="text-error-description">
+                  We couldn't verify your subscription status. Please check your connection and try again.
+                </p>
+              </div>
+
+              <Button 
+                onClick={() => window.location.reload()} 
+                variant="default"
+                data-testid="button-retry"
+              >
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show upgrade prompt for confirmed Free tier users only
+  if (!hasAccess) {
     return (
       <div className="p-6 space-y-6" data-testid="page-ai-studio">
         <div className="space-y-2">
@@ -214,7 +247,8 @@ export default function ArtistAiStudio() {
                       <Crown className="h-4 w-4" />
                       <p className="font-semibold">Pro Tier</p>
                     </div>
-                    <p className="text-2xl font-bold">$15<span className="text-sm text-muted-foreground">/mo</span></p>
+                    <p className="text-2xl font-bold text-primary">14-Day Free Trial</p>
+                    <p className="text-xs text-muted-foreground">Then $15/mo</p>
                     <ul className="text-xs text-muted-foreground space-y-1">
                       <li>• AI Art Studio access</li>
                       <li>• 35% minimum royalty</li>
@@ -227,7 +261,8 @@ export default function ArtistAiStudio() {
                       <Crown className="h-4 w-4" />
                       <p className="font-semibold">Elite Tier</p>
                     </div>
-                    <p className="text-2xl font-bold">$40<span className="text-sm text-muted-foreground">/mo</span></p>
+                    <p className="text-2xl font-bold text-primary">7-Day Free Trial</p>
+                    <p className="text-xs text-muted-foreground">Then $40/mo</p>
                     <ul className="text-xs text-muted-foreground space-y-1">
                       <li>• AI Art Studio access</li>
                       <li>• 45% guaranteed royalty</li>
@@ -243,11 +278,11 @@ export default function ArtistAiStudio() {
                   data-testid="button-upgrade-to-pro"
                 >
                   <Crown className="mr-2 h-5 w-5" />
-                  Upgrade to Unlock AI Studio
+                  Start Free Trial to Unlock AI Studio
                 </Button>
                 
-                <p className="text-xs text-muted-foreground">
-                  You can upgrade or downgrade your subscription at any time
+                <p className="text-xs text-muted-foreground text-center">
+                  Try risk-free • Cancel anytime • Only charged after trial ends
                 </p>
               </div>
             </div>

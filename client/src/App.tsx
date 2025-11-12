@@ -36,6 +36,7 @@ import AdminSettings from "@/pages/admin-settings";
 import AdminInfluencers from "@/pages/admin-influencers";
 import AdminChallenges from "@/pages/admin-challenges";
 import AdminArchivedArtworks from "@/pages/admin-archived-artworks";
+import AdminFinancialDashboard from "@/pages/AdminFinancialDashboard";
 import InfluencerApply from "@/pages/influencer-apply";
 import InfluencerLogin from "@/pages/influencer-login";
 import InfluencerPending from "@/pages/influencer-pending";
@@ -226,6 +227,14 @@ function Router() {
         <ProtectedRoute requiredType="admin">
           <AdminLayout>
             <AdminChallenges />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/financial">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminFinancialDashboard />
           </AdminLayout>
         </ProtectedRoute>
       </Route>

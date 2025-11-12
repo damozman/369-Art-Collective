@@ -765,7 +765,7 @@ function TrialAnalytics() {
   const [range, setRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   
   const { data, isLoading } = useQuery<TrialAnalyticsData>({
-    queryKey: ['/api/admin/analytics/trials', { range }],
+    queryKey: [`/api/admin/analytics/trials?range=${range}`],
   });
 
   if (isLoading) {

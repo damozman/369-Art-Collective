@@ -33,7 +33,8 @@ The system employs a client-server architecture with distinct frontend and backe
 - **Stripe Connect:** For automated artist royalty payouts.
 - **Email Notifications:** Resend integration for transactional emails with professional templates, delivery logging, and non-blocking sends.
 - **Artwork Management:** Automated archiving of inactive artworks, product type assignment with smart tagging.
-- **Royalty System:** Tiered royalties (30-45%), referral bonuses (+5%), and recruitment bonuses (5% of recruited artist's royalties).
+- **Royalty System:** Dual-tier royalty structure combining performance and subscription tiers using Math.max logic. Performance tiers: Tier 1 ($0-999) = 30%, Tier 2 ($1K-5K) = 35%, Tier 3 ($5K-10K) = 40%, Tier 4 ($10K+) = 45%. Subscription tiers: Free = 30%, Pro = 35% minimum, Elite = 45% guaranteed. Artists receive whichever percentage is higher between their performance and subscription tier. Referral bonuses (+5%) and recruitment bonuses (5% of recruited artist's royalties) apply on top.
+- **Artist Subscription Tiers:** Three-tier monetization system with recurring billing via Stripe. Free ($0/mo, 30% royalty, 20 artwork limit), Pro ($15-20/mo, 35% minimum royalty, unlimited uploads, AI Art Studio access), Elite ($40-50/mo, 45% guaranteed royalty, unlimited uploads, full AI tools, profile customization). Database tracks subscriptionTier, stripeCustomerId, stripeSubscriptionId, subscriptionStatus, and subscriptionPeriodEnd.
 - **Security:** HMAC verification for webhooks, rate limiting, audit logging, and soft-delete for accounts.
 - **Analytics & Reporting:** Artist dashboard with KPIs, earnings, and progress; Admin dashboard for revenue and network growth.
 

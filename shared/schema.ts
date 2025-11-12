@@ -37,6 +37,9 @@ export const artists = pgTable("artists", {
   tosAcceptedAt: timestamp("tos_accepted_at"), // Terms of Service acceptance timestamp for legal compliance
   tosIpAddress: text("tos_ip_address"), // IP address when TOS was accepted for audit trail
   tosVersion: text("tos_version"), // Version/hash of TOS accepted (e.g., "v1.0-2025-11" or hash)
+  isFeaturedEligible: boolean("is_featured_eligible").notNull().default(false), // Can be featured on homepage (auto-true for Elite, perf-based for Pro, manual for Free)
+  featuredPriority: integer("featured_priority").notNull().default(0), // Higher = more likely to be featured (Elite=100, Pro=50, Free=0, +manual boost)
+  featuredPinnedUntil: timestamp("featured_pinned_until"), // If set, artist is guaranteed featured until this date (for campaigns/promotions)
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ({

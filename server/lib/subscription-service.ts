@@ -41,10 +41,46 @@ const SUBSCRIPTION_CONFIG = {
   }
 };
 
+// Runtime cache for dynamically created price IDs
+const priceIdCache: Map<string, SubscriptionTier> = new Map();
+
+// Derive tier from subscription price ID when metadata is missing
+function getTierFromSubscription(subscription: Stripe.Subscription): SubscriptionTier | null {
+  if (!subscription.items?.data?.length) {
+    return null;
+  }
+
+  // Iterate all subscription items (handles proration/multi-item scenarios)
+  for (const item of subscription.items.data) {
+    if (!item.price) continue;
+
+    const priceId = typeof item.price === 'string'
+      ? item.price
+      : item.price.id;
+
+    // Check runtime cache first (for dynamically created prices)
+    if (priceIdCache.has(priceId)) {
+      return priceIdCache.get(priceId)!;
+    }
+
+    // Check config price IDs (from environment variables)
+    if (SUBSCRIPTION_CONFIG.pro.priceId && priceId === SUBSCRIPTION_CONFIG.pro.priceId) {
+      return 'pro';
+    }
+    if (SUBSCRIPTION_CONFIG.elite.priceId && priceId === SUBSCRIPTION_CONFIG.elite.priceId) {
+      return 'elite';
+    }
+  }
+
+  return null;
+}
+
 async function getOrCreatePriceId(tier: 'pro' | 'elite'): Promise<string> {
   const config = SUBSCRIPTION_CONFIG[tier];
   
   if (config.priceId) {
+    // Cache env-configured price ID for future lookups
+    priceIdCache.set(config.priceId, tier);
     return config.priceId;
   }
 
@@ -70,18 +106,24 @@ async function getOrCreatePriceId(tier: 'pro' | 'elite'): Promise<string> {
     active: true,
   });
 
+  let priceId: string;
   if (prices.data.length > 0) {
-    return prices.data[0].id;
+    priceId = prices.data[0].id;
+  } else {
+    const price = await stripe.prices.create({
+      product: product.id,
+      unit_amount: config.priceMonthly,
+      currency: 'usd',
+      recurring: { interval: 'month' }
+    });
+    priceId = price.id;
   }
 
-  const price = await stripe.prices.create({
-    product: product.id,
-    unit_amount: config.priceMonthly,
-    currency: 'usd',
-    recurring: { interval: 'month' }
-  });
-
-  return price.id;
+  // Cache dynamically created/found price ID for tier resolution
+  priceIdCache.set(priceId, tier);
+  console.log(`[INFO][PRICE_CACHE] Cached price ID ${priceId} → ${tier}`);
+  
+  return priceId;
 }
 
 // Helper to check if email was already sent (idempotency guard)
@@ -363,10 +405,17 @@ export class SubscriptionService {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
         const artistId = subscription.metadata?.artistId;
-        const tier = subscription.metadata?.tier as SubscriptionTier;
+        const tier = subscription.metadata?.tier as SubscriptionTier | undefined;
         
         if (!artistId) {
           console.error('Subscription created/updated but missing artistId metadata');
+          break;
+        }
+
+        // Get artist record for fallback tier
+        const artist = await storage.getArtist(artistId);
+        if (!artist) {
+          console.error(`Artist not found: ${artistId}`);
           break;
         }
 
@@ -374,17 +423,84 @@ export class SubscriptionService {
           ? new Date(subscription.current_period_end * 1000)
           : new Date();
 
-        await storage.updateArtist(artistId, {
+        // Determine tier: metadata → price ID → current tier (with defensive logging)
+        let resolvedTier: SubscriptionTier | undefined = tier;
+        if (!resolvedTier) {
+          // Metadata missing - derive from price ID
+          resolvedTier = getTierFromSubscription(subscription) || undefined;
+          if (resolvedTier) {
+            console.log(`[WARN][METADATA_MISSING] Stripe metadata.tier missing for ${artistId}, derived ${resolvedTier} from price ID`);
+          } else {
+            // Price derivation failed - fall back to current tier
+            resolvedTier = artist.subscriptionTier;
+            console.error(`[ERROR][TIER_RESOLUTION] Cannot derive tier for ${artistId}, falling back to current tier: ${resolvedTier}`);
+          }
+        }
+
+        // Track trial status changes
+        const isTrialing = subscription.status === 'trialing';
+        const wasTrialing = event.type === 'customer.subscription.updated' && 
+          (event.data.previous_attributes as any)?.status === 'trialing';
+
+        // Trial → Paid conversion detected
+        if (wasTrialing && !isTrialing && subscription.status === 'active') {
+          console.log(`[SUCCESS][TRIAL_CONVERSION] Trial converted to paid for ${artistId} (tier: ${resolvedTier})`);
+          
+          // Update trial record to "converted"
+          const trials = await storage.getSubscriptionTrialsByArtist(artistId);
+          const activeTrial = trials.find((t: SubscriptionTrial) => t.status === 'active');
+          
+          if (activeTrial) {
+            await storage.updateSubscriptionTrial(activeTrial.id, {
+              status: 'converted',
+              convertedAt: new Date(),
+              finalTier: resolvedTier,
+              trialEndedAt: new Date()
+            });
+            console.log(`[SUCCESS][TRIAL_ANALYTICS] Marked trial ${activeTrial.id} as converted`);
+          }
+        }
+
+        // Trial expired without payment (canceled during trial or trial expired)
+        if (wasTrialing && subscription.status === 'canceled') {
+          console.log(`[WARN][TRIAL_CANCELED] Trial canceled without conversion for ${artistId} - auto-downgrading to Free tier`);
+          
+          const trials = await storage.getSubscriptionTrialsByArtist(artistId);
+          const activeTrial = trials.find((t: SubscriptionTrial) => t.status === 'active');
+          
+          if (activeTrial) {
+            await storage.updateSubscriptionTrial(activeTrial.id, {
+              status: 'canceled',
+              trialEndedAt: new Date()
+            });
+          }
+        }
+
+        // Determine final tier: cancellations → Free, otherwise use resolved tier
+        const finalTier: SubscriptionTier = subscription.status === 'canceled' 
+          ? 'free' 
+          : resolvedTier;
+
+        // Update artist record with new subscription state
+        const updates: any = {
           stripeSubscriptionId: subscription.id,
           subscriptionStatus: subscription.status,
-          subscriptionTier: tier,
+          subscriptionTier: finalTier,
           subscriptionPeriodEnd: periodEnd as any
-        });
-        
-        // Auto-update featured artist status based on new tier
-        if (tier) {
-          await updateFeaturedStatusForTier(artistId, tier);
+        };
+
+        // Clear trialEndsAt if trial completed
+        if (!isTrialing && wasTrialing) {
+          updates.trialEndsAt = null;
         }
+
+        // Don't clear stripeSubscriptionId here - let subscription.deleted handler do it
+        // This preserves linkage for scheduled cancellations (cancel_at_period_end)
+
+        await storage.updateArtist(artistId, updates);
+        
+        // Auto-update featured artist status based on final tier
+        await updateFeaturedStatusForTier(artistId, finalTier);
         
         break;
       }
@@ -398,9 +514,11 @@ export class SubscriptionService {
           break;
         }
 
+        // Clear subscription data to allow re-subscription
         await storage.updateArtist(artistId, {
           subscriptionStatus: 'canceled',
-          subscriptionTier: 'free'
+          subscriptionTier: 'free',
+          stripeSubscriptionId: null // Clear to allow re-subscription
         });
         
         // Reset featured status to free tier (not eligible)
@@ -506,6 +624,45 @@ export class SubscriptionService {
             }
           }
         }
+        break;
+      }
+
+      case 'customer.subscription.trial_will_end': {
+        const subscription = event.data.object as Stripe.Subscription;
+        const artistId = subscription.metadata?.artistId;
+        const tier = subscription.metadata?.tier as SubscriptionTier;
+        
+        if (!artistId || !tier) {
+          console.error('Trial ending but missing artistId or tier metadata');
+          break;
+        }
+
+        const artist = await storage.getArtist(artistId);
+        if (!artist) {
+          console.error(`Artist not found: ${artistId}`);
+          break;
+        }
+
+        // Find active trial record
+        const trials = await storage.getSubscriptionTrialsByArtist(artistId);
+        const activeTrial = trials.find(t => t.status === 'active');
+
+        if (activeTrial) {
+          console.log(`[WARN][TRIAL_WILL_END] Trial ending soon for ${artist.email} (tier: ${tier})`);
+          
+          // Update trial record to track that we sent the pre-expiry email
+          await storage.updateSubscriptionTrial(activeTrial.id, {
+            emailsSent: (activeTrial.emailsSent || 0) + 1,
+            emailTemplatesSent: [
+              ...(activeTrial.emailTemplatesSent || []),
+              'trial_ending_soon'
+            ]
+          });
+
+          // TODO: Send trial ending email (Task 2)
+          console.log(`[INFO][TRIAL_EMAIL] Would send trial_ending_soon email to ${artist.email}`);
+        }
+        
         break;
       }
     }

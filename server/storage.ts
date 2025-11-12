@@ -2455,6 +2455,7 @@ class MemStorage implements IStorage {
   private portfolioSubmissions: Map<string, PortfolioSubmission> = new Map();
   private violationReports: Map<string, ViolationReport> = new Map();
   private artworks: Map<string, Artwork> = new Map();
+  private subscriptionTrials: Map<string, SubscriptionTrial> = new Map();
 
   async getArtist(id: string): Promise<Artist | undefined> {
     const artist = this.artists.get(id);
@@ -3267,6 +3268,50 @@ class MemStorage implements IStorage {
   async updateCreatorstackPurchaseAccess(): Promise<void> { console.log("MemStorage: updateCreatorstackPurchaseAccess (stub)"); }
   async createCreatorstackPromptGeneration(): Promise<any> { console.log("MemStorage: createCreatorstackPromptGeneration (stub)"); return {}; }
   async getCreatorstackPromptGenerationsByBuyer(): Promise<Array<any>> { console.log("MemStorage: getCreatorstackPromptGenerationsByBuyer (stub)"); return []; }
+
+  // Subscription Trial methods
+  async createSubscriptionTrial(trial: InsertSubscriptionTrial): Promise<SubscriptionTrial> {
+    const id = randomUUID();
+    const created: SubscriptionTrial = {
+      ...trial,
+      id,
+      trialStartedAt: trial.trialStartedAt || new Date(),
+      trialEndedAt: null,
+      convertedAt: null,
+      finalTier: null,
+      emailsSent: 0,
+      emailOpenCount: 0,
+      emailTemplatesSent: []
+    };
+    this.subscriptionTrials.set(id, created);
+    // Return deep copy to prevent mutation
+    return { 
+      ...created, 
+      emailTemplatesSent: [...created.emailTemplatesSent] 
+    };
+  }
+
+  async getSubscriptionTrialsByArtist(artistId: string): Promise<SubscriptionTrial[]> {
+    return Array.from(this.subscriptionTrials.values())
+      .filter((t: SubscriptionTrial) => t.artistId === artistId)
+      .sort((a, b) => new Date(b.trialStartedAt).getTime() - new Date(a.trialStartedAt).getTime())
+      .map((t: SubscriptionTrial) => ({ 
+        ...t, 
+        emailTemplatesSent: [...(t.emailTemplatesSent || [])]
+      }));
+  }
+
+  async updateSubscriptionTrial(id: string, updates: Partial<SubscriptionTrial>): Promise<SubscriptionTrial> {
+    const trial = this.subscriptionTrials.get(id);
+    if (!trial) throw new Error("Subscription trial not found");
+    const updated = { ...trial, ...updates };
+    this.subscriptionTrials.set(id, updated);
+    // Return deep copy to prevent mutation
+    return { 
+      ...updated, 
+      emailTemplatesSent: [...(updated.emailTemplatesSent || [])]
+    };
+  }
 }
 
 export const storage = isDatabaseConfigured() ? new PostgresStorage() : new MemStorage();

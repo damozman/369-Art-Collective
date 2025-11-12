@@ -44,7 +44,16 @@ The system employs a client-server architecture with distinct frontend and backe
     - Route ordering: Subscription routes before parameterized routes to prevent conflicts (backend: line 667 vs 800+, frontend: line 252)
     - Secure logout: Backend destroys session + clears cookie, frontend calls API endpoint before navigation
     - Automated featured artist rotation: Tier changes automatically update featured eligibility and priority via Stripe webhooks
-- **Featured Artist System:** Intelligent homepage placement based on subscription tier and performance. Elite members get automatic homepage placement (priority 100), Pro members are eligible with approval (priority 50+), Free members require manual admin promotion (priority 0-25). System includes pinning capability for guaranteed placement until specified date. API endpoint GET /api/featured-artists returns sorted artists for Shopify theme integration. Backfill script (scripts/backfill-featured-artists.ts) available for setting initial featured status.
+- **Featured Artist System (Hybrid Performance + Fair Rotation):** Intelligent homepage placement using dual-slot system balancing meritocracy with fairness:
+  - **Performance Slots (1-2):** Top earners by tier + monthly sales (rewards high performers, creates competition)
+  - **Rotation Slots (3-4):** Fair distribution among all eligible artists via `lastFeaturedAt` tracking (ensures all paying members get exposure)
+  - **Tier-Based Eligibility:** Elite members auto-eligible (priority 100), Pro members eligible (priority 50), Free tier requires manual admin approval (priority 0-25)
+  - **Value Proposition:** Elite/Pro artists get guaranteed rotation time + top performers get constant visibility
+  - **Rotation Tracking:** `lastFeaturedAt` timestamp ensures artists who haven't been featured recently get priority in rotation slots
+  - **Admin Controls:** Manual pinning capability (`featuredPinnedUntil`) for campaigns/promotions
+  - **API Integration:** GET /api/featured-artists returns hybrid-sorted artists for Shopify theme, automatically updates rotation timestamps
+  - **Automation:** Stripe subscription webhooks automatically update featured eligibility on tier changes
+  - **Testing:** Comprehensive test script (scripts/test-hybrid-rotation.ts) validates performance + rotation logic
 - **Security:** HMAC verification for webhooks, rate limiting, audit logging, soft-delete for accounts, and production-hardened authentication with proper session destruction. Secure logging with sensitive data sanitization (session IDs, API keys, Stripe objects).
 - **Analytics & Reporting:** Artist dashboard with KPIs, earnings, and progress; Admin dashboard for revenue and network growth.
 - **Email System:** Comprehensive email templates with shared layout system (13 templates total). Critical templates include: subscription confirmation, payment failed, payout notification, artist approval, artwork approval, and buyer purchase confirmation. All emails logged to `emailLogs` table with metadata for audit trails. Idempotency guards prevent duplicate sends on webhook retries by checking `subscriptionId` and `invoiceId` metadata.

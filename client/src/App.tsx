@@ -61,7 +61,6 @@ function Router() {
       <Route path="/creators" component={Creators} />
       <Route path="/leaderboard" component={PublicLeaderboard} />
       <Route path="/success-stories/:slug" component={SuccessStory} />
-      <Route path="/artists/:id" component={ArtistProfile} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminLogin} />
       <Route path="/admin/login" component={AdminLogin} />
@@ -245,6 +244,9 @@ function Router() {
           <InfluencerDashboard />
         </ProtectedRoute>
       </Route>
+      
+      {/* Parameterized routes must come last to avoid catching specific routes */}
+      <Route path="/artists/:id" component={ArtistProfile} />
       
       <Route component={NotFound} />
     </Switch>

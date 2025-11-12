@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer, decimal, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, decimal, jsonb, uniqueIndex, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -39,7 +39,15 @@ export const artists = pgTable("artists", {
   tosVersion: text("tos_version"), // Version/hash of TOS accepted (e.g., "v1.0-2025-11" or hash)
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  // Performance indexes for high-volume subscription operations
+  // Unique indexes for Stripe IDs (one customer/subscription per artist, allows NULL)
+  stripeCustomerIdx: uniqueIndex("artists_stripe_customer_id_idx").on(table.stripeCustomerId),
+  stripeSubscriptionIdx: uniqueIndex("artists_stripe_subscription_id_idx").on(table.stripeSubscriptionId),
+  // Regular indexes for filtering (many artists share same tier/status)
+  subscriptionTierIdx: index("artists_subscription_tier_idx").on(table.subscriptionTier),
+  subscriptionStatusIdx: index("artists_subscription_status_idx").on(table.subscriptionStatus),
+}));
 
 // Admins table - users who can approve/reject
 export const admins = pgTable("admins", {

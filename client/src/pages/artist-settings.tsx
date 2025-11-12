@@ -15,7 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { changePasswordSchema, updateArtistProfileSchema, deleteAccountSchema } from "@shared/schema";
 import type { Artist } from "@shared/schema";
-import { Lock, User, Mail, Type, ArrowLeft, LogOut, Image as ImageIcon, Settings as SettingsIcon, AlertTriangle } from "lucide-react";
+import { Lock, User, Mail, Type, ArrowLeft, LogOut, Image as ImageIcon, Settings as SettingsIcon, AlertTriangle, Crown, Sparkles, Zap, Check, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { loadStripe } from "@stripe/stripe-js";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +40,7 @@ export default function ArtistSettings() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  const [showCancelSubscriptionDialog, setShowCancelSubscriptionDialog] = useState(false);
 
   const { data: user } = useQuery<Artist>({ queryKey: ["/api/auth/me"] });
 
@@ -176,6 +179,189 @@ export default function ArtistSettings() {
       });
     },
   });
+
+  const { data: subscriptionDetails, isLoading: isLoadingSubscription } = useQuery<{
+    tier: "free" | "pro" | "elite";
+    status: string | null;
+    subscriptionPeriodEnd: string | null;
+  }>({
+    queryKey: ["/api/artists/subscription"],
+    enabled: !!user,
+  });
+
+  const upgradeSubscriptionMutation = useMutation({
+    mutationFn: async (tier: "pro" | "elite") => {
+      const response = await fetch("/api/artists/subscription/upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to upgrade subscription");
+      }
+
+      return response.json();
+    },
+    onSuccess: async (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/artists/subscription"] });
+      
+      if (data.requiresPayment && data.clientSecret) {
+        if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+          toast({
+            title: "Configuration error",
+            description: "Stripe not configured.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+        if (!stripe) {
+          toast({
+            title: "Failed to load Stripe",
+            description: "Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { error } = await stripe.confirmPayment({
+          clientSecret: data.clientSecret,
+          confirmParams: {
+            return_url: `${window.location.origin}/artist/subscription/confirm`,
+          },
+        });
+
+        if (error) {
+          toast({
+            title: "Payment failed",
+            description: error.message || "Please try again.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Subscription upgraded",
+          description: "Your subscription tier has been updated successfully.",
+        });
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to upgrade subscription",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const cancelSubscriptionMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/artists/subscription/cancel", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/artists/subscription"] });
+      toast({
+        title: "Subscription cancelled",
+        description: "Your subscription will end at the end of the billing period.",
+      });
+      setShowCancelSubscriptionDialog(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to cancel subscription",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const reactivateSubscriptionMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/artists/subscription/reactivate", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/artists/subscription"] });
+      toast({
+        title: "Subscription reactivated",
+        description: "Your subscription has been successfully reactivated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to reactivate subscription",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  async function handleUpgradeToTier(tier: "pro" | "elite") {
+    if (!subscriptionDetails) return;
+
+    if (subscriptionDetails.tier === "free") {
+      const response = await fetch("/api/artists/subscription/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tier }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        toast({
+          title: "Failed to create subscription",
+          description: error.message || "Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { clientSecret } = await response.json();
+
+      if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
+        toast({
+          title: "Configuration error",
+          description: "Stripe not configured.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+      if (!stripe) {
+        toast({
+          title: "Failed to load Stripe",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await stripe.confirmPayment({
+        clientSecret,
+        confirmParams: {
+          return_url: `${window.location.origin}/artist/subscription/confirm`,
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Payment failed",
+          description: error.message || "Please try again.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      upgradeSubscriptionMutation.mutate(tier);
+    }
+  }
 
   function onPasswordSubmit(data: ChangePasswordForm) {
     changePasswordMutation.mutate(data);
@@ -526,6 +712,193 @@ export default function ArtistSettings() {
             </CardContent>
           </Card>
 
+          <Card data-testid="card-subscription">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {subscriptionDetails?.tier === "elite" ? (
+                  <Crown className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                ) : subscriptionDetails?.tier === "pro" ? (
+                  <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                ) : (
+                  <Zap className="w-5 h-5" />
+                )}
+                Subscription Plan
+              </CardTitle>
+              <CardDescription>
+                Manage your subscription tier and billing
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isLoadingSubscription ? (
+                <p className="text-sm text-muted-foreground">Loading subscription details...</p>
+              ) : subscriptionDetails ? (
+                <>
+                  {/* Current tier display */}
+                  <div className="rounded-lg bg-muted p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Current Plan</p>
+                        <p className="text-2xl font-bold capitalize">{subscriptionDetails.tier}</p>
+                        {subscriptionDetails.tier !== "free" && (
+                          <p className="text-sm text-muted-foreground">
+                            ${subscriptionDetails.tier === "pro" ? "15" : "40"}/month
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant={subscriptionDetails.status === "active" ? "default" : "outline"} className="capitalize">
+                        {subscriptionDetails.status || "free"}
+                      </Badge>
+                    </div>
+
+                    {/* Subscription status info */}
+                    {subscriptionDetails.tier !== "free" && subscriptionDetails.subscriptionPeriodEnd && (
+                      <div className="border-t pt-3">
+                        <p className="text-xs text-muted-foreground">
+                          {subscriptionDetails.status === "canceled" 
+                            ? `Access until ${new Date(subscriptionDetails.subscriptionPeriodEnd).toLocaleDateString()}`
+                            : `Renews on ${new Date(subscriptionDetails.subscriptionPeriodEnd).toLocaleDateString()}`
+                          }
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tier benefits */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Your Benefits:</p>
+                    <ul className="space-y-1 text-sm">
+                      {subscriptionDetails.tier === "free" && (
+                        <>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span>30% royalty rate</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span>Up to 20 artworks</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <X className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                            <span className="text-muted-foreground">No AI Art Studio</span>
+                          </li>
+                        </>
+                      )}
+                      {subscriptionDetails.tier === "pro" && (
+                        <>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span><strong>35% minimum</strong> royalty</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span><strong>Unlimited</strong> artworks</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span>AI Art Studio access</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span>Priority support</span>
+                          </li>
+                        </>
+                      )}
+                      {subscriptionDetails.tier === "elite" && (
+                        <>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span><strong>45% guaranteed</strong> royalty</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span><strong>Unlimited</strong> artworks</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span>Full AI Art Studio</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span>Profile customization</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
+                            <span>Featured placement</span>
+                          </li>
+                        </>
+                      )}
+                    </ul>
+                  </div>
+
+                  {/* Upgrade/downgrade actions */}
+                  <div className="space-y-2">
+                    {subscriptionDetails.tier === "free" && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Upgrade to unlock more features:</p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="default"
+                            onClick={() => handleUpgradeToTier("pro")}
+                            disabled={upgradeSubscriptionMutation.isPending}
+                            className="flex-1"
+                            data-testid="button-upgrade-pro"
+                          >
+                            {upgradeSubscriptionMutation.isPending ? "Processing..." : "Upgrade to Pro ($15/mo)"}
+                          </Button>
+                          <Button
+                            variant="default"
+                            onClick={() => handleUpgradeToTier("elite")}
+                            disabled={upgradeSubscriptionMutation.isPending}
+                            className="flex-1"
+                            data-testid="button-upgrade-elite"
+                          >
+                            {upgradeSubscriptionMutation.isPending ? "Processing..." : "Upgrade to Elite ($40/mo)"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {subscriptionDetails.tier === "pro" && (
+                      <div className="space-y-2">
+                        <Button
+                          variant="default"
+                          onClick={() => handleUpgradeToTier("elite")}
+                          disabled={upgradeSubscriptionMutation.isPending}
+                          data-testid="button-upgrade-elite"
+                        >
+                          {upgradeSubscriptionMutation.isPending ? "Processing..." : "Upgrade to Elite ($40/mo)"}
+                        </Button>
+                      </div>
+                    )}
+
+                    {subscriptionDetails.tier !== "free" && subscriptionDetails.status === "canceled" && (
+                      <Button
+                        variant="default"
+                        onClick={() => reactivateSubscriptionMutation.mutate()}
+                        disabled={reactivateSubscriptionMutation.isPending}
+                        data-testid="button-reactivate-subscription"
+                      >
+                        {reactivateSubscriptionMutation.isPending ? "Reactivating..." : "Reactivate Subscription"}
+                      </Button>
+                    )}
+
+                    {subscriptionDetails.tier !== "free" && subscriptionDetails.status === "active" && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowCancelSubscriptionDialog(true)}
+                        data-testid="button-cancel-subscription"
+                      >
+                        Cancel Subscription
+                      </Button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">Unable to load subscription details</p>
+              )}
+            </CardContent>
+          </Card>
+
           <Card data-testid="card-delete-account" className="border-destructive">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-destructive">
@@ -596,6 +969,29 @@ export default function ArtistSettings() {
               data-testid="button-confirm-delete"
             >
               Yes, delete my account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showCancelSubscriptionDialog} onOpenChange={setShowCancelSubscriptionDialog}>
+        <AlertDialogContent data-testid="dialog-cancel-subscription">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel subscription?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your subscription will remain active until the end of the current billing period. 
+              You can reactivate it at any time before then.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-cancel-subscription">
+              Keep Subscription
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => cancelSubscriptionMutation.mutate()}
+              data-testid="button-confirm-cancel-subscription"
+            >
+              Yes, cancel subscription
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

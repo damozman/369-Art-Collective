@@ -39,6 +39,8 @@ import { emailService } from "./lib/email-service";
 import { generateReferralCode } from "./lib/referral-code-generator";
 import { AchievementService } from "./achievement-service";
 import { generateAiImage, saveAiImage, validatePrompt } from "./ai-service";
+import { subscriptionService } from "./lib/subscription-service";
+import Stripe from "stripe";
 
 // Initialize achievement service
 const achievementService = new AchievementService(storage);
@@ -1448,6 +1450,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Get payouts error:", error);
       res.status(500).json({ message: "Failed to fetch payouts" });
+    }
+  });
+
+  // ===== SUBSCRIPTION ROUTES =====
+
+  // Get current subscription details
+  app.get("/api/artists/subscription", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      const details = await subscriptionService.getSubscriptionDetails(artist.id);
+      res.json(details);
+    } catch (error: any) {
+      console.error("Get subscription details error:", error);
+      res.status(500).json({ message: "Failed to get subscription details" });
+    }
+  });
+
+  // Create new subscription (Pro or Elite)
+  app.post("/api/artists/subscription/create", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      const { tier } = req.body;
+
+      if (tier !== 'pro' && tier !== 'elite') {
+        return res.status(400).json({ message: "Invalid tier. Must be 'pro' or 'elite'" });
+      }
+
+      const result = await subscriptionService.createSubscription(
+        artist.id,
+        tier,
+        artist.email,
+        artist.name
+      );
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Create subscription error:", error);
+      res.status(500).json({ message: error.message || "Failed to create subscription" });
+    }
+  });
+
+  // Upgrade subscription to higher tier
+  app.post("/api/artists/subscription/upgrade", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      const { tier } = req.body;
+
+      if (tier !== 'pro' && tier !== 'elite') {
+        return res.status(400).json({ message: "Invalid tier. Must be 'pro' or 'elite'" });
+      }
+
+      await subscriptionService.upgradeSubscription(artist.id, tier);
+      res.json({ message: "Subscription upgraded successfully" });
+    } catch (error: any) {
+      console.error("Upgrade subscription error:", error);
+      res.status(500).json({ message: error.message || "Failed to upgrade subscription" });
+    }
+  });
+
+  // Cancel subscription (at end of billing period)
+  app.post("/api/artists/subscription/cancel", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      await subscriptionService.cancelSubscription(artist.id);
+      res.json({ message: "Subscription will be canceled at the end of the billing period" });
+    } catch (error: any) {
+      console.error("Cancel subscription error:", error);
+      res.status(500).json({ message: error.message || "Failed to cancel subscription" });
+    }
+  });
+
+  // Reactivate canceled subscription
+  app.post("/api/artists/subscription/reactivate", requireArtist, async (req, res) => {
+    try {
+      const artist = req.user!;
+      await subscriptionService.reactivateSubscription(artist.id);
+      res.json({ message: "Subscription reactivated successfully" });
+    } catch (error: any) {
+      console.error("Reactivate subscription error:", error);
+      res.status(500).json({ message: error.message || "Failed to reactivate subscription" });
+    }
+  });
+
+  // Stripe subscription webhook
+  app.post("/api/webhooks/stripe/subscription", async (req, res) => {
+    try {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+        apiVersion: "2025-10-29.clover",
+      });
+
+      const sig = req.headers['stripe-signature'];
+      if (!sig) {
+        return res.status(400).send('Missing Stripe signature');
+      }
+
+      const webhookSecret = process.env.STRIPE_SUBSCRIPTION_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        console.error('STRIPE_SUBSCRIPTION_WEBHOOK_SECRET not configured');
+        return res.status(500).send('Webhook secret not configured');
+      }
+
+      const event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        webhookSecret
+      );
+
+      await subscriptionService.handleWebhookEvent(event);
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error("Subscription webhook error:", error);
+      res.status(400).send(`Webhook Error: ${error.message}`);
     }
   });
 

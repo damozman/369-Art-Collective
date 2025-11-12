@@ -42,15 +42,16 @@ function logSection(title) {
 
 // Check environment variables
 function checkEnvVars() {
-  const required = ['SHOPIFY_ADMIN_API_TOKEN', 'SHOPIFY_STORE_URL'];
-  const missing = required.filter(v => !process.env[v]);
+  const accessToken = process.env.SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_ADMIN_API_TOKEN;
+  const storeUrl = process.env.SHOPIFY_STORE_URL;
   
-  if (missing.length > 0) {
+  if (!accessToken || !storeUrl) {
     log('❌ Missing required environment variables:', colors.red);
-    missing.forEach(v => log(`  • ${v}`, colors.yellow));
+    if (!accessToken) log('  • SHOPIFY_ACCESS_TOKEN', colors.yellow);
+    if (!storeUrl) log('  • SHOPIFY_STORE_URL', colors.yellow);
     log('\nPlease set these in your .env file or environment.', colors.reset);
     log('\nExample:', colors.bright);
-    log('SHOPIFY_ADMIN_API_TOKEN=shpat_xxxxxxxxxxxxx', colors.reset);
+    log('SHOPIFY_ACCESS_TOKEN=shpat_xxxxxxxxxxxxx', colors.reset);
     log('SHOPIFY_STORE_URL=your-store.myshopify.com', colors.reset);
     process.exit(1);
   }
@@ -60,14 +61,15 @@ function checkEnvVars() {
 
 // Make Shopify API request
 function shopifyRequest(method, path, data = null) {
+  const accessToken = process.env.SHOPIFY_ACCESS_TOKEN || process.env.SHOPIFY_ADMIN_API_TOKEN;
   return new Promise((resolve, reject) => {
     const options = {
       hostname: process.env.SHOPIFY_STORE_URL,
-      path: `/admin/api/2024-01${path}`,
+      path: `/admin/api/2025-01${path}`,
       method: method,
       headers: {
         'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': process.env.SHOPIFY_ADMIN_API_TOKEN,
+        'X-Shopify-Access-Token': accessToken,
       },
     };
 

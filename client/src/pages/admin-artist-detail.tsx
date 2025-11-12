@@ -26,12 +26,12 @@ export default function AdminArtistDetail() {
   const artistId = params?.id;
 
   const { data: artist, isLoading } = useQuery<Artist>({
-    queryKey: [`/api/artists/${artistId}`],
+    queryKey: [`/api/admin/artists/${artistId}`],
     enabled: Boolean(artistId),
   });
 
   const { data: portfolioSubmissions = [] } = useQuery<PortfolioSubmission[]>({
-    queryKey: [`/api/artists/${artistId}/portfolio`],
+    queryKey: [`/api/admin/artists/${artistId}/portfolio`],
     enabled: Boolean(artistId),
   });
 

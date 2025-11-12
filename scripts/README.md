@@ -43,6 +43,31 @@ npm run shopify:assign-templates
 
 ---
 
+### 3. `populate-homepage-products.js`
+**Purpose:** Update homepage with real products instead of placeholder images
+
+**Usage:**
+```bash
+npm run shopify:populate-homepage
+```
+
+**What it does:**
+- Fetches 8 featured products from your Shopify store
+- Gets collection cover images from each finish type (Metal, Canvas, Paper, Framed)
+- Updates homepage configuration with real product URLs and images
+- Deploys directly to live Shopify theme
+
+**Requirements:**
+- `SHOPIFY_STORE_URL` in `.env`
+- `SHOPIFY_ACCESS_TOKEN` in `.env`
+
+**When to use:**
+- After adding new products to showcase on homepage
+- When updating featured collections
+- To refresh homepage with latest inventory
+
+---
+
 ## Quick Start
 
 1. **First time setup:**

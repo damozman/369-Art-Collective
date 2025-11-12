@@ -528,24 +528,24 @@ export default function ArtistDashboard() {
               <h2 className="text-3xl font-bold font-serif mb-2">My Artwork</h2>
               <p className="text-muted-foreground">Manage your submissions and track their status</p>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setLocation("/artist/analytics")} data-testid="button-analytics">
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" onClick={() => setLocation("/artist/analytics")} className="min-h-11" data-testid="button-analytics">
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Analytics
               </Button>
-              <Button variant="outline" onClick={() => setLocation("/artist/referrals")} data-testid="button-referrals">
+              <Button variant="outline" onClick={() => setLocation("/artist/referrals")} className="min-h-11" data-testid="button-referrals">
                 <Users className="mr-2 h-4 w-4" />
                 Referrals
               </Button>
-              <Button variant="outline" onClick={() => setLocation("/artist/earnings")} data-testid="button-earnings">
+              <Button variant="outline" onClick={() => setLocation("/artist/earnings")} className="min-h-11" data-testid="button-earnings">
                 <DollarSign className="mr-2 h-4 w-4" />
                 Earnings
               </Button>
-              <Button variant="outline" onClick={() => setLocation("/artist/payouts")} data-testid="button-payouts">
+              <Button variant="outline" onClick={() => setLocation("/artist/payouts")} className="min-h-11" data-testid="button-payouts">
                 <Wallet className="mr-2 h-4 w-4" />
                 Payouts
               </Button>
-              <Button onClick={() => setLocation("/artist/upload")} data-testid="button-upload">
+              <Button onClick={() => setLocation("/artist/upload")} className="min-h-11" data-testid="button-upload">
                 <Upload className="mr-2 h-4 w-4" />
                 Upload Artwork
               </Button>

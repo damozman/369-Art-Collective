@@ -1,0 +1,22 @@
+To ensure your print-on-demand (POD) business can fully leverage all Printify product types—from apparel and accessories to home decor and drinkware—your design files must adhere to Printify's guidelines. These specs are largely consistent across products but can vary by print area, printing method (e.g., DTG, DTF, sublimation), and item size. Always verify exact dimensions and requirements in Printify's Product Creator tool when uploading, as it displays per-product specs and includes a resolution checker/enhancer.
+The key is preparing versatile, high-quality files upfront. Below, I've outlined minimum requirements (to avoid rejection and ensure basic printability across all products) and optimal requirements (for professional, sharp results that scale well). These are derived from Printify's official design standards.
+Minimum Requirements (Universal Compatibility)
+These ensure your designs upload and print without issues on any Printify product:
+File Formats: PNG (preferred for transparency support), JPEG, or SVG. Avoid other formats like GIF or TIFF.
+Color Mode: RGB (sRGB profile). CMYK files are auto-converted to RGB, which may cause color shifts—don't rely on it.
+Resolution/DPI: 150 DPI minimum; details (e.g., text, lines) must be at least 5 pixels wide to prevent blurriness.
+File Size/Dimensions: Match the product's print area (varies widely—e.g., t-shirt front: ~12x16 inches or 3600x4800 pixels at 300 DPI; mug wrap: ~8x3 inches or 2400x900 pixels). Include a 0.25-inch bleed margin where required (e.g., for all-over prints or cut edges).
+Other: No interlacing in PNGs; JPEG quality at 60% minimum (to reduce artifacts). Transparent backgrounds OK in PNG/SVG, but JPEGs don't support them.
+With these, you can cover 100% of Printify's 900+ products, but low-res files may result in fuzzy outputs on complex items like puzzles or large posters.
+Optimal Requirements (Professional Quality Across All Products)
+For vibrant, durable prints that impress customers and minimize returns, aim higher—especially for scalable vectors:
+File Formats: SVG for vectors (ideal for resizing without quality loss; limit to 20MB, convert text/paths, max 20,000 elements—no raster photos). Use PNG for raster designs with transparency; JPEG only for non-transparent, simple graphics.
+Color Mode: Pure RGB (sRGB). Test prints for fabric/material variances—e.g., use white underbases for DTG on dark apparel; avoid heavy gradients to transparency (they fill with white ink).
+Resolution/DPI: 300 DPI or higher. Scale details to 10+ pixels for sharpness on curved surfaces (e.g., mugs) or high-detail items (e.g., posters).
+File Size/Dimensions: Exceed minimums slightly for flexibility—e.g., design at 4500x5400 pixels for apparel fronts (covers most sizes). Always extend to bleed/safe zones: Keep key elements (text/logos) inside the safe area (dotted lines in templates); fill bleeds fully to avoid white edges.
+Other: No compression artifacts (PNG: lossless; JPEG: 80-100% quality). Order samples per product type to check material absorption (e.g., cotton vs. polyester affects ink vibrancy). For multi-print-area products (e.g., hoodies), submit separate files per area.
+Tips for Your POD Business
+Workflow: Require designers to export in these specs and provide templates from Printify's catalog. Use tools like Adobe Illustrator/Photoshop for RGB exports or Canva with custom POD settings (e.g., 300 DPI canvas sized to print areas).
+Variations by Category: Apparel/DTG needs thicker details for ink absorption; sublimation (e.g., polyester items) favors bold colors but may dull blacks; wall art requires exact sizing to avoid cropping.
+Testing: Start with samples from diverse categories to validate—Printify's enhancer helps, but it can't fix fundamentally low-res files.
+By enforcing these in your business (e.g., via designer briefs or upload checklists), you'll maximize product variety without fulfillment hiccups. For product-specific templates, check Printify's catalog directly.

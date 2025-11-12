@@ -274,7 +274,7 @@ export default function ArtistAiStudio() {
                 <Button
                   onClick={() => setLocation("/artist/settings")}
                   size="lg"
-                  className="w-full"
+                  className="w-full min-h-11"
                   data-testid="button-upgrade-to-pro"
                 >
                   <Crown className="mr-2 h-5 w-5" />

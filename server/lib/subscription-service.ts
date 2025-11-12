@@ -111,17 +111,41 @@ export class SubscriptionService {
     artistId: string,
     tier: 'pro' | 'elite',
     email: string,
-    name: string
+    name: string,
+    idempotencyKey: string
   ): Promise<{ subscriptionId: string; clientSecret: string }> {
+    // Require idempotency key from client to ensure retries use same key
+    if (!idempotencyKey || idempotencyKey.trim() === '') {
+      throw new Error('Idempotency key is required for subscription creation');
+    }
+
     const artist = await storage.getArtist(artistId);
     if (!artist) {
       throw new Error('Artist not found');
     }
 
+    // Check for existing subscriptions
     if (artist.stripeSubscriptionId) {
-      const existingSub = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId);
-      if (existingSub.status === 'active') {
+      const existingSub: any = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId, {
+        expand: ['latest_invoice.payment_intent']
+      });
+      
+      // If subscription exists and is active/trialing, prevent duplicate
+      if (['active', 'trialing'].includes(existingSub.status)) {
         throw new Error('Artist already has an active subscription');
+      }
+      
+      // If subscription is incomplete or past_due, return existing payment intent for retry
+      if (['incomplete', 'past_due'].includes(existingSub.status)) {
+        const latestInvoice: any = existingSub.latest_invoice;
+        const paymentIntent: any = latestInvoice?.payment_intent;
+        
+        if (paymentIntent && paymentIntent.client_secret) {
+          return {
+            subscriptionId: existingSub.id,
+            clientSecret: paymentIntent.client_secret
+          };
+        }
       }
     }
 
@@ -129,6 +153,7 @@ export class SubscriptionService {
 
     const priceId = await getOrCreatePriceId(tier);
 
+    // Use client-provided idempotency key to ensure retries are safely deduplicated by Stripe
     const subscription: any = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],
@@ -139,6 +164,8 @@ export class SubscriptionService {
         artistId,
         tier
       }
+    }, {
+      idempotencyKey
     });
 
     const latestInvoice: any = subscription.latest_invoice;
@@ -157,7 +184,12 @@ export class SubscriptionService {
     };
   }
 
-  async upgradeSubscription(artistId: string, newTier: 'pro' | 'elite'): Promise<void> {
+  async upgradeSubscription(artistId: string, newTier: 'pro' | 'elite', idempotencyKey: string): Promise<void> {
+    // Require idempotency key from client to ensure retries use same key
+    if (!idempotencyKey || idempotencyKey.trim() === '') {
+      throw new Error('Idempotency key is required for subscription upgrade');
+    }
+
     const artist = await storage.getArtist(artistId);
     if (!artist) {
       throw new Error('Artist not found');
@@ -171,6 +203,7 @@ export class SubscriptionService {
     
     const priceId = await getOrCreatePriceId(newTier);
 
+    // Use client-provided idempotency key to ensure retries are safely deduplicated by Stripe
     await stripe.subscriptions.update(artist.stripeSubscriptionId, {
       items: [{
         id: subscription.items.data[0].id,
@@ -180,6 +213,8 @@ export class SubscriptionService {
       metadata: {
         tier: newTier
       }
+    }, {
+      idempotencyKey
     });
 
     await storage.updateArtist(artistId, {
@@ -256,7 +291,7 @@ export class SubscriptionService {
       case 'invoice.payment_succeeded': {
         const invoice: any = event.data.object;
         if (invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
+          const subscription: any = await stripe.subscriptions.retrieve(invoice.subscription as string);
           const artistId = subscription.metadata.artistId;
 
           await storage.updateArtist(artistId, {
@@ -308,7 +343,7 @@ export class SubscriptionService {
       };
     }
 
-    const subscription = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId);
+    const subscription: any = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId);
     const tier = subscription.metadata.tier as SubscriptionTier;
     const config = tier === 'pro' ? SUBSCRIPTION_CONFIG.pro : SUBSCRIPTION_CONFIG.elite;
 

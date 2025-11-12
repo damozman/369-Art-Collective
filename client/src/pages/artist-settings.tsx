@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,7 @@ import type { Artist } from "@shared/schema";
 import { Lock, User, Mail, Type, ArrowLeft, LogOut, Image as ImageIcon, Settings as SettingsIcon, AlertTriangle, Crown, Sparkles, Zap, Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { loadStripe } from "@stripe/stripe-js";
+import { nanoid } from "nanoid";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,10 @@ export default function ArtistSettings() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [showCancelSubscriptionDialog, setShowCancelSubscriptionDialog] = useState(false);
+
+  // Store idempotency keys to reuse across retries/double-clicks
+  const createIdempotencyKeyRef = useRef<string | null>(null);
+  const upgradeIdempotencyKeyRef = useRef<string | null>(null);
 
   const { data: user } = useQuery<Artist>({ queryKey: ["/api/auth/me"] });
 
@@ -191,10 +196,17 @@ export default function ArtistSettings() {
 
   const upgradeSubscriptionMutation = useMutation({
     mutationFn: async (tier: "pro" | "elite") => {
+      // Reuse existing idempotency key or generate new one
+      // This ensures retries/double-clicks use the same key
+      if (!upgradeIdempotencyKeyRef.current) {
+        upgradeIdempotencyKeyRef.current = nanoid();
+      }
+      const idempotencyKey = upgradeIdempotencyKeyRef.current;
+      
       const response = await fetch("/api/artists/subscription/upgrade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, idempotencyKey }),
         credentials: "include",
       });
 
@@ -206,6 +218,9 @@ export default function ArtistSettings() {
       return response.json();
     },
     onSuccess: async (data) => {
+      // Clear idempotency key after successful completion
+      upgradeIdempotencyKeyRef.current = null;
+      
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       queryClient.invalidateQueries({ queryKey: ["/api/artists/subscription"] });
       
@@ -251,6 +266,9 @@ export default function ArtistSettings() {
       }
     },
     onError: (error: any) => {
+      // Clear idempotency key on error to allow fresh retry
+      upgradeIdempotencyKeyRef.current = null;
+      
       toast({
         title: "Failed to upgrade subscription",
         description: error.message || "Please try again.",
@@ -306,15 +324,24 @@ export default function ArtistSettings() {
     if (!subscriptionDetails) return;
 
     if (subscriptionDetails.tier === "free") {
+      // Reuse existing idempotency key or generate new one
+      // This ensures retries/double-clicks use the same key
+      if (!createIdempotencyKeyRef.current) {
+        createIdempotencyKeyRef.current = nanoid();
+      }
+      const idempotencyKey = createIdempotencyKeyRef.current;
+      
       const response = await fetch("/api/artists/subscription/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ tier, idempotencyKey }),
         credentials: "include",
       });
 
       if (!response.ok) {
         const error = await response.json();
+        // Clear idempotency key on error to allow fresh retry
+        createIdempotencyKeyRef.current = null;
         toast({
           title: "Failed to create subscription",
           description: error.message || "Please try again.",
@@ -352,11 +379,16 @@ export default function ArtistSettings() {
       });
 
       if (error) {
+        // Clear idempotency key on payment error to allow fresh retry
+        createIdempotencyKeyRef.current = null;
         toast({
           title: "Payment failed",
           description: error.message || "Please try again.",
           variant: "destructive",
         });
+      } else {
+        // Clear idempotency key after successful payment
+        createIdempotencyKeyRef.current = null;
       }
     } else {
       upgradeSubscriptionMutation.mutate(tier);

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
+import { secureLog, safeUserContext } from "../lib/secure-logger";
 
 declare global {
   namespace Express {
@@ -25,37 +26,34 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 export async function requireArtist(req: Request, res: Response, next: NextFunction) {
-  console.log("requireArtist middleware:", {
+  const safeContext = {
     path: req.path,
-    sessionID: req.sessionID,
     hasSession: !!req.session,
     hasUser: !!req.session?.user,
     userType: req.session?.user?.type,
     approved: req.session?.user?.approved,
-    cookies: req.headers.cookie ? "present" : "missing",
-  });
+  };
   
   if (!req.session?.user || req.session.user.type !== "artist") {
-    console.error("Artist access denied:", {
-      path: req.path,
-      sessionData: req.session?.user,
+    secureLog.error("Artist access denied", {
+      ...safeContext,
+      reason: "no_artist_session",
     });
     return res.status(403).json({ message: "Artist access required" });
   }
   
   if (!req.session.user.approved) {
-    console.error("Artist not approved:", {
-      path: req.path,
+    secureLog.error("Artist not approved", {
+      ...safeContext,
+      userId: req.session.user.id,
       approved: req.session.user.approved,
     });
     return res.status(403).json({ message: "Account pending approval" });
   }
   
-  console.log("[requireArtist] Session user ID:", req.session.user.id, "Email:", req.session.user.email);
   try {
     const artist = await storage.getArtist(req.session.user.id);
     if (artist) {
-      console.log("[requireArtist] Artist found in DB, using fresh data");
       req.user = {
         id: artist.id,
         email: artist.email,
@@ -64,31 +62,33 @@ export async function requireArtist(req: Request, res: Response, next: NextFunct
         approved: artist.approved
       };
     } else {
-      console.warn("[requireArtist] Artist lookup failed! Falling back to session data. Session ID:", req.session.user.id);
+      secureLog.warn("Artist lookup failed, using session data", {
+        userId: req.session.user.id,
+      });
       req.user = req.session.user;
     }
     next();
   } catch (error) {
-    console.error("[requireArtist] Error loading artist:", error);
+    secureLog.error("Error loading artist from database", error as Error, {
+      userId: req.session.user.id,
+    });
     req.user = req.session.user;
     next();
   }
 }
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  console.log("requireAdmin middleware:", {
+  const safeContext = {
     path: req.path,
-    sessionID: req.sessionID,
     hasSession: !!req.session,
     hasUser: !!req.session?.user,
     userType: req.session?.user?.type,
-    cookies: req.headers.cookie ? "present" : "missing",
-  });
+  };
   
   if (!req.session?.user || req.session.user.type !== "admin") {
-    console.error("Admin access denied:", {
-      path: req.path,
-      sessionData: req.session?.user,
+    secureLog.error("Admin access denied", {
+      ...safeContext,
+      reason: "no_admin_session",
     });
     return res.status(403).json({ message: "Admin access required" });
   }

@@ -2,80 +2,48 @@
 
 ## Overview
 3six9 Media Masters LLC operates two creator-focused platforms:
-- **247 Print Network (POD Marketplace):** An artist-powered print-on-demand marketplace integrating with Printify for automated fulfillment. Artists upload artwork, which is converted into POD products, earning tiered royalties (30-45%). The platform emphasizes creator-driven marketing and recruitment with automated royalty payouts and intelligent featured artist rotation.
-- **247 CreatorStack (Digital Products & AI Tools):** A digital product platform offering AI-powered kits and tools for solopreneurs. These kits, such as "Social Media Blitz," combine Canva templates with AI prompt libraries (e.g., GPT-4o powered caption generators) to automate content creation and audience growth. The business model includes one-time kit purchases and a planned monthly "Pro Membership." The goal is to provide quick, actionable solutions for time-strapped entrepreneurs.
+- **247 Print Network (POD Marketplace):** An artist-powered print-on-demand marketplace integrated with Printify, offering automated fulfillment and tiered royalties (30-45%). It focuses on creator-driven marketing, recruitment, and intelligent featured artist rotation.
+- **247 CreatorStack (Digital Products & AI Tools):** A digital product platform providing AI-powered kits (e.g., "Social Media Blitz") for solopreneurs, combining Canva templates with AI prompt libraries (GPT-4o) to automate content creation. It offers one-time kit purchases and a planned "Pro Membership."
 
-The project aims to achieve $5K/month recurring revenue through multiple kits and memberships, leveraging an ultra-lean tech stack.
+The project aims for $5K/month recurring revenue through multiple kits and memberships, utilizing an ultra-lean tech stack.
 
 ## User Preferences
 I want the agent to adopt an iterative development approach, focusing on delivering functional components incrementally. When making significant changes or architectural decisions, please ask for my approval first. I prefer clear, concise explanations and expect the agent to maintain a high standard of code quality, adhering to the established tech stack and design patterns.
 
 ## System Architecture
-The system employs a client-server architecture with distinct frontend and backend components, designed for scalability and maintainability.
+The system uses a scalable client-server architecture with distinct frontend and backend components.
 
 **UI/UX:**
-- **Frontend Technologies:** React, TypeScript, Wouter for routing, TanStack Query for data fetching, React Hook Form, Tailwind CSS, and Shadcn UI.
-- **Artist & Admin Interfaces:** Dedicated workflows for artists (artwork upload wizard, AI Art Studio with DALL-E 3, credit system) and administrators (enhanced dashboards for management, search, filtering, bulk operations).
-- **CreatorStack Buyer Interface:** Public landing page (`/creatorstack`), secure authentication (`/creatorstack/login`), and a buyer dashboard (`/creatorstack/dashboard`) for accessing purchased kits and AI tools.
-- **Shopify Storefront:** Custom `247-art.css` with a Displate-inspired aesthetic, featuring artist spotlights, interactive product selectors, multi-image galleries, and mobile responsiveness. Automated deployment and navigation setup via scripts.
-- **Influencer Affiliate Program:** Public application, tiered commissions (20-40%), global `?ref=` link tracking with 30-day cookie attribution, and an influencer dashboard displaying metrics and tier progress. Includes a gamification system with achievements, a leaderboard, and an activity feed.
-- **Customer-Facing Pages:** Displate-inspired pages including About Us, Meet the Creators (artist directory), Artist Profile Pages, Contact Us, FAQs, Join the Creatorverse (artist recruitment), and optimized product pages.
-- **Merch Cross-Sell System:** Strategic promotion of merchandise on product pages and homepage, maintaining an art-first positioning with "Coming Soon" features.
+- **Frontend Technologies:** React, TypeScript, Wouter, TanStack Query, React Hook Form, Tailwind CSS, and Shadcn UI.
+- **Interfaces:** Dedicated workflows for artists (artwork upload, AI Art Studio), administrators (enhanced dashboards), and CreatorStack buyers (secure access to purchased kits and AI tools).
+- **Shopify Storefront:** Custom `247-art.css` with a Displate-inspired aesthetic, featuring artist spotlights, interactive product selectors, and mobile responsiveness.
+- **Influencer Affiliate Program:** Public application, tiered commissions (20-40%), global `?ref=` tracking with 30-day cookie attribution, and an influencer dashboard with gamification.
+- **Customer-Facing Pages:** Displate-inspired About Us, Meet the Creators, Artist Profile Pages, Contact Us, FAQs, and optimized product pages.
 
 **Technical Implementations:**
 - **Backend Framework:** Node.js.
 - **Database:** PostgreSQL (Neon-powered) with Drizzle ORM.
-- **Authentication:** Session-based with HTTP-only cookies, bcrypt hashing, CSRF protection, and separated login architectures for different user types.
-- **API Endpoints:** Comprehensive RESTful APIs for platform operations, including `/api/creatorstack/*` for buyer authentication, purchases, and AI generation.
-- **AI Generation System:** Integration with OpenAI DALL-E 3 (for Print Network) and GPT-4o (for CreatorStack) via Replit AI Integrations. Features include a dual-balance credit system, image storage, retry logic, token usage tracking, and API routes for credit management.
-- **Shopify Integration:** Automated product creation, order capture via HMAC-verified webhooks (including idempotency for purchases), enriched product creation, and automated theme/navigation deployment. Full navigation system with responsive header/footer sections featuring desktop dropdown menus and mobile hamburger drawer with accordion-style submenus. Navigation script uses GraphQL for collections (REST deprecated in 2025-01), automatically verifies/updates page templates, and maintains proper Shopify resource IDs for all menu items. Custom list-collections template displays only curated collections (Featured, New Arrivals, Metal/Canvas/Poster/Framed Prints) instead of all 179+ auto-generated collections. **Product Structure:** All 88 products now offer 16 variants (4 sizes × 4 finishes) aligned with Printify's actual catalog: Posters (Paper finish), Canvas Prints, Framed Prints, and Metal Prints. SKU format: `ART-{artistInitials}-{artworkUUID}-{size}-{finish}`. Smart Collections auto-populate via finish tags for seamless catalog organization.
-- **Printify Integration:** Automated Print-on-Demand product creation aligned with 4 wall art product types: Posters (Blueprint 852), Canvas (Blueprint 555), Framed Prints (Blueprint 492), and Metal Signs (Blueprint 1206). Products maintain proper weights (0.25-7.0 lb) and pricing ($19-209) for accurate shipping and fulfillment.
-- **Stripe Connect:** For automated artist royalty payouts.
-- **Email Notifications:** Resend integration for transactional emails with professional templates, delivery logging, and non-blocking sends.
-- **Artwork Management:** Automated archiving of inactive artworks, product type assignment with smart tagging.
-- **Royalty System:** Dual-tier royalty structure combining performance and subscription tiers using Math.max logic. Performance tiers: Tier 1 ($0-999) = 30%, Tier 2 ($1K-5K) = 35%, Tier 3 ($5K-10K) = 40%, Tier 4 ($10K+) = 45%. Subscription tiers: Free = 30%, Pro = 35% minimum, Elite = 45% guaranteed. Artists receive whichever percentage is higher between their performance and subscription tier. Referral bonuses (+5%) and recruitment bonuses (5% of recruited artist's royalties) apply on top.
-- **Artist Subscription Tiers:** Three-tier monetization system with recurring billing via Stripe. Free ($0/mo, 30% royalty, 20 artwork limit), Pro ($15-20/mo, 35% minimum royalty, unlimited uploads, AI Art Studio access, homepage featured eligibility), Elite ($40-50/mo, 45% guaranteed royalty, unlimited uploads, full AI tools, profile customization, guaranteed homepage featured placement). Database tracks subscriptionTier, stripeCustomerId, stripeSubscriptionId, subscriptionStatus, subscriptionPeriodEnd, isFeaturedEligible, featuredPriority (0-100), and featuredPinnedUntil.
-  - **Free Trial System:** Industry-leading trial conversion strategy with tier-specific durations (Pro: 14 days, Elite: 7 days) to validate sustainable artist royalties through subscription MRR
-    - **Trial Lifecycle Management:** subscription_trials table tracks status (active/converted/canceled/expired), trial start/end dates, conversion timestamps, and activation source (signup/settings/ai-studio/dashboard)
-    - **Stripe Webhook Automation:** trial_will_end event triggers 3-day pre-expiry emails; subscription.updated handler tracks trial→paid conversions and auto-downgrades expired trials to Free tier
-    - **Strategic Email Funnel:** Four automated trial emails drive 25% conversion target: (1) Day 3 check-in with usage stats, (2) Pre-expiry warning 3 days before end, (3) Last chance urgency on final day, (4) Post-trial re-engagement for churned trials
-    - **Unified Trial UI:** useSubscriptionStatus hook provides centralized trial logic; trial CTAs replace direct subscription buttons; countdown badges on dashboard/AI Studio show days remaining; loading states prevent UI flashing
-    - **Trial Analytics Dashboard:** Admin metrics track trial start rate, trial→paid conversion %, MRR impact by tier, conversion funnel (Free→Trial→Paid), and source-level performance breakdowns with time range filtering (7d/30d/90d/all)
-  - **Production-Ready Features:** 
-    - Database optimization: Unique indexes on stripeCustomerId/stripeSubscriptionId, regular indexes on tier/status for high-volume lookups, composite index on tier+converted for trial analytics
-    - Rate limiting: 10 mutations/hour, 100 reads/15min per IP to prevent abuse
-    - Idempotency: Client-side key generation with useRef, reused across retries, Stripe 24-hour deduplication, email idempotency via subscriptionId/invoiceId metadata
-    - Type safety: Proper Stripe types (Subscription, Invoice, PaymentIntent) with runtime guards, no `any` casts, TrialAnalyticsData interface for frontend
-    - Error logging: Structured [SUCCESS]/[ERROR]/[WARN] format with context (artistId, email, tier, duration), stack traces preserved, trial webhook events logged
-    - Route ordering: Subscription routes before parameterized routes to prevent conflicts (backend: line 667 vs 800+, frontend: line 252)
-    - Secure logout: Backend destroys session + clears cookie, frontend calls API endpoint before navigation
-    - Automated featured artist rotation: Tier changes automatically update featured eligibility and priority via Stripe webhooks
-- **Featured Artist System (Hybrid Performance + Fair Rotation):** Intelligent homepage placement using dual-slot system balancing meritocracy with fairness:
-  - **Performance Slots (1-2):** Top earners by tier + monthly sales (rewards high performers, creates competition)
-  - **Rotation Slots (3-4):** Fair distribution among all eligible artists via `lastFeaturedAt` tracking (ensures all paying members get exposure)
-  - **Tier-Based Eligibility:** Elite members auto-eligible (priority 100), Pro members eligible (priority 50), Free tier requires manual admin approval (priority 0-25)
-  - **Value Proposition:** Elite/Pro artists get guaranteed rotation time + top performers get constant visibility
-  - **Rotation Tracking:** `lastFeaturedAt` timestamp ensures artists who haven't been featured recently get priority in rotation slots
-  - **Admin Controls:** Manual pinning capability (`featuredPinnedUntil`) for campaigns/promotions
-  - **API Integration:** GET /api/featured-artists returns hybrid-sorted artists for Shopify theme, automatically updates rotation timestamps
-  - **Automation:** Stripe subscription webhooks automatically update featured eligibility on tier changes
-  - **Testing:** Comprehensive test script (scripts/test-hybrid-rotation.ts) validates performance + rotation logic
-- **Security:** HMAC verification for webhooks, rate limiting, audit logging, soft-delete for accounts, and production-hardened authentication with proper session destruction. Secure logging with sensitive data sanitization (session IDs, API keys, Stripe objects).
-- **Analytics & Reporting:** Artist dashboard with KPIs, earnings, and progress; Admin dashboard for revenue and network growth.
-- **Email System:** Comprehensive email templates with shared layout system (15 templates total). **Strategic Tier Education Sequence:** Four-email funnel drives Free → Pro → Elite conversions with cohesive hybrid rotation messaging:
-  - **Welcome Email:** Light tier teaser (Free/Pro/Elite overview) sets expectations without overwhelming new artists
-  - **Portfolio Approval Email:** High-conversion moment featuring Free tier 20-artwork limit warning, Pro upgrade CTA with AI Studio hook, hybrid rotation teaser, and full tier comparison table
-  - **Subscription Confirmation Email:** Tier-specific benefits reinforcement with detailed hybrid rotation mechanics (2 performance + 2 rotation slots), Pro vs Elite differentiation, and Elite upsell for Pro members
-  - **Tier Explainer Email (NEW):** Comprehensive 5-section deep dive sent 24h post-approval: (1) Executive summary with ROI framing, (2) Complete tier comparison table, (3) Hybrid rotation walkthrough with expandable FAQ, (4) AI Studio use-case carousel (seasonal variations, style exploration, catalog scaling, creative jumpstart), (5) Consultative upgrade pathways with Pro trial + Elite consultation CTAs
-  - **Additional Templates:** Payment failed, payout notification, artwork approval/rejection, archive warnings, influencer program, buyer purchase confirmation
-  - **Technical Implementation:** All emails logged to `email_logs` table with metadata for audit trails. Idempotency guards prevent duplicate sends on webhook retries by checking `subscriptionId` and `invoiceId` metadata. Shared layout system ensures consistent branding. Test IDs on all CTAs for conversion tracking.
-- **Production Readiness:** Health check endpoint (`/api/health`) validates all 6 integrations (Database, Stripe, Shopify, Printify, OpenAI, Email). Comprehensive deployment runbook (`DEPLOYMENT.md`) with integration setup instructions, troubleshooting guides, and rollback procedures. Environment configuration documented in `.env.example`.
+- **Authentication:** Session-based with HTTP-only cookies, bcrypt hashing, and CSRF protection.
+- **API Endpoints:** Comprehensive RESTful APIs, including `/api/creatorstack/*` for buyer operations and AI generation.
+- **AI Generation System:** Integration with OpenAI DALL-E 3 (for Print Network) and GPT-4o (for CreatorStack) via Replit AI Integrations, featuring a dual-balance credit system and token usage tracking.
+- **Shopify Integration:** Automated product creation, order capture via HMAC-verified webhooks, and automated theme/navigation deployment (using GraphQL for collections). Product structure supports 16 variants per artwork, with smart collections for organization.
+- **Printify Integration:** Automated Print-on-Demand product creation aligned with 4 wall art types (Posters, Canvas, Framed Prints, Metal Signs) with proper weights and pricing.
+- **Stripe Connect:** For automated artist royalty payouts and subscription management.
+- **Email Notifications:** Resend integration for transactional emails with professional templates and delivery logging.
+- **Artwork Management:** Automated archiving and smart tagging for product type assignment.
+- **Royalty System:** Dual-tier structure combining performance (30-45%) and subscription tiers, with referral and recruitment bonuses.
+- **Artist Subscription Tiers:** Three tiers (Free, Pro, Elite) with recurring billing via Stripe. Includes a comprehensive free trial system with lifecycle management, Stripe webhook automation, a strategic email funnel, and a unified trial UI. Production-ready features include database optimization, rate limiting, idempotency, type safety, error logging, and secure logout.
+- **Featured Artist System:** Hybrid performance and fair rotation logic for homepage placement, balancing top earners with equitable exposure for all eligible artists, managed via Stripe webhooks.
+- **Security:** HMAC verification, rate limiting, audit logging, soft-delete, and production-hardened authentication.
+- **Email System:** Comprehensive templates with a shared layout system, including a strategic email sequence to drive Free → Pro → Elite conversions.
+- **Production Readiness:** Health check endpoint (`/api/health`) for 6 key integrations, and a detailed deployment runbook.
+- **Mobile Accessibility:** WCAG 2.1 Level AAA compliance with 44px minimum touch targets across all interactive elements via foundational component library updates (e.g., buttons, inputs, select, checkbox, sidebar components, and links).
 
 ## External Dependencies
 - **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered).
-- **OpenAI API:** DALL-E 3 for AI image generation (via Replit AI Integrations) and GPT-4o for content generation (via Replit AI Integrations).
-- **Printify API:** For Print-on-Demand product creation and fulfillment.
-- **Shopify Admin API:** For storefront product management, order capture, and theme/navigation automation.
-- **Stripe Connect:** For automated artist payouts and subscription management.
-- **Resend:** For transactional email notifications.
-- **Node.js:** Backend runtime environment.
+- **OpenAI API:** DALL-E 3 and GPT-4o (via Replit AI Integrations).
+- **Printify API:** For Print-on-Demand fulfillment.
+- **Shopify Admin API:** For storefront management.
+- **Stripe Connect:** For payments and subscriptions.
+- **Resend:** For transactional email services.
+- **Node.js:** Backend runtime.

@@ -173,22 +173,12 @@ const MAIN_MENU = {
   items: [
     { title: 'Home', resource_type: 'frontpage', url: '/' },
     {
-      title: 'Shop',
+      title: 'Browse Art',
       url: '#',
       children: [
         { title: 'All Artwork', url: '/collections' },
         { title: 'New Arrivals', resource_type: 'collection', handle: 'new-arrivals' },
         { title: 'Featured', resource_type: 'collection', handle: 'featured' },
-      ],
-    },
-    {
-      title: 'Print Options',
-      url: '#',
-      children: [
-        { title: 'Metal Prints', resource_type: 'collection', handle: 'finish-metal' },
-        { title: 'Canvas Prints', resource_type: 'collection', handle: 'finish-canvas' },
-        { title: 'Posters', resource_type: 'collection', handle: 'finish-paper' },
-        { title: 'Framed Prints', resource_type: 'collection', handle: 'finish-framed' },
       ],
     },
     {
@@ -216,8 +206,6 @@ const FOOTER_MENU = {
         { title: 'All Artwork', url: '/collections' },
         { title: 'New Arrivals', resource_type: 'collection', handle: 'new-arrivals' },
         { title: 'Featured', resource_type: 'collection', handle: 'featured' },
-        { title: 'Metal Prints', resource_type: 'collection', handle: 'finish-metal' },
-        { title: 'Canvas Prints', resource_type: 'collection', handle: 'finish-canvas' },
       ],
     },
     {

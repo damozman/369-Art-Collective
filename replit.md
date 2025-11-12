@@ -35,7 +35,15 @@ The system employs a client-server architecture with distinct frontend and backe
 - **Artwork Management:** Automated archiving of inactive artworks, product type assignment with smart tagging.
 - **Royalty System:** Dual-tier royalty structure combining performance and subscription tiers using Math.max logic. Performance tiers: Tier 1 ($0-999) = 30%, Tier 2 ($1K-5K) = 35%, Tier 3 ($5K-10K) = 40%, Tier 4 ($10K+) = 45%. Subscription tiers: Free = 30%, Pro = 35% minimum, Elite = 45% guaranteed. Artists receive whichever percentage is higher between their performance and subscription tier. Referral bonuses (+5%) and recruitment bonuses (5% of recruited artist's royalties) apply on top.
 - **Artist Subscription Tiers:** Three-tier monetization system with recurring billing via Stripe. Free ($0/mo, 30% royalty, 20 artwork limit), Pro ($15-20/mo, 35% minimum royalty, unlimited uploads, AI Art Studio access), Elite ($40-50/mo, 45% guaranteed royalty, unlimited uploads, full AI tools, profile customization). Database tracks subscriptionTier, stripeCustomerId, stripeSubscriptionId, subscriptionStatus, and subscriptionPeriodEnd.
-- **Security:** HMAC verification for webhooks, rate limiting, audit logging, and soft-delete for accounts.
+  - **Production-Ready Features:** 
+    - Database optimization: Unique indexes on stripeCustomerId/stripeSubscriptionId, regular indexes on tier/status for high-volume lookups
+    - Rate limiting: 10 mutations/hour, 100 reads/15min per IP to prevent abuse
+    - Idempotency: Client-side key generation with useRef, reused across retries, Stripe 24-hour deduplication
+    - Type safety: Proper Stripe types (Subscription, Invoice, PaymentIntent) with runtime guards, no `any` casts
+    - Error logging: Structured [SUCCESS]/[ERROR]/[WARN] format with context (artistId, email, tier, duration), stack traces preserved
+    - Route ordering: Subscription routes before parameterized routes to prevent conflicts (backend: line 667 vs 800+, frontend: line 252)
+    - Secure logout: Backend destroys session + clears cookie, frontend calls API endpoint before navigation
+- **Security:** HMAC verification for webhooks, rate limiting, audit logging, soft-delete for accounts, and production-hardened authentication with proper session destruction.
 - **Analytics & Reporting:** Artist dashboard with KPIs, earnings, and progress; Admin dashboard for revenue and network growth.
 
 ## External Dependencies

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Sparkles, Zap, Clock, ImageIcon, Download, Loader2, ShoppingCart } from "lucide-react";
+import { Sparkles, Zap, Clock, ImageIcon, Download, Loader2, ShoppingCart, Lock, Crown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/lib/auth-context";
 
 interface AiCredits {
   freeCreditsRemaining: number;
@@ -39,11 +41,30 @@ interface GenerationResult {
   status: string;
 }
 
+interface SubscriptionData {
+  tier: "free" | "pro" | "elite";
+  status: "active" | "canceled" | "past_due";
+  currentPeriodEnd: string | null;
+}
+
 export default function ArtistAiStudio() {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [prompt, setPrompt] = useState("");
   const [size, setSize] = useState<"1024x1024" | "512x512" | "256x256">("1024x1024");
   const [currentGeneration, setCurrentGeneration] = useState<GenerationResult | null>(null);
+
+  // Fetch subscription data
+  const { 
+    data: subscription, 
+    isLoading: subscriptionLoading,
+    isError: subscriptionError,
+    error: subscriptionErrorData
+  } = useQuery<SubscriptionData>({
+    queryKey: ["/api/artists/subscription"],
+    retry: 1,
+  });
 
   // Fetch AI credits
   const { 
@@ -125,6 +146,118 @@ export default function ArtistAiStudio() {
   // Show "buy credits" CTA only when API succeeds and reports 0 credits
   const showBuyCredits = !creditsError && totalCredits === 0;
 
+  // Check subscription tier access
+  const isPro = subscription?.tier === "pro";
+  const isElite = subscription?.tier === "elite";
+  const isFree = subscription?.tier === "free";
+  // If subscription query errors, allow access (don't lock out paying users)
+  // Only restrict if we successfully determined the user is on Free tier
+  const hasAccess = subscriptionError || isPro || isElite;
+
+  // Show loading state while checking subscription
+  if (subscriptionLoading) {
+    return (
+      <div className="p-6 space-y-6" data-testid="page-ai-studio">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <h1 className="text-3xl font-bold">AI Art Studio</h1>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="py-12">
+            <div className="flex justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show upgrade prompt ONLY for confirmed Free tier users (not for errors)
+  if (!hasAccess && isFree) {
+    return (
+      <div className="p-6 space-y-6" data-testid="page-ai-studio">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <h1 className="text-3xl font-bold" data-testid="text-page-title">AI Art Studio</h1>
+          </div>
+          <p className="text-muted-foreground" data-testid="text-page-description">
+            Generate unique artwork using AI. Perfect for creating original designs or exploring creative ideas.
+          </p>
+        </div>
+
+        <Card data-testid="card-upgrade-prompt">
+          <CardContent className="py-12">
+            <div className="max-w-md mx-auto text-center space-y-6">
+              <div className="flex justify-center">
+                <div className="rounded-full bg-primary/10 p-4">
+                  <Lock className="h-12 w-12 text-primary" />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold" data-testid="text-upgrade-title">
+                  Pro Feature: AI Art Studio
+                </h2>
+                <p className="text-muted-foreground" data-testid="text-upgrade-description">
+                  Unlock AI-powered artwork generation with a Pro or Elite subscription. Create unlimited unique designs using DALL-E 3 technology.
+                </p>
+              </div>
+
+              <div className="space-y-3 pt-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-left space-y-1 p-4 rounded-lg border">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Crown className="h-4 w-4" />
+                      <p className="font-semibold">Pro Tier</p>
+                    </div>
+                    <p className="text-2xl font-bold">$15<span className="text-sm text-muted-foreground">/mo</span></p>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>• AI Art Studio access</li>
+                      <li>• 35% minimum royalty</li>
+                      <li>• Unlimited uploads</li>
+                    </ul>
+                  </div>
+
+                  <div className="text-left space-y-1 p-4 rounded-lg border border-primary">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Crown className="h-4 w-4" />
+                      <p className="font-semibold">Elite Tier</p>
+                    </div>
+                    <p className="text-2xl font-bold">$40<span className="text-sm text-muted-foreground">/mo</span></p>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>• AI Art Studio access</li>
+                      <li>• 45% guaranteed royalty</li>
+                      <li>• Full customization</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => setLocation("/artist/settings")}
+                  size="lg"
+                  className="w-full"
+                  data-testid="button-upgrade-to-pro"
+                >
+                  <Crown className="mr-2 h-5 w-5" />
+                  Upgrade to Unlock AI Studio
+                </Button>
+                
+                <p className="text-xs text-muted-foreground">
+                  You can upgrade or downgrade your subscription at any time
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Pro/Elite users see the full AI Studio
   return (
     <div className="p-6 space-y-6" data-testid="page-ai-studio">
       {/* Header */}
@@ -132,6 +265,8 @@ export default function ArtistAiStudio() {
         <div className="flex items-center gap-2">
           <Sparkles className="h-6 w-6 text-primary" />
           <h1 className="text-3xl font-bold" data-testid="text-page-title">AI Art Studio</h1>
+          {isElite && <Badge variant="default" data-testid="badge-elite">Elite Access</Badge>}
+          {isPro && <Badge variant="secondary" data-testid="badge-pro">Pro Access</Badge>}
         </div>
         <p className="text-muted-foreground" data-testid="text-page-description">
           Generate unique artwork using AI. Perfect for creating original designs or exploring creative ideas.

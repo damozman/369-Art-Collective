@@ -20,8 +20,12 @@
  *   SHOPIFY_ACCESS_TOKEN - Your Shopify Admin API token
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const shopifyStoreUrl = process.env.SHOPIFY_STORE_URL;
 const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;

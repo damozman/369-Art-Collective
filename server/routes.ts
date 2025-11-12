@@ -98,6 +98,32 @@ const loginLimiter = rateLimit({
   },
 });
 
+// Subscription operation rate limiter (payment operations require strict limits)
+const subscriptionMutationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour window
+  max: 10, // Max 10 subscription changes per hour per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: "Too many subscription requests. Please try again in an hour.",
+    });
+  },
+});
+
+// Subscription read rate limiter (more lenient for fetching data)
+const subscriptionReadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Max 100 reads per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: "Too many requests. Please try again later.",
+    });
+  },
+});
+
 // Helper function to convert relative image URLs to absolute URLs
 function toAbsoluteUrl(imageUrl: string, req?: Request): string {
   // Guard against null/undefined
@@ -1456,7 +1482,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== SUBSCRIPTION ROUTES =====
 
   // Get current subscription details
-  app.get("/api/artists/subscription", requireArtist, async (req, res) => {
+  app.get("/api/artists/subscription", subscriptionReadLimiter, requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
       console.log("[Subscription] Fetching details for artist:", artist.id, artist.email);
@@ -1470,7 +1496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new subscription (Pro or Elite)
-  app.post("/api/artists/subscription/create", requireArtist, async (req, res) => {
+  app.post("/api/artists/subscription/create", subscriptionMutationLimiter, requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
       const { tier } = req.body;
@@ -1494,7 +1520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upgrade subscription to higher tier
-  app.post("/api/artists/subscription/upgrade", requireArtist, async (req, res) => {
+  app.post("/api/artists/subscription/upgrade", subscriptionMutationLimiter, requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
       const { tier } = req.body;
@@ -1512,7 +1538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Cancel subscription (at end of billing period)
-  app.post("/api/artists/subscription/cancel", requireArtist, async (req, res) => {
+  app.post("/api/artists/subscription/cancel", subscriptionMutationLimiter, requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
       await subscriptionService.cancelSubscription(artist.id);
@@ -1524,7 +1550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reactivate canceled subscription
-  app.post("/api/artists/subscription/reactivate", requireArtist, async (req, res) => {
+  app.post("/api/artists/subscription/reactivate", subscriptionMutationLimiter, requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
       await subscriptionService.reactivateSubscription(artist.id);

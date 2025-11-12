@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, TrendingUp, Users, Package, Calculator, Target } from "lucide-react";
+import { DollarSign, TrendingUp, Users, Package, Calculator, Target, UserCheck, XCircle, Clock } from "lucide-react";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import { Badge } from "@/components/ui/badge";
 
 export default function AdminFinancialDashboard() {
   // Fetch revenue metrics
@@ -39,6 +40,7 @@ export default function AdminFinancialDashboard() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList data-testid="tabs-financial">
           <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
+          <TabsTrigger value="trials" data-testid="tab-trials">Trial Analytics</TabsTrigger>
           <TabsTrigger value="pricing" data-testid="tab-pricing">Pricing Strategy</TabsTrigger>
           <TabsTrigger value="breakeven" data-testid="tab-breakeven">Artist Break-Even</TabsTrigger>
           <TabsTrigger value="margins" data-testid="tab-margins">Margin Calculator</TabsTrigger>
@@ -48,6 +50,11 @@ export default function AdminFinancialDashboard() {
         <TabsContent value="overview" className="space-y-4">
           <RevenueOverview data={revenueData} isLoading={revenueLoading} />
           <PrintifyCostsOverview data={printifyCosts} isLoading={costsLoading} />
+        </TabsContent>
+
+        {/* TRIAL ANALYTICS TAB */}
+        <TabsContent value="trials" className="space-y-4">
+          <TrialAnalytics />
         </TabsContent>
 
         {/* PRICING STRATEGY TAB */}
@@ -715,5 +722,282 @@ function MarginCalculator() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ============================================
+// TRIAL ANALYTICS COMPONENT  
+// ============================================
+
+interface TrialAnalyticsData {
+  summary: {
+    totalTrialsStarted: number;
+    totalConverted: number;
+    totalCanceled: number;
+    totalExpired: number;
+    conversionRate: number;
+    trialGeneratedMRR: number;
+    proTrials: number;
+    eliteTrials: number;
+    proConversions: number;
+    eliteConversions: number;
+    proConversionRate: number;
+    eliteConversionRate: number;
+  };
+  funnel: {
+    totalArtists: number;
+    freeArtists: number;
+    trialStarters: number;
+    converted: number;
+    freeToTrialRate: number;
+    trialToConversionRate: number;
+  };
+  breakdowns: {
+    tier: string;
+    source: string;
+    count: number;
+    converted: number;
+    conversionRate: number;
+  }[];
+}
+
+function TrialAnalytics() {
+  const [range, setRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  
+  const { data, isLoading } = useQuery<TrialAnalyticsData>({
+    queryKey: ['/api/admin/analytics/trials', { range }],
+  });
+
+  if (isLoading) {
+    return <Card><CardContent className="p-6">Loading trial analytics...</CardContent></Card>;
+  }
+
+  if (!data) {
+    return <Card><CardContent className="p-6">No trial data available</CardContent></Card>;
+  }
+
+  const { summary, funnel, breakdowns } = data;
+
+  return (
+    <>
+      {/* Time Range Selector */}
+      <Card data-testid="card-range-selector">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-4">
+            <Label htmlFor="range-select">Time Range:</Label>
+            <Select value={range} onValueChange={(value) => setRange(value as any)}>
+              <SelectTrigger id="range-select" className="w-[180px]" data-testid="select-time-range">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d" data-testid="option-7d">Last 7 Days</SelectItem>
+                <SelectItem value="30d" data-testid="option-30d">Last 30 Days</SelectItem>
+                <SelectItem value="90d" data-testid="option-90d">Last 90 Days</SelectItem>
+                <SelectItem value="all" data-testid="option-all">All Time</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Metrics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card data-testid="card-trials-started">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Trials Started</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="value-trials-started">
+              {summary.totalTrialsStarted}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {summary.proTrials} Pro, {summary.eliteTrials} Elite
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-conversion-rate">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="value-conversion-rate">
+              {summary.conversionRate.toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {summary.totalConverted} of {summary.totalTrialsStarted} converted
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-trial-mrr">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Trial-Generated MRR</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="value-trial-mrr">
+              ${summary.trialGeneratedMRR.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              From converted trials
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-active-trials">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Churned Trials</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="value-churned-trials">
+              {summary.totalCanceled + summary.totalExpired}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {summary.totalCanceled} canceled, {summary.totalExpired} expired
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tier Performance Breakdown */}
+      <Card data-testid="card-tier-breakdown">
+        <CardHeader>
+          <CardTitle>Pro vs Elite Performance</CardTitle>
+          <CardDescription>Trial conversion rates by subscription tier</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Pro Tier (14-day trial)</span>
+                  <Badge variant="outline" data-testid="badge-pro-tier">Pro</Badge>
+                </div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="value-pro-conversion">
+                  {summary.proConversionRate.toFixed(1)}%
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {summary.proConversions} conversions from {summary.proTrials} trials
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  MRR Impact: ${(summary.proConversions * 15).toFixed(2)}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Elite Tier (7-day trial)</span>
+                  <Badge variant="outline" data-testid="badge-elite-tier">Elite</Badge>
+                </div>
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400" data-testid="value-elite-conversion">
+                  {summary.eliteConversionRate.toFixed(1)}%
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {summary.eliteConversions} conversions from {summary.eliteTrials} trials
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  MRR Impact: ${(summary.eliteConversions * 40).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Conversion Funnel */}
+      <Card data-testid="card-conversion-funnel">
+        <CardHeader>
+          <CardTitle>Trial Conversion Funnel</CardTitle>
+          <CardDescription>User journey from Free tier to paid subscription</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="text-center space-y-2">
+                <div className="text-sm text-muted-foreground">Total Artists</div>
+                <div className="text-2xl font-bold" data-testid="value-total-artists">{funnel.totalArtists}</div>
+                <div className="text-xs text-muted-foreground">Approved accounts</div>
+              </div>
+
+              <div className="text-center space-y-2">
+                <div className="text-sm text-muted-foreground">Free Tier</div>
+                <div className="text-2xl font-bold" data-testid="value-free-artists">{funnel.freeArtists}</div>
+                <div className="text-xs text-muted-foreground">
+                  {((funnel.freeArtists / funnel.totalArtists) * 100).toFixed(1)}% of total
+                </div>
+              </div>
+
+              <div className="text-center space-y-2">
+                <div className="text-sm text-muted-foreground">Trial Starters</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400" data-testid="value-trial-starters">
+                  {funnel.trialStarters}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {funnel.freeToTrialRate.toFixed(1)}% of free users
+                </div>
+              </div>
+
+              <div className="text-center space-y-2">
+                <div className="text-sm text-muted-foreground">Converted</div>
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400" data-testid="value-converted">
+                  {funnel.converted}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {funnel.trialToConversionRate.toFixed(1)}% of trials
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Trial Source Breakdown */}
+      <Card data-testid="card-source-breakdown">
+        <CardHeader>
+          <CardTitle>Trial Sources & Conversion</CardTitle>
+          <CardDescription>Performance by trial activation source</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {breakdowns.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No trial source data available</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-3" data-testid="header-tier">Tier</th>
+                    <th className="text-left py-2 px-3" data-testid="header-source">Source</th>
+                    <th className="text-right py-2 px-3" data-testid="header-trials">Trials</th>
+                    <th className="text-right py-2 px-3" data-testid="header-converted">Converted</th>
+                    <th className="text-right py-2 px-3" data-testid="header-rate">Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {breakdowns.map((row: any, index: number) => (
+                    <tr key={index} className="border-b" data-testid={`row-breakdown-${index}`}>
+                      <td className="py-2 px-3">
+                        <Badge variant={row.tier === 'pro' ? 'outline' : 'secondary'}>
+                          {row.tier}
+                        </Badge>
+                      </td>
+                      <td className="py-2 px-3 text-muted-foreground">{row.source}</td>
+                      <td className="text-right py-2 px-3">{row.count}</td>
+                      <td className="text-right py-2 px-3">{row.converted}</td>
+                      <td className="text-right py-2 px-3 font-medium">
+                        {row.conversionRate.toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 }

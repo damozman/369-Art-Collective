@@ -2057,10 +2057,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ===== ARTWORK ROUTES =====
 
   // Upload file (requires artist auth)
-  app.post("/api/upload", requireArtist, upload.single("file"), (req, res) => {
+  app.post("/api/upload", requireArtist, upload.single("file"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      // Check upload limits before accepting file
+      const artist = await storage.getArtistById(req.user!.id);
+      if (!artist) {
+        // Clean up uploaded file
+        fs.unlinkSync(path.join(uploadDir, req.file.filename));
+        return res.status(404).json({ error: "Artist not found" });
+      }
+
+      const subscriptionTier = artist.subscriptionTier || "free";
+      if (subscriptionTier === "free") {
+        const artworks = await storage.getArtworksByArtist(req.user!.id);
+        const FREE_TIER_LIMIT = 20;
+        
+        if (artworks.length >= FREE_TIER_LIMIT) {
+          // Clean up uploaded file
+          fs.unlinkSync(path.join(uploadDir, req.file.filename));
+          return res.status(403).json({ 
+            error: `Upload limit reached. Free tier allows ${FREE_TIER_LIMIT} artworks. Upgrade to Pro or Elite for unlimited uploads.`,
+            upgradeRequired: true,
+            requiredTier: "pro",
+            currentCount: artworks.length,
+            limit: FREE_TIER_LIMIT
+          });
+        }
       }
       
       // Validate image quality for Printify requirements
@@ -2201,6 +2227,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Get artist data for subscription tier
+      const artist = await storage.getArtistById(req.user!.id);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
       // Generate SEO-friendly slug from title if not provided
       const seoSlug = data.seoSlug || data.title
         .toLowerCase()
@@ -2210,13 +2242,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Capture IP declaration text snapshot for legal evidence
       const ipDeclarationText = "I confirm that I own the rights to this artwork and it does not violate any trademarks, copyrights, or other intellectual property rights. I understand that uploading artwork containing brand logos, copyrighted characters, or other protected content will result in immediate removal and forfeiture of any pending earnings.";
 
-      const artwork = await storage.createArtwork({
-        ...data,
-        seoSlug,
-        ipDeclarationText,
-      } as any);
-      
-      res.status(201).json(normalizeArtwork(artwork, req));
+      const subscriptionTier = artist.subscriptionTier || "free";
+      const FREE_TIER_LIMIT = 20;
+
+      try {
+        // Use transactional method that enforces limit atomically
+        const artwork = await storage.createArtworkWithLimitCheck(
+          {
+            ...data,
+            seoSlug,
+            ipDeclarationText,
+          } as any,
+          subscriptionTier,
+          FREE_TIER_LIMIT
+        );
+        
+        res.status(201).json(normalizeArtwork(artwork, req));
+      } catch (limitError: any) {
+        // Check if this is a limit exceeded error
+        if (limitError.message && limitError.message.includes("Upload limit reached")) {
+          const artworks = await storage.getArtworksByArtist(req.user!.id);
+          return res.status(403).json({ 
+            message: limitError.message,
+            upgradeRequired: true,
+            requiredTier: "pro",
+            currentCount: artworks.length,
+            limit: FREE_TIER_LIMIT
+          });
+        }
+        // Re-throw other errors to outer catch
+        throw limitError;
+      }
     } catch (error: any) {
       console.error("Create artwork error:", error);
       res.status(400).json({ message: error.message || "Failed to create artwork" });
@@ -3329,6 +3385,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const artist = req.user!;
       const { prompt, size = "1024x1024" } = req.body;
+      
+      // Check subscription tier - AI Studio requires Pro or Elite
+      const artistData = await storage.getArtistById(artist.id);
+      if (!artistData) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+      
+      const subscriptionTier = artistData.subscriptionTier || "free";
+      if (subscriptionTier === "free") {
+        return res.status(403).json({ 
+          message: "AI Art Studio is a Pro feature. Upgrade to Pro or Elite to access AI-powered artwork generation.",
+          upgradeRequired: true,
+          requiredTier: "pro"
+        });
+      }
       
       // Validate prompt
       if (!prompt || typeof prompt !== 'string') {

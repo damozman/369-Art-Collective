@@ -38,10 +38,20 @@ The system uses a scalable client-server architecture with distinct frontend and
 - **Email System:** Comprehensive templates with a shared layout system, including a strategic email sequence to drive Free → Pro → Elite conversions.
 - **Production Readiness:** Health check endpoint (`/api/health`) for 6 key integrations, and a detailed deployment runbook.
 - **Mobile Accessibility:** WCAG 2.1 Level AAA compliance with 44px minimum touch targets across all interactive elements via foundational component library updates (e.g., buttons, inputs, select, checkbox, sidebar components, and links).
+- **AI Image Upscaling System:** Integrated Real-ESRGAN via Replicate API to reduce registration friction while maintaining print quality standards (150 DPI minimum, 300 DPI target). Features include:
+  - **DPI-Driven Validation:** Replaced rigid 2400×3000 pixel requirement with flexible DPI-based quality analysis
+  - **Inline Upscale Widget:** Seamless upload flow integration with "Boost Quality" button, progress tracking, and quota display
+  - **Tiered Quota System:** Free tier (3 registration bonus + 5/month), Pro (25/month), Elite (unlimited)
+  - **Deduplication Cache:** Hash-based caching to reduce costs and improve response times
+  - **8-Layer Abuse Protection:** (1) Account age minimums, (2) Tiered quotas, (3) Per-IP rate limits (10/hour), (4) File size bounds (25MB max), (5) Daily spend caps ($10/day), (6) Deduplication cache, (7) Priority queue gating, (8) Global budget monitoring
+  - **Priority Queue:** Elite (priority 1) → Pro (priority 2) → Free (priority 3) for job processing
+  - **Cost Economics:** $0.02-$0.05 per upscale, 88-94% profit margins (Free: $0.25/mo cost, Pro: $13-18/mo net, Elite: $35-45/mo net)
+  - **Production-Ready:** Full API suite (analyze, request, status, quota), polling-based job tracking, proper error handling, mobile accessibility (WCAG 2.1 AAA)
 
 ## External Dependencies
 - **Replit PostgreSQL Database:** Serverless PostgreSQL (Neon-powered).
 - **OpenAI API:** DALL-E 3 and GPT-4o (via Replit AI Integrations).
+- **Replicate API:** Real-ESRGAN for AI-powered image upscaling.
 - **Printify API:** For Print-on-Demand fulfillment.
 - **Shopify Admin API:** For storefront management.
 - **Stripe Connect:** For payments and subscriptions.

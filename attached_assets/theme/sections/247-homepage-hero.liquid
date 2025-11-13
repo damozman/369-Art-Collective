@@ -3,6 +3,7 @@
 Features Printify lifestyle mockups from Featured collection
 {% endcomment %}
 
+<!-- DEBUG: Section is loading -->
 <!-- Swiper CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
@@ -10,26 +11,9 @@ Features Printify lifestyle mockups from Featured collection
 
 {% comment %}
 Pull wall art products from Featured collection
-Filter to only: Poster, Canvas, Framed Print, Metal Sign
 {% endcomment %}
 {% assign featured_collection = collections['featured'] %}
-{% assign wall_art_products = featured_collection.products | where: "available", true %}
-
-{% comment %}
-Filter to only wall art product types
-{% endcomment %}
-{% assign hero_products = "" | split: "" %}
-{% for product in wall_art_products %}
-  {% assign product_type = product.product_type | downcase %}
-  {% if product_type contains "poster" or product_type contains "canvas" or product_type contains "framed print" or product_type contains "metal sign" %}
-    {% assign hero_products = hero_products | push: product %}
-  {% endif %}
-{% endfor %}
-
-{% comment %}
-Limit to 5 slides for optimal performance
-{% endcomment %}
-{% assign hero_products = hero_products | slice: 0, 5 %}
+{% assign hero_products = featured_collection.products | where: "available", true | slice: 0, 5 %}
 
 {% if hero_products.size > 1 %}
   {% comment %}

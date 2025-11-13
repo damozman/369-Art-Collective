@@ -4501,6 +4501,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Process trial emails (Day 3, Ending Soon, Last Chance)
+  app.post("/api/admin/trial-emails/process", requireAdmin, async (_req, res) => {
+    try {
+      const { processTrialEmails } = await import('./lib/trial-email-orchestrator');
+      const results = await processTrialEmails();
+      res.json({
+        message: "Trial email processing complete",
+        ...results
+      });
+    } catch (error: any) {
+      console.error("Trial email processing error:", error);
+      res.status(500).json({ message: "Failed to process trial emails" });
+    }
+  });
+
   // Get AI upscale usage analytics
   app.get("/api/admin/analytics/upscales", requireAdmin, async (req, res) => {
     try {

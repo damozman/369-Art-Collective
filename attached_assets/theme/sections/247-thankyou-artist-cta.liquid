@@ -1,0 +1,280 @@
+{% comment %}
+  247 Print Network - Thank You Page Artist CTA
+  Post-purchase artist recruitment touchpoint
+  Premium conversion moment after successful order
+{% endcomment %}
+
+<div class="thankyou-artist-cta" data-testid="section-thankyou-artist">
+  <div class="thankyou-artist-container">
+    <div class="thankyou-artist-content">
+      <div class="thankyou-artist-icon">
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="28" cy="28" r="28" fill="#FF8A5B" opacity="0.1"/>
+          <path d="M28 18V38M18 28H38" stroke="#FF8A5B" stroke-width="3" stroke-linecap="round"/>
+          <path d="M21 18L28 25L35 18M21 38L28 31L35 38" stroke="#FF8A5B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      
+      <h2 class="thankyou-artist-title">Loved what you saw?</h2>
+      <p class="thankyou-artist-description">
+        Turn your art into products and earn up to <strong>45% royalties</strong> on every sale. Join hundreds of artists building their creative business with us.
+      </p>
+      
+      <div class="thankyou-artist-benefits">
+        <div class="thankyou-artist-benefit">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16.667 5L7.5 14.167L3.333 10" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Free to start</span>
+        </div>
+        <div class="thankyou-artist-benefit">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16.667 5L7.5 14.167L3.333 10" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Automated fulfillment</span>
+        </div>
+        <div class="thankyou-artist-benefit">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16.667 5L7.5 14.167L3.333 10" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>AI-powered tools</span>
+        </div>
+        <div class="thankyou-artist-benefit">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16.667 5L7.5 14.167L3.333 10" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>No upfront costs</span>
+        </div>
+      </div>
+      
+      <div class="thankyou-artist-actions">
+        <a href="https://247portal.replit.app/signup" class="thankyou-artist-cta-primary" data-testid="link-thankyou-artist-signup">
+          Start Selling Your Art
+        </a>
+        <a href="https://247portal.replit.app/login" class="thankyou-artist-cta-secondary" data-testid="link-thankyou-artist-login">
+          Already an artist? Sign in
+        </a>
+      </div>
+    </div>
+    
+    <div class="thankyou-artist-image">
+      <div class="thankyou-artist-image-placeholder">
+        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="120" height="120" rx="12" fill="url(#artistGradient)"/>
+          <path d="M40 80L60 50L80 70L90 60" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+          <circle cx="50" cy="40" r="8" fill="white" opacity="0.6"/>
+          <defs>
+            <linearGradient id="artistGradient" x1="0" y1="0" x2="120" y2="120">
+              <stop offset="0%" stop-color="#FF8A5B"/>
+              <stop offset="100%" stop-color="#ff7a45"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .thankyou-artist-cta {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px solid #e5e5e5;
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    margin: 3rem 0;
+  }
+
+  .thankyou-artist-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  .thankyou-artist-content {
+    max-width: 600px;
+  }
+
+  .thankyou-artist-icon {
+    margin-bottom: 1.5rem;
+  }
+
+  .thankyou-artist-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0A1628;
+    margin: 0 0 1rem 0;
+    line-height: 1.2;
+  }
+
+  .thankyou-artist-description {
+    font-size: 1.125rem;
+    color: #4a5568;
+    line-height: 1.6;
+    margin: 0 0 2rem 0;
+  }
+
+  .thankyou-artist-description strong {
+    color: #FF8A5B;
+    font-weight: 700;
+  }
+
+  .thankyou-artist-benefits {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .thankyou-artist-benefit {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: #2d3748;
+  }
+
+  .thankyou-artist-benefit svg {
+    flex-shrink: 0;
+  }
+
+  .thankyou-artist-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .thankyou-artist-cta-primary {
+    background: #FF8A5B;
+    color: #fff;
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+
+  .thankyou-artist-cta-primary:hover {
+    background: #ff7a45;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 138, 91, 0.3);
+  }
+
+  .thankyou-artist-cta-secondary {
+    background: transparent;
+    color: #FF8A5B;
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    border: 2px solid #FF8A5B;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+
+  .thankyou-artist-cta-secondary:hover {
+    background: rgba(255, 138, 91, 0.1);
+  }
+
+  .thankyou-artist-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .thankyou-artist-image-placeholder {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 968px) {
+    .thankyou-artist-container {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .thankyou-artist-image {
+      order: -1;
+    }
+
+    .thankyou-artist-content {
+      text-align: center;
+      max-width: 100%;
+    }
+
+    .thankyou-artist-icon {
+      display: flex;
+      justify-content: center;
+    }
+
+    .thankyou-artist-benefits {
+      justify-content: center;
+    }
+
+    .thankyou-artist-actions {
+      justify-content: center;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .thankyou-artist-cta {
+      padding: 2rem 1.5rem;
+    }
+
+    .thankyou-artist-title {
+      font-size: 1.5rem;
+    }
+
+    .thankyou-artist-description {
+      font-size: 1rem;
+    }
+
+    .thankyou-artist-benefits {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .thankyou-artist-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .thankyou-artist-cta-primary,
+    .thankyou-artist-cta-secondary {
+      width: 100%;
+      text-align: center;
+    }
+
+    .thankyou-artist-image-placeholder svg {
+      width: 80px;
+      height: 80px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Thank You Artist CTA",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Post-purchase artist recruitment section. Shows after successful order to capture warm leads."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Thank You Artist CTA"
+    }
+  ]
+}
+{% endschema %}

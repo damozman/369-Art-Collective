@@ -2282,7 +2282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload image for upscale widget (no strict quality checks)
-  app.post("/api/upload/design", requireArtist, upload.single("file"), async (req, res) => {
+  app.post("/api/upload/design", requireArtist, upload.single("image"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });

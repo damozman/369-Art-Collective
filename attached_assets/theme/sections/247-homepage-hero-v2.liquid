@@ -1,7 +1,41 @@
 {% comment %}
 247 Print Network - Hero Slider with Video Background
-Cache bust: Nov 13 2025 - 18:20 EST - Navy/Coral Rebrand
+Cache bust: Nov 13 2025 - 18:30 EST - Navy/Coral Rebrand - INLINE CSS
 {% endcomment %}
+
+<style>
+/* CRITICAL INLINE CSS - Navy/Coral/Teal Rebrand */
+.hero-slide__animated-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(-45deg, #0A1628, #1A1D23, #FF6B6B, #FF8A5B, #20C997);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  z-index: 0;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-slide__btn--primary {
+  background: #FF8A5B;
+  color: #fff;
+  border-color: #FF8A5B;
+}
+
+.hero-slide__btn--primary:hover {
+  background: #FF6B4A;
+  border-color: #FF6B4A;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(255, 138, 91, 0.5);
+}
+</style>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <link rel="stylesheet" href="{{ '247-art-nov13-rebrand.css' | asset_url }}" />

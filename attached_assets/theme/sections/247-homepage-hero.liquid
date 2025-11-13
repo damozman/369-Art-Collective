@@ -18,10 +18,10 @@ Updated: Nov 13, 2025 - Force cache refresh
           <div class="swiper-slide">
             {% comment %}Get first product image{% endcomment %}
             {% if full_product.images.size > 0 %}
-              {% assign product_image = full_product.images.first %}
-              <div class="hero-slide__bg" style="background-image: url('{{ product_image.src | image_url: width: 1920 }}'); background-size: cover; background-position: center;"></div>
+              {% assign product_image = full_product.images[0] %}
+              <div class="hero-slide__bg" style="background-image: url('{{ product_image | img_url: '1920x' }}'); background-size: cover; background-position: center;"></div>
             {% elsif full_product.featured_image %}
-              <div class="hero-slide__bg" style="background-image: url('{{ full_product.featured_image.src | image_url: width: 1920 }}'); background-size: cover; background-position: center;"></div>
+              <div class="hero-slide__bg" style="background-image: url('{{ full_product.featured_image | img_url: '1920x' }}'); background-size: cover; background-position: center;"></div>
             {% else %}
               {% comment %}Fallback: solid gradient if no image{% endcomment %}
               <div class="hero-slide__bg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>

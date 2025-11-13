@@ -1,0 +1,453 @@
+{% comment %}
+247 Print Network - Featured Artworks v2 (Displate-style)
+Tabbed browsing, tight 6-column grid, badge overlays
+{% endcomment %}
+
+<style>
+.featured-artworks-v2 {
+  background: #fff;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.featured-artworks-v2__container {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.featured-artworks-v2__header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.featured-artworks-v2__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f0f0f;
+  margin: 0 0 2rem;
+  letter-spacing: -0.01em;
+}
+
+/* Tab Navigation */
+.featured-artworks-v2__tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tab-button {
+  padding: 0.75rem 2rem;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: #0f0f0f;
+}
+
+.tab-button.active {
+  color: #0f0f0f;
+  border-bottom-color: #FF8A5B;
+}
+
+/* Product Grid - 6 Columns */
+.featured-artworks-v2__grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 1400px) {
+  .featured-artworks-v2__grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .featured-artworks-v2__grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .featured-artworks-v2__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .featured-artworks-v2__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+}
+
+/* Artwork Card */
+.artwork-card-v2 {
+  text-decoration: none;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.artwork-card-v2:hover {
+  transform: translateY(-4px);
+}
+
+.artwork-card-v2__image-wrapper {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f7f8f9;
+  margin-bottom: 0.5rem;
+}
+
+.artwork-card-v2__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.artwork-card-v2:hover .artwork-card-v2__image {
+  transform: scale(1.05);
+}
+
+/* Badge Overlays */
+.artwork-card-v2__badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 4px;
+  z-index: 2;
+  backdrop-filter: blur(4px);
+}
+
+.artwork-card-v2__badge--new {
+  background: rgba(76, 175, 80, 0.95);
+  color: #fff;
+}
+
+.artwork-card-v2__badge--trending {
+  background: rgba(255, 138, 91, 0.95);
+  color: #fff;
+}
+
+.artwork-card-v2__badge--bestseller {
+  background: rgba(255, 215, 0, 0.95);
+  color: #000;
+}
+
+/* Overlay on Hover */
+.artwork-card-v2__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.artwork-card-v2:hover .artwork-card-v2__overlay {
+  opacity: 1;
+}
+
+/* Card Info */
+.artwork-card-v2__info {
+  padding: 0 0.25rem;
+}
+
+.artwork-card-v2__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f0f0f;
+  margin: 0 0 0.25rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.artwork-card-v2__artist {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artwork-card-v2:hover .artwork-card-v2__title {
+  color: #FF8A5B;
+}
+
+/* Tab Content */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .featured-artworks-v2 {
+    padding: 2rem 1rem 3rem;
+  }
+
+  .featured-artworks-v2__title {
+    font-size: 1.75rem;
+  }
+
+  .tab-button {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9375rem;
+  }
+}
+</style>
+
+<section class="featured-artworks-v2">
+  <div class="featured-artworks-v2__container">
+    
+    <div class="featured-artworks-v2__header">
+      <h2 class="featured-artworks-v2__title">{{ section.settings.title | default: "Browse posters you'll love" }}</h2>
+      
+      <!-- Tab Navigation -->
+      <ul class="featured-artworks-v2__tabs">
+        <li>
+          <button class="tab-button active" data-tab="bestselling">Bestselling</button>
+        </li>
+        <li>
+          <button class="tab-button" data-tab="trending">Trending</button>
+        </li>
+        <li>
+          <button class="tab-button" data-tab="new">New Arrivals</button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Bestselling Tab -->
+    <div class="tab-content active" data-content="bestselling">
+      <div class="featured-artworks-v2__grid">
+        {% for block in section.blocks %}
+          {% if block.type == 'artwork' and block.settings.category == 'bestselling' %}
+            <a href="{{ block.settings.artwork_url }}" class="artwork-card-v2" data-testid="card-artwork-{{ forloop.index }}">
+              <div class="artwork-card-v2__image-wrapper">
+                {% if block.settings.artwork_image != blank %}
+                  <img 
+                    src="{{ block.settings.artwork_image }}" 
+                    alt="{{ block.settings.artwork_title }}"
+                    class="artwork-card-v2__image"
+                    loading="lazy"
+                  >
+                {% else %}
+                  <div style="width: 100%; height: 100%; background: #e5e7eb;"></div>
+                {% endif %}
+                
+                {% if block.settings.badge != blank %}
+                  <div class="artwork-card-v2__badge artwork-card-v2__badge--{{ block.settings.badge }}">
+                    {{ block.settings.badge }}
+                  </div>
+                {% endif %}
+                
+                <div class="artwork-card-v2__overlay"></div>
+              </div>
+              <div class="artwork-card-v2__info">
+                <h3 class="artwork-card-v2__title">{{ block.settings.artwork_title }}</h3>
+                {% if block.settings.artist_name != blank %}
+                  <p class="artwork-card-v2__artist">{{ block.settings.artist_name }}</p>
+                {% endif %}
+              </div>
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Trending Tab -->
+    <div class="tab-content" data-content="trending">
+      <div class="featured-artworks-v2__grid">
+        {% for block in section.blocks %}
+          {% if block.type == 'artwork' and block.settings.category == 'trending' %}
+            <a href="{{ block.settings.artwork_url }}" class="artwork-card-v2" data-testid="card-artwork-{{ forloop.index }}">
+              <div class="artwork-card-v2__image-wrapper">
+                {% if block.settings.artwork_image != blank %}
+                  <img 
+                    src="{{ block.settings.artwork_image }}" 
+                    alt="{{ block.settings.artwork_title }}"
+                    class="artwork-card-v2__image"
+                    loading="lazy"
+                  >
+                {% else %}
+                  <div style="width: 100%; height: 100%; background: #e5e7eb;"></div>
+                {% endif %}
+                
+                {% if block.settings.badge != blank %}
+                  <div class="artwork-card-v2__badge artwork-card-v2__badge--{{ block.settings.badge }}">
+                    {{ block.settings.badge }}
+                  </div>
+                {% endif %}
+                
+                <div class="artwork-card-v2__overlay"></div>
+              </div>
+              <div class="artwork-card-v2__info">
+                <h3 class="artwork-card-v2__title">{{ block.settings.artwork_title }}</h3>
+                {% if block.settings.artist_name != blank %}
+                  <p class="artwork-card-v2__artist">{{ block.settings.artist_name }}</p>
+                {% endif %}
+              </div>
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- New Arrivals Tab -->
+    <div class="tab-content" data-content="new">
+      <div class="featured-artworks-v2__grid">
+        {% for block in section.blocks %}
+          {% if block.type == 'artwork' and block.settings.category == 'new' %}
+            <a href="{{ block.settings.artwork_url }}" class="artwork-card-v2" data-testid="card-artwork-{{ forloop.index }}">
+              <div class="artwork-card-v2__image-wrapper">
+                {% if block.settings.artwork_image != blank %}
+                  <img 
+                    src="{{ block.settings.artwork_image }}" 
+                    alt="{{ block.settings.artwork_title }}"
+                    class="artwork-card-v2__image"
+                    loading="lazy"
+                  >
+                {% else %}
+                  <div style="width: 100%; height: 100%; background: #e5e7eb;"></div>
+                {% endif %}
+                
+                {% if block.settings.badge != blank %}
+                  <div class="artwork-card-v2__badge artwork-card-v2__badge--{{ block.settings.badge }}">
+                    {{ block.settings.badge }}
+                  </div>
+                {% endif %}
+                
+                <div class="artwork-card-v2__overlay"></div>
+              </div>
+              <div class="artwork-card-v2__info">
+                <h3 class="artwork-card-v2__title">{{ block.settings.artwork_title }}</h3>
+                {% if block.settings.artist_name != blank %}
+                  <p class="artwork-card-v2__artist">{{ block.settings.artist_name }}</p>
+                {% endif %}
+              </div>
+            </a>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+(function() {
+  const tabButtons = document.querySelectorAll('.tab-button');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const targetTab = button.getAttribute('data-tab');
+
+      // Remove active class from all buttons and contents
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+
+      // Add active class to clicked button and corresponding content
+      button.classList.add('active');
+      document.querySelector(`[data-content="${targetTab}"]`).classList.add('active');
+    });
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "247 Featured Artworks v2",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "Browse posters you'll love"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "artwork",
+      "name": "Artwork",
+      "settings": [
+        {
+          "type": "select",
+          "id": "category",
+          "label": "Tab Category",
+          "options": [
+            { "value": "bestselling", "label": "Bestselling" },
+            { "value": "trending", "label": "Trending" },
+            { "value": "new", "label": "New Arrivals" }
+          ],
+          "default": "bestselling"
+        },
+        {
+          "type": "select",
+          "id": "badge",
+          "label": "Badge",
+          "options": [
+            { "value": "", "label": "No Badge" },
+            { "value": "new", "label": "NEW" },
+            { "value": "trending", "label": "TRENDING" },
+            { "value": "bestseller", "label": "BESTSELLER" }
+          ],
+          "default": ""
+        },
+        {
+          "type": "text",
+          "id": "artwork_title",
+          "label": "Artwork Title",
+          "default": "Untitled Artwork"
+        },
+        {
+          "type": "text",
+          "id": "artist_name",
+          "label": "Artist Name"
+        },
+        {
+          "type": "text",
+          "id": "artwork_image",
+          "label": "Artwork Image URL"
+        },
+        {
+          "type": "url",
+          "id": "artwork_url",
+          "label": "Artwork URL"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "247 Featured Artworks v2"
+    }
+  ]
+}
+{% endschema %}

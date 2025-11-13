@@ -1,89 +1,77 @@
 {
   "sections": {
-    "homepage_hero": {
-      "type": "247-homepage-hero-v2",
+    "split_hero": {
+      "type": "247-homepage-hero-split",
       "settings": {
-        "eyebrow_text": "Artist-Powered Marketplace",
+        "hero_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2_48e7b9e6-5776-4b3b-8dc5-e84e98c3cd9a.jpg?v=1762809734",
+        "badge_text": "UP TO 45% ARTIST ROYALTIES",
         "title": "Discover Art That Speaks",
-        "subtitle": "Premium print-on-demand artwork from independent creators. Every purchase supports artists directly with fair royalties.",
-        "primary_button_text": "Shop Art",
-        "primary_button_url": "/collections/all",
-        "secondary_button_text": "Become an Artist",
-        "secondary_button_url": "/pages/join",
-        "show_stats": true,
-        "stat_1_value": "50+",
-        "stat_1_label": "Active Artists",
-        "stat_2_value": "500+",
-        "stat_2_label": "Artworks",
-        "stat_3_value": "Up to 45%",
-        "stat_3_label": "Artist Royalty"
-      }
-    },
-    "featured_collections": {
-      "type": "247-featured-collections",
-      "settings": {
-        "eyebrow_text": "Print Options",
-        "title": "Choose Your Perfect Finish",
-        "subtitle": "Premium wall art in four stunning finishes. From classic posters to museum-grade metal prints."
+        "description": "Premium print-on-demand artwork from independent creators. Every purchase supports artists directly with fair royalties.",
+        "cta_text": "Shop Art",
+        "cta_url": "/collections/all"
       },
       "blocks": {
-        "collection_1": {
-          "type": "collection",
+        "promo_1": {
+          "type": "promo_card",
           "settings": {
-            "collection_name": "Posters",
-            "artwork_count": "88",
-            "collection_url": "/collections/finish-paper",
-            "collection_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2_48e7b9e6-5776-4b3b-8dc5-e84e98c3cd9a.jpg?v=1762809734"
+            "image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521",
+            "badge": "BEST GIFT",
+            "title": "Give the gift that gets them",
+            "subtitle": "Perfect for art lovers",
+            "url": "/collections/all"
           }
         },
-        "collection_2": {
-          "type": "collection",
+        "promo_2": {
+          "type": "promo_card",
           "settings": {
-            "collection_name": "Canvas Prints",
-            "artwork_count": "88",
-            "collection_url": "/collections/finish-canvas",
-            "collection_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2_48e7b9e6-5776-4b3b-8dc5-e84e98c3cd9a.jpg?v=1762809734"
+            "image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8.jpg?v=1762809529",
+            "badge": "NEW",
+            "title": "Frame your moments",
+            "subtitle": "Custom Displates & more",
+            "url": "/pages/custom"
           }
         },
-        "collection_3": {
-          "type": "collection",
+        "promo_3": {
+          "type": "promo_card",
           "settings": {
-            "collection_name": "Framed Prints",
-            "artwork_count": "88",
-            "collection_url": "/collections/finish-framed",
-            "collection_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2_48e7b9e6-5776-4b3b-8dc5-e84e98c3cd9a.jpg?v=1762809734"
+            "image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1618005182384-a83a8bd57fbe_681ab7e6-6a80-4b2a-9fd7-b1fbcead8f3c.jpg?v=1762809690",
+            "badge": "ARTISTS",
+            "title": "Space-inspired works",
+            "subtitle": "you need to see",
+            "url": "/collections/all"
           }
         },
-        "collection_4": {
-          "type": "collection",
+        "promo_4": {
+          "type": "promo_card",
           "settings": {
-            "collection_name": "Metal Prints",
-            "artwork_count": "88",
-            "collection_url": "/collections/finish-metal",
-            "collection_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2_48e7b9e6-5776-4b3b-8dc5-e84e98c3cd9a.jpg?v=1762809734"
+            "image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1477959858617-67f85cf4f1df_0774690b-17e4-4dc6-a348-b1fc2f99c116.jpg?v=1762809585",
+            "badge": "NEW COLLECTION",
+            "title": "The art of evolution",
+            "subtitle": "Featured Artists",
+            "url": "/pages/artists"
           }
         }
       },
       "block_order": [
-        "collection_1",
-        "collection_2",
-        "collection_3",
-        "collection_4"
+        "promo_1",
+        "promo_2",
+        "promo_3",
+        "promo_4"
       ]
     },
-    "featured_artworks": {
-      "type": "247-featured-artworks",
+    "featured_artworks_v2": {
+      "type": "247-featured-artworks-v2",
       "settings": {
-        "eyebrow_text": "Trending Now",
-        "title": "Featured Artworks",
-        "subtitle": "Discover stunning pieces from our talented artist community"
+        "title": "Browse posters you'll love"
       },
       "blocks": {
         "artwork_1": {
           "type": "artwork",
           "settings": {
+            "category": "bestselling",
+            "badge": "bestseller",
             "artwork_title": "Abandoned Factory",
-            "artist_name": "Sarah Chen",
+            "artist_name": "Liam Anderson",
             "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2_48e7b9e6-5776-4b3b-8dc5-e84e98c3cd9a.jpg?v=1762809734",
             "artwork_url": "https://247printnetwork.com/products/abandoned-factory-1"
           }
@@ -91,6 +79,8 @@
         "artwork_2": {
           "type": "artwork",
           "settings": {
+            "category": "bestselling",
+            "badge": "",
             "artwork_title": "Ancient Forest Canopy",
             "artist_name": "Marcus Rodriguez",
             "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521",
@@ -100,6 +90,8 @@
         "artwork_3": {
           "type": "artwork",
           "settings": {
+            "category": "bestselling",
+            "badge": "",
             "artwork_title": "Art Deco Facade",
             "artist_name": "Elena Kowalski",
             "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2.jpg?v=1762808888",
@@ -109,6 +101,8 @@
         "artwork_4": {
           "type": "artwork",
           "settings": {
+            "category": "bestselling",
+            "badge": "",
             "artwork_title": "Autumn Reflection Lake",
             "artist_name": "Liam Anderson",
             "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1506905925346-21bda4d32df4_8a42f25a-71f9-4865-9fc7-5178ed3fb9b8.jpg?v=1762809651",
@@ -118,6 +112,8 @@
         "artwork_5": {
           "type": "artwork",
           "settings": {
+            "category": "bestselling",
+            "badge": "",
             "artwork_title": "Azure Dreams",
             "artist_name": "Nina Volkov",
             "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8.jpg?v=1762809529",
@@ -127,6 +123,8 @@
         "artwork_6": {
           "type": "artwork",
           "settings": {
+            "category": "bestselling",
+            "badge": "",
             "artwork_title": "Beige Tranquility",
             "artist_name": "Yuki Tanaka",
             "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1618005182384-a83a8bd57fbe_681ab7e6-6a80-4b2a-9fd7-b1fbcead8f3c.jpg?v=1762809690",
@@ -136,6 +134,8 @@
         "artwork_7": {
           "type": "artwork",
           "settings": {
+            "category": "bestselling",
+            "badge": "",
             "artwork_title": "Bicycle Messenger",
             "artist_name": "Raj Patel",
             "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1477959858617-67f85cf4f1df_0774690b-17e4-4dc6-a348-b1fc2f99c116.jpg?v=1762809585",
@@ -145,7 +145,185 @@
         "artwork_8": {
           "type": "artwork",
           "settings": {
+            "category": "bestselling",
+            "badge": "",
             "artwork_title": "Bollywood Deco",
+            "artist_name": "Amara Johnson",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1579783902614-a3fb3927b6a5_d0b2ab97-b9e1-43c3-97b6-20c2c5e5fb5e.jpg?v=1762809680",
+            "artwork_url": "https://247printnetwork.com/products/bollywood-deco"
+          }
+        },
+        "artwork_9": {
+          "type": "artwork",
+          "settings": {
+            "category": "trending",
+            "badge": "trending",
+            "artwork_title": "Cosmic Vista",
+            "artist_name": "Sarah Chen",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2_48e7b9e6-5776-4b3b-8dc5-e84e98c3cd9a.jpg?v=1762809734",
+            "artwork_url": "https://247printnetwork.com/products/abandoned-factory-1"
+          }
+        },
+        "artwork_10": {
+          "type": "artwork",
+          "settings": {
+            "category": "trending",
+            "badge": "trending",
+            "artwork_title": "Mountain Majesty",
+            "artist_name": "Marcus Rodriguez",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521",
+            "artwork_url": "https://247printnetwork.com/products/ancient-forest-canopy"
+          }
+        },
+        "artwork_11": {
+          "type": "artwork",
+          "settings": {
+            "category": "trending",
+            "badge": "",
+            "artwork_title": "Urban Lights",
+            "artist_name": "Elena Kowalski",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2.jpg?v=1762808888",
+            "artwork_url": "https://247printnetwork.com/products/art-deco-facade"
+          }
+        },
+        "artwork_12": {
+          "type": "artwork",
+          "settings": {
+            "category": "trending",
+            "badge": "",
+            "artwork_title": "Ocean Depths",
+            "artist_name": "Liam Anderson",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1506905925346-21bda4d32df4_8a42f25a-71f9-4865-9fc7-5178ed3fb9b8.jpg?v=1762809651",
+            "artwork_url": "https://247printnetwork.com/products/autumn-reflection-lake"
+          }
+        },
+        "artwork_13": {
+          "type": "artwork",
+          "settings": {
+            "category": "trending",
+            "badge": "",
+            "artwork_title": "Sunset Boulevard",
+            "artist_name": "Nina Volkov",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8.jpg?v=1762809529",
+            "artwork_url": "https://247printnetwork.com/products/azure-dreams"
+          }
+        },
+        "artwork_14": {
+          "type": "artwork",
+          "settings": {
+            "category": "trending",
+            "badge": "",
+            "artwork_title": "Desert Dreams",
+            "artist_name": "Yuki Tanaka",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1618005182384-a83a8bd57fbe_681ab7e6-6a80-4b2a-9fd7-b1fbcead8f3c.jpg?v=1762809690",
+            "artwork_url": "https://247printnetwork.com/products/beige-tranquility"
+          }
+        },
+        "artwork_15": {
+          "type": "artwork",
+          "settings": {
+            "category": "trending",
+            "badge": "",
+            "artwork_title": "City Pulse",
+            "artist_name": "Raj Patel",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1477959858617-67f85cf4f1df_0774690b-17e4-4dc6-a348-b1fc2f99c116.jpg?v=1762809585",
+            "artwork_url": "https://247printnetwork.com/products/bicycle-messenger-1"
+          }
+        },
+        "artwork_16": {
+          "type": "artwork",
+          "settings": {
+            "category": "trending",
+            "badge": "",
+            "artwork_title": "Neon Nights",
+            "artist_name": "Amara Johnson",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1579783902614-a3fb3927b6a5_d0b2ab97-b9e1-43c3-97b6-20c2c5e5fb5e.jpg?v=1762809680",
+            "artwork_url": "https://247printnetwork.com/products/bollywood-deco"
+          }
+        },
+        "artwork_17": {
+          "type": "artwork",
+          "settings": {
+            "category": "new",
+            "badge": "new",
+            "artwork_title": "Stellar Journey",
+            "artist_name": "Sarah Chen",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2_48e7b9e6-5776-4b3b-8dc5-e84e98c3cd9a.jpg?v=1762809734",
+            "artwork_url": "https://247printnetwork.com/products/abandoned-factory-1"
+          }
+        },
+        "artwork_18": {
+          "type": "artwork",
+          "settings": {
+            "category": "new",
+            "badge": "new",
+            "artwork_title": "Winter Wonderland",
+            "artist_name": "Marcus Rodriguez",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521",
+            "artwork_url": "https://247printnetwork.com/products/ancient-forest-canopy"
+          }
+        },
+        "artwork_19": {
+          "type": "artwork",
+          "settings": {
+            "category": "new",
+            "badge": "new",
+            "artwork_title": "Golden Hour",
+            "artist_name": "Elena Kowalski",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1511818966892-d7d671e672a2.jpg?v=1762808888",
+            "artwork_url": "https://247printnetwork.com/products/art-deco-facade"
+          }
+        },
+        "artwork_20": {
+          "type": "artwork",
+          "settings": {
+            "category": "new",
+            "badge": "",
+            "artwork_title": "Aurora Borealis",
+            "artist_name": "Liam Anderson",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1506905925346-21bda4d32df4_8a42f25a-71f9-4865-9fc7-5178ed3fb9b8.jpg?v=1762809651",
+            "artwork_url": "https://247printnetwork.com/products/autumn-reflection-lake"
+          }
+        },
+        "artwork_21": {
+          "type": "artwork",
+          "settings": {
+            "category": "new",
+            "badge": "",
+            "artwork_title": "Tropical Paradise",
+            "artist_name": "Nina Volkov",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8.jpg?v=1762809529",
+            "artwork_url": "https://247printnetwork.com/products/azure-dreams"
+          }
+        },
+        "artwork_22": {
+          "type": "artwork",
+          "settings": {
+            "category": "new",
+            "badge": "",
+            "artwork_title": "Minimalist Zen",
+            "artist_name": "Yuki Tanaka",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1618005182384-a83a8bd57fbe_681ab7e6-6a80-4b2a-9fd7-b1fbcead8f3c.jpg?v=1762809690",
+            "artwork_url": "https://247printnetwork.com/products/beige-tranquility"
+          }
+        },
+        "artwork_23": {
+          "type": "artwork",
+          "settings": {
+            "category": "new",
+            "badge": "",
+            "artwork_title": "Vintage Vibes",
+            "artist_name": "Raj Patel",
+            "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1477959858617-67f85cf4f1df_0774690b-17e4-4dc6-a348-b1fc2f99c116.jpg?v=1762809585",
+            "artwork_url": "https://247printnetwork.com/products/bicycle-messenger-1"
+          }
+        },
+        "artwork_24": {
+          "type": "artwork",
+          "settings": {
+            "category": "new",
+            "badge": "",
+            "artwork_title": "Abstract Emotions",
             "artist_name": "Amara Johnson",
             "artwork_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1579783902614-a3fb3927b6a5_d0b2ab97-b9e1-43c3-97b6-20c2c5e5fb5e.jpg?v=1762809680",
             "artwork_url": "https://247printnetwork.com/products/bollywood-deco"
@@ -160,77 +338,24 @@
         "artwork_5",
         "artwork_6",
         "artwork_7",
-        "artwork_8"
+        "artwork_8",
+        "artwork_9",
+        "artwork_10",
+        "artwork_11",
+        "artwork_12",
+        "artwork_13",
+        "artwork_14",
+        "artwork_15",
+        "artwork_16",
+        "artwork_17",
+        "artwork_18",
+        "artwork_19",
+        "artwork_20",
+        "artwork_21",
+        "artwork_22",
+        "artwork_23",
+        "artwork_24"
       ]
-    },
-    "featured_artists": {
-      "type": "247-featured-artists",
-      "settings": {
-        "eyebrow_text": "Meet the Creators",
-        "title": "Featured Artists",
-        "subtitle": "Discover talented creators from around the world bringing unique visions to life",
-        "cta_text": "View All Artists",
-        "cta_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/creators"
-      },
-      "blocks": {
-        "artist_1": {
-          "type": "artist",
-          "settings": {
-            "artist_name": "Sarah Chen",
-            "specialty": "Nature & Landscapes",
-            "artwork_count": "24",
-            "artist_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artists/cb8afb09-4d53-4fae-96b5-86d62b8a561a",
-            "artist_image": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=1000&fit=crop&q=80",
-            "avatar_image": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&q=80"
-          }
-        },
-        "artist_2": {
-          "type": "artist",
-          "settings": {
-            "artist_name": "Marcus Rodriguez",
-            "specialty": "Abstract Expressionist",
-            "artwork_count": "18",
-            "artist_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artists/c89b4503-ed02-4e48-b371-5d0c9aa2fad2",
-            "artist_image": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&h=1000&fit=crop&q=80",
-            "avatar_image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&q=80"
-          }
-        },
-        "artist_3": {
-          "type": "artist",
-          "settings": {
-            "artist_name": "Elena Kowalski",
-            "specialty": "Wildlife Photography",
-            "artwork_count": "32",
-            "artist_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artists/5ce6e662-6cd6-4679-af3c-30465accfcd9",
-            "artist_image": "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&h=1000&fit=crop&q=80",
-            "avatar_image": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&q=80"
-          }
-        },
-        "artist_4": {
-          "type": "artist",
-          "settings": {
-            "artist_name": "Liam Anderson",
-            "specialty": "Urban & Architecture",
-            "artwork_count": "28",
-            "artist_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artists/24564f8f-89a9-402d-8f98-ee448ef3965b",
-            "artist_image": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=1000&fit=crop&q=80",
-            "avatar_image": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&q=80"
-          }
-        }
-      },
-      "block_order": [
-        "artist_1",
-        "artist_2",
-        "artist_3",
-        "artist_4"
-      ]
-    },
-    "merch_preview": {
-      "type": "247-merch-preview",
-      "settings": {
-        "heading": "Your Favorite Art, Everywhere",
-        "description": "Soon you'll be able to wear and use your favorite artwork. Apparel, accessories, and more."
-      }
     },
     "trust_badges": {
       "type": "247-trust-badges",
@@ -239,28 +364,28 @@
           "type": "badge",
           "settings": {
             "title": "Premium Quality",
-            "description": "Museum-grade prints with vibrant colors and professional finishes"
+            "description": "Museum-grade prints with vibrant colors"
           }
         },
         "badge_2": {
           "type": "badge",
           "settings": {
             "title": "Fair Artist Royalties",
-            "description": "Artists earn 30-45% of every sale, paid automatically"
+            "description": "Artists earn 30-45% of every sale"
           }
         },
         "badge_3": {
           "type": "badge",
           "settings": {
             "title": "Fast Worldwide Shipping",
-            "description": "Global fulfillment via Printify in 5-7 business days"
+            "description": "Global fulfillment in 5-7 business days"
           }
         },
         "badge_4": {
           "type": "badge",
           "settings": {
             "title": "Satisfaction Guaranteed",
-            "description": "100% money-back guarantee on all orders"
+            "description": "100% money-back guarantee"
           }
         }
       },
@@ -270,30 +395,11 @@
         "badge_3",
         "badge_4"
       ]
-    },
-    "artist_cta": {
-      "type": "247-artist-cta-banner",
-      "settings": {
-        "eyebrow_text": "Calling All Artists",
-        "title": "Join Our Growing Creator Network",
-        "subtitle": "Upload your artwork, we handle printing and shipping. You earn up to 45% royalties on every sale.",
-        "button_text": "Start Earning Today",
-        "button_url": "https://247printnetwork.replit.app/register",
-        "show_stats": true,
-        "stat_1_value": "Up to 45%",
-        "stat_1_label": "Artist Royalty",
-        "stat_2_value": "$0",
-        "stat_2_label": "To Join"
-      }
     }
   },
   "order": [
-    "homepage_hero",
-    "featured_collections",
-    "featured_artworks",
-    "featured_artists",
-    "merch_preview",
-    "trust_badges",
-    "artist_cta"
+    "split_hero",
+    "featured_artworks_v2",
+    "trust_badges"
   ]
 }

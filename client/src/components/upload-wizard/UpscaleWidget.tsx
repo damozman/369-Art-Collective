@@ -45,6 +45,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isCompletedRef = useRef(false);
+  const uploadStartTimeRef = useRef<number>(0);
 
   const { data: quota } = useQuery<QuotaStatus>({
     queryKey: ['/api/upscale/quota'],
@@ -79,6 +80,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
   const uploadAndAnalyzeImage = async () => {
     if (!selectedFile) return;
 
+    uploadStartTimeRef.current = Date.now();
     setIsUploading(true);
     
     try {
@@ -122,8 +124,15 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
         } catch (error) {
           console.error('Failed to analyze image:', error);
         } finally {
-          // Set uploading to false after analysis completes
-          setIsUploading(false);
+          // Ensure minimum loading state display time of 250ms for visual consistency
+          const MIN_LOADING_TIME = 250;
+          const elapsedTime = Date.now() - uploadStartTimeRef.current;
+          const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsedTime);
+          
+          timeoutRef.current = setTimeout(() => {
+            setIsUploading(false);
+            timeoutRef.current = null;
+          }, remainingTime);
         }
       };
       img.src = uploadedUrl;

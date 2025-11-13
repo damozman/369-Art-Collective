@@ -70,6 +70,20 @@ The system uses a scalable client-server architecture with distinct frontend and
 
 **Recent Implementations** (Nov 13, 2025):
 1. **Trial Email System Complete** - Implemented strategic email funnel with 4 professional HTML templates (Day 3, Ending Soon, Last Chance, Re-engagement). Features hour-based timing windows (72-120h, 48-72h, 24-48h) to handle cron drift, idempotency via emailLogs tracking, Stripe webhook integration, and admin preview/batch processing endpoints. Targeting 10-25% trial→paid conversion lift.
+2. **Shopify Homepage Hero Slider** - Production-ready auto-rotating hero slider featuring:
+   - Auto-rotating Swiper.js slider with fade transitions (6s delay, loop enabled)
+   - Dynamic product images from Featured collection (5 products)
+   - Prominent marketing copy ("Discover Art That Speaks" + subtitle)
+   - De-emphasized artist/artwork info below headline
+   - Navigation arrows, pagination dots, and stats bar
+   - Fixed Liquid syntax: Uses modern `image_url` filter instead of deprecated `img_url`
+   - Deployed to live theme (ID: 179686146345) at https://247printnetwork.com
+3. **Best Sellers Smart Collection** - Created automatic sales-based collection:
+   - Smart Collection with "best-selling" sort order
+   - Auto-updates based on Shopify sales tracking
+   - No manual curation needed - fully data-driven
+   - URL: https://247printnetwork.com/collections/best-sellers
+   - Shows all products initially, ranks by sales as they occur
 
 **Testing Coverage** (Nov 13, 2025):
 - ✅ Featured Artist System (homepage testimonials working)

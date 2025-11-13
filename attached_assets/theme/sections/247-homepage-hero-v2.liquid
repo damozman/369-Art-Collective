@@ -1,0 +1,196 @@
+{% comment %}
+247 Print Network - Hero Slider (Simplified)
+{% endcomment %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+{{ '247-art.css' | asset_url | stylesheet_tag }}
+
+{% comment %}Hardcode the product handles we know exist{% endcomment %}
+{% assign product_handles = "abandoned-factory,ancient-forest-canopy,art-deco-facade,autumn-reflection-lake,azure-dreams" | split: "," %}
+
+<section class="hero-slider-section">
+  <div class="swiper hero-swiper">
+    <div class="swiper-wrapper">
+      {% for handle in product_handles limit: 5 %}
+        {% assign current_product = all_products[handle] %}
+        {% if current_product %}
+          <div class="swiper-slide">
+            {% if current_product.featured_image %}
+              <div class="hero-slide__bg" style="background-image: url('{{ current_product.featured_image | img_url: '1920x' }}'); background-size: cover; background-position: center;"></div>
+            {% else %}
+              <div class="hero-slide__bg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+            {% endif %}
+            
+            <div class="hero-slide__overlay"></div>
+            
+            <div class="hero-slide__content">
+              <div class="hero-slide__text">
+                <div class="hero-slide__eyebrow">{{ section.settings.eyebrow_text | default: "Artist-Powered Marketplace" }}</div>
+                <h1 class="hero-slide__main-title">{{ section.settings.title | default: "Discover Art That Speaks" }}</h1>
+                <p class="hero-slide__subtitle">{{ section.settings.subtitle | default: "Premium print-on-demand artwork from independent creators. Every purchase supports artists directly." }}</p>
+                
+                <div class="hero-slide__artwork-info">
+                  <span class="hero-slide__artwork-label">Now Featured:</span>
+                  <span class="hero-slide__artwork-title">{{ current_product.title }}</span>
+                  <span class="hero-slide__artist-name">by {{ current_product.vendor | default: "Featured Artist" }}</span>
+                </div>
+                
+                <div class="hero-slide__actions">
+                  <a href="{{ current_product.url }}" class="hero-slide__btn hero-slide__btn--primary">
+                    Shop This Art
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                  <a href="{{ section.settings.secondary_button_url | default: '/pages/join' }}" class="hero-slide__btn hero-slide__btn--secondary">
+                    {{ section.settings.secondary_button_text | default: "Become an Artist" }}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    
+    <div class="swiper-pagination"></div>
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-button-next"></div>
+  </div>
+  
+  {% if section.settings.show_stats %}
+    <div class="hero-stats">
+      <div class="hero-stats__container">
+        {% if section.settings.stat_1_value != blank %}
+          <div class="hero-stats__item">
+            <div class="hero-stats__value">{{ section.settings.stat_1_value }}</div>
+            <div class="hero-stats__label">{{ section.settings.stat_1_label }}</div>
+          </div>
+        {% endif %}
+        
+        {% if section.settings.stat_2_value != blank %}
+          <div class="hero-stats__item">
+            <div class="hero-stats__value">{{ section.settings.stat_2_value }}</div>
+            <div class="hero-stats__label">{{ section.settings.stat_2_label }}</div>
+          </div>
+        {% endif %}
+        
+        {% if section.settings.stat_3_value != blank %}
+          <div class="hero-stats__item">
+            <div class="hero-stats__value">{{ section.settings.stat_3_value }}</div>
+            <div class="hero-stats__label">{{ section.settings.stat_3_label }}</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    new Swiper('.hero-swiper', {
+      effect: 'fade',
+      fadeEffect: { crossFade: true },
+      speed: 1000,
+      autoplay: {
+        delay: 6000,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true
+      },
+      loop: true,
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      }
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "247 Homepage Hero v2",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow_text",
+      "label": "Eyebrow Text",
+      "default": "Artist-Powered Marketplace"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Main Title",
+      "default": "Discover Art That Speaks"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Premium print-on-demand artwork from independent creators. Every purchase supports artists directly."
+    },
+    {
+      "type": "text",
+      "id": "secondary_button_text",
+      "label": "Secondary Button Text",
+      "default": "Become an Artist"
+    },
+    {
+      "type": "url",
+      "id": "secondary_button_url",
+      "label": "Secondary Button URL"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_stats",
+      "label": "Show Statistics Bar",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "stat_1_value",
+      "label": "Stat 1 Value",
+      "default": "50+"
+    },
+    {
+      "type": "text",
+      "id": "stat_1_label",
+      "label": "Stat 1 Label",
+      "default": "Active Artists"
+    },
+    {
+      "type": "text",
+      "id": "stat_2_value",
+      "label": "Stat 2 Value",
+      "default": "500+"
+    },
+    {
+      "type": "text",
+      "id": "stat_2_label",
+      "label": "Stat 2 Label",
+      "default": "Artworks"
+    },
+    {
+      "type": "text",
+      "id": "stat_3_value",
+      "label": "Stat 3 Value",
+      "default": "Up to 45%"
+    },
+    {
+      "type": "text",
+      "id": "stat_3_label",
+      "label": "Stat 3 Label",
+      "default": "Artist Royalty"
+    }
+  ],
+  "presets": [
+    {
+      "name": "247 Homepage Hero v2"
+    }
+  ]
+}
+{% endschema %}

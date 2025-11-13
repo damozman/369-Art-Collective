@@ -1,31 +1,32 @@
 #!/bin/bash
-# Deploy Product Mockup Gallery System to Shopify
-# This uploads the template, JavaScript, and CSS needed to display Printify mockup images
+# Deploy Product Page with Mockup Gallery Support
+# This uploads the complete product page template that displays Printify mockup images
 
 cd "$(dirname "$0")"
 
-echo "🎨 Deploying Product Mockup Gallery System..."
-echo "   This will enable mockup images on product pages"
+echo "🎨 Deploying Complete Product Page with Mockup Gallery..."
+echo "   This includes all features + mockup image support"
 echo ""
 
 shopify theme push \
   --store=bvhpq0-hy.myshopify.com \
   --theme=179686146345 \
   --allow-live \
-  --only=sections/247-art-product.liquid \
-  --only=assets/247-art.js \
-  --only=assets/247-art.css \
-  --only=assets/247-art-nov13-rebrand.css \
+  --only=sections/247-product-page.liquid \
   --only=templates/product.art.json
 
 echo ""
 echo "✅ Deployment complete!"
 echo ""
-echo "📋 Next steps:"
-echo "   1. Visit your Shopify product pages to verify mockup images appear"
-echo "   2. Click thumbnails to switch between mockup views"
-echo "   3. Each product should show ~4 images (1 original + 3 mockups)"
+echo "📋 What to check:"
+echo "   1. Product pages should show beautiful Displate-style layout"
+echo "   2. Thumbnails on left side (up to 6 images)"
+echo "   3. Click thumbnails to switch between images"
+echo "   4. Mockup images should appear automatically"
 echo ""
-echo "🔗 Test products:"
-echo "   - Stairway to Clouds (9876069187881)"
-echo "   - Art Deco Facade (9875831161129)"
+echo "🔗 Test on Shopify admin:"
+echo "   Products → Stairway to Clouds → View in online store"
+echo "   Products → Art Deco Facade → View in online store"
+echo ""
+echo "⚠️  If you see 404 errors:"
+echo "   Check that products exist and are published in Shopify admin"

@@ -169,13 +169,13 @@ export default function ArtistProfile() {
         <h2 className="text-3xl font-bold mb-8">Featured Artworks</h2>
 
         {artworksLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
               <Skeleton key={i} className="aspect-square" />
             ))}
           </div>
         ) : artworks && artworks.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {artworks
               .filter(artwork => artwork.status === "approved")
               .map(artwork => (

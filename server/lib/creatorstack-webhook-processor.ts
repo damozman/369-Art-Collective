@@ -42,16 +42,26 @@ function parseKitSKU(sku: string): string | null {
  * 3. Create purchase records (idempotent using shopifyOrderId + lineItemId)
  * 4. Return processing summary
  */
-export async function processCreatorStackPurchase(shopifyOrder: ShopifyWebhookOrder) {
+export async function processCreatorStackPurchase(shopifyOrder: any) {
   console.log(`[CreatorStack] Processing Shopify order: ${shopifyOrder.id}`);
   
-  const { email, id: shopifyOrderId, line_items } = shopifyOrder;
+  // Extract email from various Shopify webhook formats
+  const email = shopifyOrder.email 
+    || shopifyOrder.contact_email 
+    || shopifyOrder.customer?.email 
+    || shopifyOrder.billing_address?.email;
+  
+  const shopifyOrderId = shopifyOrder.id;
+  const line_items = shopifyOrder.line_items;
   
   // Validate email
   if (!email || !email.includes('@')) {
     console.error(`[CreatorStack] Invalid email in order ${shopifyOrderId}: ${email}`);
+    console.error(`[CreatorStack] Order structure:`, JSON.stringify(shopifyOrder, null, 2));
     return { success: false, error: 'invalid_email' };
   }
+  
+  console.log(`[CreatorStack] Extracted buyer email: ${email}`);
 
   // Find or create buyer
   let buyer = await storage.getCreatorstackBuyerByEmail(email);

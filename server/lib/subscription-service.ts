@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { storage } from "../storage";
 import { emailService } from './email-service';
 import { db } from './db';
-import { emailLogs } from '@shared/schema';
+import { emailLogs, subscriptionTrials } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { updateFeaturedStatusForTier } from './featured-artists-service';
 
@@ -10,7 +10,46 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2024-10-28.acacia'
+});
+
+// Type for subscription trial records from DB
+type SubscriptionTrial = typeof subscriptionTrials.$inferSelect;
+
+// Helper: Extract payment intent from expanded invoice
+function extractPaymentIntent(
+  invoice: Stripe.Subscription['latest_invoice']
+): Stripe.PaymentIntent | null {
+  if (!invoice || typeof invoice === 'string') {
+    return null;
+  }
+  
+  // Type guard for expanded invoice with payment_intent
+  const expandedInvoice = invoice as any;
+  const paymentIntent = expandedInvoice.payment_intent;
+  
+  if (!paymentIntent || typeof paymentIntent === 'string') {
+    return null;
+  }
+  
+  // Check if it's a deleted payment intent
+  if ('deleted' in paymentIntent && paymentIntent.deleted) {
+    return null;
+  }
+  
+  return paymentIntent as Stripe.PaymentIntent;
+}
+
+// Helper: Extract subscription ID from invoice
+function extractSubscriptionId(invoice: Stripe.Invoice | null | undefined): string | null {
+  if (!invoice) {
+    return null;
+  }
+  
+  const sub = (invoice as any).subscription;
+  return typeof sub === 'string' ? sub : null;
+}
 
 export type SubscriptionTier = 'free' | 'pro' | 'elite';
 
@@ -229,20 +268,13 @@ export class SubscriptionService {
       
       // If subscription is incomplete or past_due, return existing payment intent for retry
       if (['incomplete', 'past_due'].includes(existingSub.status)) {
-        // Type guard: expanded fields are objects, unexpanded are string IDs
-        if (typeof existingSub.latest_invoice !== 'string' && existingSub.latest_invoice) {
-          const invoice = existingSub.latest_invoice as Stripe.Invoice;
-          
-          if (typeof invoice.payment_intent !== 'string' && invoice.payment_intent) {
-            const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-            
-            if (paymentIntent.client_secret) {
-              return {
-                subscriptionId: existingSub.id,
-                clientSecret: paymentIntent.client_secret
-              };
-            }
-          }
+        const paymentIntent = extractPaymentIntent(existingSub.latest_invoice);
+        
+        if (paymentIntent && paymentIntent.client_secret) {
+          return {
+            subscriptionId: existingSub.id,
+            clientSecret: paymentIntent.client_secret
+          };
         }
         
         // Edge case: subscription is incomplete but has no payment intent
@@ -277,47 +309,48 @@ export class SubscriptionService {
       idempotencyKey
     });
 
-    // Type guard: expanded fields are objects, unexpanded are string IDs
-    if (typeof subscription.latest_invoice !== 'string' && subscription.latest_invoice) {
-      const invoice = subscription.latest_invoice as Stripe.Invoice;
+    const paymentIntent = extractPaymentIntent(subscription.latest_invoice);
+    
+    if (paymentIntent) {
+      const sub = subscription as any;
+      const periodEnd = typeof sub.current_period_end === 'number'
+        ? new Date(sub.current_period_end * 1000)
+        : undefined;
+
+      // Update artist with subscription and trial info
+      const updates: any = {
+        stripeSubscriptionId: subscription.id,
+        subscriptionStatus: subscription.status,
+        subscriptionTier: tier,
+        trialEndsAt: trialEnd as any
+      };
       
-      if (typeof invoice.payment_intent !== 'string' && invoice.payment_intent) {
-        const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-
-        const periodEnd = typeof subscription.current_period_end === 'number'
-          ? new Date(subscription.current_period_end * 1000)
-          : new Date();
-
-        // Update artist with subscription and trial info
-        await storage.updateArtist(artistId, {
-          stripeSubscriptionId: subscription.id,
-          subscriptionStatus: subscription.status,
-          subscriptionTier: tier,
-          subscriptionPeriodEnd: periodEnd as any,
-          trialEndsAt: trialEnd as any
-        });
-
-        // Create trial analytics record
-        await storage.createSubscriptionTrial({
-          artistId,
-          stripeCustomerId: customerId,
-          stripeSubscriptionId: subscription.id,
-          tier,
-          status: 'active',
-          trialSource: 'dashboard_upgrade', // Default source, can be customized later
-          trialStartedAt: new Date(),
-          scheduledTrialEnd: trialEnd,
-        });
-
-        if (!paymentIntent.client_secret) {
-          throw new Error('Payment intent missing client secret');
-        }
-
-        return {
-          subscriptionId: subscription.id,
-          clientSecret: paymentIntent.client_secret
-        };
+      if (periodEnd) {
+        updates.subscriptionPeriodEnd = periodEnd as any;
       }
+      
+      await storage.updateArtist(artistId, updates);
+
+      // Create trial analytics record
+      await storage.createSubscriptionTrial({
+        artistId,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscription.id,
+        tier,
+        status: 'active',
+        trialSource: 'dashboard_upgrade', // Default source, can be customized later
+        trialStartedAt: new Date(),
+        scheduledTrialEnd: trialEnd,
+      });
+
+      if (!paymentIntent.client_secret) {
+        throw new Error('Payment intent missing client secret');
+      }
+
+      return {
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent.client_secret
+      };
     }
     
     throw new Error('Failed to create subscription - missing payment intent');
@@ -419,8 +452,9 @@ export class SubscriptionService {
           break;
         }
 
-        const periodEnd = typeof subscription.current_period_end === 'number'
-          ? new Date(subscription.current_period_end * 1000)
+        const sub = subscription as any;
+        const periodEnd = typeof sub.current_period_end === 'number'
+          ? new Date(sub.current_period_end * 1000)
           : new Date();
 
         // Determine tier: metadata → price ID → current tier (with defensive logging)
@@ -453,9 +487,7 @@ export class SubscriptionService {
           if (activeTrial) {
             await storage.updateSubscriptionTrial(activeTrial.id, {
               status: 'converted',
-              convertedAt: new Date(),
-              finalTier: resolvedTier,
-              trialEndedAt: new Date()
+              convertedAt: new Date()
             });
             console.log(`[SUCCESS][TRIAL_ANALYTICS] Marked trial ${activeTrial.id} as converted`);
           }
@@ -471,7 +503,7 @@ export class SubscriptionService {
           if (activeTrial) {
             await storage.updateSubscriptionTrial(activeTrial.id, {
               status: 'canceled',
-              trialEndedAt: new Date()
+              canceledAt: new Date()
             });
           }
         }
@@ -530,8 +562,9 @@ export class SubscriptionService {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
         
-        if (typeof invoice.subscription === 'string' && invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        const subscriptionId = extractSubscriptionId(invoice);
+        if (subscriptionId) {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           const artistId = subscription.metadata?.artistId;
           const tier = subscription.metadata?.tier as 'pro' | 'elite' | undefined;
           
@@ -540,8 +573,9 @@ export class SubscriptionService {
             break;
           }
 
-          const periodEnd = typeof subscription.current_period_end === 'number'
-            ? new Date(subscription.current_period_end * 1000)
+          const sub = subscription as any;
+          const periodEnd = typeof sub.current_period_end === 'number'
+            ? new Date(sub.current_period_end * 1000)
             : new Date();
 
           await storage.updateArtist(artistId, {
@@ -564,7 +598,7 @@ export class SubscriptionService {
                 console.log(`[SUCCESS][SUBSCRIPTION_CONFIRMED] Sending confirmation email to ${artist.email} for ${tier} subscription`);
                 await emailService.sendSubscriptionConfirmation(
                   artist.email,
-                  artist.artistName,
+                  artist.name,
                   artistId,
                   tier,
                   periodEnd
@@ -581,8 +615,9 @@ export class SubscriptionService {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         
-        if (typeof invoice.subscription === 'string' && invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        const subscriptionId = extractSubscriptionId(invoice);
+        if (subscriptionId) {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           const artistId = subscription.metadata?.artistId;
           const tier = subscription.metadata?.tier as 'pro' | 'elite' | undefined;
           
@@ -610,7 +645,7 @@ export class SubscriptionService {
                 console.log(`[WARN][PAYMENT_FAILED] Sending payment failed email to ${artist.email} for ${tier} subscription (invoice: ${invoice.id})`);
                 await emailService.sendPaymentFailed(
                   artist.email,
-                  artist.artistName,
+                  artist.name,
                   artistId,
                   tier,
                   subscription.id,
@@ -696,8 +731,9 @@ export class SubscriptionService {
     const tier = subscription.metadata?.tier as SubscriptionTier;
     const config = tier === 'pro' ? SUBSCRIPTION_CONFIG.pro : SUBSCRIPTION_CONFIG.elite;
 
-    const periodEnd = typeof subscription.current_period_end === 'number'
-      ? new Date(subscription.current_period_end * 1000)
+    const sub = subscription as any;
+    const periodEnd = typeof sub.current_period_end === 'number'
+      ? new Date(sub.current_period_end * 1000)
       : new Date();
 
     return {

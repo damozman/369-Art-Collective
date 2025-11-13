@@ -121,6 +121,9 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
           });
         } catch (error) {
           console.error('Failed to analyze image:', error);
+        } finally {
+          // Set uploading to false after analysis completes
+          setIsUploading(false);
         }
       };
       img.src = uploadedUrl;
@@ -131,7 +134,6 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
         description: "Could not upload image for analysis",
         variant: "destructive",
       });
-    } finally {
       setIsUploading(false);
     }
   };
@@ -265,89 +267,102 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   };
 
-  if (!selectedFile || !analysis) return null;
+  if (!selectedFile) return null;
 
-  const showUpscaleButton = analysis.needsUpscale && quota?.hasQuota;
+  const showUpscaleButton = analysis?.needsUpscale && quota?.hasQuota;
   const isUpscaling = upscaleMutation.isPending || jobId !== null;
+  const isAnalyzing = isUploading || (!analysis && selectedFile);
 
   return (
-    <Card className="mt-4">
+    <Card className="mt-4" data-testid="card-upscale-widget">
       <CardContent className="p-4 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 space-y-2">
-            <div className="flex items-center gap-2">
-              {analysis.meetsTarget ? (
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              ) : analysis.meetsMinimum ? (
-                <AlertCircle className="h-5 w-5 text-yellow-500" />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-red-500" />
-              )}
-              <h4 className="text-sm font-semibold">Print Quality Analysis</h4>
+        {isAnalyzing ? (
+          <div className="flex items-center gap-3" data-testid="loading-analysis">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div>
+              <h4 className="text-sm font-semibold">Analyzing Print Quality...</h4>
+              <p className="text-xs text-muted-foreground">Checking image resolution and DPI</p>
             </div>
-            
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <span className="text-muted-foreground">Resolution:</span>
-                <p className="font-medium">{analysis.width} × {analysis.height}px</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Estimated DPI:</span>
-                <p className="font-medium">{analysis.estimatedDpi} DPI</p>
-              </div>
-            </div>
+          </div>
+        ) : analysis ? (
+          <>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  {analysis.meetsTarget ? (
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  ) : analysis.meetsMinimum ? (
+                    <AlertCircle className="h-5 w-5 text-yellow-500" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                  )}
+                  <h4 className="text-sm font-semibold">Print Quality Analysis</h4>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-muted-foreground">Resolution:</span>
+                    <p className="font-medium">{analysis.width} × {analysis.height}px</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Estimated DPI:</span>
+                    <p className="font-medium">{analysis.estimatedDpi} DPI</p>
+                  </div>
+                </div>
 
-            <p className="text-xs text-muted-foreground">{analysis.message}</p>
+                <p className="text-xs text-muted-foreground">{analysis.message}</p>
 
-            {quota && (
-              <div className="flex items-center gap-2 text-xs">
-                <Sparkles className="h-3 w-3 text-primary" />
-                <span className="text-muted-foreground">AI Upscales:</span>
-                {quota.quotaType === 'elite_unlimited' ? (
-                  <Badge variant="default" className="h-6">Unlimited</Badge>
-                ) : (
-                  <Badge variant="outline" className="h-6">
-                    {quota.remaining} / {quota.total} remaining
-                  </Badge>
+                {quota && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <Sparkles className="h-3 w-3 text-primary" />
+                    <span className="text-muted-foreground">AI Upscales:</span>
+                    {quota.quotaType === 'elite_unlimited' ? (
+                      <Badge variant="default" className="h-6">Unlimited</Badge>
+                    ) : (
+                      <Badge variant="outline" className="h-6">
+                        {quota.remaining} / {quota.total} remaining
+                      </Badge>
+                    )}
+                  </div>
                 )}
               </div>
+
+              {showUpscaleButton && !isUpscaling && (
+                <Button
+                  onClick={() => upscaleMutation.mutate()}
+                  size="default"
+                  className="gap-2"
+                  data-testid="button-boost-quality"
+                >
+                  <Zap className="h-4 w-4" />
+                  Boost Quality
+                </Button>
+              )}
+            </div>
+
+            {isUpscaling && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Enhancing image with AI...</span>
+                  <span className="font-medium">{progress}%</span>
+                </div>
+                <Progress value={progress} className="h-2" data-testid="progress-upscale" />
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span>This usually takes 30-60 seconds</span>
+                </div>
+              </div>
             )}
-          </div>
 
-          {showUpscaleButton && !isUpscaling && (
-            <Button
-              onClick={() => upscaleMutation.mutate()}
-              size="default"
-              className="gap-2"
-              data-testid="button-boost-quality"
-            >
-              <Zap className="h-4 w-4" />
-              Boost Quality
-            </Button>
-          )}
-        </div>
-
-        {isUpscaling && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Enhancing image with AI...</span>
-              <span className="font-medium">{progress}%</span>
-            </div>
-            <Progress value={progress} className="h-2" data-testid="progress-upscale" />
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              <span>This usually takes 30-60 seconds</span>
-            </div>
-          </div>
-        )}
-
-        {!quota?.hasQuota && analysis.needsUpscale && (
-          <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-md">
-            <p className="text-xs text-yellow-800 dark:text-yellow-200">
-              You've used all your AI upscales. Upgrade to <strong>Pro</strong> (25/month) or <strong>Elite</strong> (unlimited) for more.
-            </p>
-          </div>
-        )}
+            {!quota?.hasQuota && analysis.needsUpscale && (
+              <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                  You've used all your AI upscales. Upgrade to <strong>Pro</strong> (25/month) or <strong>Elite</strong> (unlimited) for more.
+                </p>
+              </div>
+            )}
+          </>
+        ) : null}
       </CardContent>
     </Card>
   );

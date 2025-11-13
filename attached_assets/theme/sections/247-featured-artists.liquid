@@ -93,17 +93,17 @@ Showcase artists with their artwork
 <style>
 .featured-artists {
   background: #fff;
-  padding: 6rem 2rem;
+  padding: 5rem 2rem;
 }
 
 .featured-artists__container {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
 .featured-artists__header {
   text-align: center;
-  margin-bottom: 4rem;
+  margin-bottom: 3rem;
 }
 
 .featured-artists__eyebrow {
@@ -120,7 +120,7 @@ Showcase artists with their artwork
 }
 
 .featured-artists__title {
-  font-size: 3.25rem;
+  font-size: 2.75rem;
   font-weight: 800;
   color: #0f0f0f;
   margin: 0 0 1rem;
@@ -128,7 +128,7 @@ Showcase artists with their artwork
 }
 
 .featured-artists__subtitle {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   color: #6b7280;
   line-height: 1.7;
   max-width: 700px;
@@ -137,9 +137,9 @@ Showcase artists with their artwork
 
 .featured-artists__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 2.5rem;
-  margin-bottom: 3rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.75rem;
+  margin-bottom: 2.5rem;
 }
 
 .artist-feature {
@@ -329,18 +329,61 @@ Showcase artists with their artwork
   transform: translateX(3px);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
+  .featured-artists__container {
+    max-width: 100%;
+    padding: 0 1.5rem;
+  }
+
+  .featured-artists__grid {
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 968px) {
   .featured-artists {
     padding: 4rem 1.5rem;
   }
 
   .featured-artists__title {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
+  }
+
+  .featured-artists__subtitle {
+    font-size: 1rem;
+  }
+
+  .featured-artists__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .featured-artists {
+    padding: 3rem 1rem;
+  }
+
+  .featured-artists__header {
+    margin-bottom: 2rem;
+  }
+
+  .featured-artists__title {
+    font-size: 2rem;
   }
 
   .featured-artists__grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
+  }
+
+  .artist-feature__overlay {
+    transform: translateY(0);
+  }
+
+  .artist-feature__btn {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

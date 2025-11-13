@@ -894,6 +894,56 @@ section.247pn-art-product .product__info {
   background-repeat: no-repeat;
 }
 
+/* VIDEO BACKGROUND */
+.hero-slide__video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* ANIMATED GRADIENT BACKGROUND */
+.hero-slide__animated-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  z-index: 0;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Hide video on mobile to save bandwidth */
+@media (max-width: 768px) {
+  .hero-slide__video {
+    display: none;
+  }
+  
+  .hero-slide__animated-bg {
+    display: block !important;
+  }
+}
+
 .hero-slide__overlay {
   position: absolute;
   top: 0;

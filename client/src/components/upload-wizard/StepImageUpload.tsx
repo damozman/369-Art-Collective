@@ -66,7 +66,7 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange }: Step
         </p>
       </div>
 
-      {!previewUrl ? (
+      {!selectedFile ? (
         <label
           htmlFor="wizard-file-upload"
           className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover-elevate bg-muted/30"
@@ -92,31 +92,34 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange }: Step
         </label>
       ) : (
         <div className="space-y-4">
-          <div className="relative">
-            <img
-              src={currentPreviewUrl || ''}
-              alt="Preview"
-              className="w-full h-auto max-h-96 object-contain rounded-lg"
-              data-testid="img-preview"
-            />
-            <div className="absolute top-2 right-2 flex gap-2">
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                onClick={clearFile}
-                data-testid="button-clear-file"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            {selectedFile && (
-              <div className="mt-2 text-sm text-muted-foreground">
-                <p><strong>File:</strong> {selectedFile.name}</p>
-                <p><strong>Size:</strong> {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+          {currentPreviewUrl && (
+            <div className="relative">
+              <img
+                src={currentPreviewUrl}
+                alt="Preview"
+                className="w-full h-auto max-h-96 object-contain rounded-lg"
+                data-testid="img-preview"
+              />
+              <div className="absolute top-2 right-2 flex gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={clearFile}
+                  data-testid="button-clear-file"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+          
+          {selectedFile && (
+            <div className="text-sm text-muted-foreground">
+              <p><strong>File:</strong> {selectedFile.name}</p>
+              <p><strong>Size:</strong> {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+            </div>
+          )}
           
           <UpscaleWidget 
             selectedFile={selectedFile}

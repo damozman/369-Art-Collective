@@ -915,7 +915,7 @@ section.247pn-art-product .product__info {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #4facfe);
+  background: linear-gradient(-45deg, #0A1628, #1A1D23, #FF6B6B, #FF8A5B, #20C997);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
   z-index: 0;
@@ -1062,16 +1062,16 @@ section.247pn-art-product .product__info {
 }
 
 .hero-slide__btn--primary {
-  background: #6366f1;
+  background: #FF8A5B;
   color: #fff;
-  border-color: #6366f1;
+  border-color: #FF8A5B;
 }
 
 .hero-slide__btn--primary:hover {
-  background: #5558e3;
-  border-color: #5558e3;
+  background: #FF6B4A;
+  border-color: #FF6B4A;
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 12px 32px rgba(255, 138, 91, 0.5);
 }
 
 .hero-slide__btn--secondary {

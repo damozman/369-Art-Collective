@@ -17,7 +17,7 @@ The system uses a scalable client-server architecture with distinct frontend and
 - **Frontend Technologies:** React, TypeScript, Wouter, TanStack Query, React Hook Form, Tailwind CSS, and Shadcn UI.
 - **Interfaces:** Dedicated workflows for artists (artwork upload, AI Art Studio), administrators (enhanced dashboards), and CreatorStack buyers (secure access to purchased kits and AI tools).
 - **Shopify Storefront:** Custom `247-art.css` with a Displate-inspired aesthetic, featuring artist spotlights, interactive product selectors, and mobile responsiveness.
-- **Influencer Affiliate Program:** Public application, tiered commissions (20-40%), global `?ref=` tracking with 30-day cookie attribution, and an influencer dashboard with gamification.
+- **Influencer Affiliate Program:** Public application, tiered commissions (20-40%), global `?ref=` tracking with 30-day cookie attribution ('247pn_affiliate'), and an influencer dashboard with gamification. Affiliate click tracking allows multiple clicks per affiliate code with full UTM parameter capture (source/medium/campaign) for attribution analytics. Schema optimized with performance indexes on affiliate_code and (influencer_id, created_at) composite.
 - **Customer-Facing Pages:** Displate-inspired About Us, Meet the Creators, Artist Profile Pages, Contact Us, FAQs, and optimized product pages.
 
 **Technical Implementations:**

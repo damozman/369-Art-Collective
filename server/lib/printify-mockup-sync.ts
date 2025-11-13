@@ -104,6 +104,8 @@ export async function syncPrintifyMockupsToShopify(
  * @param maxRetries - Maximum number of retry attempts (default: 3)
  * 
  * @returns SyncResult with status and counts
+ * 
+ * Note: Returns success=true even if mockupsAdded=0 (idempotent - safe to rerun)
  */
 export async function syncPrintifyMockupsWithRetry(
   printifyShopId: string,
@@ -124,12 +126,18 @@ export async function syncPrintifyMockupsWithRetry(
       delay
     );
 
-    if (result.success && result.mockupsAdded > 0) {
+    // Success means the sync completed without errors
+    // Even if 0 mockups were added (already synced or only default image)
+    if (result.success) {
+      if (result.mockupsAdded === 0) {
+        console.log("[Mockup Sync] No new mockups to add (already synced or only default image)");
+      }
       return result;
     }
 
+    // Only retry on actual failures
     if (attempt < maxRetries - 1) {
-      console.log(`[Mockup Sync] No mockups added, will retry in ${delay}ms...`);
+      console.log(`[Mockup Sync] Sync failed, will retry in ${delay}ms...`);
     }
   }
 

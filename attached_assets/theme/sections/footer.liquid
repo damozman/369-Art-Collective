@@ -4,9 +4,19 @@
 
 <footer class="site-footer" role="contentinfo">
   <div class="footer-wrapper">
-    {% if linklists[section.settings.menu].links.size > 0 %}
-      <nav class="footer-nav">
-        <ul class="footer-menu">
+    <nav class="footer-nav">
+      <ul class="footer-menu">
+        <li class="footer-column">
+          <h4 class="footer-title">For Artists</h4>
+          <ul class="footer-submenu">
+            <li><a href="https://247portal.replit.app/signup" class="footer-artist-cta">Become an Artist</a></li>
+            <li><a href="https://247portal.replit.app/login">Artist Portal Login</a></li>
+            <li><a href="/pages/join">Artist Benefits</a></li>
+            <li><a href="/pages/faq">Artist FAQs</a></li>
+          </ul>
+        </li>
+        
+        {% if linklists[section.settings.menu].links.size > 0 %}
           {% for link in linklists[section.settings.menu].links %}
             <li class="footer-column">
               <h4 class="footer-title">{{ link.title }}</h4>
@@ -26,9 +36,9 @@
               {% endif %}
             </li>
           {% endfor %}
-        </ul>
-      </nav>
-    {% endif %}
+        {% endif %}
+      </ul>
+    </nav>
 
     <div class="footer-bottom">
       <p class="copyright">© {{ 'now' | date: '%Y' }} {{ shop.name }}. All rights reserved.</p>
@@ -92,9 +102,19 @@
     color: #fff;
   }
   
+  .footer-artist-cta {
+    color: #FF8A5B !important;
+    font-weight: 600;
+  }
+  
+  .footer-artist-cta:hover {
+    color: #FF6B6B !important;
+  }
+  
   .footer-bottom {
     border-top: 1px solid #333;
     padding-top: 1.5rem;
+    margin-top: 2rem;
     text-align: center;
   }
   

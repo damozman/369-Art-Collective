@@ -5,11 +5,11 @@
 <div class="homepage-bottom">
   <!-- Why Collect Section -->
   <section class="why-collect-section">
-    <div class="container">
+    <div class="container-wide">
       <h2 class="section-title">Why Collect from 247 Print Network</h2>
       
       <div class="benefits-grid">
-        <div class="benefit-card">
+        <div class="benefit-card" data-testid="card-benefit-quality">
           <div class="benefit-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
@@ -19,7 +19,7 @@
           <p class="benefit-desc">Premium materials, archival inks, and professional printing ensure your art lasts generations.</p>
         </div>
         
-        <div class="benefit-card">
+        <div class="benefit-card" data-testid="card-benefit-royalties">
           <div class="benefit-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" fill="currentColor"/>
@@ -29,14 +29,24 @@
           <p class="benefit-desc">We believe in fair pay. Every purchase directly supports independent creators.</p>
         </div>
         
-        <div class="benefit-card">
+        <div class="benefit-card" data-testid="card-benefit-shipping">
           <div class="benefit-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13 3C13 2.45 12.55 2 12 2C11.45 2 11 2.45 11 3V5.08C7.61 5.57 5 8.47 5 12C5 15.87 8.13 19 12 19C15.87 19 19 15.87 19 12C19 8.47 16.39 5.57 13 5.08V3ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM11 9V13H13.5L15 15.5L16.5 14L14.5 10.5H11V9Z" fill="currentColor"/>
+              <path d="M20 8H17V4H3C1.9 4 1 4.9 1 6V17H3C3 18.66 4.34 20 6 20C7.66 20 9 18.66 9 17H15C15 18.66 16.34 20 18 20C19.66 20 21 18.66 21 17H23V12L20 8ZM6 18C5.45 18 5 17.55 5 17C5 16.45 5.45 16 6 16C6.55 16 7 16.45 7 17C7 17.55 6.55 18 6 18ZM20 9.5L21.96 12H17V9.5H20ZM18 18C17.45 18 17 17.55 17 17C17 16.45 17.45 16 18 16C18.55 16 19 16.45 19 17C19 17.55 18.55 18 18 18Z" fill="currentColor"/>
             </svg>
           </div>
-          <h3 class="benefit-title">Fast & Reliable Shipping</h3>
+          <h3 class="benefit-title">Fast Worldwide Shipping</h3>
           <p class="benefit-desc">Print-on-demand fulfillment means your order ships fresh, with care, directly to your door.</p>
+        </div>
+        
+        <div class="benefit-card" data-testid="card-benefit-satisfaction">
+          <div class="benefit-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <h3 class="benefit-title">100% Satisfaction Guaranteed</h3>
+          <p class="benefit-desc">Not happy? We'll make it right with our hassle-free returns and responsive support team.</p>
         </div>
       </div>
     </div>
@@ -96,66 +106,93 @@
     padding: 0 2rem;
   }
   
+  .container-wide {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+  
   /* Why Collect Section */
   .why-collect-section {
-    padding: 5rem 0;
+    padding: 4rem 0 4.5rem;
     background: linear-gradient(135deg, #0A1628 0%, #1a2942 100%);
     color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .why-collect-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(255, 138, 91, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(32, 201, 151, 0.08) 0%, transparent 50%);
+    pointer-events: none;
   }
   
   .section-title {
     text-align: center;
     font-size: 2.5rem;
     font-weight: 700;
-    margin: 0 0 4rem 0;
+    margin: 0 0 3rem 0;
     color: #fff;
+    position: relative;
+    z-index: 1;
   }
   
   .benefits-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 3rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    position: relative;
+    z-index: 1;
   }
   
   .benefit-card {
     text-align: center;
-    padding: 2rem;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     transition: all 0.3s;
   }
   
   .benefit-card:hover {
-    transform: translateY(-8px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 138, 91, 0.3);
+    transform: translateY(-6px);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 138, 91, 0.4);
+    box-shadow: 0 12px 30px rgba(255, 138, 91, 0.15);
   }
   
   .benefit-icon {
-    width: 72px;
-    height: 72px;
+    width: 80px;
+    height: 80px;
     margin: 0 auto 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, #FF8A5B 0%, #FF6B6B 100%);
-    border-radius: 16px;
+    border-radius: 20px;
     color: #fff;
+    box-shadow: 0 8px 20px rgba(255, 138, 91, 0.25);
   }
   
   .benefit-title {
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: 700;
     margin: 0 0 1rem 0;
     color: #fff;
   }
   
   .benefit-desc {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: #ccc;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.85);
     margin: 0;
   }
   
@@ -290,20 +327,62 @@
   }
   
   /* Responsive Design */
-  @media (max-width: 1024px) {
+  @media (max-width: 1200px) {
+    .container-wide {
+      max-width: 100%;
+      padding: 0 1.5rem;
+    }
+    
     .benefits-grid {
-      grid-template-columns: 1fr;
-      gap: 2rem;
+      gap: 1.5rem;
+    }
+    
+    .benefit-card {
+      padding: 2rem 1.5rem;
+    }
+  }
+  
+  @media (max-width: 968px) {
+    .why-collect-section {
+      padding: 3rem 0;
+    }
+    
+    .section-title {
+      font-size: 2rem;
+      margin-bottom: 2rem;
     }
     
     .stats-grid {
       grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
     }
   }
   
   @media (max-width: 768px) {
+    .benefits-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    .benefit-card {
+      padding: 2rem 1.5rem;
+    }
+    
+    .benefit-icon {
+      width: 70px;
+      height: 70px;
+    }
+    
+    .benefit-title {
+      font-size: 1.35rem;
+    }
+    
+    .benefit-desc {
+      font-size: 1rem;
+    }
+    
     .section-title {
-      font-size: 2rem;
+      font-size: 1.75rem;
     }
     
     .cta-title {
@@ -319,6 +398,10 @@
       gap: 1.5rem;
     }
     
+    .stat-number {
+      font-size: 2.5rem;
+    }
+    
     .cta-buttons {
       flex-direction: column;
       width: 100%;
@@ -328,6 +411,34 @@
     .btn-secondary {
       width: 100%;
       max-width: 300px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .why-collect-section {
+      padding: 2.5rem 0;
+    }
+    
+    .container,
+    .container-wide {
+      padding: 0 1rem;
+    }
+    
+    .section-title {
+      font-size: 1.5rem;
+    }
+    
+    .benefit-icon {
+      width: 64px;
+      height: 64px;
+    }
+    
+    .benefit-title {
+      font-size: 1.25rem;
+    }
+    
+    .cta-title {
+      font-size: 1.75rem;
     }
   }
 </style>

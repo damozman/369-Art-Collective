@@ -4537,6 +4537,325 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================
+  // AI IMAGE UPSCALING ROUTES
+  // ============================================
+  
+  app.post("/api/upscale/analyze", async (req, res) => {
+    try {
+      const artistId = req.session.user?.id;
+      if (!artistId || req.session.user?.type !== "artist") {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { imageUrl, width, height } = req.body;
+
+      if (!imageUrl || !width || !height) {
+        return res.status(400).json({ message: "Image URL, width, and height are required" });
+      }
+
+      const { DpiValidatorService } = await import('./lib/dpi-validator-service');
+      const { UpscaleQuotaService } = await import('./lib/upscale-quota-service');
+
+      const analysis = DpiValidatorService.analyzePrintQuality(width, height);
+      const quotaStatus = await UpscaleQuotaService.checkQuota(artistId);
+
+      const upscaledAnalysis = DpiValidatorService.calculateUpscaledQuality(
+        width, 
+        height, 
+        DpiValidatorService.getUpscaleScale(width, height)
+      );
+
+      res.json({
+        current: analysis,
+        afterUpscaling: upscaledAnalysis,
+        quota: quotaStatus,
+        shouldRecommend: DpiValidatorService.shouldRecommendUpscaling(width, height),
+        recommendedScale: DpiValidatorService.getUpscaleScale(width, height)
+      });
+    } catch (error: any) {
+      console.error("Upscale analysis error:", error);
+      res.status(500).json({ message: "Failed to analyze image" });
+    }
+  });
+
+  app.post("/api/upscale/request", async (req, res) => {
+    try {
+      const artistId = req.session.user?.id;
+      if (!artistId || req.session.user?.type !== "artist") {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { imageUrl, fileHash, width, height, fileSize } = req.body;
+
+      if (!imageUrl || !fileHash || !width || !height || !fileSize) {
+        return res.status(400).json({ 
+          message: "Image URL, file hash, dimensions, and file size are required" 
+        });
+      }
+
+      const { UpscaleQuotaService } = await import('./lib/upscale-quota-service');
+      const { UpscaleDeduplicationService } = await import('./lib/upscale-deduplication-service');
+      const { UpscaleAbuseProtection } = await import('./lib/upscale-abuse-protection');
+      const { ReplicateUpscaleService } = await import('./lib/replicate-upscale-service');
+      const { DpiValidatorService } = await import('./lib/dpi-validator-service');
+
+      const artist = await storage.getArtistById(artistId);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found" });
+      }
+
+      const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() 
+        || req.socket.remoteAddress 
+        || 'unknown';
+
+      const abuseCheck = await UpscaleAbuseProtection.checkAllProtections({
+        artistId,
+        ipAddress,
+        fileSize,
+        accountCreatedAt: artist.createdAt
+      });
+
+      if (!abuseCheck.allowed) {
+        return res.status(429).json({ 
+          message: abuseCheck.reason,
+          waitSeconds: abuseCheck.waitSeconds
+        });
+      }
+
+      const quotaStatus = await UpscaleQuotaService.checkQuota(artistId);
+      if (!quotaStatus.hasQuota) {
+        return res.status(403).json({ 
+          message: "Upscale quota exceeded",
+          quota: quotaStatus
+        });
+      }
+
+      const cached = await UpscaleDeduplicationService.checkCache(fileHash);
+      if (cached.found) {
+        console.log(`✅ Upscale cache hit for hash ${fileHash}`);
+        
+        await UpscaleQuotaService.consumeQuota(artistId, quotaStatus.quotaType);
+        
+        const tier = artist.subscriptionTier || 'free';
+        await UpscaleDeduplicationService.saveToCache({
+          fileHash,
+          artistId,
+          quotaType: quotaStatus.quotaType,
+          tier,
+          ipAddress,
+          originalUrl: imageUrl,
+          upscaledUrl: cached.upscaledUrl!,
+          originalWidth: cached.originalWidth!,
+          originalHeight: cached.originalHeight!,
+          upscaledWidth: cached.upscaledWidth!,
+          upscaledHeight: cached.upscaledHeight!,
+          originalDpi: cached.originalDpi!,
+          costCents: 0
+        });
+        
+        return res.json({
+          status: 'completed',
+          upscaledUrl: cached.upscaledUrl,
+          cached: true,
+          originalWidth: cached.originalWidth,
+          originalHeight: cached.originalHeight,
+          upscaledWidth: cached.upscaledWidth,
+          upscaledHeight: cached.upscaledHeight
+        });
+      }
+
+      const scale = DpiValidatorService.getUpscaleScale(width, height);
+      const estimatedCost = ReplicateUpscaleService.estimateCost(scale);
+
+      try {
+        const { predictionId } = await ReplicateUpscaleService.createUpscaleJob({
+          imageUrl,
+          scale
+        });
+
+        const tier = artist.subscriptionTier || 'free';
+        const priority = tier === 'elite' ? 1 : tier === 'pro' ? 2 : 3;
+
+        const job = await storage.createUpscaleJob({
+          artistId,
+          fileHash,
+          originalUrl: imageUrl,
+          status: 'queued',
+          priority,
+          replicateId: predictionId
+        });
+
+        await UpscaleQuotaService.consumeQuota(artistId, quotaStatus.quotaType);
+
+        await UpscaleDeduplicationService.createPendingRecord({
+          fileHash,
+          artistId,
+          quotaType: quotaStatus.quotaType,
+          tier,
+          ipAddress,
+          jobId: job.id,
+          replicateId: predictionId,
+          originalUrl: imageUrl,
+          originalWidth: width,
+          originalHeight: height,
+          upscaledWidth: width * scale,
+          upscaledHeight: height * scale,
+          originalDpi: DpiValidatorService.analyzePrintQuality(width, height).estimatedDpi,
+          costCents: estimatedCost
+        });
+
+        console.log(`✅ Upscale job created: ${job.id} (Replicate: ${predictionId})`);
+
+        res.json({
+          status: 'queued',
+          jobId: job.id,
+          predictionId,
+          estimatedCost: estimatedCost,
+          message: 'Upscaling in progress. This usually takes 30-60 seconds.'
+        });
+      } catch (error: any) {
+        console.error("Upscale request error:", error);
+        
+        await UpscaleDeduplicationService.recordFailedAttempt({
+          fileHash,
+          artistId,
+          quotaType: quotaStatus.quotaType,
+          tier: artist.subscriptionTier || 'free',
+          ipAddress,
+          originalUrl: imageUrl,
+          errorMessage: error.message || "Failed to create upscale job"
+        });
+
+        res.status(500).json({ message: "Failed to start upscaling" });
+      }
+    } catch (error: any) {
+      console.error("Upscale request error:", error);
+      res.status(500).json({ message: "Failed to process upscale request" });
+    }
+  });
+
+  app.get("/api/upscale/status/:jobId", async (req, res) => {
+    try {
+      const artistId = req.session.user?.id;
+      if (!artistId || req.session.user?.type !== "artist") {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { jobId } = req.params;
+
+      const job = await storage.getUpscaleJobById(jobId);
+      if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      if (job.artistId !== artistId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      if (job.status === 'completed' && job.upscaledUrl) {
+        return res.json({
+          status: 'completed',
+          upscaledUrl: job.upscaledUrl,
+          jobId: job.id
+        });
+      }
+
+      if (job.status === 'failed') {
+        return res.json({
+          status: 'failed',
+          error: job.errorMessage || "Upscaling failed",
+          jobId: job.id
+        });
+      }
+
+      if (job.replicateId) {
+        const { ReplicateUpscaleService } = await import('./lib/replicate-upscale-service');
+        
+        try {
+          const replicateStatus = await ReplicateUpscaleService.getJobStatus(job.replicateId);
+          
+          if (replicateStatus.status === 'completed' && replicateStatus.upscaledUrl) {
+            await storage.updateUpscaleJob(job.id, {
+              status: 'completed',
+              upscaledUrl: replicateStatus.upscaledUrl,
+              completedAt: new Date()
+            });
+
+            await storage.updateUpscaleUsageByJobId(job.id, {
+              status: 'completed',
+              upscaledUrl: replicateStatus.upscaledUrl,
+              completedAt: new Date()
+            });
+
+            return res.json({
+              status: 'completed',
+              upscaledUrl: replicateStatus.upscaledUrl,
+              jobId: job.id
+            });
+          } else if (replicateStatus.status === 'failed') {
+            await storage.updateUpscaleJob(job.id, {
+              status: 'failed',
+              errorMessage: replicateStatus.error || "Upscaling failed"
+            });
+
+            await storage.updateUpscaleUsageByJobId(job.id, {
+              status: 'failed',
+              errorMessage: replicateStatus.error || "Upscaling failed"
+            });
+
+            return res.json({
+              status: 'failed',
+              error: replicateStatus.error || "Upscaling failed",
+              jobId: job.id
+            });
+          }
+
+          return res.json({
+            status: replicateStatus.status,
+            jobId: job.id
+          });
+        } catch (error: any) {
+          console.error("Error checking Replicate status:", error);
+          return res.json({
+            status: job.status,
+            jobId: job.id
+          });
+        }
+      }
+
+      res.json({
+        status: job.status,
+        jobId: job.id
+      });
+    } catch (error: any) {
+      console.error("Status check error:", error);
+      res.status(500).json({ message: "Failed to check status" });
+    }
+  });
+
+  app.get("/api/upscale/quota", async (req, res) => {
+    try {
+      const artistId = req.session.user?.id;
+      if (!artistId || req.session.user?.type !== "artist") {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { UpscaleQuotaService } = await import('./lib/upscale-quota-service');
+      
+      const quotaStatus = await UpscaleQuotaService.checkQuota(artistId);
+      const analytics = await UpscaleQuotaService.getUsageAnalytics(artistId);
+
+      res.json({
+        ...quotaStatus,
+        analytics
+      });
+    } catch (error: any) {
+      console.error("Quota check error:", error);
+      res.status(500).json({ message: "Failed to check quota" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -12,7 +12,7 @@ Cache bust: Nov 13 2025 - 14:30 EST
 <section class="hero-slider-section">
   <div class="swiper hero-swiper">
     <div class="swiper-wrapper">
-      {% for handle in product_handles limit: 5 %}
+      {% for handle in product_handles limit: 4 %}
         {% assign current_product = all_products[handle] %}
         {% if current_product %}
           <div class="swiper-slide">

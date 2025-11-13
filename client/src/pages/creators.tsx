@@ -63,7 +63,7 @@ export default function Creators() {
       {/* Artist Grid */}
       <section className="max-w-7xl mx-auto px-6 py-16">
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="premium-card" data-testid={`skeleton-artist-${i}`}>
                 <Skeleton className="w-full aspect-[4/3]" />
@@ -82,7 +82,7 @@ export default function Creators() {
             ))}
           </div>
         ) : artists && artists.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {artists.map((artist, index) => (
               <Link
                 key={artist.id}

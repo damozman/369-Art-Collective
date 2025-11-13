@@ -184,7 +184,7 @@ export default function Home() {
               Built by creators, for creators. We've removed every barrier between your art and your income.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {features.map((feature, index) => (
               <Card key={index} className="hover-elevate" data-testid={`feature-card-${index}`}>
                 <CardContent className="p-6 space-y-3">
@@ -213,7 +213,7 @@ export default function Home() {
               Four simple steps to start earning from your creativity
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
             {howItWorks.map((item, index) => (
               <div key={index} className="text-center space-y-3" data-testid={`step-${index}`}>
                 <div className="mx-auto h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold">
@@ -240,7 +240,7 @@ export default function Home() {
               Real artists building real empires with 247 Print Network
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {testimonials.length > 0 ? (
               testimonials.map((testimonial, index) => (
                 <Card 

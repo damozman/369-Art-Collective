@@ -99,48 +99,58 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl font-serif">247 Print Network</span>
+      {/* Navigation - Modern Clean Design */}
+      <header className="border-b sticky top-0 bg-background backdrop-blur-sm z-50 shadow-sm">
+        <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Sparkles className="h-7 w-7 text-primary" />
+            <span className="font-bold text-2xl md:text-3xl tracking-tight">247 Print Network</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button variant="ghost" onClick={() => setLocation("/login")} data-testid="button-login">
+            <Button 
+              variant="ghost" 
+              onClick={() => setLocation("/login")} 
+              data-testid="button-login"
+              className="hidden sm:flex"
+              size="lg"
+            >
               Sign In
             </Button>
-            <Button onClick={() => setLocation("/register")} data-testid="button-get-started">
+            <Button 
+              onClick={() => setLocation("/register")} 
+              data-testid="button-get-started"
+              size="lg"
+            >
               Get Started
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-4xl mx-auto text-center space-y-6">
-            <Badge className="mb-4" variant="secondary" data-testid="badge-status">
-              <Rocket className="h-3 w-3 mr-1" />
+      {/* Hero Section - More Visual Impact */}
+      <section className="relative py-24 md:py-40 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background" />
+        <div className="container mx-auto px-4 md:px-6 relative">
+          <div className="max-w-5xl mx-auto text-center space-y-8">
+            <Badge className="mb-4 text-sm px-4 py-2" variant="secondary" data-testid="badge-status">
+              <Rocket className="h-4 w-4 mr-2" />
               Now Accepting Artist Applications
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold font-serif leading-tight">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight tracking-tight">
               Turn Your Art Into
               <br />
-              <span className="text-primary">Passive Income</span>
+              <span className="text-primary bg-clip-text">Passive Income</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Join the artist-powered marketplace where your creativity becomes a sustainable business. 
               Upload once, earn forever. Zero inventory, infinite possibilities.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
               <Button 
                 size="lg" 
                 onClick={() => setLocation("/register")}
-                className="text-lg"
+                className="text-lg h-14 px-8"
                 data-testid="button-join-network"
               >
                 Join the Network
@@ -150,6 +160,7 @@ export default function Home() {
                 size="lg" 
                 variant="outline"
                 onClick={() => setLocation("/login")}
+                className="text-lg h-14 px-8"
                 data-testid="button-artist-login"
               >
                 Artist Login

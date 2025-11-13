@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { UpscaleWidget } from "./UpscaleWidget";
 
 interface StepImageUploadProps {
   selectedFile: File | null;
@@ -10,6 +12,11 @@ interface StepImageUploadProps {
 
 export function StepImageUpload({ selectedFile, previewUrl, onFileChange }: StepImageUploadProps) {
   const { toast } = useToast();
+  const [currentPreviewUrl, setCurrentPreviewUrl] = useState<string | null>(previewUrl);
+
+  useEffect(() => {
+    setCurrentPreviewUrl(previewUrl);
+  }, [previewUrl]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -34,7 +41,13 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange }: Step
     }
   };
 
+  const handleUpscaledFile = (upscaledFile: File, upscaledUrl: string) => {
+    setCurrentPreviewUrl(upscaledUrl);
+    onFileChange(upscaledFile);
+  };
+
   const clearFile = () => {
+    setCurrentPreviewUrl(null);
     onFileChange(null);
   };
 
@@ -78,30 +91,37 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange }: Step
           />
         </label>
       ) : (
-        <div className="relative">
-          <img
-            src={previewUrl}
-            alt="Preview"
-            className="w-full h-auto max-h-96 object-contain rounded-lg"
-            data-testid="img-preview"
-          />
-          <div className="absolute top-2 right-2 flex gap-2">
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              onClick={clearFile}
-              data-testid="button-clear-file"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          {selectedFile && (
-            <div className="mt-2 text-sm text-muted-foreground">
-              <p><strong>File:</strong> {selectedFile.name}</p>
-              <p><strong>Size:</strong> {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+        <div className="space-y-4">
+          <div className="relative">
+            <img
+              src={currentPreviewUrl || ''}
+              alt="Preview"
+              className="w-full h-auto max-h-96 object-contain rounded-lg"
+              data-testid="img-preview"
+            />
+            <div className="absolute top-2 right-2 flex gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                onClick={clearFile}
+                data-testid="button-clear-file"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-          )}
+            {selectedFile && (
+              <div className="mt-2 text-sm text-muted-foreground">
+                <p><strong>File:</strong> {selectedFile.name}</p>
+                <p><strong>Size:</strong> {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+              </div>
+            )}
+          </div>
+          
+          <UpscaleWidget 
+            selectedFile={selectedFile}
+            onUpscaledFile={handleUpscaledFile}
+          />
         </div>
       )}
     </div>

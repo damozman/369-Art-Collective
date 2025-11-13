@@ -1,0 +1,354 @@
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Zap, Sparkles, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
+interface UpscaleWidgetProps {
+  selectedFile: File | null;
+  onUpscaledFile: (file: File, upscaledUrl: string) => void;
+}
+
+interface DpiAnalysis {
+  width: number;
+  height: number;
+  estimatedDpi: number;
+  targetDpi: number;
+  meetsMinimum: boolean;
+  meetsTarget: boolean;
+  needsUpscale: boolean;
+  recommendedScale: number;
+  message: string;
+}
+
+interface QuotaStatus {
+  hasQuota: boolean;
+  quotaType: 'registration_bonus' | 'monthly' | 'elite_unlimited';
+  remaining: number;
+  total: number;
+  tier: string;
+  message: string;
+}
+
+export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetProps) {
+  const { toast } = useToast();
+  const [analysis, setAnalysis] = useState<DpiAnalysis | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isCompletedRef = useRef(false);
+
+  const { data: quota } = useQuery<QuotaStatus>({
+    queryKey: ['/api/upscale/quota'],
+    enabled: !!selectedFile,
+  });
+
+  useEffect(() => {
+    if (selectedFile) {
+      uploadAndAnalyzeImage();
+    } else {
+      cleanup();
+      setAnalysis(null);
+      setJobId(null);
+      setProgress(0);
+      setImageUrl(null);
+    }
+    
+    return () => cleanup();
+  }, [selectedFile]);
+
+  const cleanup = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const uploadAndAnalyzeImage = async () => {
+    if (!selectedFile) return;
+
+    setIsUploading(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+
+      const uploadResponse = await fetch('/api/upload/design', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const uploadData = await uploadResponse.json();
+      const uploadedUrl = uploadData.url;
+      setImageUrl(uploadedUrl);
+
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          const analyzeResponse = await apiRequest('POST', '/api/upscale/analyze', {
+            imageUrl: uploadedUrl,
+            width: img.width,
+            height: img.height,
+          });
+          const analyzeData = await analyzeResponse.json();
+
+          setAnalysis({
+            width: img.width,
+            height: img.height,
+            estimatedDpi: analyzeData.current.estimatedDpi,
+            targetDpi: analyzeData.current.targetDpi,
+            meetsMinimum: analyzeData.current.meetsMinimum,
+            meetsTarget: analyzeData.current.meetsTarget,
+            needsUpscale: analyzeData.shouldRecommend,
+            recommendedScale: analyzeData.recommendedScale,
+            message: analyzeData.current.message,
+          });
+        } catch (error) {
+          console.error('Failed to analyze image:', error);
+        }
+      };
+      img.src = uploadedUrl;
+    } catch (error) {
+      console.error('Failed to upload and analyze image:', error);
+      toast({
+        title: "Upload failed",
+        description: "Could not upload image for analysis",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const upscaleMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedFile || !analysis || !imageUrl) throw new Error('No file or analysis available');
+
+      const fileHash = await hashFile(selectedFile);
+
+      const response = await apiRequest('POST', '/api/upscale/request', {
+        imageUrl,
+        fileHash,
+        width: analysis.width,
+        height: analysis.height,
+        fileSize: selectedFile.size,
+      });
+
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      if (data.cached || data.status === 'completed') {
+        handleUpscaleComplete(data.upscaledUrl);
+      } else if (data.jobId) {
+        setJobId(data.jobId);
+        startPolling(data.jobId);
+      }
+      queryClient.invalidateQueries({ queryKey: ['/api/upscale/quota'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Upscale failed",
+        description: error.message || "Failed to upscale image",
+        variant: "destructive",
+      });
+      setProgress(0);
+    },
+  });
+
+  const startPolling = (jobId: string) => {
+    isCompletedRef.current = false;
+    setProgress(10);
+    
+    pollingIntervalRef.current = setInterval(async () => {
+      if (isCompletedRef.current) return;
+      
+      try {
+        const result = await fetch(`/api/upscale/status/${jobId}`);
+        if (!result.ok) {
+          throw new Error(`Status check failed: ${result.statusText}`);
+        }
+        const data = await result.json();
+
+        if (data.status === 'completed' && data.upscaledUrl) {
+          if (isCompletedRef.current) return;
+          isCompletedRef.current = true;
+          cleanup();
+          handleUpscaleComplete(data.upscaledUrl);
+        } else if (data.status === 'failed') {
+          if (isCompletedRef.current) return;
+          isCompletedRef.current = true;
+          cleanup();
+          toast({
+            title: "Upscale failed",
+            description: data.error || "Failed to upscale image",
+            variant: "destructive",
+          });
+          setProgress(0);
+          setJobId(null);
+        } else {
+          setProgress((prev) => Math.min(prev + 5, 90));
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+        setProgress((prev) => Math.min(prev + 2, 90));
+      }
+    }, 3000);
+
+    timeoutRef.current = setTimeout(() => {
+      if (isCompletedRef.current) return;
+      isCompletedRef.current = true;
+      cleanup();
+      toast({
+        title: "Upscale timeout",
+        description: "The upscale is taking longer than expected. Please try again.",
+        variant: "destructive",
+      });
+      setProgress(0);
+      setJobId(null);
+    }, 120000);
+  };
+
+  const handleUpscaleComplete = async (upscaledUrl: string) => {
+    try {
+      setProgress(100);
+      
+      const response = await fetch(upscaledUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch upscaled image');
+      }
+      const blob = await response.blob();
+      const upscaledFile = new File([blob], selectedFile!.name, { type: selectedFile!.type });
+      
+      onUpscaledFile(upscaledFile, upscaledUrl);
+      
+      toast({
+        title: "Image upscaled!",
+        description: "Your image has been enhanced for professional print quality.",
+      });
+
+      setTimeout(() => {
+        setProgress(0);
+        setJobId(null);
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to process upscaled image:', error);
+      toast({
+        title: "Processing failed",
+        description: "Could not load the upscaled image. Please try again.",
+        variant: "destructive",
+      });
+      setProgress(0);
+      setJobId(null);
+    }
+  };
+
+  const hashFile = async (file: File): Promise<string> => {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  if (!selectedFile || !analysis) return null;
+
+  const showUpscaleButton = analysis.needsUpscale && quota?.hasQuota;
+  const isUpscaling = upscaleMutation.isPending || jobId !== null;
+
+  return (
+    <Card className="mt-4">
+      <CardContent className="p-4 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-2">
+              {analysis.meetsTarget ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : analysis.meetsMinimum ? (
+                <AlertCircle className="h-5 w-5 text-yellow-500" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-red-500" />
+              )}
+              <h4 className="text-sm font-semibold">Print Quality Analysis</h4>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-muted-foreground">Resolution:</span>
+                <p className="font-medium">{analysis.width} × {analysis.height}px</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Estimated DPI:</span>
+                <p className="font-medium">{analysis.estimatedDpi} DPI</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground">{analysis.message}</p>
+
+            {quota && (
+              <div className="flex items-center gap-2 text-xs">
+                <Sparkles className="h-3 w-3 text-primary" />
+                <span className="text-muted-foreground">AI Upscales:</span>
+                {quota.quotaType === 'elite_unlimited' ? (
+                  <Badge variant="default" className="h-6">Unlimited</Badge>
+                ) : (
+                  <Badge variant="outline" className="h-6">
+                    {quota.remaining} / {quota.total} remaining
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
+
+          {showUpscaleButton && !isUpscaling && (
+            <Button
+              onClick={() => upscaleMutation.mutate()}
+              size="default"
+              className="gap-2"
+              data-testid="button-boost-quality"
+            >
+              <Zap className="h-4 w-4" />
+              Boost Quality
+            </Button>
+          )}
+        </div>
+
+        {isUpscaling && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Enhancing image with AI...</span>
+              <span className="font-medium">{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-2" data-testid="progress-upscale" />
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>This usually takes 30-60 seconds</span>
+            </div>
+          </div>
+        )}
+
+        {!quota?.hasQuota && analysis.needsUpscale && (
+          <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-md">
+            <p className="text-xs text-yellow-800 dark:text-yellow-200">
+              You've used all your AI upscales. Upgrade to <strong>Pro</strong> (25/month) or <strong>Elite</strong> (unlimited) for more.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

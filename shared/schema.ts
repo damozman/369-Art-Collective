@@ -6,6 +6,12 @@ import { z } from "zod";
 // Trial status enum - enforces valid status values at database level
 export const trialStatusEnum = pgEnum('trial_status', ['active', 'canceled', 'converted', 'expired']);
 
+// Upscale quota type enum - tracks which quota bucket was used
+export const upscaleQuotaTypeEnum = pgEnum('upscale_quota_type', ['registration_bonus', 'monthly', 'elite_unlimited']);
+
+// Upscale job status enum - tracks job lifecycle
+export const upscaleStatusEnum = pgEnum('upscale_status', ['queued', 'processing', 'completed', 'failed']);
+
 // Artists table - users who can upload artwork
 export const artists = pgTable("artists", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -45,6 +51,11 @@ export const artists = pgTable("artists", {
   featuredPriority: integer("featured_priority").notNull().default(0), // Higher = more likely to be featured (Elite=100, Pro=50, Free=0, +manual boost)
   featuredPinnedUntil: timestamp("featured_pinned_until"), // If set, artist is guaranteed featured until this date (for campaigns/promotions)
   lastFeaturedAt: timestamp("last_featured_at"), // Last time artist appeared in featured rotation (for fair rotation)
+  registrationUpscalesUsed: integer("registration_upscales_used").notNull().default(0), // One-time registration bonus (3 max)
+  monthlyUpscalesUsed: integer("monthly_upscales_used").notNull().default(0), // Monthly quota usage (resets on billing cycle)
+  lastUpscaleResetAt: timestamp("last_upscale_reset_at"), // Last time monthly quota was reset
+  lifetimeUpscalesProcessed: integer("lifetime_upscales_processed").notNull().default(0), // Total upscales ever processed (analytics)
+  totalUpscaleCostCents: integer("total_upscale_cost_cents").notNull().default(0), // Cumulative cost tracking in cents
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ({
@@ -82,6 +93,59 @@ export const subscriptionTrials = pgTable("subscription_trials", {
   statusIdx: index("subscription_trials_status_idx").on(table.status),
   tierConvertedIdx: index("subscription_trials_tier_converted_idx").on(table.tier, table.status), // Composite for analytics
   trialStartedIdx: index("subscription_trials_started_at_idx").on(table.trialStartedAt), // Time-series queries
+}));
+
+// Upscale Jobs - Priority queue for async upscaling (MUST be defined before upscale_usage due to FK reference)
+export const upscaleJobs = pgTable("upscale_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artistId: varchar("artist_id").notNull().references(() => artists.id),
+  fileHash: text("file_hash").notNull(),
+  originalUrl: text("original_url").notNull(),
+  upscaledUrl: text("upscaled_url"),
+  status: upscaleStatusEnum("status").notNull().default("queued"),
+  priority: integer("priority").notNull().default(3), // 1=Elite, 2=Pro, 3=Free
+  replicateId: text("replicate_id").unique(), // Unique Replicate prediction ID for webhook lookups
+  errorMessage: text("error_message"),
+  retryCount: integer("retry_count").notNull().default(0), // Track retry attempts (max 3)
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  artistIdx: index("upscale_jobs_artist_id_idx").on(table.artistId),
+  statusPriorityCreatedIdx: index("upscale_jobs_status_priority_created_idx").on(table.status, table.priority, table.createdAt), // Queue processing with FIFO
+  replicateIdx: uniqueIndex("upscale_jobs_replicate_id_idx").on(table.replicateId), // Webhook lookups
+}));
+
+// Upscale Usage - Tracks all upscale operations for analytics and deduplication
+export const upscaleUsage = pgTable("upscale_usage", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  artistId: varchar("artist_id").notNull().references(() => artists.id),
+  fileHash: text("file_hash").notNull(), // SHA-256 hash for deduplication
+  quotaType: upscaleQuotaTypeEnum("quota_type").notNull(), // registration_bonus, monthly, elite_unlimited
+  tier: text("tier").notNull(), // Snapshot of artist tier when upscale occurred
+  ipAddress: text("ip_address"), // For abuse detection
+  jobId: varchar("job_id").references(() => upscaleJobs.id), // Link to job that processed this (nullable for cached results)
+  replicateId: text("replicate_id"), // Replicate prediction ID (nullable for cached results)
+  status: upscaleStatusEnum("status").notNull().default("queued"),
+  originalUrl: text("original_url"), // Original image URL
+  upscaledUrl: text("upscaled_url"), // Upscaled result URL
+  originalWidth: integer("original_width"), // Numeric width for efficient queries
+  originalHeight: integer("original_height"), // Numeric height for efficient queries
+  upscaledWidth: integer("upscaled_width"), // Numeric width for result
+  upscaledHeight: integer("upscaled_height"), // Numeric height for result
+  originalDpi: integer("original_dpi"), // Calculated DPI of original
+  costCents: integer("cost_cents").notNull().default(0), // Cost in cents
+  errorMessage: text("error_message"), // If failed
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  artistIdx: index("upscale_usage_artist_id_idx").on(table.artistId),
+  fileHashIdx: index("upscale_usage_file_hash_idx").on(table.fileHash), // For deduplication lookups
+  statusIdx: index("upscale_usage_status_idx").on(table.status),
+  createdAtIdx: index("upscale_usage_created_at_idx").on(table.createdAt), // For time-series analytics
+  ipCreatedIdx: index("upscale_usage_ip_created_idx").on(table.ipAddress, table.createdAt), // Abuse detection (daily checks)
+  jobIdx: index("upscale_usage_job_id_idx").on(table.jobId), // Job reconciliation
+  replicateIdx: index("upscale_usage_replicate_id_idx").on(table.replicateId), // Webhook reconciliation
 }));
 
 // Admins table - users who can approve/reject

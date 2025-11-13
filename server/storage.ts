@@ -418,6 +418,7 @@ export interface IStorage {
   updateUpscaleJob(id: string, updates: Partial<any>): Promise<any>;
   updateUpscaleUsageByJobId(jobId: string, updates: Partial<any>): Promise<void>;
   getArtistById(id: string): Promise<Artist | undefined>;
+  getAllUpscaleUsage(): Promise<any[]>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -2504,6 +2505,13 @@ class PostgresStorage implements IStorage {
       .set(updates)
       .where(eq(upscaleUsage.jobId, jobId));
   }
+
+  async getAllUpscaleUsage(): Promise<any[]> {
+    return await db
+      .select()
+      .from(upscaleUsage)
+      .orderBy(desc(upscaleUsage.createdAt));
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -3396,6 +3404,11 @@ class MemStorage implements IStorage {
 
   async updateUpscaleUsageByJobId(): Promise<void> { 
     console.log("MemStorage: updateUpscaleUsageByJobId (stub)"); 
+  }
+
+  async getAllUpscaleUsage(): Promise<any[]> {
+    console.log("MemStorage: getAllUpscaleUsage (stub)");
+    return [];
   }
 }
 

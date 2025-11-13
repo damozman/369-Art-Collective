@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useLocation } from "wouter";
-import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings, Flag, MessageSquare, Search, ArrowUpDown } from "lucide-react";
+import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings, Flag, MessageSquare, Search, ArrowUpDown, Zap, TrendingUp, DollarSign } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -50,6 +50,21 @@ export default function AdminDashboard() {
   const { data: violationReports } = useQuery<ViolationReport[]>({
     queryKey: ["/api/artworks", selectedArtwork?.id, "violations"],
     enabled: !!selectedArtwork,
+  });
+
+  // Query for AI upscale analytics
+  const { data: upscaleAnalytics, isLoading: upscaleLoading } = useQuery<{
+    totalUpscales: number;
+    completedUpscales: number;
+    failedUpscales: number;
+    totalCostDollars: number;
+    byTier: { free: number; pro: number; elite: number };
+    byQuotaType: { registration_bonus: number; monthly: number; elite_unlimited: number };
+    costByTier: { free: number; pro: number; elite: number };
+    cacheHits: number;
+    cacheHitRate: number;
+  }>({
+    queryKey: ["/api/admin/analytics/upscales"],
   });
 
   const pendingArtistsCount = artists?.filter(a => !a.approved).length || 0;
@@ -377,6 +392,7 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Artwork Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="hover-elevate cursor-pointer" onClick={() => handleFilterChange("all")}>
             <CardHeader className="p-4">
@@ -402,6 +418,111 @@ export default function AdminDashboard() {
               <CardTitle className="text-3xl text-red-600" data-testid="text-rejected">{stats.rejected}</CardTitle>
             </CardHeader>
           </Card>
+        </div>
+
+        {/* AI Upscale Analytics */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Zap className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">AI Upscale Analytics</h2>
+          </div>
+          {upscaleLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map(i => (
+                <Card key={i}>
+                  <CardHeader className="p-4">
+                    <Skeleton className="h-4 w-24 mb-2" />
+                    <Skeleton className="h-8 w-16" />
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          ) : upscaleAnalytics ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardDescription>Total Upscales</CardDescription>
+                    <CardTitle className="text-3xl" data-testid="text-total-upscales">{upscaleAnalytics.totalUpscales}</CardTitle>
+                  </CardHeader>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardDescription>Completed</CardDescription>
+                    <CardTitle className="text-3xl text-green-600" data-testid="text-completed-upscales">{upscaleAnalytics.completedUpscales}</CardTitle>
+                  </CardHeader>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardDescription>Total Cost</CardDescription>
+                    <CardTitle className="text-3xl text-primary" data-testid="text-total-cost">${upscaleAnalytics.totalCostDollars.toFixed(2)}</CardTitle>
+                  </CardHeader>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardDescription>Cache Hit Rate</CardDescription>
+                    <CardTitle className="text-3xl text-blue-600" data-testid="text-cache-rate">{upscaleAnalytics.cacheHitRate}%</CardTitle>
+                  </CardHeader>
+                </Card>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardDescription className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Usage by Tier
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Free:</span>
+                        <span className="font-medium">{upscaleAnalytics.byTier.free} upscales (${upscaleAnalytics.costByTier.free.toFixed(2)})</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Pro:</span>
+                        <span className="font-medium">{upscaleAnalytics.byTier.pro} upscales (${upscaleAnalytics.costByTier.pro.toFixed(2)})</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Elite:</span>
+                        <span className="font-medium">{upscaleAnalytics.byTier.elite} upscales (${upscaleAnalytics.costByTier.elite.toFixed(2)})</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="p-4">
+                    <CardDescription className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      Usage by Quota Type
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Registration Bonus:</span>
+                        <span className="font-medium">{upscaleAnalytics.byQuotaType.registration_bonus}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Monthly:</span>
+                        <span className="font-medium">{upscaleAnalytics.byQuotaType.monthly}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Elite Unlimited:</span>
+                        <span className="font-medium">{upscaleAnalytics.byQuotaType.elite_unlimited}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          ) : (
+            <Card>
+              <CardHeader className="p-4">
+                <CardDescription>No upscale usage data available</CardDescription>
+              </CardHeader>
+            </Card>
+          )}
         </div>
 
         {/* Search and Sort Toolbar */}

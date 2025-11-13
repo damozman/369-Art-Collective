@@ -4418,6 +4418,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get AI upscale usage analytics
+  app.get("/api/admin/analytics/upscales", requireAdmin, async (req, res) => {
+    try {
+      const usage = await storage.getAllUpscaleUsage();
+      
+      // Normalize data: ensure tier, quotaType, costCents have valid defaults
+      const normalized = usage.map(u => ({
+        ...u,
+        tier: u.tier || 'free',
+        quotaType: u.quotaType || 'monthly',
+        costCents: u.costCents || 0,
+        status: u.status || 'queued',
+      }));
+      
+      // Calculate total metrics
+      const totalUpscales = normalized.length;
+      const completedUpscales = normalized.filter(u => u.status === 'completed').length;
+      const failedUpscales = normalized.filter(u => u.status === 'failed').length;
+      const totalCostCents = normalized.reduce((sum, u) => sum + u.costCents, 0);
+      const totalCostDollars = totalCostCents / 100;
+      
+      // Breakdown by tier (with null guard)
+      const byTier = {
+        free: normalized.filter(u => u.tier === 'free').length,
+        pro: normalized.filter(u => u.tier === 'pro').length,
+        elite: normalized.filter(u => u.tier === 'elite').length,
+      };
+      
+      // Breakdown by quota type (with null guard)
+      const byQuotaType = {
+        registration_bonus: normalized.filter(u => u.quotaType === 'registration_bonus').length,
+        monthly: normalized.filter(u => u.quotaType === 'monthly').length,
+        elite_unlimited: normalized.filter(u => u.quotaType === 'elite_unlimited').length,
+      };
+      
+      // Cost breakdown by tier (with null guard)
+      const costByTier = {
+        free: normalized.filter(u => u.tier === 'free').reduce((sum, u) => sum + u.costCents, 0) / 100,
+        pro: normalized.filter(u => u.tier === 'pro').reduce((sum, u) => sum + u.costCents, 0) / 100,
+        elite: normalized.filter(u => u.tier === 'elite').reduce((sum, u) => sum + u.costCents, 0) / 100,
+      };
+      
+      // Cache hit analysis (upscales with no jobId means cache hit)
+      const cacheHits = normalized.filter(u => !u.jobId && u.status === 'completed').length;
+      const cacheHitRate = totalUpscales > 0 ? (cacheHits / totalUpscales * 100) : 0;
+      
+      res.json({
+        totalUpscales,
+        completedUpscales,
+        failedUpscales,
+        totalCostDollars: parseFloat(totalCostDollars.toFixed(2)),
+        byTier,
+        byQuotaType,
+        costByTier: {
+          free: parseFloat(costByTier.free.toFixed(2)),
+          pro: parseFloat(costByTier.pro.toFixed(2)),
+          elite: parseFloat(costByTier.elite.toFixed(2)),
+        },
+        cacheHits,
+        cacheHitRate: parseFloat(cacheHitRate.toFixed(1)),
+      });
+    } catch (error: any) {
+      console.error("Upscale analytics error:", error);
+      res.status(500).json({ message: "Failed to calculate upscale analytics" });
+    }
+  });
+
   // CreatorStack Shopify Webhook TEST endpoint (NO HMAC verification - dev only!)
   // Use this for local testing without needing to calculate HMAC signatures
   app.post("/api/creatorstack/webhooks/shopify/test", async (req, res) => {

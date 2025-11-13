@@ -244,7 +244,7 @@ Left: Hero image with CTA | Right: Promotional sidebar
   <div class="split-hero__main">
     {% if section.settings.hero_image != blank %}
       <div class="split-hero__bg">
-        <img src="{{ section.settings.hero_image | img_url: '1200x' }}" alt="{{ section.settings.title }}">
+        <img src="{{ section.settings.hero_image }}" alt="{{ section.settings.title }}">
       </div>
     {% endif %}
     
@@ -276,7 +276,7 @@ Left: Hero image with CTA | Right: Promotional sidebar
       <a href="{{ block.settings.url }}" class="promo-card">
         {% if block.settings.image != blank %}
           <div class="promo-card__bg">
-            <img src="{{ block.settings.image | img_url: '600x' }}" alt="{{ block.settings.title }}">
+            <img src="{{ block.settings.image }}" alt="{{ block.settings.title }}">
           </div>
         {% endif %}
         
@@ -305,9 +305,9 @@ Left: Hero image with CTA | Right: Promotional sidebar
       "content": "Main Hero (Left)"
     },
     {
-      "type": "image_picker",
+      "type": "text",
       "id": "hero_image",
-      "label": "Hero Background Image",
+      "label": "Hero Background Image URL",
       "info": "Recommended: 1200x800px lifestyle image"
     },
     {
@@ -346,9 +346,9 @@ Left: Hero image with CTA | Right: Promotional sidebar
       "limit": 4,
       "settings": [
         {
-          "type": "image_picker",
+          "type": "text",
           "id": "image",
-          "label": "Card Image"
+          "label": "Card Image URL"
         },
         {
           "type": "text",

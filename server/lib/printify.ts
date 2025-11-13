@@ -166,10 +166,25 @@ export async function getProducts(shopId: string, page = 1): Promise<any> {
 }
 
 /**
- * Get a specific product
+ * Get a specific product (includes mockup images in images array)
  */
 export async function getProduct(shopId: string, productId: string): Promise<any> {
   return printifyRequest(`/shops/${shopId}/products/${productId}.json`);
+}
+
+/**
+ * Get mockup images for a product
+ * Returns array of image objects with src, variant_ids, position, is_default
+ * Note: Mockups are generated asynchronously - may need to wait 5-10 seconds after product creation
+ */
+export async function getProductMockups(shopId: string, productId: string): Promise<Array<{
+  src: string;
+  variant_ids: number[];
+  position: string;
+  is_default: boolean;
+}>> {
+  const product = await getProduct(shopId, productId);
+  return product.images || [];
 }
 
 /**

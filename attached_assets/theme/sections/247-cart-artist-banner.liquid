@@ -1,0 +1,211 @@
+{% comment %}
+  247 Print Network - Cart Artist Recruitment Banner
+  Subtle post-cart artist recruitment touchpoint
+  Dismissible with cookie persistence
+{% endcomment %}
+
+<div class="cart-artist-banner" id="cartArtistBanner" data-testid="banner-cart-artist">
+  <div class="cart-artist-banner-content">
+    <div class="cart-artist-banner-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="cart-artist-banner-text">
+      <p class="cart-artist-banner-title">Love creating art?</p>
+      <p class="cart-artist-banner-description">Join our artist community and earn 30-45% royalties on every sale. Free to start!</p>
+    </div>
+    <a href="https://247portal.replit.app/signup" class="cart-artist-banner-cta" data-testid="link-cart-artist-signup">
+      Become an Artist
+    </a>
+    <button class="cart-artist-banner-close" aria-label="Dismiss artist banner" data-testid="button-dismiss-artist-banner">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<style>
+  .cart-artist-banner {
+    background: linear-gradient(135deg, #0A1628 0%, #1a2a45 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    opacity: 1;
+    transition: all 0.3s ease;
+  }
+
+  .cart-artist-banner.hidden {
+    opacity: 0;
+    max-height: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  .cart-artist-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .cart-artist-banner-icon {
+    color: #FF8A5B;
+    flex-shrink: 0;
+  }
+
+  .cart-artist-banner-text {
+    flex: 1;
+    min-width: 250px;
+  }
+
+  .cart-artist-banner-title {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .cart-artist-banner-description {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .cart-artist-banner-cta {
+    background: #FF8A5B;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .cart-artist-banner-cta:hover {
+    background: #ff7a45;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 138, 91, 0.3);
+  }
+
+  .cart-artist-banner-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .cart-artist-banner-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .cart-artist-banner {
+      padding: 1.25rem;
+    }
+
+    .cart-artist-banner-content {
+      gap: 1rem;
+    }
+
+    .cart-artist-banner-text {
+      min-width: 200px;
+    }
+
+    .cart-artist-banner-cta {
+      width: 100%;
+      text-align: center;
+      order: 3;
+    }
+
+    .cart-artist-banner-close {
+      order: 4;
+      margin-left: auto;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .cart-artist-banner-icon {
+      display: none;
+    }
+
+    .cart-artist-banner-text {
+      min-width: auto;
+    }
+
+    .cart-artist-banner-title {
+      font-size: 0.95rem;
+    }
+
+    .cart-artist-banner-description {
+      font-size: 0.8125rem;
+    }
+  }
+</style>
+
+<script>
+  (function() {
+    const banner = document.getElementById('cartArtistBanner');
+    const closeBtn = banner?.querySelector('.cart-artist-banner-close');
+    const cookieName = '247_cart_artist_banner_dismissed';
+    const cookieDays = 30;
+
+    function setCookie(name, value, days) {
+      const expires = new Date();
+      expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+      document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+    }
+
+    function getCookie(name) {
+      const nameEQ = name + '=';
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i];
+        while (cookie.charAt(0) === ' ') cookie = cookie.substring(1, cookie.length);
+        if (cookie.indexOf(nameEQ) === 0) return cookie.substring(nameEQ.length, cookie.length);
+      }
+      return null;
+    }
+
+    // Check if banner was previously dismissed
+    if (getCookie(cookieName) === 'true') {
+      banner?.classList.add('hidden');
+    }
+
+    // Handle dismiss
+    closeBtn?.addEventListener('click', function() {
+      banner?.classList.add('hidden');
+      setCookie(cookieName, 'true', cookieDays);
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Cart Artist Banner",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Displays a subtle artist recruitment banner on the cart page. Dismissible by users with 30-day cookie."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Cart Artist Banner"
+    }
+  ]
+}
+{% endschema %}

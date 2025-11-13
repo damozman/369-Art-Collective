@@ -26,7 +26,7 @@ The system uses a scalable client-server architecture with distinct frontend and
 - **Authentication:** Session-based with HTTP-only cookies, bcrypt hashing, and CSRF protection.
 - **AI Generation System:** Integration with OpenAI DALL-E 3 (for Print Network) and GPT-4o (for CreatorStack) via Replit AI Integrations, featuring a dual-balance credit system and token usage tracking.
 - **Shopify Integration:** Automated product creation, order capture via HMAC-verified webhooks, and automated theme/navigation deployment. Product structure supports 16 variants per artwork, with smart collections for organization.
-- **Printify Integration:** Automated Print-on-Demand product creation aligned with 4 wall art types.
+- **Printify Integration:** Automated Print-on-Demand product creation aligned with 4 wall art types, with automated mockup image sync to Shopify product galleries.
 - **Stripe Connect:** For automated artist royalty payouts and subscription management.
 - **Email Notifications:** Resend integration for transactional emails with professional templates and delivery logging, including a strategic trial email funnel with 4 templates.
 - **Artwork Management:** Automated archiving and smart tagging.
@@ -35,6 +35,7 @@ The system uses a scalable client-server architecture with distinct frontend and
 - **Featured Artist System:** Hybrid performance and fair rotation logic for homepage placement.
 - **Security:** HMAC verification, rate limiting, audit logging, soft-delete, and production-hardened authentication.
 - **AI Image Upscaling System:** Integrated Real-ESRGAN via Replicate API to reduce registration friction while maintaining print quality standards. Features include DPI-driven validation, inline upscale widget, tiered quota system, deduplication cache, and 8-layer abuse protection.
+- **Printify Mockup Sync System:** Automated system that retrieves Printify-generated product mockup images and adds them to Shopify product galleries after artwork approval. Features intelligent retry logic with exponential backoff (5s, 10s, 15s delays), non-blocking async execution, and comprehensive error handling. System runs automatically during artwork approval workflow without delaying admin response.
 - **Production Readiness:** Health check endpoint (`/api/health`) for 6 key integrations, and a detailed deployment runbook.
 - **Mobile Accessibility:** WCAG 2.1 Level AAA compliance with 44px minimum touch targets.
 

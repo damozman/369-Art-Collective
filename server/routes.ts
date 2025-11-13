@@ -27,6 +27,7 @@ import crypto from "crypto";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured, updateProductStatus } from "./lib/shopify";
 import { createWallArtProducts } from "./lib/printify-service";
 import { isPrintifyConfigured } from "./lib/printify";
+import { syncPrintifyMockupsWithRetry } from "./lib/printify-mockup-sync";
 import { requireAuth, requireArtist, requireAdmin, requireInfluencer } from "./middleware/auth";
 import { getAffiliateCodeFromCookie } from "./middleware/affiliate-tracking";
 import { processShopifyOrder } from "./lib/order-processor";
@@ -2709,6 +2710,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         printifyProductId,
         printifyImageId,
       });
+
+      // Sync Printify mockup images to Shopify (non-blocking)
+      if (printifyProductId && shopifyProductId && isPrintifyConfigured() && isShopifyConfigured()) {
+        (async () => {
+          try {
+            // Get Printify shop ID (from environment or cached)
+            const { getShops } = await import("./lib/printify");
+            const shops = await getShops();
+            if (shops && shops.length > 0) {
+              const printifyShopId = shops[0].id;
+              
+              console.log(`[Mockup Sync] Starting mockup sync for artwork ${id}`);
+              console.log(`  Printify: ${printifyShopId}/${printifyProductId}`);
+              console.log(`  Shopify: ${shopifyProductId}`);
+              
+              const result = await syncPrintifyMockupsWithRetry(
+                printifyShopId,
+                printifyProductId,
+                shopifyProductId,
+                3 // Max 3 retry attempts
+              );
+              
+              if (result.success) {
+                console.log(`[Mockup Sync] ✅ Successfully added ${result.mockupsAdded} mockup images to Shopify product ${shopifyProductId}`);
+              } else {
+                console.warn(`[Mockup Sync] ⚠️ Mockup sync failed or incomplete:`, result.errors);
+              }
+            }
+          } catch (error: any) {
+            console.error('[Mockup Sync] Error syncing mockups:', error);
+          }
+        })();
+      }
 
       // Send artwork approval email (non-blocking)
       emailService.sendArtworkDecisionEmail(artist.email, artist.name, artist.id, artwork.title, true)

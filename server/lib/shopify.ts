@@ -366,6 +366,62 @@ export async function deleteAllProducts(): Promise<{ deleted: number; errors: st
   }
 }
 
+/**
+ * Add additional images to an existing Shopify product
+ * Useful for adding Printify mockup images after product creation
+ */
+export async function addProductImages(
+  shopifyProductId: string,
+  imageUrls: Array<{ src: string; alt?: string; position?: number }>
+): Promise<any> {
+  if (!isShopifyConfigured()) {
+    throw new Error("Shopify is not configured");
+  }
+
+  try {
+    const apiVersion = "2024-10";
+    const results = [];
+
+    // Add each image
+    for (const image of imageUrls) {
+      const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/products/${shopifyProductId}/images.json`;
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": shopifyAccessToken,
+        },
+        body: JSON.stringify({
+          image: {
+            src: image.src,
+            alt: image.alt || "",
+            position: image.position,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.warn(`[Shopify] Failed to add image ${image.src}: ${error}`);
+        continue;
+      }
+
+      const result = await response.json();
+      results.push(result);
+      
+      // Rate limiting: Shopify allows 2 requests per second
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    console.log(`[Shopify] Added ${results.length} images to product ${shopifyProductId}`);
+    return results;
+  } catch (error: any) {
+    console.error("Shopify add images error:", error);
+    throw new Error(`Failed to add images to Shopify product: ${error.message}`);
+  }
+}
+
 // Legacy function for backward compatibility
 export async function createDraftProduct(product: ShopifyProduct): Promise<any> {
   if (!isShopifyConfigured()) {

@@ -1,0 +1,345 @@
+{% comment %}
+  Homepage Bottom Sections - Benefits, Stats, CTA
+{% endcomment %}
+
+<div class="homepage-bottom">
+  <!-- Why Collect Section -->
+  <section class="why-collect-section">
+    <div class="container">
+      <h2 class="section-title">Why Collect from 247 Print Network</h2>
+      
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <h3 class="benefit-title">Museum-Quality Prints</h3>
+          <p class="benefit-desc">Premium materials, archival inks, and professional printing ensure your art lasts generations.</p>
+        </div>
+        
+        <div class="benefit-card">
+          <div class="benefit-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <h3 class="benefit-title">Artists Earn 30-45%</h3>
+          <p class="benefit-desc">We believe in fair pay. Every purchase directly supports independent creators.</p>
+        </div>
+        
+        <div class="benefit-card">
+          <div class="benefit-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 3C13 2.45 12.55 2 12 2C11.45 2 11 2.45 11 3V5.08C7.61 5.57 5 8.47 5 12C5 15.87 8.13 19 12 19C15.87 19 19 15.87 19 12C19 8.47 16.39 5.57 13 5.08V3ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM11 9V13H13.5L15 15.5L16.5 14L14.5 10.5H11V9Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <h3 class="benefit-title">Fast & Reliable Shipping</h3>
+          <p class="benefit-desc">Print-on-demand fulfillment means your order ships fresh, with care, directly to your door.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Social Proof Stats -->
+  <section class="stats-section">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-number">500+</div>
+          <div class="stat-label">Independent Artists</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">10K+</div>
+          <div class="stat-label">Unique Artworks</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">25K+</div>
+          <div class="stat-label">Happy Collectors</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">4.9/5</div>
+          <div class="stat-label">Customer Rating</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Final CTA Section -->
+  <section class="final-cta-section">
+    <div class="container">
+      <div class="cta-content">
+        <h2 class="cta-title">Ready to Discover Your Next Piece?</h2>
+        <p class="cta-subtitle">Explore thousands of unique artworks from talented creators worldwide</p>
+        
+        <div class="cta-buttons">
+          <a href="/collections/all" class="btn-primary">Browse Collections</a>
+          <a href="https://247portal.replit.app/signup" class="btn-secondary">
+            <span class="creator-note">Creators earn 30-45%</span>
+            <span class="creator-link">Start Selling →</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+  .homepage-bottom {
+    margin-top: 4rem;
+  }
+  
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+  
+  /* Why Collect Section */
+  .why-collect-section {
+    padding: 5rem 0;
+    background: linear-gradient(135deg, #0A1628 0%, #1a2942 100%);
+    color: #fff;
+  }
+  
+  .section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 4rem 0;
+    color: #fff;
+  }
+  
+  .benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+  }
+  
+  .benefit-card {
+    text-align: center;
+    padding: 2rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s;
+  }
+  
+  .benefit-card:hover {
+    transform: translateY(-8px);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 138, 91, 0.3);
+  }
+  
+  .benefit-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #FF8A5B 0%, #FF6B6B 100%);
+    border-radius: 16px;
+    color: #fff;
+  }
+  
+  .benefit-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    color: #fff;
+  }
+  
+  .benefit-desc {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #ccc;
+    margin: 0;
+  }
+  
+  /* Stats Section */
+  .stats-section {
+    padding: 4rem 0;
+    background: #f8f9fa;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    text-align: center;
+  }
+  
+  .stat-item {
+    padding: 2rem 1rem;
+  }
+  
+  .stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #0A1628;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #FF8A5B 0%, #20C997 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .stat-label {
+    font-size: 1rem;
+    color: #666;
+    font-weight: 500;
+  }
+  
+  /* Final CTA Section */
+  .final-cta-section {
+    padding: 6rem 0;
+    background: linear-gradient(135deg, #20C997 0%, #17a2b8 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .final-cta-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2"/></svg>');
+    background-size: 50px 50px;
+    opacity: 0.1;
+  }
+  
+  .cta-content {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .cta-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 1rem 0;
+  }
+  
+  .cta-subtitle {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 3rem 0;
+  }
+  
+  .cta-buttons {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  .btn-primary {
+    background: #fff;
+    color: #0A1628;
+    padding: 1rem 3rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .btn-secondary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.75rem 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+  
+  .creator-note {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .creator-link {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .benefits-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+    
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .section-title {
+      font-size: 2rem;
+    }
+    
+    .cta-title {
+      font-size: 2rem;
+    }
+    
+    .cta-subtitle {
+      font-size: 1rem;
+    }
+    
+    .stats-grid {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    .cta-buttons {
+      flex-direction: column;
+      width: 100%;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+      width: 100%;
+      max-width: 300px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Homepage Bottom Sections",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Homepage Bottom"
+    }
+  ]
+}
+{% endschema %}

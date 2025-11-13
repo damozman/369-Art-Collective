@@ -395,11 +395,16 @@
         "badge_3",
         "badge_4"
       ]
+    },
+    "homepage_bottom": {
+      "type": "247-homepage-bottom",
+      "settings": {}
     }
   },
   "order": [
     "split_hero",
     "featured_artworks_v2",
-    "trust_badges"
+    "trust_badges",
+    "homepage_bottom"
   ]
 }

@@ -1,0 +1,384 @@
+{% comment %}
+247 Print Network - Split Hero Section (Displate-style)
+Left: Hero image with CTA | Right: Promotional sidebar
+{% endcomment %}
+
+<style>
+/* Split Hero Layout - 60/40 */
+.split-hero {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  gap: 1.5rem;
+  max-width: 100%;
+  min-height: 500px;
+  padding: 1.5rem;
+  background: #fff;
+}
+
+@media (max-width: 1024px) {
+  .split-hero {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    min-height: auto;
+  }
+}
+
+/* Left Hero Card */
+.split-hero__main {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 500px;
+  display: flex;
+  align-items: flex-end;
+  background: linear-gradient(-45deg, #0A1628, #1A1D23, #FF6B6B, #FF8A5B, #20C997);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@media (max-width: 1024px) {
+  .split-hero__main {
+    min-height: 400px;
+  }
+}
+
+/* Background Image */
+.split-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.split-hero__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Overlay */
+.split-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
+  z-index: 1;
+}
+
+/* Content */
+.split-hero__content {
+  position: relative;
+  z-index: 2;
+  padding: 3rem;
+  color: #fff;
+  max-width: 600px;
+}
+
+@media (max-width: 768px) {
+  .split-hero__content {
+    padding: 2rem 1.5rem;
+  }
+}
+
+.split-hero__badge {
+  display: inline-block;
+  padding: 0.5rem 1.25rem;
+  background: #DCFF00;
+  color: #000;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+}
+
+.split-hero__title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0 0 1rem;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 768px) {
+  .split-hero__title {
+    font-size: 2.5rem;
+  }
+}
+
+.split-hero__description {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin: 0 0 2rem;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.split-hero__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2.5rem;
+  background: #FF8A5B;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  text-transform: capitalize;
+}
+
+.split-hero__cta:hover {
+  background: #FF6B4A;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 138, 91, 0.4);
+}
+
+.split-hero__cta svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Right Sidebar */
+.split-hero__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+  .split-hero__sidebar {
+    grid-template-columns: 1fr 1fr;
+    display: grid;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .split-hero__sidebar {
+    grid-template-columns: 1fr;
+  }
+}
+
+.promo-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 115px;
+  display: flex;
+  align-items: flex-end;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: #f7f8f9;
+}
+
+.promo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.promo-card__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.promo-card__bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.promo-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+  z-index: 1;
+}
+
+.promo-card__content {
+  position: relative;
+  z-index: 2;
+  padding: 1.25rem;
+  width: 100%;
+}
+
+.promo-card__badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+}
+
+.promo-card__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.promo-card__subtitle {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0.25rem 0 0;
+}
+</style>
+
+<section class="split-hero">
+  <!-- Left Hero -->
+  <div class="split-hero__main">
+    {% if section.settings.hero_image != blank %}
+      <div class="split-hero__bg">
+        <img src="{{ section.settings.hero_image | img_url: '1200x' }}" alt="{{ section.settings.title }}">
+      </div>
+    {% endif %}
+    
+    <div class="split-hero__overlay"></div>
+    
+    <div class="split-hero__content">
+      {% if section.settings.badge_text != blank %}
+        <div class="split-hero__badge">{{ section.settings.badge_text }}</div>
+      {% endif %}
+      
+      <h1 class="split-hero__title">{{ section.settings.title | default: "Early Black Friday discounts!" }}</h1>
+      
+      {% if section.settings.description != blank %}
+        <p class="split-hero__description">{{ section.settings.description }}</p>
+      {% endif %}
+      
+      <a href="{{ section.settings.cta_url | default: '/collections/all' }}" class="split-hero__cta">
+        {{ section.settings.cta_text | default: "Shop now" }}
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- Right Sidebar - Promo Cards -->
+  <div class="split-hero__sidebar">
+    {% for block in section.blocks %}
+      <a href="{{ block.settings.url }}" class="promo-card">
+        {% if block.settings.image != blank %}
+          <div class="promo-card__bg">
+            <img src="{{ block.settings.image | img_url: '600x' }}" alt="{{ block.settings.title }}">
+          </div>
+        {% endif %}
+        
+        <div class="promo-card__overlay"></div>
+        
+        <div class="promo-card__content">
+          {% if block.settings.badge != blank %}
+            <div class="promo-card__badge">{{ block.settings.badge }}</div>
+          {% endif %}
+          <h3 class="promo-card__title">{{ block.settings.title }}</h3>
+          {% if block.settings.subtitle != blank %}
+            <p class="promo-card__subtitle">{{ block.settings.subtitle }}</p>
+          {% endif %}
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "247 Split Hero",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Main Hero (Left)"
+    },
+    {
+      "type": "image_picker",
+      "id": "hero_image",
+      "label": "Hero Background Image",
+      "info": "Recommended: 1200x800px lifestyle image"
+    },
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Badge Text",
+      "default": "UP TO 39% OFF"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Main Title",
+      "default": "Early Black Friday discounts!"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description"
+    },
+    {
+      "type": "text",
+      "id": "cta_text",
+      "label": "CTA Button Text",
+      "default": "Shop now"
+    },
+    {
+      "type": "url",
+      "id": "cta_url",
+      "label": "CTA Button URL"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "promo_card",
+      "name": "Promo Card",
+      "limit": 4,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Card Image"
+        },
+        {
+          "type": "text",
+          "id": "badge",
+          "label": "Badge Text",
+          "info": "Optional badge (e.g., 'NEW', 'BEST GIFT')"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Card Title",
+          "default": "Give the gift that gets them"
+        },
+        {
+          "type": "text",
+          "id": "subtitle",
+          "label": "Card Subtitle"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Card Link URL"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "247 Split Hero"
+    }
+  ]
+}
+{% endschema %}

@@ -98,7 +98,7 @@ export default function JoinCreatorverse() {
     {
       step: "2",
       title: "Upload Your Artwork",
-      description: "Submit high-quality designs (2400x3000px minimum). Our admin team reviews and approves your work.",
+      description: "Submit high-quality designs (150+ DPI for prints). Our admin team reviews and approves your work.",
       icon: Palette
     },
     {

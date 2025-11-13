@@ -655,10 +655,10 @@ export default function Register() {
             <CardContent className="space-y-6">
               {/* Image quality requirements */}
               <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Image Quality Requirements</h4>
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Portfolio Quality Standards</h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                  <li>• Minimum resolution: <strong>2400×3000 pixels</strong> (or 3000×2400 for landscape)</li>
-                  <li>• Recommended: <strong>300 DPI</strong> for professional quality prints</li>
+                  <li>• Minimum quality: <strong>150 DPI</strong> for 8×10 inch prints</li>
+                  <li>• Target quality: <strong>300 DPI</strong> for professional results</li>
                   <li>• Supported formats: <strong>PNG, JPG</strong> only</li>
                   <li>• Maximum file size: 10MB per image</li>
                   <li>• Required: <strong>2-3 portfolio images</strong></li>
@@ -678,7 +678,7 @@ export default function Register() {
                       Click to upload portfolio images ({portfolioFiles.length}/3)
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      High-resolution PNG or JPG (min. 2400×3000 px)
+                      High-resolution PNG or JPG (150+ DPI for prints)
                     </p>
                   </div>
                   <input

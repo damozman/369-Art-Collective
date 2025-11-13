@@ -162,4 +162,4 @@ export class StripeConnectService {
 }
 
 export const stripeConnectService = new StripeConnectService();
-export { stripe };
+export { getStripeClient };

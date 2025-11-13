@@ -16,7 +16,7 @@
           <div class="swiper-slide">
             {% comment %}Check if featured_image exists{% endcomment %}
             {% if product.featured_image %}
-              <div class="hero-slide__bg" style="background-image: url('{{ product.featured_image | img_url: '1920x1080', crop: 'center' }}');"></div>
+              <div class="hero-slide__bg" style="background-image: url('{{ product.featured_image | image_url: width: 1920 }}');"></div>
             {% else %}
               {% comment %}Fallback: solid gradient if no image{% endcomment %}
               <div class="hero-slide__bg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>

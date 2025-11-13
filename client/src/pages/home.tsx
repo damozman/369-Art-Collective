@@ -83,7 +83,7 @@ export default function Home() {
     {
       step: "2",
       title: "Upload Your Art",
-      description: "Submit your designs with our quality requirements (2400x3000px minimum for print perfection)."
+      description: "Submit your designs meeting our print quality standards (150+ DPI for professional results)."
     },
     {
       step: "3",

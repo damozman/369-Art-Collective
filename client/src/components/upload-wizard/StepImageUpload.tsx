@@ -54,15 +54,15 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange }: Step
   return (
     <div className="space-y-4">
       <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-        <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Image Quality Requirements</h4>
+        <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Print Quality Standards</h4>
         <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-          <li>• Minimum resolution: <strong>2400×3000 pixels</strong> (or 3000×2400 for landscape)</li>
-          <li>• Recommended: <strong>300 DPI</strong> for professional quality prints</li>
+          <li>• Minimum quality: <strong>150 DPI</strong> for 8×10 inch prints</li>
+          <li>• Target quality: <strong>300 DPI</strong> for professional results</li>
           <li>• Supported formats: <strong>PNG, JPG</strong> only</li>
           <li>• Maximum file size: 10MB</li>
         </ul>
         <p className="text-xs text-blue-700 dark:text-blue-300 mt-2 italic">
-          Low-resolution images will be rejected to ensure quality prints for customers
+          Images below 150 DPI will be rejected. Use our AI upscaler to boost quality if needed!
         </p>
       </div>
 
@@ -78,7 +78,7 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange }: Step
               Click to upload or drag and drop
             </p>
             <p className="text-xs text-muted-foreground">
-              High-resolution PNG or JPG (min. 2400×3000 px)
+              High-resolution PNG or JPG (150+ DPI for prints)
             </p>
           </div>
           <input

@@ -720,7 +720,7 @@ export const affiliateConversions = pgTable("affiliate_conversions", {
 export const affiliateClicks = pgTable("affiliate_clicks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   influencerId: varchar("influencer_id").notNull().references(() => influencers.id),
-  affiliateCode: text("affiliate_code").notNull().unique(), // Indexed for fast lookups
+  affiliateCode: text("affiliate_code").notNull(), // Removed .unique() to allow multiple clicks per affiliate
   
   // Request metadata
   ipAddress: text("ip_address"), // Store for fraud detection; ensure GDPR/CCPA compliance with retention policy
@@ -734,7 +734,11 @@ export const affiliateClicks = pgTable("affiliate_clicks", {
   convertedToSale: boolean("converted_to_sale").notNull().default(false),
   
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  // Performance indexes for analytics queries
+  affiliateCodeIdx: index("affiliate_clicks_affiliate_code_idx").on(table.affiliateCode),
+  influencerIdCreatedIdx: index("affiliate_clicks_influencer_id_created_idx").on(table.influencerId, table.createdAt),
+}));
 
 // Achievements - Badge system for gamification
 export const achievements = pgTable("achievements", {

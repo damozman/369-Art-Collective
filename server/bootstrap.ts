@@ -44,10 +44,6 @@ export async function bootstrapAdmin() {
           name: "Test Artist",
           artistShort: "TEST",
           bio: "Test artist account for development and testing",
-          website: "https://example.com",
-          socialMedia: {},
-          ipDeclarationAccepted: true,
-          termsAccepted: true,
           approved: true, // Pre-approve test artist for immediate access
         });
 

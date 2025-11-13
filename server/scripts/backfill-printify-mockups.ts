@@ -77,12 +77,12 @@ ${colors.reset}\n`);
   // Step 3: Query database for approved artworks with product IDs
   console.log(`${colors.cyan}[3/5] Querying database for eligible artworks...${colors.reset}`);
   
-  const allArtworks = await storage.getArtworks();
+  const allArtworks = await storage.getAllArtworks();
   const eligibleArtworks = allArtworks.filter(
-    artwork => 
-      artwork.status === 'approved' && 
-      artwork.printifyProductId && 
-      artwork.shopifyProductId
+    artworkWithArtist => 
+      artworkWithArtist.status === 'approved' && 
+      artworkWithArtist.printifyProductId && 
+      artworkWithArtist.shopifyProductId
   );
   
   console.log(`${colors.gray}  Total artworks: ${allArtworks.length}${colors.reset}`);

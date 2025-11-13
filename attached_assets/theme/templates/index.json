@@ -357,6 +357,68 @@
         "artwork_24"
       ]
     },
+    "featured_artists": {
+      "type": "247-featured-artists",
+      "settings": {
+        "eyebrow_text": "MEET THE CREATORS",
+        "title": "Featured Artists",
+        "subtitle": "Discover talented creators from around the world bringing unique visions to life. Each artist earns 30-45% royalties on every sale.",
+        "cta_text": "View All Artists",
+        "cta_url": "/pages/creators"
+      },
+      "blocks": {
+        "artist_1": {
+          "type": "artist",
+          "settings": {
+            "artist_name": "Sarah Chen",
+            "specialty": "Abstract & Digital Art",
+            "artist_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1579783902614-a3fb3927b6a5_d0b2ab97-b9e1-43c3-97b6-20c2c5e5fb5e.jpg?v=1762809680",
+            "avatar_image": "",
+            "artwork_count": "42",
+            "artist_url": "/collections/all"
+          }
+        },
+        "artist_2": {
+          "type": "artist",
+          "settings": {
+            "artist_name": "Marcus Rodriguez",
+            "specialty": "Nature & Landscapes",
+            "artist_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521",
+            "avatar_image": "",
+            "artwork_count": "38",
+            "artist_url": "/collections/all"
+          }
+        },
+        "artist_3": {
+          "type": "artist",
+          "settings": {
+            "artist_name": "Elena Kowalski",
+            "specialty": "Urban Photography",
+            "artist_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1477959858617-67f85cf4f1df_0774690b-17e4-4dc6-a348-b1fc2f99c116.jpg?v=1762809585",
+            "avatar_image": "",
+            "artwork_count": "56",
+            "artist_url": "/collections/all"
+          }
+        },
+        "artist_4": {
+          "type": "artist",
+          "settings": {
+            "artist_name": "Yuki Tanaka",
+            "specialty": "Minimalist Design",
+            "artist_image": "https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1618005182384-a83a8bd57fbe_681ab7e6-6a80-4b2a-9fd7-b1fbcead8f3c.jpg?v=1762809690",
+            "avatar_image": "",
+            "artwork_count": "31",
+            "artist_url": "/collections/all"
+          }
+        }
+      },
+      "block_order": [
+        "artist_1",
+        "artist_2",
+        "artist_3",
+        "artist_4"
+      ]
+    },
     "homepage_bottom": {
       "type": "247-homepage-bottom",
       "settings": {}
@@ -365,6 +427,7 @@
   "order": [
     "split_hero",
     "featured_artworks_v2",
+    "featured_artists",
     "homepage_bottom"
   ]
 }

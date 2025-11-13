@@ -1,0 +1,21 @@
+{
+  "sections": {
+    "cart-items": {
+      "type": "main-cart-items",
+      "settings": {}
+    },
+    "cart-artist-banner": {
+      "type": "247-cart-artist-banner",
+      "settings": {}
+    },
+    "cart-footer": {
+      "type": "main-cart-footer",
+      "settings": {}
+    }
+  },
+  "order": [
+    "cart-items",
+    "cart-artist-banner",
+    "cart-footer"
+  ]
+}

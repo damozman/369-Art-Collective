@@ -1,5 +1,6 @@
 {% comment %}
-247 Print Network - Hero Slider (Simplified)
+247 Print Network - Hero Slider v1.1
+Cache bust: Nov 13 2025 - 14:30 EST
 {% endcomment %}
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -12,8 +13,10 @@
   <div class="swiper hero-swiper">
     <div class="swiper-wrapper">
       {% for handle in product_handles limit: 5 %}
+        <!-- DEBUG: Trying handle: {{ handle }} -->
         {% assign current_product = all_products[handle] %}
         {% if current_product %}
+          <!-- DEBUG: SUCCESS - Product found: {{ current_product.title }} -->
           <div class="swiper-slide">
             {% if current_product.featured_image %}
               <div class="hero-slide__bg" style="background-image: url('{{ current_product.featured_image | img_url: '1920x' }}'); background-size: cover; background-position: center;"></div>
@@ -49,6 +52,8 @@
               </div>
             </div>
           </div>
+        {% else %}
+          <!-- DEBUG: FAILED - Product not found for handle: {{ handle }} -->
         {% endif %}
       {% endfor %}
     </div>

@@ -34,12 +34,18 @@ Pull wall art products from Featured collection
               {% comment %}Content container{% endcomment %}
               <div class="hero-slide__content">
                 <div class="hero-slide__text">
-                  {% comment %}Extract artist name from product title{% endcomment %}
-                  {% assign artist_name = product.vendor | default: "Featured Artist" %}
+                  {% comment %}Main marketing headline{% endcomment %}
+                  <div class="hero-slide__eyebrow">{{ section.settings.eyebrow_text | default: "Artist-Powered Marketplace" }}</div>
+                  <h1 class="hero-slide__main-title">{{ section.settings.title | default: "Discover Art That Speaks" }}</h1>
+                  <p class="hero-slide__subtitle">{{ section.settings.subtitle | default: "Premium print-on-demand artwork from independent creators. Every purchase supports artists directly." }}</p>
                   
-                  <div class="hero-slide__eyebrow">Featured Artist</div>
-                  <h1 class="hero-slide__title">{{ product.title }}</h1>
-                  <p class="hero-slide__artist">by {{ artist_name }}</p>
+                  {% comment %}Featured artwork info (smaller){% endcomment %}
+                  {% assign artist_name = product.vendor | default: "Featured Artist" %}
+                  <div class="hero-slide__artwork-info">
+                    <span class="hero-slide__artwork-label">Now Featured:</span>
+                    <span class="hero-slide__artwork-title">{{ product.title }}</span>
+                    <span class="hero-slide__artist-name">by {{ artist_name }}</span>
+                  </div>
                   
                   <div class="hero-slide__actions">
                     <a href="{{ product.url }}" class="hero-slide__btn hero-slide__btn--primary" data-testid="button-shop-art-{{ forloop.index }}">
@@ -48,11 +54,9 @@ Pull wall art products from Featured collection
                         <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
                     </a>
-                    {% if artist_name != "Featured Artist" %}
-                      <a href="/collections/vendors?q={{ artist_name | url_encode }}" class="hero-slide__btn hero-slide__btn--secondary" data-testid="button-view-artist-{{ forloop.index }}">
-                        View Artist
-                      </a>
-                    {% endif %}
+                    <a href="{{ section.settings.secondary_button_url | default: '/pages/join' }}" class="hero-slide__btn hero-slide__btn--secondary" data-testid="button-become-artist-{{ forloop.index }}">
+                      {{ section.settings.secondary_button_text | default: "Become an Artist" }}
+                    </a>
                   </div>
                 </div>
               </div>

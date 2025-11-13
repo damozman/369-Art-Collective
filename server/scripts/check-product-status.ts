@@ -5,11 +5,11 @@ const SHOPIFY_SHOP = process.env.SHOPIFY_SHOP_URL!.replace(/^https?:\/\//, '').r
 const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN!;
 
 async function checkProducts() {
-  console.log("🔍 Checking Product Status in Shopify\n");
+  console.log("🔍 Checking Product Status & Sales Channels\n");
   
   // Get first 10 products to check status
   const response = await fetch(
-    `https://${SHOPIFY_SHOP}/admin/api/2024-01/products.json?limit=10`,
+    `https://${SHOPIFY_SHOP}/admin/api/2025-01/products.json?limit=10&fields=id,title,handle,status,published_at`,
     {
       headers: {
         "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
@@ -28,13 +28,22 @@ async function checkProducts() {
 
   if (data.products && data.products.length > 0) {
     console.log("Product Status Breakdown:\n");
-    data.products.forEach((product: any, i: number) => {
-      console.log(`${i + 1}. ${product.title}`);
+    
+    for (const product of data.products) {
+      const statusIcon = product.status === "active" ? "✅" : "❌";
+      const publishedIcon = product.published_at ? "🌐" : "🔒";
+      
+      console.log(`${statusIcon} ${publishedIcon} ${product.title}`);
+      console.log(`   Handle: ${product.handle}`);
       console.log(`   Status: ${product.status}`);
-      console.log(`   Published: ${product.published_at ? 'Yes ✅' : 'No ❌'}`);
-      console.log(`   Variants: ${product.variants?.length || 0}`);
+      console.log(`   Published: ${product.published_at || "NOT PUBLISHED"}`);
       console.log("");
-    });
+    }
+    
+    console.log("\nLegend:");
+    console.log("✅ = Active status");
+    console.log("🌐 = Published to Online Store");
+    console.log("🔒 = NOT published to Online Store");
   } else {
     console.log("❌ No products found in Shopify!");
   }

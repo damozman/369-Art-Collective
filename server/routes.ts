@@ -1788,6 +1788,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Email template preview endpoints (for QA testing)
+  app.get("/api/admin/email-preview/:templateName", requireAdmin, async (req, res) => {
+    try {
+      const { templateName } = req.params;
+      const { trialDay3Email, trialEndingSoonEmail, trialLastChanceEmail, reEngagementEmail, templateMetadata, replaceEmailPlaceholders } = await import('./email-templates');
+      
+      const metadata = templateMetadata[templateName];
+      if (!metadata) {
+        return res.status(404).json({ 
+          message: "Template not found",
+          available: Object.keys(templateMetadata)
+        });
+      }
+
+      const params = req.query as Record<string, string>;
+      const data = { ...metadata.sampleData, ...params };
+      const domain = req.get('host') || 'example.replit.app';
+      
+      let html: string;
+      switch (templateName) {
+        case 'trial-day-3':
+          html = trialDay3Email({ ...data, domain });
+          break;
+        case 'trial-ending-soon':
+          html = trialEndingSoonEmail({ ...data, domain });
+          break;
+        case 'trial-last-chance':
+          html = trialLastChanceEmail({ ...data, domain });
+          break;
+        case 're-engagement':
+          html = reEngagementEmail({ ...data, domain });
+          break;
+        default:
+          return res.status(404).json({ message: "Unknown template" });
+      }
+
+      html = replaceEmailPlaceholders(html, {
+        unsubscribeUrl: `https://${domain}/unsubscribe`,
+        domain
+      });
+
+      res.type('html').send(html);
+    } catch (error: any) {
+      console.error("Email preview error:", error);
+      res.status(500).json({ message: "Failed to generate preview" });
+    }
+  });
+
+  app.get("/api/admin/email-templates", requireAdmin, async (_req, res) => {
+    try {
+      const { templateMetadata } = await import('./email-templates');
+      res.json(templateMetadata);
+    } catch (error: any) {
+      console.error("Get email templates error:", error);
+      res.status(500).json({ message: "Failed to fetch templates" });
+    }
+  });
+
   // Admin login (with rate limiting)
   app.post("/api/admins/login", loginLimiter, async (req, res) => {
     try {

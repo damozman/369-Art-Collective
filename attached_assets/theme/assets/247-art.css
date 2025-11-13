@@ -927,29 +927,34 @@ section.247pn-art-product .product__info {
 
 /* Main marketing copy (prominent) */
 .hero-slide__eyebrow {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 1rem;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  display: inline-block;
 }
 
 .hero-slide__main-title {
-  font-size: 3.5rem;
-  font-weight: 700;
-  line-height: 1.1;
-  margin: 0 0 1.5rem 0;
+  font-size: 4.5rem;
+  font-weight: 800;
+  line-height: 1.05;
+  margin: 0 0 2rem 0;
   color: #fff;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .hero-slide__subtitle {
-  font-size: 1.25rem;
-  line-height: 1.6;
+  font-size: 1.375rem;
+  line-height: 1.7;
   color: rgba(255, 255, 255, 0.95);
-  margin: 0 0 2rem 0;
-  max-width: 600px;
+  margin: 0 0 2.5rem 0;
+  max-width: 650px;
 }
 
 /* Featured artwork info (smaller, subtle) */
@@ -988,20 +993,22 @@ section.247pn-art-product .product__info {
 .hero-slide__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .hero-slide__btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem 2rem;
-  font-size: 1rem;
+  padding: 1.125rem 2.5rem;
+  font-size: 1.0625rem;
   font-weight: 600;
-  border-radius: 12px;
+  border-radius: 8px;
   text-decoration: none;
   transition: all 0.3s ease;
   border: 2px solid transparent;
+  min-width: 180px;
+  justify-content: center;
 }
 
 .hero-slide__btn--primary {
@@ -1014,19 +1021,19 @@ section.247pn-art-product .product__info {
   background: #5558e3;
   border-color: #5558e3;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5);
 }
 
 .hero-slide__btn--secondary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(12px);
 }
 
 .hero-slide__btn--secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.6);
   transform: translateY(-2px);
 }
 
@@ -1069,17 +1076,35 @@ section.247pn-art-product .product__info {
 }
 
 /* Mobile responsiveness */
+@media (max-width: 1024px) {
+  .hero-slide__content {
+    padding: 0 2rem;
+  }
+  
+  .hero-slide__main-title {
+    font-size: 3rem;
+  }
+  
+  .hero-slide__subtitle {
+    font-size: 1.125rem;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-slide__content {
     padding: 0 1.5rem;
   }
   
   .hero-slide__main-title {
-    font-size: 2.25rem;
+    font-size: 2.5rem;
   }
   
   .hero-slide__subtitle {
-    font-size: 1rem;
+    font-size: 1.0625rem;
+  }
+  
+  .hero-slide__eyebrow {
+    font-size: 0.8125rem;
   }
   
   .hero-slide__actions {

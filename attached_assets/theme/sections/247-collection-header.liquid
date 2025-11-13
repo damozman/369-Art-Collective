@@ -31,8 +31,8 @@ Premium header for collection pages
 
 <style>
 .collection-header {
-  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
-  padding: 4rem 2rem 3rem;
+  background: linear-gradient(135deg, #0A1628 0%, #0F1F35 100%);
+  padding: 3rem 2rem 2.5rem;
   position: relative;
   overflow: hidden;
 }
@@ -45,8 +45,8 @@ Premium header for collection pages
   right: 0;
   bottom: 0;
   background: 
-    radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(255, 138, 91, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(32, 201, 151, 0.08) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -62,10 +62,10 @@ Premium header for collection pages
 }
 
 .collection-header__image {
-  margin-bottom: 2rem;
-  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
   overflow: hidden;
-  max-width: 800px;
+  max-width: 700px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -77,25 +77,25 @@ Premium header for collection pages
 }
 
 .collection-header__title {
-  font-size: 3.5rem;
+  font-size: 3rem;
   font-weight: 800;
   color: #fff;
-  margin: 0 0 1rem;
-  letter-spacing: -0.03em;
+  margin: 0 0 0.75rem;
+  letter-spacing: -0.02em;
   line-height: 1.1;
 }
 
 .collection-header__description {
-  font-size: 1.25rem;
-  color: rgba(255, 255, 255, 0.8);
-  line-height: 1.7;
-  max-width: 700px;
-  margin: 0 auto 1rem;
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.6;
+  max-width: 650px;
+  margin: 0 auto 0.75rem;
 }
 
 .collection-header__count {
-  font-size: 0.9375rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+  color: #FF8A5B;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 600;
@@ -103,15 +103,19 @@ Premium header for collection pages
 
 @media (max-width: 768px) {
   .collection-header {
-    padding: 3rem 1.5rem 2rem;
+    padding: 2.5rem 1.5rem 2rem;
   }
 
   .collection-header__title {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .collection-header__description {
-    font-size: 1.125rem;
+    font-size: 1rem;
+  }
+
+  .collection-header__count {
+    font-size: 0.8125rem;
   }
 }
 </style>

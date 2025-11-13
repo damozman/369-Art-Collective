@@ -209,12 +209,12 @@
         "artist_4": {
           "type": "artist",
           "settings": {
-            "artist_name": "Yuki Tanaka",
-            "specialty": "Minimalist & Modern",
-            "artwork_count": "21",
-            "artist_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artists/yuki-tanaka",
+            "artist_name": "Liam Anderson",
+            "specialty": "Urban & Architecture",
+            "artwork_count": "28",
+            "artist_url": "https://b904a60b-c14e-44da-9091-0356ece22fe8-00-11b19dselj20y.picard.replit.dev/artists/24564f8f-89a9-402d-8f98-ee448ef3965b",
             "artist_image": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=1000&fit=crop&q=80",
-            "avatar_image": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&q=80"
+            "avatar_image": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&q=80"
           }
         }
       },

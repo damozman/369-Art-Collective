@@ -645,31 +645,48 @@ class PostgresStorage implements IStorage {
   }
 
   async getAllArtworks(): Promise<ArtworkWithArtist[]> {
-    const allArtworks = await db
-      .select()
+    // Use a single JOIN query instead of N+1 queries
+    // This prevents "Too many connections" errors with Neon serverless
+    const results = await db
+      .select({
+        // Artwork fields
+        id: artworksTable.id,
+        artistId: artworksTable.artistId,
+        title: artworksTable.title,
+        description: artworksTable.description,
+        imageUrl: artworksTable.imageUrl,
+        tags: artworksTable.tags,
+        status: artworksTable.status,
+        rejectionReason: artworksTable.rejectionReason,
+        ipDeclarationAccepted: artworksTable.ipDeclarationAccepted,
+        ipDeclarationText: artworksTable.ipDeclarationText,
+        shopifyProductId: artworksTable.shopifyProductId,
+        shopifyProductStatus: artworksTable.shopifyProductStatus,
+        shopifyTemplate: artworksTable.shopifyTemplate,
+        printifyProductId: artworksTable.printifyProductId,
+        printifyImageId: artworksTable.printifyImageId,
+        lastSaleDate: artworksTable.lastSaleDate,
+        archivedAt: artworksTable.archivedAt,
+        archiveWarningEmailSentAt: artworksTable.archiveWarningEmailSentAt,
+        createdAt: artworksTable.createdAt,
+        updatedAt: artworksTable.updatedAt,
+        artworkStory: artworksTable.artworkStory,
+        styleTags: artworksTable.styleTags,
+        suggestedUse: artworksTable.suggestedUse,
+        seoSlug: artworksTable.seoSlug,
+        productType: artworksTable.productType,
+        // Artist fields (nested)
+        artist: {
+          id: artists.id,
+          name: artists.name,
+          email: artists.email,
+        },
+      })
       .from(artworksTable)
+      .leftJoin(artists, eq(artworksTable.artistId, artists.id))
       .orderBy(artworksTable.createdAt);
     
-    const artworksWithArtist = await Promise.all(
-      allArtworks.map(async (artwork) => {
-        const [artist] = await db
-          .select({
-            id: artists.id,
-            name: artists.name,
-            email: artists.email,
-          })
-          .from(artists)
-          .where(eq(artists.id, artwork.artistId))
-          .limit(1);
-        
-        return {
-          ...artwork,
-          artist,
-        };
-      })
-    );
-    
-    return artworksWithArtist as ArtworkWithArtist[];
+    return results as ArtworkWithArtist[];
   }
 
   async createArtwork(insertArtwork: InsertArtwork): Promise<Artwork> {

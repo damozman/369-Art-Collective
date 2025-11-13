@@ -42,6 +42,9 @@ async function backfillPrintifyMockups() {
 ╚════════════════════════════════════════════════════════════════╝
 ${colors.reset}\n`);
 
+  console.log(`${colors.yellow}⚠️  Important: Stop the "Start application" workflow before running this script${colors.reset}`);
+  console.log(`${colors.gray}   This prevents database connection conflicts.${colors.reset}\n`);
+
   // Step 1: Validate configuration
   console.log(`${colors.cyan}[1/5] Validating API configuration...${colors.reset}`);
   

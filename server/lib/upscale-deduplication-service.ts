@@ -45,6 +45,41 @@ export class UpscaleDeduplicationService {
     };
   }
 
+  static async createPendingRecord(params: {
+    fileHash: string;
+    artistId: string;
+    quotaType: 'registration_bonus' | 'monthly' | 'elite_unlimited';
+    tier: string;
+    ipAddress?: string;
+    jobId?: string;
+    replicateId?: string;
+    originalUrl: string;
+    originalWidth: number;
+    originalHeight: number;
+    upscaledWidth: number;
+    upscaledHeight: number;
+    originalDpi: number;
+    costCents: number;
+  }): Promise<void> {
+    await db.insert(upscaleUsage).values({
+      artistId: params.artistId,
+      fileHash: params.fileHash,
+      quotaType: params.quotaType,
+      tier: params.tier,
+      ipAddress: params.ipAddress,
+      jobId: params.jobId,
+      replicateId: params.replicateId,
+      status: 'queued',
+      originalUrl: params.originalUrl,
+      originalWidth: params.originalWidth,
+      originalHeight: params.originalHeight,
+      upscaledWidth: params.upscaledWidth,
+      upscaledHeight: params.upscaledHeight,
+      originalDpi: params.originalDpi,
+      costCents: params.costCents
+    });
+  }
+
   static async saveToCache(params: {
     fileHash: string;
     artistId: string;

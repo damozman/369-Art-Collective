@@ -28,6 +28,8 @@ import {
   creatorstackBuyers,
   creatorstackPurchases,
   creatorstackPromptGenerations,
+  upscaleJobs,
+  upscaleUsage,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -405,6 +407,17 @@ export interface IStorage {
   // CreatorStack Prompt Generation CRUD
   createCreatorstackPromptGeneration(generation: any): Promise<any>;
   getCreatorstackPromptGenerationsByBuyer(buyerId: string): Promise<any[]>;
+  
+  // ===================================
+  // AI UPSCALING METHODS
+  // ===================================
+  
+  // Upscale Job CRUD
+  createUpscaleJob(job: { artistId: string; fileHash: string; originalUrl: string; status: string; priority: number; replicateId: string }): Promise<any>;
+  getUpscaleJobById(id: string): Promise<any | undefined>;
+  updateUpscaleJob(id: string, updates: Partial<any>): Promise<any>;
+  updateUpscaleUsageByJobId(jobId: string, updates: Partial<any>): Promise<void>;
+  getArtistById(id: string): Promise<Artist | undefined>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -2446,6 +2459,51 @@ class PostgresStorage implements IStorage {
       .where(eq(creatorstackPromptGenerations.buyerId, buyerId))
       .orderBy(desc(creatorstackPromptGenerations.createdAt));
   }
+
+  // ===================================
+  // AI UPSCALING METHODS
+  // ===================================
+
+  async getArtistById(id: string): Promise<Artist | undefined> {
+    return this.getArtist(id);
+  }
+
+  async createUpscaleJob(job: { 
+    artistId: string; 
+    fileHash: string; 
+    originalUrl: string; 
+    status: string; 
+    priority: number; 
+    replicateId: string 
+  }): Promise<any> {
+    const [created] = await db
+      .insert(upscaleJobs)
+      .values(job)
+      .returning();
+    return created;
+  }
+
+  async getUpscaleJobById(id: string): Promise<any | undefined> {
+    return await db.query.upscaleJobs.findFirst({
+      where: eq(upscaleJobs.id, id)
+    });
+  }
+
+  async updateUpscaleJob(id: string, updates: Partial<any>): Promise<any> {
+    const [updated] = await db
+      .update(upscaleJobs)
+      .set(updates)
+      .where(eq(upscaleJobs.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateUpscaleUsageByJobId(jobId: string, updates: Partial<any>): Promise<void> {
+    await db
+      .update(upscaleUsage)
+      .set(updates)
+      .where(eq(upscaleUsage.jobId, jobId));
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -3311,6 +3369,33 @@ class MemStorage implements IStorage {
       ...updated, 
       emailTemplatesSent: [...(updated.emailTemplatesSent || [])]
     };
+  }
+
+  // ===================================
+  // AI UPSCALING METHODS (Stubs)
+  // ===================================
+
+  async getArtistById(id: string): Promise<Artist | undefined> {
+    return this.getArtist(id);
+  }
+
+  async createUpscaleJob(): Promise<any> { 
+    console.log("MemStorage: createUpscaleJob (stub)"); 
+    return { id: randomUUID() }; 
+  }
+
+  async getUpscaleJobById(): Promise<any | undefined> { 
+    console.log("MemStorage: getUpscaleJobById (stub)"); 
+    return undefined; 
+  }
+
+  async updateUpscaleJob(): Promise<any> { 
+    console.log("MemStorage: updateUpscaleJob (stub)"); 
+    return {}; 
+  }
+
+  async updateUpscaleUsageByJobId(): Promise<void> { 
+    console.log("MemStorage: updateUpscaleUsageByJobId (stub)"); 
   }
 }
 

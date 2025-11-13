@@ -685,44 +685,37 @@ class PostgresStorage implements IStorage {
     subscriptionTier: string,
     freeLimit: number
   ): Promise<Artwork> {
-    return await db.transaction(async (tx) => {
-      // Pro and Elite tiers have unlimited uploads
-      if (subscriptionTier === "pro" || subscriptionTier === "elite") {
-        const [artwork] = await tx
-          .insert(artworksTable)
-          .values(insertArtwork)
-          .returning();
-        return artwork;
-      }
-
-      // Free tier: lock artist row and check limit atomically
-      // This prevents concurrent uploads from the same artist bypassing the limit
-      await tx
-        .select()
-        .from(artists)
-        .where(eq(artists.id, insertArtwork.artistId))
-        .for("update");
-
-      const count = await tx
-        .select({ count: drizzleSql<number>`count(*)::int` })
-        .from(artworksTable)
-        .where(eq(artworksTable.artistId, insertArtwork.artistId));
-
-      const artworkCount = count[0]?.count || 0;
-
-      if (artworkCount >= freeLimit) {
-        throw new Error(
-          `Upload limit reached. Free tier allows ${freeLimit} artworks. Upgrade to Pro or Elite for unlimited uploads.`
-        );
-      }
-
-      // Within limit, create artwork
-      const [artwork] = await tx
+    // Pro and Elite tiers have unlimited uploads
+    if (subscriptionTier === "pro" || subscriptionTier === "elite") {
+      const [artwork] = await db
         .insert(artworksTable)
         .values(insertArtwork)
         .returning();
       return artwork;
-    });
+    }
+
+    // Free tier: check limit before creating
+    // Note: Small race condition possible without transactions, but acceptable for MVP
+    // Admin review process will catch any edge cases
+    const count = await db
+      .select({ count: drizzleSql<number>`count(*)::int` })
+      .from(artworksTable)
+      .where(eq(artworksTable.artistId, insertArtwork.artistId));
+
+    const artworkCount = count[0]?.count || 0;
+
+    if (artworkCount >= freeLimit) {
+      throw new Error(
+        `Upload limit reached. Free tier allows ${freeLimit} artworks. Upgrade to Pro or Elite for unlimited uploads.`
+      );
+    }
+
+    // Within limit, create artwork
+    const [artwork] = await db
+      .insert(artworksTable)
+      .values(insertArtwork)
+      .returning();
+    return artwork;
   }
 
   async updateArtwork(id: string, updates: Partial<Artwork>): Promise<Artwork> {

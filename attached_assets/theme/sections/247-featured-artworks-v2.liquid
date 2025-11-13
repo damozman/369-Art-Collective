@@ -116,11 +116,29 @@ Tabbed browsing, tight 6-column grid, badge overlays
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+  transition: opacity 0.3s ease, transform 0.4s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
-.artwork-card-v2:hover .artwork-card-v2__image {
-  transform: scale(1.05);
+.artwork-card-v2__image--primary {
+  z-index: 1;
+  opacity: 1;
+}
+
+.artwork-card-v2__image--secondary {
+  z-index: 0;
+  opacity: 0;
+}
+
+.artwork-card-v2:hover .artwork-card-v2__image--primary {
+  opacity: 0;
+}
+
+.artwork-card-v2:hover .artwork-card-v2__image--secondary {
+  opacity: 1;
+  transform: scale(1.03);
 }
 
 /* Badge Overlays */
@@ -157,14 +175,55 @@ Tabbed browsing, tight 6-column grid, badge overlays
 .artwork-card-v2__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
-  z-index: 1;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 1rem;
 }
 
 .artwork-card-v2:hover .artwork-card-v2__overlay {
   opacity: 1;
+}
+
+/* Find Similar Button */
+.artwork-card-v2__similar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  color: #0f0f0f;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 20px;
+  text-decoration: none;
+  transform: translateY(10px);
+  opacity: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.artwork-card-v2:hover .artwork-card-v2__similar-btn {
+  transform: translateY(0);
+  opacity: 1;
+  transition-delay: 0.1s;
+}
+
+.artwork-card-v2__similar-btn:hover {
+  background: #FF8A5B;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 138, 91, 0.3);
+}
+
+.artwork-card-v2__similar-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Card Info */
@@ -254,11 +313,27 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   <img 
                     src="{{ block.settings.artwork_image }}" 
                     alt="{{ block.settings.artwork_title }}"
-                    class="artwork-card-v2__image"
+                    class="artwork-card-v2__image artwork-card-v2__image--primary"
+                    loading="lazy"
+                  >
+                {% endif %}
+                
+                {% if block.settings.mockup_image != blank %}
+                  <img 
+                    src="{{ block.settings.mockup_image }}" 
+                    alt="{{ block.settings.artwork_title }} Mockup"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
                     loading="lazy"
                   >
                 {% else %}
-                  <div style="width: 100%; height: 100%; background: #e5e7eb;"></div>
+                  {% if block.settings.artwork_image != blank %}
+                    <img 
+                      src="{{ block.settings.artwork_image }}" 
+                      alt="{{ block.settings.artwork_title }}"
+                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                      loading="lazy"
+                    >
+                  {% endif %}
                 {% endif %}
                 
                 {% if block.settings.badge != blank %}
@@ -267,7 +342,14 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   </div>
                 {% endif %}
                 
-                <div class="artwork-card-v2__overlay"></div>
+                <div class="artwork-card-v2__overlay">
+                  <button class="artwork-card-v2__similar-btn" onclick="event.preventDefault(); window.location.href='/search?q=similar+to+{{ block.settings.artwork_title | url_encode }}';" data-testid="button-find-similar-{{ forloop.index }}">
+                    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM19 19l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Find Similar
+                  </button>
+                </div>
               </div>
               <div class="artwork-card-v2__info">
                 <h3 class="artwork-card-v2__title">{{ block.settings.artwork_title }}</h3>
@@ -292,11 +374,27 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   <img 
                     src="{{ block.settings.artwork_image }}" 
                     alt="{{ block.settings.artwork_title }}"
-                    class="artwork-card-v2__image"
+                    class="artwork-card-v2__image artwork-card-v2__image--primary"
+                    loading="lazy"
+                  >
+                {% endif %}
+                
+                {% if block.settings.mockup_image != blank %}
+                  <img 
+                    src="{{ block.settings.mockup_image }}" 
+                    alt="{{ block.settings.artwork_title }} Mockup"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
                     loading="lazy"
                   >
                 {% else %}
-                  <div style="width: 100%; height: 100%; background: #e5e7eb;"></div>
+                  {% if block.settings.artwork_image != blank %}
+                    <img 
+                      src="{{ block.settings.artwork_image }}" 
+                      alt="{{ block.settings.artwork_title }}"
+                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                      loading="lazy"
+                    >
+                  {% endif %}
                 {% endif %}
                 
                 {% if block.settings.badge != blank %}
@@ -305,7 +403,14 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   </div>
                 {% endif %}
                 
-                <div class="artwork-card-v2__overlay"></div>
+                <div class="artwork-card-v2__overlay">
+                  <button class="artwork-card-v2__similar-btn" onclick="event.preventDefault(); window.location.href='/search?q=similar+to+{{ block.settings.artwork_title | url_encode }}';" data-testid="button-find-similar-{{ forloop.index }}">
+                    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM19 19l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Find Similar
+                  </button>
+                </div>
               </div>
               <div class="artwork-card-v2__info">
                 <h3 class="artwork-card-v2__title">{{ block.settings.artwork_title }}</h3>
@@ -330,11 +435,27 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   <img 
                     src="{{ block.settings.artwork_image }}" 
                     alt="{{ block.settings.artwork_title }}"
-                    class="artwork-card-v2__image"
+                    class="artwork-card-v2__image artwork-card-v2__image--primary"
+                    loading="lazy"
+                  >
+                {% endif %}
+                
+                {% if block.settings.mockup_image != blank %}
+                  <img 
+                    src="{{ block.settings.mockup_image }}" 
+                    alt="{{ block.settings.artwork_title }} Mockup"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
                     loading="lazy"
                   >
                 {% else %}
-                  <div style="width: 100%; height: 100%; background: #e5e7eb;"></div>
+                  {% if block.settings.artwork_image != blank %}
+                    <img 
+                      src="{{ block.settings.artwork_image }}" 
+                      alt="{{ block.settings.artwork_title }}"
+                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                      loading="lazy"
+                    >
+                  {% endif %}
                 {% endif %}
                 
                 {% if block.settings.badge != blank %}
@@ -343,7 +464,14 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   </div>
                 {% endif %}
                 
-                <div class="artwork-card-v2__overlay"></div>
+                <div class="artwork-card-v2__overlay">
+                  <button class="artwork-card-v2__similar-btn" onclick="event.preventDefault(); window.location.href='/search?q=similar+to+{{ block.settings.artwork_title | url_encode }}';" data-testid="button-find-similar-{{ forloop.index }}">
+                    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM19 19l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Find Similar
+                  </button>
+                </div>
               </div>
               <div class="artwork-card-v2__info">
                 <h3 class="artwork-card-v2__title">{{ block.settings.artwork_title }}</h3>
@@ -434,7 +562,14 @@ Tabbed browsing, tight 6-column grid, badge overlays
         {
           "type": "text",
           "id": "artwork_image",
-          "label": "Artwork Image URL"
+          "label": "Artwork Image URL",
+          "info": "Primary artwork image (shows by default)"
+        },
+        {
+          "type": "text",
+          "id": "mockup_image",
+          "label": "Mockup Image URL",
+          "info": "Optional: Printify mockup image (shows on hover)"
         },
         {
           "type": "url",

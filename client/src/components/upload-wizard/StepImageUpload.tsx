@@ -84,7 +84,7 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange }: Step
           <input
             id="wizard-file-upload"
             type="file"
-            className="hidden"
+            className="sr-only"
             accept="image/*"
             onChange={handleFileChange}
             data-testid="input-file"

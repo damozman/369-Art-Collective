@@ -1,12 +1,21 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+// Lazy initialization to ensure runtime environment variable is used
+// Prevents build-time caching of wrong key (VITE_STRIPE_PUBLIC_KEY fallback)
+function getStripeClient(): Stripe {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY environment variable is required');
+  }
+  
+  // Sanity check: ensure we're not using publishable key
+  if (process.env.STRIPE_SECRET_KEY.startsWith('pk_')) {
+    throw new Error('STRIPE_SECRET_KEY must be a secret key (sk_*), not a publishable key (pk_*)');
+  }
+  
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-10-28.acacia',
+  });
 }
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-10-28.acacia',
-});
 
 export interface CreateAccountLinkParams {
   artistId: string;
@@ -28,7 +37,7 @@ export class StripeConnectService {
    * Create a Stripe Connect account for an artist
    */
   async createConnectedAccount(email: string, metadata: { artistId: string }): Promise<string> {
-    const account = await stripe.accounts.create({
+    const account = await getStripeClient().accounts.create({
       type: 'express',
       email,
       capabilities: {
@@ -58,7 +67,7 @@ export class StripeConnectService {
       });
     }
 
-    const accountLink = await stripe.accountLinks.create({
+    const accountLink = await getStripeClient().accountLinks.create({
       account: accountId,
       refresh_url: params.refreshUrl,
       return_url: params.returnUrl,
@@ -87,7 +96,7 @@ export class StripeConnectService {
     default_currency?: string;
     external_account_last4?: string;
   }> {
-    const account = await stripe.accounts.retrieve(accountId);
+    const account = await getStripeClient().accounts.retrieve(accountId);
 
     // Extract external account details (bank account)
     let externalAccountLast4: string | undefined;
@@ -117,7 +126,7 @@ export class StripeConnectService {
    * Process a transfer to a connected account
    */
   async processTransfer(params: ProcessTransferParams): Promise<string> {
-    const transfer = await stripe.transfers.create({
+    const transfer = await getStripeClient().transfers.create({
       amount: params.amount,
       currency: 'usd',
       destination: params.connectedAccountId,
@@ -132,7 +141,7 @@ export class StripeConnectService {
    * Retrieve account by artist ID from metadata
    */
   async getAccountByArtistId(artistId: string): Promise<string | null> {
-    const accounts = await stripe.accounts.list({
+    const accounts = await getStripeClient().accounts.list({
       limit: 100,
     });
 
@@ -148,7 +157,7 @@ export class StripeConnectService {
     signature: string,
     webhookSecret: string
   ): Stripe.Event {
-    return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+    return getStripeClient().webhooks.constructEvent(payload, signature, webhookSecret);
   }
 }
 

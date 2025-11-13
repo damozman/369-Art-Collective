@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
-import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings, Eye, EyeOff, Crown, Sparkles, ExternalLink, BarChart3, Archive, RefreshCw } from "lucide-react";
+import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings, Eye, EyeOff, Crown, Sparkles, ExternalLink, BarChart3, Archive, RefreshCw, Zap, TrendingUp } from "lucide-react";
 import { useSubscriptionStatus, getTrialStatusText, type SubscriptionStatus } from "@/hooks/use-subscription-status";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Artwork } from "@shared/schema";
@@ -185,6 +185,176 @@ function SubscriptionTierCard({
               Manage Subscription
             </Button>
           </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// AI Upscale Quota Widget Component
+function QuotaWidget({ tier }: { tier: string }) {
+  const [, setLocation] = useLocation();
+  
+  const { data: quotaData, isLoading } = useQuery<{
+    hasQuota: boolean;
+    quotaType: 'registration_bonus' | 'monthly' | 'elite_unlimited';
+    remaining: number;
+    total: number;
+    tier: string;
+    message: string;
+    analytics: {
+      lifetimeTotal: number;
+      currentMonthUsed: number;
+      totalCostCents: number;
+      recentUpscales: any[];
+    };
+  }>({
+    queryKey: ['/api/upscale/quota'],
+  });
+
+  if (isLoading) {
+    return (
+      <Card className="mb-8" data-testid="card-quota-loading">
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-3/4" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!quotaData) return null;
+
+  const isUnlimited = quotaData.quotaType === 'elite_unlimited';
+  const hasQuota = quotaData.total > 0;
+  const percentageUsed = isUnlimited || !hasQuota ? 0 : ((quotaData.total - quotaData.remaining) / quotaData.total) * 100;
+  const isLowQuota = hasQuota && !isUnlimited && percentageUsed >= 80;
+  const isExhausted = hasQuota && !isUnlimited && quotaData.remaining === 0;
+  const hasZeroQuota = !isUnlimited && !hasQuota;
+
+  return (
+    <Card className="mb-8" data-testid="card-quota">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            <CardTitle>AI Image Upscaling</CardTitle>
+          </div>
+          {isUnlimited ? (
+            <Badge variant="default" className="bg-primary" data-testid="badge-quota-unlimited">
+              <Sparkles className="w-3 h-3 mr-1" />
+              Unlimited
+            </Badge>
+          ) : (
+            <Badge variant={isExhausted ? "destructive" : isLowQuota ? "secondary" : "outline"} data-testid="badge-quota-remaining">
+              {quotaData.remaining} / {quotaData.total} remaining
+            </Badge>
+          )}
+        </div>
+        <CardDescription>
+          {isUnlimited 
+            ? "Enhance any image to professional print quality with priority processing"
+            : "Boost low-resolution images to meet print quality standards"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {hasZeroQuota && (
+            <div className="p-4 bg-muted/50 rounded-lg border border-muted">
+              <p className="text-sm text-muted-foreground">
+                No AI upscale quota assigned. Upgrade to start enhancing your images.
+              </p>
+            </div>
+          )}
+
+          {!isUnlimited && hasQuota && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Quota Usage</span>
+                <span className="font-medium">{Math.round(percentageUsed)}%</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all ${
+                    isExhausted ? 'bg-destructive' : 
+                    isLowQuota ? 'bg-yellow-500' : 
+                    'bg-primary'
+                  }`}
+                  style={{ width: `${Math.min(100, Math.max(0, percentageUsed))}%` }}
+                  data-testid="progress-quota-usage"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {quotaData.quotaType === 'registration_bonus' && 'Using registration bonus credits'}
+                {quotaData.quotaType === 'monthly' && 'Resets monthly on your subscription anniversary'}
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+            <div className="flex items-start gap-2">
+              <TrendingUp className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <div>
+                <p className="font-medium">{quotaData.analytics?.lifetimeTotal || 0}</p>
+                <p className="text-muted-foreground text-xs">Lifetime upscales</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <BarChart3 className="h-4 w-4 text-muted-foreground mt-0.5" />
+              <div>
+                <p className="font-medium">{quotaData.analytics?.currentMonthUsed || 0}</p>
+                <p className="text-muted-foreground text-xs">This month</p>
+              </div>
+            </div>
+            {isUnlimited && (
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium">Priority Queue</p>
+                  <p className="text-muted-foreground text-xs">Fastest processing</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {hasZeroQuota && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-3">
+                AI upscaling is available with Pro or Elite subscriptions.
+              </p>
+              <Button onClick={() => setLocation("/artist/settings")} className="w-full" data-testid="button-upgrade-quota-zero">
+                <Crown className="mr-2 h-4 w-4" />
+                Upgrade to Get AI Upscales
+              </Button>
+            </div>
+          )}
+
+          {isExhausted && !hasZeroQuota && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-3">
+                You've used all your AI upscales. Upgrade to continue enhancing images.
+              </p>
+              <Button onClick={() => setLocation("/artist/settings")} className="w-full" data-testid="button-upgrade-quota">
+                <Crown className="mr-2 h-4 w-4" />
+                Upgrade for More Upscales
+              </Button>
+            </div>
+          )}
+
+          {isLowQuota && !isExhausted && !hasZeroQuota && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground mb-3">
+                Running low on upscales. Upgrade for unlimited AI enhancements.
+              </p>
+              <Button variant="outline" onClick={() => setLocation("/artist/settings")} className="w-full" size="sm" data-testid="button-upgrade-quota-low">
+                <Crown className="mr-2 h-4 w-4" />
+                View Upgrade Options
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -632,6 +802,9 @@ export default function ArtistDashboard() {
             isLoading={subscriptionLoading}
             artworkCount={stats.total}
           />
+
+          {/* AI Upscale Quota Section */}
+          <QuotaWidget tier={subscription?.tier || "free"} />
 
           {/* Featured Status Section */}
           <FeaturedStatusCard

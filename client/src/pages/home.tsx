@@ -1,4 +1,5 @@
 import { useLocation } from "wouter";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +17,9 @@ import {
   Award,
   ArrowRight,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  Menu,
+  X
 } from "lucide-react";
 import type { Testimonial } from "@shared/schema";
 
@@ -27,12 +30,20 @@ type FeaturedTestimonial = Testimonial & {
 
 export default function Home() {
   const [, setLocation] = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const { data: featuredTestimonials = [], isLoading: featuredLoading } = useQuery<FeaturedTestimonial[]>({
     queryKey: ["/api/featured-testimonials"],
   });
   
   const testimonials = featuredTestimonials.slice(0, 7);
+
+  const navLinks = [
+    { name: "How It Works", href: "#how-it-works" },
+    { name: "For Artists", href: "#for-artists" },
+    { name: "Success Stories", href: "#testimonials" },
+    { name: "Shop Art", href: "https://bvhpq0-hy.myshopify.com" },
+  ];
 
   const features = [
     {
@@ -103,9 +114,24 @@ export default function Home() {
       <header className="border-b sticky top-0 bg-background backdrop-blur-sm z-50 shadow-sm">
         <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Sparkles className="h-7 w-7 text-primary" />
+            <Sparkles className="h-7 w-7 text-primary" data-testid="icon-logo" />
             <span className="font-bold text-2xl md:text-3xl tracking-tight">247 Print Network</span>
           </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                data-testid={`link-nav-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {link.name}
+              </a>
+            ))}
+          </nav>
+
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <Button 
@@ -121,11 +147,69 @@ export default function Home() {
               onClick={() => setLocation("/register")} 
               data-testid="button-get-started"
               size="lg"
+              className="hidden sm:flex"
             >
               Get Started
             </Button>
+
+            {/* Mobile Menu Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              data-testid="button-mobile-menu"
+              aria-expanded={mobileMenuOpen}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t bg-background">
+            <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+              {navLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="text-lg font-medium text-foreground hover:text-primary transition-colors py-3 px-4 rounded-md hover:bg-accent"
+                  onClick={() => setMobileMenuOpen(false)}
+                  data-testid={`link-mobile-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  {link.name}
+                </a>
+              ))}
+              <div className="flex flex-col gap-2 pt-4 border-t mt-2">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setLocation("/login");
+                  }} 
+                  data-testid="button-mobile-login"
+                  size="lg"
+                  className="w-full justify-start"
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setLocation("/register");
+                  }} 
+                  data-testid="button-mobile-get-started"
+                  size="lg"
+                  className="w-full"
+                >
+                  Get Started
+                </Button>
+              </div>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Hero Section - More Visual Impact */}
@@ -185,7 +269,7 @@ export default function Home() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20">
+      <section id="for-artists" className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-serif mb-4">
@@ -214,7 +298,7 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-muted/50">
+      <section id="how-it-works" className="py-20 bg-muted/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-serif mb-4">
@@ -241,7 +325,7 @@ export default function Home() {
       </section>
 
       {/* Success Stories / Testimonials */}
-      <section className="py-20 bg-muted/50">
+      <section id="testimonials" className="py-20 bg-muted/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-serif mb-4">

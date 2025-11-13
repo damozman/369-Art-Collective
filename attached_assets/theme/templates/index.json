@@ -357,45 +357,6 @@
         "artwork_24"
       ]
     },
-    "trust_badges": {
-      "type": "247-trust-badges",
-      "blocks": {
-        "badge_1": {
-          "type": "badge",
-          "settings": {
-            "title": "Premium Quality",
-            "description": "Museum-grade prints with vibrant colors"
-          }
-        },
-        "badge_2": {
-          "type": "badge",
-          "settings": {
-            "title": "Fair Artist Royalties",
-            "description": "Artists earn 30-45% of every sale"
-          }
-        },
-        "badge_3": {
-          "type": "badge",
-          "settings": {
-            "title": "Fast Worldwide Shipping",
-            "description": "Global fulfillment in 5-7 business days"
-          }
-        },
-        "badge_4": {
-          "type": "badge",
-          "settings": {
-            "title": "Satisfaction Guaranteed",
-            "description": "100% money-back guarantee"
-          }
-        }
-      },
-      "block_order": [
-        "badge_1",
-        "badge_2",
-        "badge_3",
-        "badge_4"
-      ]
-    },
     "homepage_bottom": {
       "type": "247-homepage-bottom",
       "settings": {}
@@ -404,7 +365,6 @@
   "order": [
     "split_hero",
     "featured_artworks_v2",
-    "trust_badges",
     "homepage_bottom"
   ]
 }

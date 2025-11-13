@@ -5,6 +5,7 @@ import { db } from './db';
 import { emailLogs, subscriptionTrials } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { updateFeaturedStatusForTier } from './featured-artists-service';
+import { sendReEngagementEmail } from './trial-email-orchestrator';
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -505,6 +506,12 @@ export class SubscriptionService {
               status: 'canceled',
               canceledAt: new Date()
             });
+            
+            // Send re-engagement email (non-blocking)
+            if (activeTrial.tier === 'pro' || activeTrial.tier === 'elite') {
+              sendReEngagementEmail(artistId, activeTrial.tier)
+                .catch(err => console.error('[ERROR] Re-engagement email failed:', err));
+            }
           }
         }
 
@@ -685,17 +692,27 @@ export class SubscriptionService {
         if (activeTrial) {
           console.log(`[WARN][TRIAL_WILL_END] Trial ending soon for ${artist.email} (tier: ${tier})`);
           
-          // Update trial record to track that we sent the pre-expiry email
-          await storage.updateSubscriptionTrial(activeTrial.id, {
-            emailsSent: (activeTrial.emailsSent || 0) + 1,
-            emailTemplatesSent: [
-              ...(activeTrial.emailTemplatesSent || []),
-              'trial_ending_soon'
-            ]
-          });
-
-          // TODO: Send trial ending email (Task 2)
-          console.log(`[INFO][TRIAL_EMAIL] Would send trial_ending_soon email to ${artist.email}`);
+          // Import orchestrator dynamically to avoid circular dependencies
+          const { sendTrialEndingSoonEmail } = await import('./trial-email-orchestrator');
+          
+          // Send trial ending soon email (non-blocking)
+          sendTrialEndingSoonEmail(artistId)
+            .then(result => {
+              if (result.sent) {
+                console.log(`[SUCCESS][TRIAL_EMAIL] Sent trial_ending_soon email to ${artist.email}`);
+                // Update trial record to track email sent
+                storage.updateSubscriptionTrial(activeTrial.id, {
+                  emailsSent: (activeTrial.emailsSent || 0) + 1,
+                  emailTemplatesSent: [
+                    ...(activeTrial.emailTemplatesSent || []),
+                    'trial_ending_soon'
+                  ]
+                }).catch(err => console.error('[ERROR] Failed to update trial record:', err));
+              } else {
+                console.log(`[INFO][TRIAL_EMAIL] trial_ending_soon not sent: ${result.reason}`);
+              }
+            })
+            .catch(err => console.error('[ERROR][TRIAL_EMAIL] Failed to send trial_ending_soon:', err));
         }
         
         break;

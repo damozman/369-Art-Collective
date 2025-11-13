@@ -16,7 +16,7 @@ The system uses a scalable client-server architecture with distinct frontend and
 **UI/UX:**
 - **Frontend Technologies:** React, TypeScript, Wouter, TanStack Query, React Hook Form, Tailwind CSS, and Shadcn UI.
 - **Interfaces:** Dedicated workflows for artists (artwork upload, AI Art Studio), administrators (enhanced dashboards), and CreatorStack buyers (secure access to purchased kits and AI tools).
-- **Shopify Storefront:** Custom `247-art.css` with a Displate-inspired aesthetic, featuring artist spotlights, interactive product selectors, and mobile responsiveness.
+- **Shopify Storefront:** Custom `247-art.css` with a Displate-inspired aesthetic, featuring artist spotlights, interactive product selectors, and mobile responsiveness. Artist Portal navigation now fully integrated across site: desktop header CTAs ("Artist Portal" login + coral "Become an Artist" button), mobile drawer (priority gradient CTA + login link with 48px touch targets), and footer "For Artists" section (signup, login, benefits, FAQs) - all pointing to 247portal.replit.app.
 - **Influencer Affiliate Program:** Public application, tiered commissions (20-40%), global `?ref=` tracking with 30-day cookie attribution, and an influencer dashboard with gamification.
 - **Customer-Facing Pages:** Displate-inspired About Us, Meet the Creators, Artist Profile Pages, Contact Us, FAQs, and optimized product pages.
 

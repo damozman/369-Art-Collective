@@ -1,11 +1,11 @@
 {
   "sections": {
-    "main": {
-      "type": "247-art-product",
+    "product_page": {
+      "type": "247-product-page",
       "settings": {}
     }
   },
   "order": [
-    "main"
+    "product_page"
   ]
 }

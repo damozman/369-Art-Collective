@@ -37,16 +37,25 @@
     </nav>
 
     <div class="header-actions">
-      <a href="https://247portal.replit.app/login" class="artist-portal-link">Artist Portal</a>
-      
-      <a href="https://247portal.replit.app/signup" class="become-artist-btn">Become an Artist</a>
-      
       <a href="/cart" class="cart-link">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M6 16C4.9 16 4.01 16.9 4.01 18C4.01 19.1 4.9 20 6 20C7.1 20 8 19.1 8 18C8 16.9 7.1 16 6 16ZM0 0V2H2L5.6 9.59L4.24 12.04C4.09 12.32 4 12.65 4 13C4 14.1 4.9 15 6 15H18V13H6.42C6.28 13 6.17 12.89 6.17 12.75L6.2 12.63L7.1 11H14.55C15.3 11 15.96 10.58 16.3 9.97L19.88 3.5C19.95 3.34 20 3.17 20 3C20 2.45 19.55 2 19 2H4.21L3.27 0H0ZM16 16C14.9 16 14.01 16.9 14.01 18C14.01 19.1 14.9 20 16 20C17.1 20 18 19.1 18 18C18 16.9 17.1 16 16 16Z" fill="currentColor"/>
         </svg>
         <span class="cart-count">{{ cart.item_count }}</span>
       </a>
+      
+      <div class="artist-dropdown">
+        <button type="button" class="artist-link-subtle" aria-expanded="false">
+          Sell Your Art
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M3 5L6 8L9 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="artist-dropdown-menu">
+          <a href="https://247portal.replit.app/signup" class="artist-dropdown-item">Apply as Artist</a>
+          <a href="https://247portal.replit.app/login" class="artist-dropdown-item">Artist Portal</a>
+        </div>
+      </div>
       
       <button class="mobile-nav-toggle" aria-expanded="false" aria-label="Toggle navigation menu">
         <span class="hamburger-line"></span>
@@ -67,25 +76,6 @@
           </svg>
         </button>
       </div>
-      
-      <ul class="mobile-nav-menu">
-        <li class="mobile-nav-item mobile-nav-item--highlight">
-          <a href="https://247portal.replit.app/signup" class="mobile-nav-link mobile-nav-cta">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M10 2C5.58 2 2 5.58 2 10C2 14.42 5.58 18 10 18C14.42 18 18 14.42 18 10C18 5.58 14.42 2 10 2ZM13 11H11V13H9V11H7V9H9V7H11V9H13V11Z" fill="currentColor"/>
-            </svg>
-            Become an Artist
-          </a>
-        </li>
-        <li class="mobile-nav-item">
-          <a href="https://247portal.replit.app/login" class="mobile-nav-link">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M10 2C5.58 2 2 5.58 2 10C2 14.42 5.58 18 10 18C14.42 18 18 14.42 18 10C18 5.58 14.42 2 10 2ZM10 5C11.38 5 12.5 6.12 12.5 7.5C12.5 8.88 11.38 10 10 10C8.62 10 7.5 8.88 7.5 7.5C7.5 6.12 8.62 5 10 5ZM10 16C7.75 16 5.79 14.83 4.75 13.08C4.78 11.28 8.25 10.3 10 10.3C11.74 10.3 15.22 11.28 15.25 13.08C14.21 14.83 12.25 16 10 16Z" fill="currentColor"/>
-            </svg>
-            Artist Portal
-          </a>
-        </li>
-      </ul>
       
       {% if linklists[section.settings.menu].links.size > 0 %}
         <ul class="mobile-nav-menu">
@@ -112,6 +102,16 @@
           {% endfor %}
         </ul>
       {% endif %}
+      
+      <div class="mobile-nav-divider"></div>
+      
+      <div class="mobile-artist-block">
+        <h4 class="mobile-artist-title">Create with Us</h4>
+        <div class="mobile-artist-links">
+          <a href="https://247portal.replit.app/signup" class="mobile-artist-link">Apply as Artist</a>
+          <a href="https://247portal.replit.app/login" class="mobile-artist-link">Portal Login</a>
+        </div>
+      </div>
     </div>
   </nav>
 </header>
@@ -235,38 +235,86 @@
     gap: 1rem;
   }
   
-  .artist-portal-link {
+  /* Subtle Artist Dropdown */
+  .artist-dropdown {
+    position: relative;
+  }
+  
+  .artist-link-subtle {
+    color: #666;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  
+  .artist-link-subtle:hover,
+  .artist-link-subtle:focus {
+    color: #0A1628;
+    background: #f5f5f5;
+  }
+  
+  .artist-link-subtle:focus {
+    outline: 2px solid #FF8A5B;
+    outline-offset: 2px;
+  }
+  
+  .artist-link-subtle svg {
+    transition: transform 0.2s;
+  }
+  
+  .artist-link-subtle[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+  
+  .artist-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #fff;
+    min-width: 180px;
+    padding: 0.5rem 0;
+    margin-top: 0.5rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    border: 1px solid #e5e5e5;
+    z-index: 100;
+    pointer-events: none;
+  }
+  
+  .artist-dropdown.is-open .artist-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  
+  .artist-dropdown-item {
+    display: block;
+    padding: 0.75rem 1rem;
     color: #1a1a1a;
     text-decoration: none;
-    font-size: 0.9375rem;
-    font-weight: 500;
-    padding: 0.625rem 1rem;
-    border-radius: 6px;
-    transition: all 0.2s;
-    white-space: nowrap;
+    font-size: 0.875rem;
+    transition: background 0.2s;
   }
   
-  .artist-portal-link:hover {
+  .artist-dropdown-item:hover {
     background: #f5f5f5;
-    color: #0A1628;
-  }
-  
-  .become-artist-btn {
-    color: #fff;
-    background: #FF8A5B;
-    text-decoration: none;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-  
-  .become-artist-btn:hover {
-    background: #FF6B6B;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 138, 91, 0.3);
+    color: #FF8A5B;
   }
   
   .cart-link {
@@ -469,31 +517,68 @@
     padding-left: 3rem;
   }
   
-  .mobile-nav-item--highlight {
-    background: linear-gradient(135deg, #FF8A5B 0%, #FF6B6B 100%);
-    border-bottom: none;
+  .mobile-nav-divider {
+    height: 1px;
+    background: #e5e5e5;
+    margin: 1.5rem 0;
   }
   
-  .mobile-nav-item--highlight .mobile-nav-link {
-    color: #fff;
+  .mobile-artist-block {
+    padding: 1.5rem;
+    background: #fafafa;
+    border-radius: 8px;
+    margin: 0 1.5rem 1.5rem;
+  }
+  
+  .mobile-artist-title {
+    font-size: 0.875rem;
     font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 1rem 0;
   }
   
-  .mobile-nav-item--highlight .mobile-nav-link:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-  }
-  
-  .mobile-nav-cta {
+  .mobile-artist-links {
+    display: flex;
     gap: 0.75rem;
   }
   
-  .mobile-nav-cta svg {
-    flex-shrink: 0;
+  .mobile-artist-link {
+    flex: 1;
+    padding: 0.875rem 1rem;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s;
+    text-align: center;
   }
   
-  .mobile-nav-link svg {
-    margin-right: 0.75rem;
+  .mobile-artist-link:first-child {
+    background: #fff;
+    border: 1px solid #FF8A5B;
+    color: #FF8A5B;
+  }
+  
+  .mobile-artist-link:first-child:hover {
+    background: #FF8A5B;
+    color: #fff;
+  }
+  
+  .mobile-artist-link:last-child {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    color: #1a1a1a;
+  }
+  
+  .mobile-artist-link:last-child:hover {
+    background: #f5f5f5;
+    border-color: #0A1628;
   }
 
   /* Responsive Breakpoints - Mobile First */
@@ -502,8 +587,7 @@
       display: none;
     }
     
-    .artist-portal-link,
-    .become-artist-btn {
+    .artist-dropdown {
       display: none;
     }
 
@@ -628,6 +712,36 @@
       document.body.style.overflow = '';
     }
 
+    // Artist Dropdown
+    const artistDropdown = document.querySelector('.artist-dropdown');
+    const artistButton = document.querySelector('.artist-link-subtle');
+    
+    if (artistButton) {
+      artistButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = artistDropdown.classList.contains('is-open');
+        artistDropdown.classList.toggle('is-open');
+        artistButton.setAttribute('aria-expanded', !isOpen);
+      });
+      
+      // Close on click outside
+      document.addEventListener('click', function(e) {
+        if (!artistDropdown.contains(e.target)) {
+          artistDropdown.classList.remove('is-open');
+          artistButton.setAttribute('aria-expanded', 'false');
+        }
+      });
+      
+      // Close on Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && artistDropdown.classList.contains('is-open')) {
+          artistDropdown.classList.remove('is-open');
+          artistButton.setAttribute('aria-expanded', 'false');
+          artistButton.focus();
+        }
+      });
+    }
+    
     if (mobileNavToggle) {
       mobileNavToggle.addEventListener('click', function() {
         if (mobileNav.classList.contains('active')) {

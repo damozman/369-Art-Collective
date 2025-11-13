@@ -2281,6 +2281,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload image for upscale widget (no strict quality checks)
+  app.post("/api/upload/design", requireArtist, upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+      
+      const imageUrl = `/uploads/${req.file.filename}`;
+      console.log(`[Upload Design] File uploaded for upscale widget: ${req.file.filename}`);
+      
+      // Return URL in format expected by UpscaleWidget (key: 'url', not 'imageUrl')
+      res.status(200).json({ url: imageUrl });
+    } catch (error: any) {
+      console.error("Upload design error:", error);
+      // Clean up file if there was an error
+      if (req.file) {
+        const filePath = path.join(uploadDir, req.file.filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+      res.status(500).json({ error: error.message || "Upload failed" });
+    }
+  });
+
   // Portfolio upload during registration (2-3 images required)
   // Note: Allows unapproved artists (they just registered)
   app.post("/api/artists/portfolio", requireAuth, upload.array("files", 3), async (req, res) => {

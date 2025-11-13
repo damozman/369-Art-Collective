@@ -1,6 +1,6 @@
 {% comment %}
-247 Print Network - Hero Slider v1.1
-Cache bust: Nov 13 2025 - 14:30 EST
+247 Print Network - Hero Slider with Video Background
+Cache bust: Nov 13 2025 - 16:05 EST
 {% endcomment %}
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
@@ -16,10 +16,15 @@ Cache bust: Nov 13 2025 - 14:30 EST
         {% assign current_product = all_products[handle] %}
         {% if current_product %}
           <div class="swiper-slide">
-            {% if current_product.featured_image %}
-              <div class="hero-slide__bg" style="background-image: url('{{ current_product.featured_image | img_url: '1920x' }}'); background-size: cover; background-position: center;"></div>
+            
+            {% comment %}VIDEO BACKGROUND - Add your video URL in theme settings{% endcomment %}
+            {% if section.settings.enable_video and section.settings.video_url != blank %}
+              <video class="hero-slide__video" autoplay loop muted playsinline>
+                <source src="{{ section.settings.video_url }}" type="video/mp4">
+              </video>
             {% else %}
-              <div class="hero-slide__bg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+              {% comment %}ANIMATED GRADIENT BACKGROUND (default){% endcomment %}
+              <div class="hero-slide__animated-bg"></div>
             {% endif %}
             
             <div class="hero-slide__overlay"></div>
@@ -116,6 +121,27 @@ Cache bust: Nov 13 2025 - 14:30 EST
 {
   "name": "247 Homepage Hero v2",
   "settings": [
+    {
+      "type": "header",
+      "content": "Video Background (Optional)"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_video",
+      "label": "Enable Video Background",
+      "default": false,
+      "info": "When disabled, shows animated gradient background"
+    },
+    {
+      "type": "text",
+      "id": "video_url",
+      "label": "Video URL",
+      "info": "Direct link to MP4 video (recommended: 2-5MB, 1920x1080)"
+    },
+    {
+      "type": "header",
+      "content": "Text Content"
+    },
     {
       "type": "text",
       "id": "eyebrow_text",

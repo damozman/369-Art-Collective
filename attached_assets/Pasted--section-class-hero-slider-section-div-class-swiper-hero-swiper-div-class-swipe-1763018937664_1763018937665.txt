@@ -1,0 +1,199 @@
+
+
+<section class="hero-slider-section">
+  <div class="swiper hero-swiper">
+    <div class="swiper-wrapper">
+      
+        <!-- DEBUG: Trying handle: abandoned-factory-1 -->
+        
+        
+          <!-- DEBUG: SUCCESS - Product found: Abandoned Factory -->
+          <div class="swiper-slide">
+            
+              <div class="hero-slide__bg" style="background-image: url('//247printnetwork.com/cdn/shop/files/photo-1511818966892-d7d671e672a2_48e7b9e6-5776-4b3b-8dc5-e84e98c3cd9a_1920x.jpg?v=1762809734'); background-size: cover; background-position: center;"></div>
+            
+            
+            <div class="hero-slide__overlay"></div>
+            
+            <div class="hero-slide__content">
+              <div class="hero-slide__text">
+                <div class="hero-slide__eyebrow">Artist-Powered Marketplace</div>
+                <h1 class="hero-slide__main-title">Discover Art That Speaks</h1>
+                <p class="hero-slide__subtitle">Premium print-on-demand artwork from independent creators. Every purchase supports artists directly with fair royalties.</p>
+                
+                <div class="hero-slide__artwork-info">
+                  <span class="hero-slide__artwork-label">Now Featured:</span>
+                  <span class="hero-slide__artwork-title">Abandoned Factory</span>
+                  <span class="hero-slide__artist-name">by Liam Anderson</span>
+                </div>
+                
+                <div class="hero-slide__actions">
+                  <a href="/products/abandoned-factory-1" class="hero-slide__btn hero-slide__btn--primary">
+                    Shop This Art
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                  <a href="/pages/join" class="hero-slide__btn hero-slide__btn--secondary">
+                    Become an Artist
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        
+      
+        <!-- DEBUG: Trying handle: ancient-forest-canopy -->
+        
+        
+          <!-- DEBUG: SUCCESS - Product found: Ancient Forest Canopy -->
+          <div class="swiper-slide">
+            
+              <div class="hero-slide__bg" style="background-image: url('//247printnetwork.com/cdn/shop/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf_1920x.jpg?v=1762809521'); background-size: cover; background-position: center;"></div>
+            
+            
+            <div class="hero-slide__overlay"></div>
+            
+            <div class="hero-slide__content">
+              <div class="hero-slide__text">
+                <div class="hero-slide__eyebrow">Artist-Powered Marketplace</div>
+                <h1 class="hero-slide__main-title">Discover Art That Speaks</h1>
+                <p class="hero-slide__subtitle">Premium print-on-demand artwork from independent creators. Every purchase supports artists directly with fair royalties.</p>
+                
+                <div class="hero-slide__artwork-info">
+                  <span class="hero-slide__artwork-label">Now Featured:</span>
+                  <span class="hero-slide__artwork-title">Ancient Forest Canopy</span>
+                  <span class="hero-slide__artist-name">by Sarah Chen</span>
+                </div>
+                
+                <div class="hero-slide__actions">
+                  <a href="/products/ancient-forest-canopy" class="hero-slide__btn hero-slide__btn--primary">
+                    Shop This Art
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                  <a href="/pages/join" class="hero-slide__btn hero-slide__btn--secondary">
+                    Become an Artist
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        
+      
+        <!-- DEBUG: Trying handle: art-deco-facade -->
+        
+        
+          <!-- DEBUG: SUCCESS - Product found: Art Deco Facade -->
+          <div class="swiper-slide">
+            
+              <div class="hero-slide__bg" style="background-image: url('//247printnetwork.com/cdn/shop/files/photo-1511818966892-d7d671e672a2_1920x.jpg?v=1762808888'); background-size: cover; background-position: center;"></div>
+            
+            
+            <div class="hero-slide__overlay"></div>
+            
+            <div class="hero-slide__content">
+              <div class="hero-slide__text">
+                <div class="hero-slide__eyebrow">Artist-Powered Marketplace</div>
+                <h1 class="hero-slide__main-title">Discover Art That Speaks</h1>
+                <p class="hero-slide__subtitle">Premium print-on-demand artwork from independent creators. Every purchase supports artists directly with fair royalties.</p>
+                
+                <div class="hero-slide__artwork-info">
+                  <span class="hero-slide__artwork-label">Now Featured:</span>
+                  <span class="hero-slide__artwork-title">Art Deco Facade</span>
+                  <span class="hero-slide__artist-name">by Liam Anderson</span>
+                </div>
+                
+                <div class="hero-slide__actions">
+                  <a href="/products/art-deco-facade" class="hero-slide__btn hero-slide__btn--primary">
+                    Shop This Art
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                  <a href="/pages/join" class="hero-slide__btn hero-slide__btn--secondary">
+                    Become an Artist
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        
+      
+        <!-- DEBUG: Trying handle: autumn-reflection-lake -->
+        
+        
+          <!-- DEBUG: SUCCESS - Product found: Autumn Reflection Lake -->
+          <div class="swiper-slide">
+            
+              <div class="hero-slide__bg" style="background-image: url('//247printnetwork.com/cdn/shop/files/photo-1506905925346-21bda4d32df4_8a42f25a-71f9-4865-9fc7-5178ed3fb9b8_1920x.jpg?v=1762809651'); background-size: cover; background-position: center;"></div>
+            
+            
+            <div class="hero-slide__overlay"></div>
+            
+            <div class="hero-slide__content">
+              <div class="hero-slide__text">
+                <div class="hero-slide__eyebrow">Artist-Powered Marketplace</div>
+                <h1 class="hero-slide__main-title">Discover Art That Speaks</h1>
+                <p class="hero-slide__subtitle">Premium print-on-demand artwork from independent creators. Every purchase supports artists directly with fair royalties.</p>
+                
+                <div class="hero-slide__artwork-info">
+                  <span class="hero-slide__artwork-label">Now Featured:</span>
+                  <span class="hero-slide__artwork-title">Autumn Reflection Lake</span>
+                  <span class="hero-slide__artist-name">by Sarah Chen</span>
+                </div>
+                
+                <div class="hero-slide__actions">
+                  <a href="/products/autumn-reflection-lake" class="hero-slide__btn hero-slide__btn--primary">
+                    Shop This Art
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                  <a href="/pages/join" class="hero-slide__btn hero-slide__btn--secondary">
+                    Become an Artist
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        
+      
+        <!-- DEBUG: Trying handle: azure-dreams -->
+        
+        
+          <!-- DEBUG: SUCCESS - Product found: Azure Dreams -->
+          <div class="swiper-slide">
+            
+              <div class="hero-slide__bg" style="background-image: url('//247printnetwork.com/cdn/shop/files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8_1920x.jpg?v=1762809529'); background-size: cover; background-position: center;"></div>
+            
+            
+            <div class="hero-slide__overlay"></div>
+            
+            <div class="hero-slide__content">
+              <div class="hero-slide__text">
+                <div class="hero-slide__eyebrow">Artist-Powered Marketplace</div>
+                <h1 class="hero-slide__main-title">Discover Art That Speaks</h1>
+                <p class="hero-slide__subtitle">Premium print-on-demand artwork from independent creators. Every purchase supports artists directly with fair royalties.</p>
+                
+                <div class="hero-slide__artwork-info">
+                  <span class="hero-slide__artwork-label">Now Featured:</span>
+                  <span class="hero-slide__artwork-title">Azure Dreams</span>
+                  <span class="hero-slide__artist-name">by Marcus Rodriguez</span>
+                </div>
+                
+                <div class="hero-slide__actions">
+                  <a href="/products/azure-dreams" class="hero-slide__btn hero-slide__btn--primary">
+                    Shop This Art
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </a>
+                  <a href="/pages/join" class="hero-slide__btn hero-slide__btn--secondary">
+                    Become an Artist
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>

@@ -1,0 +1,140 @@
+But this is where end users (shoppers will come and expect wall art, posters and the like from the printify line (although they don't know this) So I would only want those items included. So are you saying that wyou would use printifys mockup s on my site with my Artist images automatically? And we are talking about the hereo section right?YES — 100% focused on your hero section.
+YES — only wall art, posters, framed prints, etc. from Printify’s catalog.
+YES — automatically using your artists’ uploaded designs on Printify mockups.
+NO — shoppers will never see Printify’s name.
+Let me break this down exactly how it works for your POD marketplace (247printnetwork.com):
+
+Your Goal (Hero Section)
+A stunning, auto-rotating hero slider that shows real wall art in real rooms — using your artists’ uploaded designs printed on Printify products — all pulled automatically into the hero.
+
+How It Works: Step-by-Step (No Manual Uploads)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+StepWhat HappensWho Sees It1Artist uploads design → abstract-sunrise.pngArtist2You (admin) create Printify product → "Framed Poster"You3Printify auto-generates mockups → living-room-mockup.jpgBehind the scenes4Shopify syncs the mockup as featured imageYour store5Hero code pulls featured image → shows in sliderShopper sees beautiful art in a room
+Shoppers see:
+“Wow, that poster looks amazing in a real living room!”
+They never see Printify, APIs, or mockup generators.
+
+Hero Code: Auto-Pull Printify Mockups (Only Wall Art)
+liquid{% comment %}
+HERO: Auto-rotates 3 featured wall art products from Printify
+Only includes: Posters, Framed Prints, Canvas
+{% endcomment %}
+
+{% assign hero_collection = collections['featured-wall-art'] %}
+{% assign wall_art_products = hero_collection.products | where: "product_type", "Poster" 
+                                                 | where: "product_type", "Framed Print" 
+                                                 | where: "product_type", "Canvas" 
+                                                 | limit: 3 %}
+
+<div class="swiper mySwiper absolute inset-0">
+  <div class="swiper-wrapper">
+    {% for product in wall_art_products %}
+      {% if product.featured_image %}
+        <div class="swiper-slide" 
+             style="background-image: url('{{ product.featured_image | img_url: '1920x1080', crop: 'center' }}'); 
+                    background-size: cover; background-position: center;">
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+Setup in 5 Minutes (Shopify Admin)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ActionHow1Create a collection: featured-wall-art2Add 3 products (Posters, Framed Prints, Canvas)3Set featured image = Printify lifestyle mockup (room scene)4Paste code into hero.liquid5Done — auto-updates when you change products
+
+Printify Mockup Automation (Zero Effort)
+Option A: Manual (Fastest)
+
+In Printify → Edit Product → Mockup Generator
+Choose "Living Room", "Office", "Bedroom"
+Export → Upload to Shopify as Featured Image
+
+Option B: Auto (Set & Forget)
+Use Printify + Zapier:
+textTrigger: New Product in Printify
+Action: Generate mockup → Upload to Shopify Files → Set as Featured Image
+I can give you the exact Zap template.
+
+What Shoppers See (Example)
+text[Slide 1] → Artist "LunaArt" design on a 24x36 framed poster in a cozy loft
+[Slide 2] → Artist "PixelVibe" canvas in a modern office
+[Slide 3] → Artist "InkDream" poster above a bed
+All automatically from your artists’ uploads.
+
+Final Answer to Your Question
+"Are you saying that you would use Printify’s mockups on my site with my Artist images automatically?"
+YES.
+Here’s the flow:
+textArtist Uploads Design 
+     ↓
+You Apply to Printify Poster/Canvas 
+     ↓
+Printify Auto-Generates Room Mockup 
+     ↓
+Mockup Syncs to Shopify Featured Image 
+     ↓
+Hero Code Displays It Automatically
+No manual image swaps. No Printify branding. Only wall art. Only your artists.

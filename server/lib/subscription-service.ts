@@ -7,13 +7,22 @@ import { eq, and, desc } from 'drizzle-orm';
 import { updateFeaturedStatusForTier } from './featured-artists-service';
 import { sendReEngagementEmail } from './trial-email-orchestrator';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+// Lazy initialization to ensure runtime environment variable is used
+// Prevents build-time caching of wrong key (VITE_STRIPE_PUBLIC_KEY fallback)
+function getStripeClient(): Stripe {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+  }
+  
+  // Sanity check: ensure we're not using publishable key
+  if (process.env.STRIPE_SECRET_KEY.startsWith('pk_')) {
+    throw new Error('STRIPE_SECRET_KEY must be a secret key (sk_*), not a publishable key (pk_*)');
+  }
+  
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-10-28.acacia'
+  });
 }
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-10-28.acacia'
-});
 
 // Type for subscription trial records from DB
 type SubscriptionTrial = typeof subscriptionTrials.$inferSelect;
@@ -124,7 +133,7 @@ async function getOrCreatePriceId(tier: 'pro' | 'elite'): Promise<string> {
     return config.priceId;
   }
 
-  const products = await stripe.products.search({
+  const products = await getStripeClient().products.search({
     query: `metadata['tier']:'${tier}' AND metadata['platform']:'247-print-network'`,
   });
 
@@ -132,7 +141,7 @@ async function getOrCreatePriceId(tier: 'pro' | 'elite'): Promise<string> {
   if (products.data.length > 0) {
     product = products.data[0];
   } else {
-    product = await stripe.products.create({
+    product = await getStripeClient().products.create({
       name: config.name,
       metadata: {
         tier,
@@ -141,7 +150,7 @@ async function getOrCreatePriceId(tier: 'pro' | 'elite'): Promise<string> {
     });
   }
 
-  const prices = await stripe.prices.list({
+  const prices = await getStripeClient().prices.list({
     product: product.id,
     active: true,
   });
@@ -150,7 +159,7 @@ async function getOrCreatePriceId(tier: 'pro' | 'elite'): Promise<string> {
   if (prices.data.length > 0) {
     priceId = prices.data[0].id;
   } else {
-    const price = await stripe.prices.create({
+    const price = await getStripeClient().prices.create({
       product: product.id,
       unit_amount: config.priceMonthly,
       currency: 'usd',
@@ -223,7 +232,7 @@ export class SubscriptionService {
       return artist.stripeCustomerId;
     }
 
-    const customer = await stripe.customers.create({
+    const customer = await getStripeClient().customers.create({
       email,
       name,
       metadata: {
@@ -258,7 +267,7 @@ export class SubscriptionService {
 
     // Check for existing subscriptions
     if (artist.stripeSubscriptionId) {
-      const existingSub = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId, {
+      const existingSub = await getStripeClient().subscriptions.retrieve(artist.stripeSubscriptionId, {
         expand: ['latest_invoice.payment_intent']
       });
       
@@ -294,7 +303,7 @@ export class SubscriptionService {
     trialEnd.setDate(trialEnd.getDate() + trialPeriodDays);
 
     // Use client-provided idempotency key to ensure retries are safely deduplicated by Stripe
-    const subscription = await stripe.subscriptions.create({
+    const subscription = await getStripeClient().subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],
       payment_behavior: 'default_incomplete',
@@ -372,12 +381,12 @@ export class SubscriptionService {
       throw new Error('No active subscription to upgrade');
     }
 
-    const subscription = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId);
+    const subscription = await getStripeClient().subscriptions.retrieve(artist.stripeSubscriptionId);
     
     const priceId = await getOrCreatePriceId(newTier);
 
     // Use client-provided idempotency key to ensure retries are safely deduplicated by Stripe
-    await stripe.subscriptions.update(artist.stripeSubscriptionId, {
+    await getStripeClient().subscriptions.update(artist.stripeSubscriptionId, {
       items: [{
         id: subscription.items.data[0].id,
         price: priceId,
@@ -405,7 +414,7 @@ export class SubscriptionService {
       throw new Error('No active subscription to cancel');
     }
 
-    await stripe.subscriptions.update(artist.stripeSubscriptionId, {
+    await getStripeClient().subscriptions.update(artist.stripeSubscriptionId, {
       cancel_at_period_end: true
     });
 
@@ -424,7 +433,7 @@ export class SubscriptionService {
       throw new Error('No subscription to reactivate');
     }
 
-    await stripe.subscriptions.update(artist.stripeSubscriptionId, {
+    await getStripeClient().subscriptions.update(artist.stripeSubscriptionId, {
       cancel_at_period_end: false
     });
 
@@ -571,7 +580,7 @@ export class SubscriptionService {
         
         const subscriptionId = extractSubscriptionId(invoice);
         if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const subscription = await getStripeClient().subscriptions.retrieve(subscriptionId);
           const artistId = subscription.metadata?.artistId;
           const tier = subscription.metadata?.tier as 'pro' | 'elite' | undefined;
           
@@ -624,7 +633,7 @@ export class SubscriptionService {
         
         const subscriptionId = extractSubscriptionId(invoice);
         if (subscriptionId) {
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          const subscription = await getStripeClient().subscriptions.retrieve(subscriptionId);
           const artistId = subscription.metadata?.artistId;
           const tier = subscription.metadata?.tier as 'pro' | 'elite' | undefined;
           
@@ -744,7 +753,7 @@ export class SubscriptionService {
       };
     }
 
-    const subscription = await stripe.subscriptions.retrieve(artist.stripeSubscriptionId);
+    const subscription = await getStripeClient().subscriptions.retrieve(artist.stripeSubscriptionId);
     const tier = subscription.metadata?.tier as SubscriptionTier;
     const config = tier === 'pro' ? SUBSCRIPTION_CONFIG.pro : SUBSCRIPTION_CONFIG.elite;
 

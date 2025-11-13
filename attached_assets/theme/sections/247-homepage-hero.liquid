@@ -14,10 +14,13 @@ Updated: Nov 13, 2025 - Force cache refresh
     <div class="swiper hero-swiper">
       <div class="swiper-wrapper">
         {% for product in hero_products %}
+          {% assign full_product = all_products[product.handle] %}
           <div class="swiper-slide">
             {% comment %}Check if featured_image exists{% endcomment %}
-            {% if product.featured_image %}
-              <div class="hero-slide__bg" style="background-image: url('{{ product.featured_image | image_url: width: 1920 }}');"></div>
+            {% if full_product.featured_media.preview_image %}
+              <div class="hero-slide__bg" style="background-image: url('{{ full_product.featured_media.preview_image | image_url: width: 1920 }}');"></div>
+            {% elsif full_product.featured_image %}
+              <div class="hero-slide__bg" style="background-image: url('{{ full_product.featured_image | image_url: width: 1920 }}');"></div>
             {% else %}
               {% comment %}Fallback: solid gradient if no image{% endcomment %}
               <div class="hero-slide__bg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
@@ -31,15 +34,15 @@ Updated: Nov 13, 2025 - Force cache refresh
                 <h1 class="hero-slide__main-title">{{ section.settings.title | default: "Discover Art That Speaks" }}</h1>
                 <p class="hero-slide__subtitle">{{ section.settings.subtitle | default: "Premium print-on-demand artwork from independent creators. Every purchase supports artists directly." }}</p>
                 
-                {% assign artist_name = product.vendor | default: "Featured Artist" %}
+                {% assign artist_name = full_product.vendor | default: "Featured Artist" %}
                 <div class="hero-slide__artwork-info">
                   <span class="hero-slide__artwork-label">Now Featured:</span>
-                  <span class="hero-slide__artwork-title">{{ product.title }}</span>
+                  <span class="hero-slide__artwork-title">{{ full_product.title }}</span>
                   <span class="hero-slide__artist-name">by {{ artist_name }}</span>
                 </div>
                 
                 <div class="hero-slide__actions">
-                  <a href="{{ product.url }}" class="hero-slide__btn hero-slide__btn--primary" data-testid="button-shop-art-{{ forloop.index }}">
+                  <a href="{{ full_product.url }}" class="hero-slide__btn hero-slide__btn--primary" data-testid="button-shop-art-{{ forloop.index }}">
                     Shop This Art
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                       <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

@@ -3,17 +3,15 @@
 Features Printify lifestyle mockups from Featured collection
 {% endcomment %}
 
-<!-- DEBUG: Section is loading -->
-<!-- Swiper CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-
 {{ '247-art.css' | asset_url | stylesheet_tag }}
 
-{% comment %}
-Pull wall art products from Featured collection
-{% endcomment %}
 {% assign featured_collection = collections['featured'] %}
-{% assign hero_products = featured_collection.products | slice: 0, 5 %}
+{% if featured_collection %}
+  {% assign hero_products = featured_collection.products | slice: 0, 5 %}
+{% else %}
+  {% assign hero_products = collections.all.products | slice: 0, 5 %}
+{% endif %}
 
 {% if hero_products.size > 1 %}
   {% comment %}

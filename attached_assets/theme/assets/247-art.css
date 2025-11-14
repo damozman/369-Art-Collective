@@ -17,7 +17,8 @@ UPDATED: Nov 14 2025 07:04 EST - Mockup Container Size Reduction (85% width)
   position: relative;
   width: 85% !important; /* Reduced from 100% by 15% - FORCE OVERRIDE */
   height: 0;
-  padding-bottom: 53.125% !important; /* 62.5% * 0.85 to maintain aspect ratio */
+  /* 16:9 aspect ratio to match mockup images exactly - NO letterboxing */
+  padding-bottom: 47.8125% !important; /* (9/16) * 0.85 = 56.25% * 0.85 */
   max-width: 85vw !important;
   margin: 0 auto !important; /* Center the container */
   overflow: hidden;
@@ -184,9 +185,7 @@ UPDATED: Nov 14 2025 07:04 EST - Mockup Container Size Reduction (85% width)
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-  .hero-mockup-container {
-    padding-bottom: 125%; /* Taller aspect ratio for mobile (1:1.25) */
-  }
+  /* Container keeps same 16:9 aspect ratio on mobile - removed override */
   
   .hero-mockup-overlay {
     /* Mobile-specific positioning with fallback to desktop values */

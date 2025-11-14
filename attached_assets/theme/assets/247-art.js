@@ -552,6 +552,71 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Calculate actual rendered image bounds (handles object-fit: contain letterboxing)
+  function calculateImageBounds(img, container) {
+    if (!img || !img.naturalWidth || !img.naturalHeight) {
+      return null;
+    }
+
+    const containerWidth = container.offsetWidth;
+    const containerHeight = container.offsetHeight;
+    const imageAspect = img.naturalWidth / img.naturalHeight;
+    const containerAspect = containerWidth / containerHeight;
+
+    let renderedWidth, renderedHeight, offsetX, offsetY;
+
+    if (imageAspect > containerAspect) {
+      // Image is wider - fits to width, letterboxed top/bottom
+      renderedWidth = containerWidth;
+      renderedHeight = containerWidth / imageAspect;
+      offsetX = 0;
+      offsetY = (containerHeight - renderedHeight) / 2;
+    } else {
+      // Image is taller - fits to height, letterboxed left/right
+      renderedHeight = containerHeight;
+      renderedWidth = containerHeight * imageAspect;
+      offsetX = (containerWidth - renderedWidth) / 2;
+      offsetY = 0;
+    }
+
+    return {
+      width: renderedWidth,
+      height: renderedHeight,
+      left: offsetX,
+      top: offsetY
+    };
+  }
+
+  // Position overlay based on actual image coordinates
+  function positionOverlay() {
+    const bgImg = heroBackground.querySelector('img');
+    if (!bgImg || !bgImg.complete) return;
+
+    const template = MOCKUP_TEMPLATES[currentMockupIndex];
+    if (!template) return;
+
+    const bounds = calculateImageBounds(bgImg, heroContainer);
+    if (!bounds) return;
+
+    // Convert percentage positions to pixels based on actual image area
+    const isMobile = window.innerWidth <= 768;
+    const overlayXPercent = parseFloat(isMobile ? template.overlay_x_mobile : template.overlay_x) / 100;
+    const overlayYPercent = parseFloat(isMobile ? template.overlay_y_mobile : template.overlay_y) / 100;
+
+    // Calculate absolute pixel position
+    const absoluteX = bounds.left + (bounds.width * overlayXPercent);
+    const absoluteY = bounds.top + (bounds.height * overlayYPercent);
+
+    // Set overlay position using pixels instead of percentages
+    heroOverlay.style.left = `${absoluteX}px`;
+    heroOverlay.style.top = `${absoluteY}px`;
+
+    // Update other CSS properties
+    heroContainer.style.setProperty('--base-width', isMobile ? template.base_width_mobile : template.base_width);
+    heroContainer.style.setProperty('--artwork-ratio', currentArtworkRatio);
+    heroContainer.style.setProperty('--size-scale', currentSizeScale);
+  }
+
   // Load mockup template
   function loadMockup(index) {
     if (index < 0 || index >= MOCKUP_TEMPLATES.length) return;
@@ -569,18 +634,16 @@ document.addEventListener('DOMContentLoaded', function() {
       bgImg = document.createElement('img');
       bgImg.alt = template.name;
       heroBackground.appendChild(bgImg);
+      
+      // Reposition overlay when image loads
+      bgImg.addEventListener('load', positionOverlay);
     }
     bgImg.src = mockupUrl;
 
-    // Update overlay positioning via CSS custom properties
-    heroContainer.style.setProperty('--overlay-x', template.overlay_x);
-    heroContainer.style.setProperty('--overlay-y', template.overlay_y);
-    heroContainer.style.setProperty('--overlay-x-mobile', template.overlay_x_mobile);
-    heroContainer.style.setProperty('--overlay-y-mobile', template.overlay_y_mobile);
-    heroContainer.style.setProperty('--base-width', template.base_width);
-    heroContainer.style.setProperty('--base-width-mobile', template.base_width_mobile);
-    heroContainer.style.setProperty('--artwork-ratio', currentArtworkRatio);
-    heroContainer.style.setProperty('--size-scale', currentSizeScale);
+    // Position overlay immediately if image already loaded
+    if (bgImg.complete) {
+      positionOverlay();
+    }
 
     // Update dot indicators
     document.querySelectorAll('.mockup-dot').forEach((dot, i) => {
@@ -630,8 +693,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        loadMockup(currentMockupIndex); // Reload with appropriate mobile/desktop image
-      }, 250);
+        positionOverlay(); // Recalculate position based on new window size
+      }, 100); // Faster debounce for smoother repositioning
     });
   }
 
@@ -690,6 +753,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     currentSizeScale = scaleFactor;
     heroContainer.style.setProperty('--size-scale', scaleFactor);
+    
+    // Reposition overlay with new scale
+    positionOverlay();
   }
 
   // Update mockup frame based on frame selection

@@ -54,13 +54,11 @@ UPDATED: Nov 14 2025 07:04 EST - Mockup Container Size Reduction (85% width)
 /* Product artwork overlay container */
 .hero-mockup-overlay {
   position: absolute;
-  /* Desktop positioning - will be updated via CSS custom properties */
-  left: var(--overlay-x, 50%);
-  /* CEILING CONSTRAINT: Prevents artwork from going higher than 20% from top */
-  top: clamp(20%, var(--overlay-y, 30%), 60%);
+  /* Position set via JavaScript based on actual rendered image bounds */
+  /* left and top will be set as pixel values by JS */
   transform: translate(-50%, -50%) scale(var(--size-scale, 1.0));
   transform-origin: center center;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   /* Base dimensions */
   width: var(--base-width, 400px);
@@ -185,17 +183,10 @@ UPDATED: Nov 14 2025 07:04 EST - Mockup Container Size Reduction (85% width)
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-  /* Container keeps same 16:9 aspect ratio on mobile - removed override */
-  
   .hero-mockup-overlay {
-    /* Mobile-specific positioning with fallback to desktop values */
-    left: var(--overlay-x-mobile, var(--overlay-x, 50%));
-    /* CEILING CONSTRAINT: Mobile also gets clamped positioning */
-    top: clamp(20%, var(--overlay-y-mobile, var(--overlay-y, 35%)), 60%);
+    /* Position set via JavaScript - no percentage overrides needed */
     /* Smaller scale on mobile */
     transform: translate(-50%, -50%) scale(calc(var(--size-scale, 1.0) * 0.7));
-    /* Smaller base width on mobile */
-    width: var(--base-width-mobile, calc(var(--base-width, 400px) * 0.8));
   }
   
   .hero-mockup-controls {

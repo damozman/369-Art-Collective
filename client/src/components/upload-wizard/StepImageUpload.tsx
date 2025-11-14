@@ -8,9 +8,10 @@ interface StepImageUploadProps {
   selectedFile: File | null;
   previewUrl: string | null;
   onFileChange: (file: File | null) => void;
+  onValidationChange?: (status: "pending" | "invalid" | "valid") => void;
 }
 
-export function StepImageUpload({ selectedFile, previewUrl, onFileChange }: StepImageUploadProps) {
+export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onValidationChange }: StepImageUploadProps) {
   const { toast } = useToast();
   const [currentPreviewUrl, setCurrentPreviewUrl] = useState<string | null>(previewUrl);
 
@@ -124,6 +125,7 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange }: Step
           <UpscaleWidget 
             selectedFile={selectedFile}
             onUpscaledFile={handleUpscaledFile}
+            onValidationChange={onValidationChange}
           />
         </div>
       )}

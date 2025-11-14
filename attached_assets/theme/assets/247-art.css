@@ -55,7 +55,8 @@ UPDATED: Nov 14 2025 07:04 EST - Mockup Container Size Reduction (85% width)
   position: absolute;
   /* Desktop positioning - will be updated via CSS custom properties */
   left: var(--overlay-x, 50%);
-  top: var(--overlay-y, 30%);
+  /* CEILING CONSTRAINT: Prevents artwork from going higher than 20% from top */
+  top: clamp(20%, var(--overlay-y, 30%), 60%);
   transform: translate(-50%, -50%) scale(var(--size-scale, 1.0));
   transform-origin: center center;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -190,7 +191,8 @@ UPDATED: Nov 14 2025 07:04 EST - Mockup Container Size Reduction (85% width)
   .hero-mockup-overlay {
     /* Mobile-specific positioning with fallback to desktop values */
     left: var(--overlay-x-mobile, var(--overlay-x, 50%));
-    top: var(--overlay-y-mobile, var(--overlay-y, 35%));
+    /* CEILING CONSTRAINT: Mobile also gets clamped positioning */
+    top: clamp(20%, var(--overlay-y-mobile, var(--overlay-y, 35%)), 60%);
     /* Smaller scale on mobile */
     transform: translate(-50%, -50%) scale(calc(var(--size-scale, 1.0) * 0.7));
     /* Smaller base width on mobile */

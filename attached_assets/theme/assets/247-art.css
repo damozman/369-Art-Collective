@@ -69,15 +69,12 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   grid-row: 1;
   position: relative;
   width: 100%;
-  height: auto;
   border-radius: 16px;
   overflow: visible;
   background: #f7f8f9;
   /* Support for preview scaling via CSS custom property */
   --preview-scale: 1;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: flex-start;
 }
 
 /* When thumbnails exist, main image takes column 2 */
@@ -88,8 +85,9 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 .gallery__main-wrapper {
   position: relative;
   width: 100%;
-  height: auto;
-  overflow: visible;
+  padding-bottom: 100%; /* 1:1 aspect ratio container */
+  overflow: hidden;
+  border-radius: 16px;
   /* Apply scale transformation based on custom property */
   transform: scale(var(--preview-scale));
   transform-origin: center center;
@@ -97,15 +95,16 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 }
 
 .gallery__main-image {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: contain;
   opacity: 0;
   transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   border-radius: 16px;
-  display: block;
 }
 
 .gallery__main-image.active {

@@ -10,7 +10,7 @@ section.247pn-art-product {
   /* Reset any base theme positioning */
   position: relative !important;
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px) minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0, 1.2fr) minmax(380px, 420px) minmax(0, 1fr) !important;
   grid-template-rows: auto !important;
   gap: 2rem !important;
   max-width: 1400px !important;

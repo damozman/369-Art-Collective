@@ -553,8 +553,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const isMobile = window.innerWidth <= 768;
     const mockupUrl = isMobile ? template.mobile_url : template.desktop_url;
 
-    // Update background image
-    heroBackground.style.backgroundImage = `url('${mockupUrl}')`;
+    // Update background image using <img> tag instead of CSS background
+    let bgImg = heroBackground.querySelector('img');
+    if (!bgImg) {
+      bgImg = document.createElement('img');
+      bgImg.alt = template.name;
+      heroBackground.appendChild(bgImg);
+    }
+    bgImg.src = mockupUrl;
 
     // Update overlay positioning via CSS custom properties
     heroContainer.style.setProperty('--overlay-x', template.overlay_x);

@@ -147,7 +147,6 @@ section.pn247-art-product .product__media-gallery {
   grid-column: 1 !important;
   grid-row: 1 !important;
   width: 100% !important;
-  max-width: 420px !important;
   height: auto !important;
   z-index: 1 !important;
   display: grid;
@@ -185,7 +184,6 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   grid-row: 1;
   position: relative;
   width: 100%;
-  max-width: 420px !important;
   border-radius: 0;
   overflow: hidden;
   background: transparent;
@@ -205,7 +203,6 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 .gallery__main-wrapper {
   position: relative;
   width: 100%;
-  max-width: 420px !important;
   height: 0;
   padding-bottom: 66.67%; /* 3:2 aspect ratio */
   overflow: hidden;

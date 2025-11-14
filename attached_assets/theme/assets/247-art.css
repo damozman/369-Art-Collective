@@ -114,12 +114,12 @@ section.pn247-art-product {
   /* Reset any base theme positioning */
   position: relative !important;
   display: grid !important;
-  grid-template-columns: 1fr minmax(220px, 260px) !important;
+  grid-template-columns: minmax(0, 1.3fr) minmax(220px, 260px) !important;
   grid-template-rows: auto !important;
-  gap: 0.5rem !important;
+  gap: 1rem !important;
   max-width: 100% !important;
   margin: 0 !important;
-  padding: 2rem 0.5rem 0.5rem !important; /* Add top buffer from header */
+  padding: 2rem 1rem 0.5rem !important; /* Add top buffer from header */
   
   /* Prevent base theme interference */
   width: 100% !important;
@@ -204,7 +204,8 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   position: relative;
   width: 100%;
   height: 0;
-  padding-bottom: 66.67%; /* 3:2 aspect ratio */
+  padding-bottom: clamp(40vh, 66.67%, 60vh); /* Cap height to keep above fold */
+  max-height: 60vh;
   overflow: hidden;
   border-radius: 0;
   background: transparent;

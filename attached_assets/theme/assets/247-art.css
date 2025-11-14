@@ -188,10 +188,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   overflow: hidden;
   border-radius: 0;
   background: transparent;
-  /* Apply scale transformation based on custom property */
-  transform: scale(var(--preview-scale));
-  transform-origin: center center;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Container stays fixed - only overlay scales */
   aspect-ratio: 3 / 2;
 }
 

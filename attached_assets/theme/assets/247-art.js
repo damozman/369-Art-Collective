@@ -419,44 +419,43 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
   // Mockup template definitions
   // TODO: Replace with Shopify metafield data when available
-  // STANDARDIZED POSITIONING - All mockups use same overlay position
-  // Desktop: 50% horizontal (centered), 30% from top
-  // Mobile: 50% horizontal (centered), 28% from top
+  // CUSTOM POSITIONING - Each mockup optimized for its specific layout
+  // Each room has unique positioning to match wall space and furniture
   const MOCKUP_TEMPLATES = [
     {
       id: 'living-room-modern',
       name: 'Modern Living Room',
       desktop_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1920&h=1200&fit=crop&crop=center',
       mobile_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=1000&fit=crop&crop=top',
-      overlay_x: '50%',  // Standardized: centered
-      overlay_y: '30%',  // Standardized: 30% from top
-      overlay_x_mobile: '50%',  // Standardized: centered
-      overlay_y_mobile: '28%',  // Standardized: 28% from top
-      base_width: '400px',
-      base_width_mobile: '280px'
+      overlay_x: '38%',  // Positioned on left wall area
+      overlay_y: '28%',  // Upper portion of wall
+      overlay_x_mobile: '50%',  // Centered for mobile
+      overlay_y_mobile: '26%',  // Slightly higher on mobile
+      base_width: '420px',
+      base_width_mobile: '300px'
     },
     {
       id: 'bedroom-cozy',
       name: 'Cozy Bedroom',
       desktop_url: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1920&h=1200&fit=crop&crop=center',
       mobile_url: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&h=1000&fit=crop&crop=top',
-      overlay_x: '50%',  // Standardized: centered
-      overlay_y: '30%',  // Standardized: 30% from top
-      overlay_x_mobile: '50%',  // Standardized: centered
-      overlay_y_mobile: '28%',  // Standardized: 28% from top
-      base_width: '400px',
-      base_width_mobile: '280px'
+      overlay_x: '52%',  // Slightly right of center above bed
+      overlay_y: '24%',  // Above headboard placement
+      overlay_x_mobile: '50%',  // Centered above bed on mobile
+      overlay_y_mobile: '22%',  // Higher for mobile crop
+      base_width: '380px',
+      base_width_mobile: '270px'
     },
     {
       id: 'office-minimalist',
       name: 'Minimalist Office',
       desktop_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=1200&fit=crop&crop=center',
       mobile_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=1000&fit=crop&crop=top',
-      overlay_x: '50%',  // Standardized: centered
-      overlay_y: '30%',  // Standardized: 30% from top
-      overlay_x_mobile: '50%',  // Standardized: centered
-      overlay_y_mobile: '28%',  // Standardized: 28% from top
-      base_width: '400px',
+      overlay_x: '62%',  // Right side wall in office
+      overlay_y: '32%',  // Eye level in office setting
+      overlay_x_mobile: '50%',  // Centered for mobile
+      overlay_y_mobile: '30%',  // Adjusted for mobile view
+      base_width: '390px',
       base_width_mobile: '280px'
     },
     {
@@ -464,10 +463,10 @@ document.addEventListener('DOMContentLoaded', function() {
       name: 'Gallery Wall',
       desktop_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1920&h=1200&fit=crop&crop=center',
       mobile_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&h=1000&fit=crop&crop=center',
-      overlay_x: '50%',  // Standardized: centered
-      overlay_y: '30%',  // Standardized: 30% from top
-      overlay_x_mobile: '50%',  // Standardized: centered
-      overlay_y_mobile: '28%',  // Standardized: 28% from top
+      overlay_x: '50%',  // Perfectly centered for gallery
+      overlay_y: '30%',  // Museum-style center placement
+      overlay_x_mobile: '50%',  // Stay centered on mobile
+      overlay_y_mobile: '30%',  // Same position works well
       base_width: '400px',
       base_width_mobile: '280px'
     }

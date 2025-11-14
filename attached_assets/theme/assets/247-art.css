@@ -10,9 +10,9 @@ section.pn247-art-product {
   /* Reset any base theme positioning */
   position: relative !important;
   display: grid !important;
-  grid-template-columns: minmax(0, 1.2fr) minmax(380px, 480px) !important;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px) !important;
   grid-template-rows: auto !important;
-  gap: 3rem !important;
+  gap: 2rem !important;
   max-width: 1400px !important;
   margin: 0 auto !important;
   padding: 3rem 2rem !important;
@@ -69,13 +69,15 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   grid-row: 1;
   position: relative;
   width: 100%;
-  max-height: clamp(480px, 70vh, 720px);
+  height: auto;
   border-radius: 16px;
   overflow: visible;
   background: #f7f8f9;
   /* Support for preview scaling via CSS custom property */
   --preview-scale: 1;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: flex-start;
 }
 
 /* When thumbnails exist, main image takes column 2 */
@@ -86,9 +88,8 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 .gallery__main-wrapper {
   position: relative;
   width: 100%;
-  max-height: clamp(480px, 70vh, 720px);
-  aspect-ratio: 1 / 1;
-  overflow: hidden;
+  height: auto;
+  overflow: visible;
   /* Apply scale transformation based on custom property */
   transform: scale(var(--preview-scale));
   transform-origin: center center;
@@ -96,16 +97,15 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 }
 
 .gallery__main-image {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   opacity: 0;
   transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   border-radius: 16px;
+  display: block;
 }
 
 .gallery__main-image.active {

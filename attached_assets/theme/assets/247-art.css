@@ -75,19 +75,12 @@ section.247pn-art-product .product__media-gallery {
   position: relative;
   width: 100%;
   max-height: clamp(480px, 70vh, 720px);
-  height: min(70vh, 100%);
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   /* Apply scale transformation based on custom property */
   transform: scale(var(--preview-scale));
   transform-origin: center center;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Keep square aspect ratio on mobile only */
-@media (max-width: 768px) {
-  .gallery__main-wrapper {
-    aspect-ratio: 1 / 1;
-  }
 }
 
 .gallery__main-image {

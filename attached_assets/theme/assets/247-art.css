@@ -170,7 +170,7 @@ section.247pn-art-product .product__media-gallery {
 }
 
 .gallery__zoom-btn:focus-visible {
-  outline: 3px solid #6366f1;
+  outline: 3px solid #2c5f8d;
   outline-offset: 2px;
 }
 
@@ -202,20 +202,20 @@ section.247pn-art-product .product__media-gallery {
 }
 
 .gallery__thumbnail:hover {
-  border-color: #6366f1;
+  border-color: #2c5f8d;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 4px 12px rgba(44, 95, 141, 0.15);
 }
 
 .gallery__thumbnail:focus-visible {
-  outline: 3px solid #6366f1;
+  outline: 3px solid #2c5f8d;
   outline-offset: 2px;
-  border-color: #6366f1;
+  border-color: #2c5f8d;
 }
 
 .gallery__thumbnail.active {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  border-color: #2c5f8d;
+  box-shadow: 0 0 0 3px rgba(44, 95, 141, 0.15);
 }
 
 /* ===== LIGHTBOX ZOOM MODAL ===== */
@@ -402,7 +402,7 @@ section.247pn-art-product .product__info {
   background: linear-gradient(135deg, #f7f8f9 0%, #eef0f2 100%);
   padding: 2rem;
   border-radius: 16px;
-  border: 1px solid rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(44, 95, 141, 0.12);
   margin: 1.5rem 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
@@ -510,10 +510,10 @@ section.247pn-art-product .product__info {
 }
 
 .art-option.selected {
-  border-color: #6366f1;
-  background: #6366f1;
+  border-color: #2c5f8d;
+  background: #2c5f8d;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25), 0 2px 4px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 4px 12px rgba(44, 95, 141, 0.25), 0 2px 4px rgba(44, 95, 141, 0.15);
 }
 
 .art-option__title {
@@ -572,16 +572,16 @@ section.247pn-art-product .product__info {
 }
 
 .frame-toggle.selected {
-  border-color: #6366f1;
-  background: rgba(99, 102, 241, 0.04);
-  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.15);
+  border-color: #2c5f8d;
+  background: rgba(44, 95, 141, 0.04);
+  box-shadow: 0 2px 12px rgba(44, 95, 141, 0.15);
 }
 
 .frame-checkbox {
   width: 24px;
   height: 24px;
   cursor: pointer;
-  accent-color: #6366f1;
+  accent-color: #2c5f8d;
 }
 
 .frame-info {
@@ -763,12 +763,12 @@ section.247pn-art-product .product__info {
 
 /* ===== UPSELL SECTION ===== */
 .merch-upsell {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(99, 102, 241, 0.06) 100%);
+  background: linear-gradient(135deg, rgba(44, 95, 141, 0.03) 0%, rgba(44, 95, 141, 0.06) 100%);
   padding: 2rem;
   border-radius: 16px;
-  border: 1px solid rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(44, 95, 141, 0.15);
   margin-top: 2.5rem;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.04);
+  box-shadow: 0 2px 8px rgba(44, 95, 141, 0.04);
 }
 
 .merch-upsell__title {
@@ -804,10 +804,10 @@ section.247pn-art-product .product__info {
 }
 
 .merch-item:hover {
-  border-color: #6366f1;
+  border-color: #2c5f8d;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12), 0 2px 4px rgba(99, 102, 241, 0.08);
-  background: rgba(99, 102, 241, 0.02);
+  box-shadow: 0 4px 12px rgba(44, 95, 141, 0.12), 0 2px 4px rgba(44, 95, 141, 0.08);
+  background: rgba(44, 95, 141, 0.02);
 }
 
 .merch-item__icon {
@@ -857,12 +857,12 @@ section.247pn-art-product .product__info {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #2c5f8d 0%, #1e4976 100%);
   color: #fff;
   border-radius: 12px;
   font-size: 1.5rem;
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 4px 12px rgba(44, 95, 141, 0.25);
 }
 
 .trust-badge__title {

@@ -1,0 +1,229 @@
+Below is the exact intel checklist I need to give you bullet-proof, copy-paste instructions to launch your Etsy-killing POD marketplace on 247printnetwork.com — fully integrated with your Shopify + Printify + Replit stack, zero guesswork.
+Send me anything you have from the sections below (screenshots, Loom videos, Notion pages, Replit links, Shopify admin exports — all good). The more you fill, the tighter the plan.
+
+1. CURRENT TECH STACK (Copy-Paste or Screenshot)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ItemWhat to SendShopify ThemeName + version (e.g., Dawn 13.0)Active AppsFull list from /admin/apps (name + monthly cost)Printify IntegrationConnected? Which products synced? (posters, canvas, frames?)Replit AppsList each Replit project + public URL + main functionCustom CodeAny theme.liquid, snippets/, or assets/ editsDomain Setup247printnetwork.com → Shopify? Any subdomains?
+
+2. USER FLOWS (Loom or Text)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FlowRecord or DescribeCustomer JourneyHomepage → Collection → PDP → Cart → CheckoutArtist OnboardingCurrent form → Replit → approval → live product?Affiliate DashboardWhat does an artist see? (Replit URL?)Admin Approval QueueHow do you approve/reject designs now?
+
+3. PRODUCT & DESIGN SPECS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ItemSendLive Products5 example Shopify product URLsDesign Upload FormatPNG? SVG? Size? (e.g., 4500x5400px)Mockup PipelineHow are room scenes generated? (Printify auto? Replit?)Niche FocusTop 3 wall-art sub-niches (e.g., gothic, mid-century, pet portraits)
+
+4. MONETIZATION & PAYOUTS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ItemAnswerYour Cut% or flat fee per sale?Artist Payout%? When? (weekly? Stripe?)Promo Plan0% commission for 90 days?Affiliate RateWhat % do artists earn per referral?
+
+5. SEO & CONTENT (Current State)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ItemSendGoogle Search ConsoleScreenshot of indexed pages + queriesBlog PostsURLs of any published guidesTarget KeywordsList of 5 you want to rank forBacklinksAny you know of?
+
+6. ROADMAP & GOALS (Your Vision)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QuestionAnswerEtsy Killer FeatureWhat makes you better? (90% payouts, faster approval, etc.)Launch DateWhen do you want marketplace live?First 10 ArtistsDo you have them? From where? (X, Discord?)Revenue Goal$2,500/mo by when?
+
+7. REPLIT DEEP DIVE (Critical)
+For each Replit app, send:
+txtProject Name: 
+Public URL: 
+Main File (e.g., index.js): 
+Key Endpoints: 
+  POST /upload → ?
+  GET /dashboard → ?
+Database? (Replit DB, SQLite, etc.)
+Env Vars: (list keys, not values)
+
+ONCE YOU SEND THIS → I DELIVER:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+OutputFormat1-Click Webkul SetupShopify admin steps + API keysReplit → Webkul Sync CodeNode.js + webhooksAuto-Mockup PipelinePrintify → Replit → ShopifyHero Carousel (Live Artist Art)Liquid + JSSEO Content Cluster10 articles + internal links0% Commission Launch KitEmail templates + banner codeArtist Referral EngineGoAffPro + Replit tracking

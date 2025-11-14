@@ -15,7 +15,7 @@ section.pn247-art-product {
   gap: 1.5rem !important;
   max-width: 1400px !important;
   margin: 0 auto !important;
-  padding: 1.5rem 2rem !important;
+  padding: 0.5rem 2rem 1.5rem !important;
   
   /* Prevent base theme interference */
   width: 100% !important;

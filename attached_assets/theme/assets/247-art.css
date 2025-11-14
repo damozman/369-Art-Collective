@@ -84,7 +84,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 .gallery__main-wrapper {
   position: relative;
   width: 100%;
-  padding-bottom: 85%; /* Slightly shorter aspect ratio for compact layout */
+  padding-bottom: 110%; /* Taller container for larger image display */
   overflow: hidden;
   border-radius: 12px;
   background: #f7f8f9;

@@ -1,3 +1,12 @@
+export interface ProductVariantQualification {
+  variantKey: string;
+  productName: string;
+  widthInches: number;
+  heightInches: number;
+  qualified: boolean;
+  requiredPixels: { width: number; height: number };
+}
+
 export interface ImageQualityAnalysis {
   width: number;
   height: number;
@@ -13,6 +22,12 @@ export interface ImageQualityAnalysis {
     framedPrint: boolean;
     metalSign: boolean;
   };
+  variantQualification: {
+    qualified: ProductVariantQualification[];
+    locked: ProductVariantQualification[];
+    totalQualified: number;
+    totalVariants: number;
+  };
 }
 
 export class DpiValidatorService {
@@ -27,8 +42,26 @@ export class DpiValidatorService {
     metalSign: { width: 12, height: 16 },
   };
 
+  static readonly PRODUCT_VARIANTS = [
+    { key: 'poster_small', name: 'Poster 11×8"', width: 11, height: 8 },
+    { key: 'poster_medium', name: 'Poster 18×24"', width: 18, height: 24 },
+    { key: 'poster_large', name: 'Poster 24×36"', width: 24, height: 36 },
+    { key: 'canvas_small', name: 'Canvas 12×9"', width: 12, height: 9 },
+    { key: 'canvas_medium', name: 'Canvas 16×20"', width: 16, height: 20 },
+    { key: 'canvas_large', name: 'Canvas 24×32"', width: 24, height: 32 },
+    { key: 'framed_small', name: 'Framed 12×16"', width: 12, height: 16 },
+    { key: 'framed_medium', name: 'Framed 18×24"', width: 18, height: 24 },
+    { key: 'framed_large', name: 'Framed 24×36"', width: 24, height: 36 },
+    { key: 'metal_small', name: 'Metal 12×16"', width: 12, height: 16 },
+    { key: 'metal_medium', name: 'Metal 18×24"', width: 18, height: 24 },
+    { key: 'metal_large', name: 'Metal 24×36"', width: 24, height: 36 },
+  ];
+
   static analyzePrintQuality(width: number, height: number): ImageQualityAnalysis {
     const megapixels = (width * height) / 1_000_000;
+    
+    const shortSide = Math.min(width, height);
+    const longSide = Math.max(width, height);
     
     const largestDimension = Math.max(width, height);
     const largestProductDimension = Math.max(
@@ -41,21 +74,52 @@ export class DpiValidatorService {
     const meetsMinimum = estimatedDpi >= this.MIN_DPI;
     const meetsTarget = estimatedDpi >= this.TARGET_DPI;
     
+    const qualified: ProductVariantQualification[] = [];
+    const locked: ProductVariantQualification[] = [];
+    
+    for (const variant of this.PRODUCT_VARIANTS) {
+      const requiredShortSide = Math.min(variant.width, variant.height) * this.MIN_DPI;
+      const requiredLongSide = Math.max(variant.width, variant.height) * this.MIN_DPI;
+      
+      const meetsRequirements = shortSide >= requiredShortSide && longSide >= requiredLongSide;
+      
+      const qualification: ProductVariantQualification = {
+        variantKey: variant.key,
+        productName: variant.name,
+        widthInches: variant.width,
+        heightInches: variant.height,
+        qualified: meetsRequirements,
+        requiredPixels: {
+          width: variant.width * this.MIN_DPI,
+          height: variant.height * this.MIN_DPI,
+        },
+      };
+      
+      if (meetsRequirements) {
+        qualified.push(qualification);
+      } else {
+        locked.push(qualification);
+      }
+    }
+    
     let recommendation: 'perfect' | 'good' | 'needs_upscaling' | 'unsuitable';
     let message: string;
     
     if (estimatedDpi >= this.TARGET_DPI) {
       recommendation = 'perfect';
-      message = `Excellent quality! Your image has ~${estimatedDpi} DPI - perfect for all print products.`;
+      message = `Excellent quality! Your image qualifies for all ${this.PRODUCT_VARIANTS.length} product variants at ${estimatedDpi} DPI.`;
     } else if (estimatedDpi >= 200) {
       recommendation = 'good';
-      message = `Good quality at ~${estimatedDpi} DPI. Will print well, but upscaling could enhance sharpness.`;
-    } else if (estimatedDpi >= this.MIN_DPI) {
+      message = `Good quality at ~${estimatedDpi} DPI. Qualifies for ${qualified.length}/${this.PRODUCT_VARIANTS.length} variants. Upscaling could unlock larger sizes.`;
+    } else if (qualified.length >= 9) {
       recommendation = 'needs_upscaling';
-      message = `Your image is ~${estimatedDpi} DPI. We recommend upscaling to ${this.TARGET_DPI} DPI for best print quality.`;
+      message = `Your image qualifies for ${qualified.length}/${this.PRODUCT_VARIANTS.length} variants at ~${estimatedDpi} DPI. Upscaling recommended to unlock all sizes.`;
+    } else if (qualified.length > 0) {
+      recommendation = 'unsuitable';
+      message = `Limited quality: only ${qualified.length}/${this.PRODUCT_VARIANTS.length} variants qualify. Please upload a higher resolution image (minimum 2700×3600 pixels for 9+ variants).`;
     } else {
       recommendation = 'unsuitable';
-      message = `Image quality is too low (~${estimatedDpi} DPI). Even with upscaling, prints may appear pixelated. Please upload a higher resolution image (at least ${this.MIN_DPI} DPI).`;
+      message = `Image resolution too low. No variants qualify. Minimum 2700×3600 pixels required.`;
     }
     
     const productSuitability = {
@@ -70,11 +134,17 @@ export class DpiValidatorService {
       height,
       megapixels: parseFloat(megapixels.toFixed(2)),
       estimatedDpi,
-      meetsMinimum,
-      meetsTarget,
+      meetsMinimum: qualified.length >= 9,
+      meetsTarget: qualified.length === this.PRODUCT_VARIANTS.length,
       recommendation,
       message,
-      productSuitability
+      productSuitability,
+      variantQualification: {
+        qualified,
+        locked,
+        totalQualified: qualified.length,
+        totalVariants: this.PRODUCT_VARIANTS.length,
+      },
     };
   }
 
@@ -106,6 +176,11 @@ export class DpiValidatorService {
 
   static isAcceptableForPrint(width: number, height: number): boolean {
     const analysis = this.analyzePrintQuality(width, height);
-    return analysis.recommendation !== 'unsuitable';
+    return analysis.variantQualification.totalQualified >= 9;
+  }
+  
+  static getQualifiedVariantKeys(width: number, height: number): string[] {
+    const analysis = this.analyzePrintQuality(width, height);
+    return analysis.variantQualification.qualified.map(v => v.variantKey);
   }
 }

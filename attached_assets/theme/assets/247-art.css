@@ -45,8 +45,13 @@ section.pn247-art-product .product__media-gallery {
   height: auto !important;
   z-index: 1 !important;
   display: grid;
-  grid-template-columns: 80px 1fr;
+  grid-template-columns: 1fr;
   gap: 1rem;
+}
+
+/* Only add thumbnail column when multiple images exist */
+section.pn247-art-product .product__media-gallery.has-thumbnails {
+  grid-template-columns: 80px 1fr;
 }
 
 /* Sticky gallery on desktop */
@@ -58,9 +63,9 @@ section.pn247-art-product .product__media-gallery {
   }
 }
 
-/* Main image viewer */
+/* Main image viewer - spans full width by default */
 .gallery__main {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
   position: relative;
   width: 100%;
@@ -71,6 +76,11 @@ section.pn247-art-product .product__media-gallery {
   /* Support for preview scaling via CSS custom property */
   --preview-scale: 1;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When thumbnails exist, main image takes column 2 */
+.product__media-gallery.has-thumbnails .gallery__main {
+  grid-column: 2;
 }
 
 .gallery__main-wrapper {

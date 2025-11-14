@@ -161,7 +161,23 @@ export class DpiValidatorService {
 
   static shouldRecommendUpscaling(width: number, height: number): boolean {
     const analysis = this.analyzePrintQuality(width, height);
-    return analysis.recommendation === 'needs_upscaling' || analysis.recommendation === 'good';
+    
+    // Case 1: Already meets minimum but could be better
+    if (analysis.recommendation === 'needs_upscaling' || analysis.recommendation === 'good') {
+      return true;
+    }
+    
+    // Case 2: Below minimum BUT upscaling would help reach it
+    if (analysis.variantQualification.totalQualified < 8) {
+      // Check if upscaling would help
+      const scale = this.getUpscaleScale(width, height);
+      const upscaledAnalysis = this.calculateUpscaledQuality(width, height, scale);
+      
+      // Recommend upscaling if it would bring us to 8+ variants
+      return upscaledAnalysis.variantQualification.totalQualified >= 8;
+    }
+    
+    return false;
   }
 
   static getUpscaleScale(width: number, height: number): 2 | 4 {

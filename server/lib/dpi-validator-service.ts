@@ -165,9 +165,21 @@ export class DpiValidatorService {
   }
 
   static getUpscaleScale(width: number, height: number): 2 | 4 {
-    const analysis = this.analyzePrintQuality(width, height);
+    // Target our maximum product requirement: 24×36" at 150 DPI = 3600×5400
+    const TARGET_MAX_WIDTH = 3600;
+    const TARGET_MAX_HEIGHT = 5400;
     
-    if (analysis.estimatedDpi >= 200) {
+    const shortSide = Math.min(width, height);
+    const longSide = Math.max(width, height);
+    
+    // Calculate scale needed to reach target
+    const scaleNeededForWidth = TARGET_MAX_WIDTH / shortSide;
+    const scaleNeededForHeight = TARGET_MAX_HEIGHT / longSide;
+    const scaleNeeded = Math.max(scaleNeededForWidth, scaleNeededForHeight);
+    
+    // Real-ESRGAN only supports 2x or 4x
+    // Choose the minimum scale that meets our requirements
+    if (scaleNeeded <= 2) {
       return 2;
     }
     

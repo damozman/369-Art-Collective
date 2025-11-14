@@ -16,10 +16,20 @@ UPDATED: Nov 13 2025 18:20 EST - Navy/Coral/Teal Rebrand
 .hero-mockup-container {
   position: relative;
   width: 100%;
-  height: 700px;
+  height: 0;
+  padding-bottom: 62.5%; /* 16:10 aspect ratio (1000/1600 = 0.625) */
   max-width: 100vw;
   overflow: hidden;
   background-color: #e5e7eb;
+}
+
+/* Force absolute positioning for all children to work with padding-bottom trick */
+.hero-mockup-container > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .hero-mockup-background {
@@ -167,7 +177,7 @@ UPDATED: Nov 13 2025 18:20 EST - Navy/Coral/Teal Rebrand
 /* Mobile responsive */
 @media (max-width: 768px) {
   .hero-mockup-container {
-    height: 500px;
+    padding-bottom: 125%; /* Taller aspect ratio for mobile (1:1.25) */
   }
   
   .hero-mockup-overlay {

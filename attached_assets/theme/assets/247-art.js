@@ -623,9 +623,10 @@ document.addEventListener('DOMContentLoaded', function() {
       windowWidth: window.innerWidth
     });
 
-    // Set overlay position using pixels instead of percentages
+    // Set overlay position using pixels for X, but keep Y relative to container
+    // to avoid letterboxing drift issues
     heroOverlay.style.left = `${absoluteX}px`;
-    heroOverlay.style.top = `${absoluteY}px`;
+    heroOverlay.style.top = `${overlayYPercent * 100}%`;
 
     // Update other CSS properties
     heroContainer.style.setProperty('--base-width', isMobile ? template.base_width_mobile : template.base_width);

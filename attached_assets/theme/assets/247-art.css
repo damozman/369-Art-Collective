@@ -157,6 +157,13 @@ section.pn247-art-product .product__media-gallery {
   align-items: start !important;
 }
 
+/* Force all gallery grid children to align at top */
+section.pn247-art-product .product__media-gallery > * {
+  align-self: start !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
 /* Only add thumbnail column when multiple images exist */
 section.pn247-art-product .product__media-gallery.has-thumbnails {
   grid-template-columns: 70px 1fr;

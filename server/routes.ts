@@ -33,7 +33,7 @@ import { getAffiliateCodeFromCookie } from "./middleware/affiliate-tracking";
 import { processShopifyOrder } from "./lib/order-processor";
 import { processCreatorStackPurchase } from "./lib/creatorstack-webhook-processor";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
-import { validateImageQuality, MIN_WIDTH, MIN_HEIGHT } from "./lib/image-validator";
+import { validateImageQuality, MIN_LONG_SIDE, MIN_SHORT_SIDE } from "./lib/image-validator";
 import { stripeConnectService } from "./lib/stripe-connect";
 import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from "./lib/payout-service";
 import { emailService } from "./lib/email-service";
@@ -2318,8 +2318,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fs.unlinkSync(filePath);
         return res.status(400).json({ 
           error: validation.message || "Image quality check failed",
-          minWidth: MIN_WIDTH,
-          minHeight: MIN_HEIGHT,
+          minLongSide: MIN_LONG_SIDE,
+          minShortSide: MIN_SHORT_SIDE,
           actualDimensions: validation.dimensions
         });
       }
@@ -2412,8 +2412,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           return res.status(400).json({ 
             error: `Image "${file.originalname}" ${validation.message || "does not meet quality requirements"}`,
-            minWidth: MIN_WIDTH,
-            minHeight: MIN_HEIGHT,
+            minLongSide: MIN_LONG_SIDE,
+            minShortSide: MIN_SHORT_SIDE,
             actualDimensions: validation.dimensions
           });
         }

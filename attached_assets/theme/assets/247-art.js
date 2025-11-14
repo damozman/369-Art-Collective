@@ -447,10 +447,10 @@ document.addEventListener('DOMContentLoaded', function() {
       name: 'Modern Living Room',
       desktop_url: mockupLivingRoom,
       mobile_url: mockupLivingRoom,
-      overlay_x: '50%',  // Centered on clear wall space
-      overlay_y: '35%',  // Upper-center wall area
-      overlay_x_mobile: '50%',  // Same position on mobile
-      overlay_y_mobile: '35%',  // Same position on mobile
+      overlay_x: '50%',  // Centered horizontally
+      overlay_y: '42%',  // Adjusted lower - wall center
+      overlay_x_mobile: '50%',
+      overlay_y_mobile: '42%',
       base_width: '420px',
       base_width_mobile: '300px'
     },
@@ -459,10 +459,10 @@ document.addEventListener('DOMContentLoaded', function() {
       name: 'Cozy Bedroom',
       desktop_url: mockupBedroom,
       mobile_url: mockupBedroom,
-      overlay_x: '50%',  // Centered above bed
-      overlay_y: '30%',  // Above headboard area
-      overlay_x_mobile: '50%',  // Same position on mobile
-      overlay_y_mobile: '30%',  // Same position on mobile
+      overlay_x: '50%',  // Centered horizontally
+      overlay_y: '38%',  // Adjusted lower - above bed
+      overlay_x_mobile: '50%',
+      overlay_y_mobile: '38%',
       base_width: '400px',
       base_width_mobile: '280px'
     },
@@ -471,10 +471,10 @@ document.addEventListener('DOMContentLoaded', function() {
       name: 'Minimalist Office',
       desktop_url: mockupOffice,
       mobile_url: mockupOffice,
-      overlay_x: '50%',  // Centered on clean wall
-      overlay_y: '33%',  // Eye level placement
-      overlay_x_mobile: '50%',  // Same position on mobile
-      overlay_y_mobile: '33%',  // Same position on mobile
+      overlay_x: '50%',  // Centered horizontally
+      overlay_y: '40%',  // Adjusted lower - wall center
+      overlay_x_mobile: '50%',
+      overlay_y_mobile: '40%',
       base_width: '400px',
       base_width_mobile: '280px'
     },
@@ -483,10 +483,10 @@ document.addEventListener('DOMContentLoaded', function() {
       name: 'Gallery Wall',
       desktop_url: mockupGallery,
       mobile_url: mockupGallery,
-      overlay_x: '50%',  // Perfectly centered
-      overlay_y: '40%',  // Gallery center placement
-      overlay_x_mobile: '50%',  // Same position on mobile
-      overlay_y_mobile: '40%',  // Same position on mobile
+      overlay_x: '50%',  // Centered horizontally
+      overlay_y: '45%',  // Adjusted lower - gallery center
+      overlay_x_mobile: '50%',
+      overlay_y_mobile: '45%',
       base_width: '400px',
       base_width_mobile: '280px'
     }
@@ -590,13 +590,19 @@ document.addEventListener('DOMContentLoaded', function() {
   // Position overlay based on actual image coordinates
   function positionOverlay() {
     const bgImg = heroBackground.querySelector('img');
-    if (!bgImg || !bgImg.complete) return;
+    if (!bgImg || !bgImg.complete) {
+      console.log('Overlay positioning skipped - image not ready');
+      return;
+    }
 
     const template = MOCKUP_TEMPLATES[currentMockupIndex];
     if (!template) return;
 
     const bounds = calculateImageBounds(bgImg, heroContainer);
-    if (!bounds) return;
+    if (!bounds) {
+      console.log('Overlay positioning skipped - bounds calculation failed');
+      return;
+    }
 
     // Convert percentage positions to pixels based on actual image area
     const isMobile = window.innerWidth <= 768;
@@ -606,6 +612,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Calculate absolute pixel position
     const absoluteX = bounds.left + (bounds.width * overlayXPercent);
     const absoluteY = bounds.top + (bounds.height * overlayYPercent);
+
+    console.log('Positioning overlay:', {
+      template: template.name,
+      bounds: bounds,
+      overlayXPercent,
+      overlayYPercent,
+      absoluteX,
+      absoluteY,
+      windowWidth: window.innerWidth
+    });
 
     // Set overlay position using pixels instead of percentages
     heroOverlay.style.left = `${absoluteX}px`;

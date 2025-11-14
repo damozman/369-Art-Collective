@@ -204,7 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedFrame = radio.value;
       }
       
-      updatePrice();
+      // Unified update: both price and visual preview
+      updatePreview();
     });
   });
 
@@ -242,11 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
         showImage(imageIndex);
       }
 
-      // Update visual size preview
-      updateSizePreview(selectedSize);
-
-      // Update frame overlay
-      updateFrameOverlay(selectedFrame);
+      // Update visual preview (size + frame)
+      updatePreview();
 
       console.log('Variant selected:', matchingVariant);
     } else {
@@ -254,10 +252,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Visual size preview - scales the image based on selected size
+  // Create persistent frame overlay element on page load
+  let frameOverlay = null;
+  function initFrameOverlay() {
+    const mainGallery = document.querySelector('.gallery__main');
+    if (!mainGallery) return;
+
+    frameOverlay = document.createElement('div');
+    frameOverlay.className = 'frame-overlay';
+    frameOverlay.dataset.frameType = 'none';
+    mainGallery.appendChild(frameOverlay);
+  }
+
+  // Visual size preview - uses CSS custom property for dimension-aware scaling
   function updateSizePreview(size) {
-    const mainImageWrapper = document.getElementById('main-image-wrapper');
-    if (!mainImageWrapper) return;
+    const mainGallery = document.querySelector('.gallery__main');
+    if (!mainGallery) return;
 
     // Size scale mapping (relative visual representation)
     const sizeScales = {
@@ -274,31 +284,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const scale = sizeScales[size] || 1.00;
     
-    // Apply transform with smooth transition
-    mainImageWrapper.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-    mainImageWrapper.style.transform = `scale(${scale})`;
+    // Apply scale via CSS custom property for layout-aware scaling
+    mainGallery.style.setProperty('--preview-scale', scale);
   }
 
-  // Frame overlay system
+  // Frame overlay system - toggles classes instead of DOM recreation
   function updateFrameOverlay(frameType) {
-    // Remove existing frame overlay
-    const existingOverlay = document.querySelector('.frame-overlay');
-    if (existingOverlay) {
-      existingOverlay.remove();
-    }
+    if (!frameOverlay) return;
 
-    // Don't add overlay for "none"
-    if (frameType === 'none') return;
-
-    // Create frame overlay
-    const mainImageWrapper = document.getElementById('main-image-wrapper');
-    if (!mainImageWrapper) return;
-
-    const frameOverlay = document.createElement('div');
-    frameOverlay.className = 'frame-overlay';
+    // Update frame type data attribute and classes
     frameOverlay.dataset.frameType = frameType;
     
-    mainImageWrapper.parentElement.appendChild(frameOverlay);
+    // Toggle visibility
+    if (frameType === 'none') {
+      frameOverlay.classList.remove('active');
+    } else {
+      frameOverlay.classList.add('active');
+    }
+  }
+
+  // Unified update function for all preview changes
+  function updatePreview() {
+    updateSizePreview(selectedSize);
+    updateFrameOverlay(selectedFrame);
+    updatePrice();
   }
 
   // Update price display
@@ -338,9 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (matchingVariant) {
       updatePriceDisplay(matchingVariant.price);
     }
-
-    // Update frame overlay when frame changes
-    updateFrameOverlay(selectedFrame);
   }
 
   // Update availability
@@ -359,6 +365,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initialize on page load
+  initFrameOverlay();
+  
   if (variants.length > 0) {
     initializeSelections();
   }

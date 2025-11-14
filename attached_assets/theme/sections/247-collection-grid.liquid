@@ -38,7 +38,17 @@ Premium grid layout with filters and sorting
                     src="{{ product.featured_image | img_url: '600x600' }}" 
                     alt="{{ product.title }}"
                     loading="lazy"
+                    class="product-card__image--primary"
                   >
+                  {% comment %} Show second image (first mockup) on hover if available {% endcomment %}
+                  {% if product.media[1] and product.media[1].media_type == 'image' %}
+                    <img 
+                      src="{{ product.media[1] | img_url: '600x600' }}" 
+                      alt="{{ product.title }} - Mockup View"
+                      loading="lazy"
+                      class="product-card__image--hover"
+                    >
+                  {% endif %}
                 {% else %}
                   <div class="product-card__placeholder"></div>
                 {% endif %}
@@ -218,7 +228,36 @@ document.addEventListener('DOMContentLoaded', function() {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.4s ease;
+}
+
+/* Image swap hover effect */
+.product-card__image--primary,
+.product-card__image--hover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.product-card__image--primary {
+  opacity: 1;
+  z-index: 1;
+}
+
+.product-card__image--hover {
+  opacity: 0;
+  z-index: 2;
+}
+
+/* On hover: swap images and add subtle zoom */
+.product-card:hover .product-card__image--primary {
+  opacity: 0;
+}
+
+.product-card:hover .product-card__image--hover {
+  opacity: 1;
 }
 
 .product-card:hover .product-card__image img {

@@ -1203,7 +1203,7 @@ Best regards,
             
             <p><strong>Common reasons for rejection:</strong></p>
             <ul>
-              <li>Image resolution below 2400x3000px (required for print quality)</li>
+              <li>Image resolution too low (minimum 2400×1800px required for print quality)</li>
               <li>Copyright or trademark concerns</li>
               <li>Image quality issues (compression artifacts, blur, noise)</li>
               <li>Inappropriate content</li>
@@ -1235,7 +1235,7 @@ We've reviewed your artwork submission "${artworkTitle}". Unfortunately, we're u
 ${reason ? `Feedback: ${reason}` : ''}
 
 Common reasons for rejection:
-- Image resolution below 2400x3000px (required for print quality)
+- Image resolution too low (minimum 2400×1800px required for print quality)
 - Copyright or trademark concerns
 - Image quality issues (compression artifacts, blur, noise)
 - Inappropriate content

@@ -40,11 +40,12 @@ export function getImageDimensions(filePath: string): ImageDimensions | null {
   }
 }
 
-// Printify wall art quality requirements:
-// - 8"x10" at 300 DPI = 2400x3000 pixels
-// - We'll use this as minimum for quality prints
-export const MIN_WIDTH = 2400;
-export const MIN_HEIGHT = 3000;
+// Printify wall art quality requirements (flexible for various orientations):
+// - 6"x6" at 300 DPI = 1800x1800 pixels (minimum for smallest prints)
+// - 8"x10" at 300 DPI = 2400x3000 pixels (standard quality)
+// Requirements: At least 1800px on shortest side, 2400px on longest side
+export const MIN_SHORT_SIDE = 1800;
+export const MIN_LONG_SIDE = 2400;
 
 export function validateImageQuality(filePath: string): { valid: boolean; message?: string; dimensions?: ImageDimensions } {
   const dimensions = getImageDimensions(filePath);
@@ -58,15 +59,17 @@ export function validateImageQuality(filePath: string): { valid: boolean; messag
   
   const { width, height } = dimensions;
   
-  // Check if either orientation meets the minimum (landscape or portrait)
-  const meetsMinimum = 
-    (width >= MIN_WIDTH && height >= MIN_HEIGHT) ||
-    (width >= MIN_HEIGHT && height >= MIN_WIDTH);
+  // Determine short and long sides (works for any orientation)
+  const shortSide = Math.min(width, height);
+  const longSide = Math.max(width, height);
+  
+  // Check if image meets flexible quality requirements
+  const meetsMinimum = shortSide >= MIN_SHORT_SIDE && longSide >= MIN_LONG_SIDE;
   
   if (!meetsMinimum) {
     return {
       valid: false,
-      message: `Image resolution too low. Minimum ${MIN_WIDTH}×${MIN_HEIGHT} pixels required for quality prints. Your image is ${width}×${height} pixels.`,
+      message: `Image resolution too low. Minimum ${MIN_LONG_SIDE}×${MIN_SHORT_SIDE} pixels required for quality prints. Your image is ${width}×${height} pixels.`,
       dimensions,
     };
   }

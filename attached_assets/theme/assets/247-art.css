@@ -2,8 +2,18 @@
 247 Print Network - Premium Art Product Styles
 Modern 2024/2025 Design - Clean, Contemporary, Artist-Centric
 DEFENSIVE CSS - Overrides base theme
-UPDATED: Nov 14 2025 08:20 EST - Mockup slides integrated into gallery
+UPDATED: Nov 14 2025 19:55 EST - Fixed Shopify layout padding issue
 */
+
+/* Override Shopify Dawn base layout padding for art product pages */
+body.template-product main#MainContent {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+body.template-product .shopify-section:first-child {
+  margin-top: 0 !important;
+}
 
 /* ===== GALLERY MOCKUP SLIDES ===== */
 .gallery__mockup-slide {

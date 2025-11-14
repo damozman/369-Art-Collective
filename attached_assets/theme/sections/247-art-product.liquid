@@ -3,7 +3,7 @@
 Premium Displate-inspired layout with artist spotlight and enhanced product presentation
 {% endcomment %}
 
-{{ '247-art.css' | asset_url | append: '?v=20251114-1945' | stylesheet_tag }}
+{{ '247-art.css' | asset_url | append: '?v=20251114-1950' | stylesheet_tag }}
 
 {%- comment -%} ===== PRODUCT DETAILS SECTION ===== {%- endcomment -%}
 <section class="pn247-art-product">
@@ -203,17 +203,17 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
               {%- endif -%}
             >
           {%- endfor -%}
-
-          {%- comment -%} Zoom Overlay - Inside wrapper for proper containment {%- endcomment -%}
-          <button class="gallery__zoom-btn" id="zoom-trigger" aria-label="Zoom image">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="8" cy="8" r="6"/>
-              <line x1="13" y1="13" x2="18" y2="18"/>
-              <line x1="8" y1="5" x2="8" y2="11"/>
-              <line x1="5" y1="8" x2="11" y2="8"/>
-            </svg>
-          </button>
         </div>
+
+        {%- comment -%} Zoom button as sibling, positioned relative to .gallery__main {%- endcomment -%}
+        <button class="gallery__zoom-btn" id="zoom-trigger" aria-label="Zoom image">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="8" cy="8" r="6"/>
+            <line x1="13" y1="13" x2="18" y2="18"/>
+            <line x1="8" y1="5" x2="8" y2="11"/>
+            <line x1="5" y1="8" x2="11" y2="8"/>
+          </svg>
+        </button>
       </div>
 
     {%- else -%}

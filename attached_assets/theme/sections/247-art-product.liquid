@@ -72,31 +72,6 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
     {%- endif -%}
   </div>
 
-  {%- comment -%} Lightbox Zoom Modal {%- endcomment -%}
-  <div class="lightbox" id="image-lightbox">
-    <button class="lightbox__close" id="lightbox-close" aria-label="Close lightbox">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
-    </button>
-    <div class="lightbox__content">
-      <img src="" alt="" id="lightbox-image">
-    </div>
-    <div class="lightbox__nav">
-      <button class="lightbox__prev" id="lightbox-prev" aria-label="Previous image">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
-      </button>
-      <button class="lightbox__next" id="lightbox-next" aria-label="Next image">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-
   {%- comment -%} MIDDLE COLUMN: Horizontal Configurator {%- endcomment -%}
   <div class="product__configurator">
     {% render '247-art-options', product: product %}
@@ -211,6 +186,31 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
     {% render '247-merch-upsell', product: product %}
   </div>
 </section>
+
+{%- comment -%} Lightbox Zoom Modal - Outside grid layout {%- endcomment -%}
+<div class="lightbox" id="image-lightbox">
+  <button class="lightbox__close" id="lightbox-close" aria-label="Close lightbox">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+  <div class="lightbox__content">
+    <img src="" alt="" id="lightbox-image">
+  </div>
+  <div class="lightbox__nav">
+    <button class="lightbox__prev" id="lightbox-prev" aria-label="Previous image">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    <button class="lightbox__next" id="lightbox-next" aria-label="Next image">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+  </div>
+</div>
 
 {%- comment -%} Serialize product data for JavaScript variant system {%- endcomment -%}
 <script>

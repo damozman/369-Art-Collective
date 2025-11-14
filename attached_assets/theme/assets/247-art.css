@@ -35,7 +35,7 @@ body.template-product .shopify-section:first-child {
 .mockup-slide__background {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   display: block;
 }
@@ -186,7 +186,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   width: 100%;
   border-radius: 0;
   overflow: hidden;
-  background: red; /* DEBUG - see where element actually is */
+  background: transparent;
   padding: 0 !important;
   margin: 0 !important;
   align-self: start !important;

@@ -185,7 +185,8 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 .gallery__main-wrapper {
   position: relative;
   width: 100%;
-  padding-bottom: 66.67%; /* 3:2 landscape aspect ratio for mockup rooms */
+  height: 0;
+  padding-bottom: 0;
   overflow: hidden;
   border-radius: 0;
   background: transparent;
@@ -193,6 +194,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   transform: scale(var(--preview-scale));
   transform-origin: center center;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  aspect-ratio: 3 / 2;
 }
 
 .gallery__main-image {

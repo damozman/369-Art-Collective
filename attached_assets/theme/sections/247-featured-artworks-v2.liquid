@@ -307,9 +307,27 @@ Tabbed browsing, tight 6-column grid, badge overlays
       <div class="featured-artworks-v2__grid">
         {% for block in section.blocks %}
           {% if block.type == 'artwork' and block.settings.category == 'bestselling' %}
+            {% comment %}Extract product handle from URL{% endcomment %}
+            {% assign product_url = block.settings.artwork_url %}
+            {% assign url_parts = product_url | split: '/products/' %}
+            {% if url_parts.size > 1 %}
+              {% assign product_handle = url_parts[1] | split: '?' | first | split: '#' | first %}
+              {% assign product = all_products[product_handle] %}
+            {% else %}
+              {% assign product = null %}
+            {% endif %}
+            
             <a href="{{ block.settings.artwork_url }}" class="artwork-card-v2" data-testid="card-artwork-{{ forloop.index }}">
               <div class="artwork-card-v2__image-wrapper">
-                {% if block.settings.artwork_image != blank %}
+                {% comment %}Primary image: use product's featured image if available, fallback to block setting{% endcomment %}
+                {% if product and product.featured_image %}
+                  <img 
+                    src="{{ product.featured_image | img_url: '600x600' }}" 
+                    alt="{{ product.title }}"
+                    class="artwork-card-v2__image artwork-card-v2__image--primary"
+                    loading="lazy"
+                  >
+                {% elsif block.settings.artwork_image != blank %}
                   <img 
                     src="{{ block.settings.artwork_image }}" 
                     alt="{{ block.settings.artwork_title }}"
@@ -318,22 +336,35 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   >
                 {% endif %}
                 
-                {% if block.settings.mockup_image != blank %}
+                {% comment %}Hover image: use product's second media if available, fallback to mockup_image or primary{% endcomment %}
+                {% if product and product.media[1] and product.media[1].media_type == 'image' %}
+                  <img 
+                    src="{{ product.media[1] | img_url: '600x600' }}" 
+                    alt="{{ product.title }} - Mockup View"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                    loading="lazy"
+                  >
+                {% elsif block.settings.mockup_image != blank %}
                   <img 
                     src="{{ block.settings.mockup_image }}" 
                     alt="{{ block.settings.artwork_title }} Mockup"
                     class="artwork-card-v2__image artwork-card-v2__image--secondary"
                     loading="lazy"
                   >
-                {% else %}
-                  {% if block.settings.artwork_image != blank %}
-                    <img 
-                      src="{{ block.settings.artwork_image }}" 
-                      alt="{{ block.settings.artwork_title }}"
-                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
-                      loading="lazy"
-                    >
-                  {% endif %}
+                {% elsif product and product.featured_image %}
+                  <img 
+                    src="{{ product.featured_image | img_url: '600x600' }}" 
+                    alt="{{ product.title }}"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                    loading="lazy"
+                  >
+                {% elsif block.settings.artwork_image != blank %}
+                  <img 
+                    src="{{ block.settings.artwork_image }}" 
+                    alt="{{ block.settings.artwork_title }}"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                    loading="lazy"
+                  >
                 {% endif %}
                 
                 {% if block.settings.badge != blank %}
@@ -368,9 +399,27 @@ Tabbed browsing, tight 6-column grid, badge overlays
       <div class="featured-artworks-v2__grid">
         {% for block in section.blocks %}
           {% if block.type == 'artwork' and block.settings.category == 'trending' %}
+            {% comment %}Extract product handle from URL{% endcomment %}
+            {% assign product_url = block.settings.artwork_url %}
+            {% assign url_parts = product_url | split: '/products/' %}
+            {% if url_parts.size > 1 %}
+              {% assign product_handle = url_parts[1] | split: '?' | first | split: '#' | first %}
+              {% assign product = all_products[product_handle] %}
+            {% else %}
+              {% assign product = null %}
+            {% endif %}
+            
             <a href="{{ block.settings.artwork_url }}" class="artwork-card-v2" data-testid="card-artwork-{{ forloop.index }}">
               <div class="artwork-card-v2__image-wrapper">
-                {% if block.settings.artwork_image != blank %}
+                {% comment %}Primary image{% endcomment %}
+                {% if product and product.featured_image %}
+                  <img 
+                    src="{{ product.featured_image | img_url: '600x600' }}" 
+                    alt="{{ product.title }}"
+                    class="artwork-card-v2__image artwork-card-v2__image--primary"
+                    loading="lazy"
+                  >
+                {% elsif block.settings.artwork_image != blank %}
                   <img 
                     src="{{ block.settings.artwork_image }}" 
                     alt="{{ block.settings.artwork_title }}"
@@ -379,22 +428,35 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   >
                 {% endif %}
                 
-                {% if block.settings.mockup_image != blank %}
+                {% comment %}Hover image{% endcomment %}
+                {% if product and product.media[1] and product.media[1].media_type == 'image' %}
+                  <img 
+                    src="{{ product.media[1] | img_url: '600x600' }}" 
+                    alt="{{ product.title }} - Mockup View"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                    loading="lazy"
+                  >
+                {% elsif block.settings.mockup_image != blank %}
                   <img 
                     src="{{ block.settings.mockup_image }}" 
                     alt="{{ block.settings.artwork_title }} Mockup"
                     class="artwork-card-v2__image artwork-card-v2__image--secondary"
                     loading="lazy"
                   >
-                {% else %}
-                  {% if block.settings.artwork_image != blank %}
-                    <img 
-                      src="{{ block.settings.artwork_image }}" 
-                      alt="{{ block.settings.artwork_title }}"
-                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
-                      loading="lazy"
-                    >
-                  {% endif %}
+                {% elsif product and product.featured_image %}
+                  <img 
+                    src="{{ product.featured_image | img_url: '600x600' }}" 
+                    alt="{{ product.title }}"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                    loading="lazy"
+                  >
+                {% elsif block.settings.artwork_image != blank %}
+                  <img 
+                    src="{{ block.settings.artwork_image }}" 
+                    alt="{{ block.settings.artwork_title }}"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                    loading="lazy"
+                  >
                 {% endif %}
                 
                 {% if block.settings.badge != blank %}
@@ -429,9 +491,27 @@ Tabbed browsing, tight 6-column grid, badge overlays
       <div class="featured-artworks-v2__grid">
         {% for block in section.blocks %}
           {% if block.type == 'artwork' and block.settings.category == 'new' %}
+            {% comment %}Extract product handle from URL{% endcomment %}
+            {% assign product_url = block.settings.artwork_url %}
+            {% assign url_parts = product_url | split: '/products/' %}
+            {% if url_parts.size > 1 %}
+              {% assign product_handle = url_parts[1] | split: '?' | first | split: '#' | first %}
+              {% assign product = all_products[product_handle] %}
+            {% else %}
+              {% assign product = null %}
+            {% endif %}
+            
             <a href="{{ block.settings.artwork_url }}" class="artwork-card-v2" data-testid="card-artwork-{{ forloop.index }}">
               <div class="artwork-card-v2__image-wrapper">
-                {% if block.settings.artwork_image != blank %}
+                {% comment %}Primary image{% endcomment %}
+                {% if product and product.featured_image %}
+                  <img 
+                    src="{{ product.featured_image | img_url: '600x600' }}" 
+                    alt="{{ product.title }}"
+                    class="artwork-card-v2__image artwork-card-v2__image--primary"
+                    loading="lazy"
+                  >
+                {% elsif block.settings.artwork_image != blank %}
                   <img 
                     src="{{ block.settings.artwork_image }}" 
                     alt="{{ block.settings.artwork_title }}"
@@ -440,22 +520,35 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   >
                 {% endif %}
                 
-                {% if block.settings.mockup_image != blank %}
+                {% comment %}Hover image{% endcomment %}
+                {% if product and product.media[1] and product.media[1].media_type == 'image' %}
+                  <img 
+                    src="{{ product.media[1] | img_url: '600x600' }}" 
+                    alt="{{ product.title }} - Mockup View"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                    loading="lazy"
+                  >
+                {% elsif block.settings.mockup_image != blank %}
                   <img 
                     src="{{ block.settings.mockup_image }}" 
                     alt="{{ block.settings.artwork_title }} Mockup"
                     class="artwork-card-v2__image artwork-card-v2__image--secondary"
                     loading="lazy"
                   >
-                {% else %}
-                  {% if block.settings.artwork_image != blank %}
-                    <img 
-                      src="{{ block.settings.artwork_image }}" 
-                      alt="{{ block.settings.artwork_title }}"
-                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
-                      loading="lazy"
-                    >
-                  {% endif %}
+                {% elsif product and product.featured_image %}
+                  <img 
+                    src="{{ product.featured_image | img_url: '600x600' }}" 
+                    alt="{{ product.title }}"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                    loading="lazy"
+                  >
+                {% elsif block.settings.artwork_image != blank %}
+                  <img 
+                    src="{{ block.settings.artwork_image }}" 
+                    alt="{{ block.settings.artwork_title }}"
+                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                    loading="lazy"
+                  >
                 {% endif %}
                 
                 {% if block.settings.badge != blank %}

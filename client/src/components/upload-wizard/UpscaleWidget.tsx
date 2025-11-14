@@ -14,6 +14,15 @@ interface UpscaleWidgetProps {
   onValidationChange?: (status: "pending" | "invalid" | "valid") => void;
 }
 
+interface ProductVariantQualification {
+  variantKey: string;
+  productName: string;
+  widthInches: number;
+  heightInches: number;
+  qualified: boolean;
+  requiredPixels: { width: number; height: number };
+}
+
 interface DpiAnalysis {
   width: number;
   height: number;
@@ -24,6 +33,12 @@ interface DpiAnalysis {
   needsUpscale: boolean;
   recommendedScale: number;
   message: string;
+  variantQualification?: {
+    qualified: ProductVariantQualification[];
+    locked: ProductVariantQualification[];
+    totalQualified: number;
+    totalVariants: number;
+  };
 }
 
 interface QuotaStatus {
@@ -136,6 +151,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
             needsUpscale: analyzeData.shouldRecommend,
             recommendedScale: analyzeData.recommendedScale,
             message: analyzeData.current.message,
+            variantQualification: analyzeData.current.variantQualification,
           };
           setAnalysis(analysisResult);
           
@@ -352,6 +368,44 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
                 </div>
 
                 <p className="text-xs text-muted-foreground">{analysis.message}</p>
+
+                {analysis.variantQualification && (
+                  <div className="pt-2 border-t space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium">Product Variants</span>
+                      <Badge 
+                        variant={analysis.variantQualification.totalQualified === analysis.variantQualification.totalVariants ? "default" : "outline"}
+                        className="h-6"
+                        data-testid="badge-variant-count"
+                      >
+                        {analysis.variantQualification.totalQualified} of {analysis.variantQualification.totalVariants} qualified
+                      </Badge>
+                    </div>
+                    
+                    {analysis.variantQualification.locked.length > 0 && (
+                      <div className="p-2 bg-muted/50 rounded-md">
+                        <p className="text-xs text-muted-foreground mb-1">
+                          <strong>{analysis.variantQualification.locked.length} locked variants</strong> need higher resolution:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {analysis.variantQualification.locked.slice(0, 3).map((variant) => (
+                            <Badge key={variant.variantKey} variant="outline" className="h-5 text-xs opacity-50">
+                              {variant.productName}
+                            </Badge>
+                          ))}
+                          {analysis.variantQualification.locked.length > 3 && (
+                            <Badge variant="outline" className="h-5 text-xs opacity-50">
+                              +{analysis.variantQualification.locked.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Need {Math.max(...analysis.variantQualification.locked.map(v => v.requiredPixels.width))} × {Math.max(...analysis.variantQualification.locked.map(v => v.requiredPixels.height))} pixels minimum
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {quota && (
                   <div className="flex items-center gap-2 text-xs">

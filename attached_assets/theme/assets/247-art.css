@@ -172,6 +172,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   background: transparent;
   padding: 0;
   margin: 0;
+  align-self: start;
   /* Support for preview scaling via CSS custom property */
   --preview-scale: 1;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);

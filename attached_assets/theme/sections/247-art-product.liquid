@@ -5,6 +5,19 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
 
 {{ '247-art.css' | asset_url | append: '?v=20251114-2000' | stylesheet_tag }}
 
+<style>
+/* Emergency override for white space */
+main#MainContent,
+#MainContent {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+.shopify-section {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+</style>
+
 {%- comment -%} ===== PRODUCT DETAILS SECTION ===== {%- endcomment -%}
 <section class="pn247-art-product">
   {%- comment -%} LEFT COLUMN: Product Image Gallery {%- endcomment -%}

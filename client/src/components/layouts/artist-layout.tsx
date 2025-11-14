@@ -222,7 +222,7 @@ export function ArtistLayout({ children }: ArtistLayoutProps) {
                   <DropdownMenuContent
                     side="top"
                     align="end"
-                    className="w-56"
+                    className="w-56 z-[9999]"
                   >
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />

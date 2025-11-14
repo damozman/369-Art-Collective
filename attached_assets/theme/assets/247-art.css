@@ -15,11 +15,11 @@ UPDATED: Nov 14 2025 07:04 EST - Mockup Container Size Reduction (85% width)
 
 .hero-mockup-container {
   position: relative;
-  width: 85%; /* Reduced from 100% by 15% */
+  width: 85% !important; /* Reduced from 100% by 15% - FORCE OVERRIDE */
   height: 0;
-  padding-bottom: 53.125%; /* 62.5% * 0.85 to maintain aspect ratio */
-  max-width: 85vw;
-  margin: 0 auto; /* Center the container */
+  padding-bottom: 53.125% !important; /* 62.5% * 0.85 to maintain aspect ratio */
+  max-width: 85vw !important;
+  margin: 0 auto !important; /* Center the container */
   overflow: hidden;
   background-color: #e5e7eb;
 }

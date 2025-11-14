@@ -6,8 +6,12 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
 {{ '247-art.css' | asset_url | stylesheet_tag }}
 
 {%- comment -%} ===== HERO MOCKUP SECTION (Displate-style) ===== {%- endcomment -%}
-{%- comment -%} Hide section if no mockup data (graceful degradation) - JS will set this {%- endcomment -%}
-<div class="hero-mockup-section" id="hero-mockup-section" data-has-mockups="false" data-loading="true">
+{%- comment -%} Inject mockup asset URLs as data attributes for JavaScript {%- endcomment -%}
+<div class="hero-mockup-section" id="hero-mockup-section" data-has-mockups="false" data-loading="true"
+     data-mockup-living-room="{{ 'mockup-living-room.png' | asset_url }}"
+     data-mockup-bedroom="{{ 'mockup-bedroom.png' | asset_url }}"
+     data-mockup-office="{{ 'mockup-office.png' | asset_url }}"
+     data-mockup-gallery="{{ 'mockup-gallery.png' | asset_url }}">
   <div class="hero-mockup-container" id="hero-mockup-container">
     {%- comment -%} Room mockup background (will be set via JS/CSS) {%- endcomment -%}
     <div class="hero-mockup-background" id="hero-mockup-background"></div>

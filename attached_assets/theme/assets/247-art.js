@@ -414,3 +414,275 @@ document.addEventListener('DOMContentLoaded', function() {
   thumbnailsContainer.addEventListener('scroll', updateScrollButtons);
   updateScrollButtons(); // Initial state
 });
+
+// ===== HERO MOCKUP SYSTEM (Displate-style) =====
+document.addEventListener('DOMContentLoaded', function() {
+  // Mockup template definitions
+  // TODO: Replace with Shopify metafield data when available
+  const MOCKUP_TEMPLATES = [
+    {
+      id: 'living-room-modern',
+      name: 'Modern Living Room',
+      desktop_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1920&h=1200&fit=crop',
+      mobile_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=1000&fit=crop',
+      overlay_x: '35%',
+      overlay_y: '28%',
+      overlay_x_mobile: '50%',
+      overlay_y_mobile: '30%',
+      base_width: '420px',
+      base_width_mobile: '280px'
+    },
+    {
+      id: 'bedroom-cozy',
+      name: 'Cozy Bedroom',
+      desktop_url: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1920&h=1200&fit=crop',
+      mobile_url: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&h=1000&fit=crop',
+      overlay_x: '40%',
+      overlay_y: '25%',
+      overlay_x_mobile: '50%',
+      overlay_y_mobile: '28%',
+      base_width: '380px',
+      base_width_mobile: '260px'
+    },
+    {
+      id: 'office-minimalist',
+      name: 'Minimalist Office',
+      desktop_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=1200&fit=crop',
+      mobile_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=1000&fit=crop',
+      overlay_x: '32%',
+      overlay_y: '26%',
+      overlay_x_mobile: '50%',
+      overlay_y_mobile: '32%',
+      base_width: '400px',
+      base_width_mobile: '270px'
+    },
+    {
+      id: 'gallery-wall',
+      name: 'Gallery Wall',
+      desktop_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1920&h=1200&fit=crop',
+      mobile_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&h=1000&fit=crop',
+      overlay_x: '50%',
+      overlay_y: '30%',
+      overlay_x_mobile: '50%',
+      overlay_y_mobile: '32%',
+      base_width: '400px',
+      base_width_mobile: '280px'
+    }
+  ];
+
+  // Size variant scale factors
+  const SIZE_SCALE_FACTORS = {
+    '8x10': 0.60,
+    '10x10': 0.75,
+    '12x16': 1.00,  // Base reference
+    '16x16': 1.20,
+    '18x24': 1.50,
+    '24x36': 2.00
+  };
+
+  // DOM elements
+  const heroSection = document.getElementById('hero-mockup-section');
+  const heroContainer = document.getElementById('hero-mockup-container');
+  const heroBackground = document.getElementById('hero-mockup-background');
+  const heroOverlay = document.getElementById('hero-mockup-overlay');
+  const heroArtwork = document.getElementById('hero-mockup-artwork');
+  const heroFrame = document.getElementById('hero-mockup-frame');
+  const mockupDots = document.getElementById('mockup-dots');
+  const mockupPrev = document.getElementById('mockup-prev');
+  const mockupNext = document.getElementById('mockup-next');
+
+  // Skip if hero section doesn't exist
+  if (!heroSection || MOCKUP_TEMPLATES.length === 0) {
+    return;
+  }
+
+  // State management
+  let currentMockupIndex = 0;
+  let currentSizeScale = 1.0;
+  let currentFrame = 'none';
+  let currentArtworkRatio = 1.0;
+
+  // Calculate artwork aspect ratio
+  if (heroArtwork && heroArtwork.naturalWidth && heroArtwork.naturalHeight) {
+    currentArtworkRatio = heroArtwork.naturalWidth / heroArtwork.naturalHeight;
+  }
+
+  // Initialize mockup system
+  function initializeMockupSystem() {
+    // Show hero section since we have mockups
+    heroSection.setAttribute('data-has-mockups', 'true');
+    heroSection.setAttribute('data-loading', 'false');
+
+    // Create room selector dots
+    createMockupDots();
+
+    // Load first mockup
+    loadMockup(0);
+
+    // Set up event listeners
+    setupMockupControls();
+    setupConfiguratorSync();
+
+    // Get initial size/frame from configurator
+    syncInitialState();
+  }
+
+  // Create room selector dots
+  function createMockupDots() {
+    mockupDots.innerHTML = '';
+    MOCKUP_TEMPLATES.forEach((template, index) => {
+      const dot = document.createElement('button');
+      dot.className = 'mockup-dot';
+      dot.setAttribute('aria-label', `View ${template.name}`);
+      dot.setAttribute('data-mockup-index', index);
+      if (index === 0) dot.classList.add('active');
+      mockupDots.appendChild(dot);
+    });
+  }
+
+  // Load mockup template
+  function loadMockup(index) {
+    if (index < 0 || index >= MOCKUP_TEMPLATES.length) return;
+
+    const template = MOCKUP_TEMPLATES[index];
+    currentMockupIndex = index;
+
+    // Determine which URL to use based on viewport
+    const isMobile = window.innerWidth <= 768;
+    const mockupUrl = isMobile ? template.mobile_url : template.desktop_url;
+
+    // Update background image
+    heroBackground.style.backgroundImage = `url('${mockupUrl}')`;
+
+    // Update overlay positioning via CSS custom properties
+    heroContainer.style.setProperty('--overlay-x', template.overlay_x);
+    heroContainer.style.setProperty('--overlay-y', template.overlay_y);
+    heroContainer.style.setProperty('--overlay-x-mobile', template.overlay_x_mobile);
+    heroContainer.style.setProperty('--overlay-y-mobile', template.overlay_y_mobile);
+    heroContainer.style.setProperty('--base-width', template.base_width);
+    heroContainer.style.setProperty('--base-width-mobile', template.base_width_mobile);
+    heroContainer.style.setProperty('--artwork-ratio', currentArtworkRatio);
+    heroContainer.style.setProperty('--size-scale', currentSizeScale);
+
+    // Update dot indicators
+    document.querySelectorAll('.mockup-dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === index);
+    });
+
+    // Update navigation button states
+    mockupPrev.disabled = index === 0;
+    mockupNext.disabled = index === MOCKUP_TEMPLATES.length - 1;
+  }
+
+  // Setup mockup navigation controls
+  function setupMockupControls() {
+    // Previous button
+    mockupPrev.addEventListener('click', () => {
+      if (currentMockupIndex > 0) {
+        loadMockup(currentMockupIndex - 1);
+      }
+    });
+
+    // Next button
+    mockupNext.addEventListener('click', () => {
+      if (currentMockupIndex < MOCKUP_TEMPLATES.length - 1) {
+        loadMockup(currentMockupIndex + 1);
+      }
+    });
+
+    // Dot navigation
+    mockupDots.addEventListener('click', (e) => {
+      if (e.target.classList.contains('mockup-dot')) {
+        const index = parseInt(e.target.getAttribute('data-mockup-index'));
+        loadMockup(index);
+      }
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' && currentMockupIndex > 0) {
+        loadMockup(currentMockupIndex - 1);
+      } else if (e.key === 'ArrowRight' && currentMockupIndex < MOCKUP_TEMPLATES.length - 1) {
+        loadMockup(currentMockupIndex + 1);
+      }
+    });
+
+    // Responsive mockup switching on resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        loadMockup(currentMockupIndex); // Reload with appropriate mobile/desktop image
+      }, 250);
+    });
+  }
+
+  // Setup synchronization with configurator
+  function setupConfiguratorSync() {
+    // Listen for size changes from configurator
+    document.addEventListener('size-changed', (e) => {
+      updateMockupSize(e.detail.size);
+    });
+
+    // Listen for frame changes from configurator
+    document.addEventListener('frame-changed', (e) => {
+      updateMockupFrame(e.detail.frame);
+    });
+
+    // Also listen to DOM changes for size selection
+    const sizeOptions = document.querySelectorAll('[data-option-type="size"] input[type="radio"]');
+    sizeOptions.forEach(radio => {
+      radio.addEventListener('change', function() {
+        updateMockupSize(this.value);
+      });
+    });
+
+    // Listen for frame toggle changes
+    const frameToggles = document.querySelectorAll('.frame-toggle input[type="radio"]');
+    frameToggles.forEach(radio => {
+      radio.addEventListener('change', function() {
+        updateMockupFrame(this.value);
+      });
+    });
+  }
+
+  // Sync initial state from configurator
+  function syncInitialState() {
+    // Get selected size
+    const selectedSizeRadio = document.querySelector('[data-option-type="size"] input[type="radio"]:checked');
+    if (selectedSizeRadio) {
+      updateMockupSize(selectedSizeRadio.value);
+    }
+
+    // Get selected frame
+    const selectedFrameRadio = document.querySelector('.frame-toggle input[type="radio"]:checked');
+    if (selectedFrameRadio) {
+      updateMockupFrame(selectedFrameRadio.value);
+    }
+  }
+
+  // Update mockup size based on variant selection
+  function updateMockupSize(sizeValue) {
+    // Extract size from variant name (e.g., "8x10 - Canvas" -> "8x10")
+    const sizeMatch = sizeValue.match(/(\d+x\d+)/);
+    if (!sizeMatch) return;
+
+    const size = sizeMatch[1];
+    const scaleFactor = SIZE_SCALE_FACTORS[size] || 1.0;
+
+    currentSizeScale = scaleFactor;
+    heroContainer.style.setProperty('--size-scale', scaleFactor);
+  }
+
+  // Update mockup frame based on frame selection
+  function updateMockupFrame(frameValue) {
+    currentFrame = frameValue;
+    heroFrame.setAttribute('data-frame', frameValue);
+
+    // TODO: Load actual frame PNG assets when available
+    // For now, CSS handles frame styling via data-frame attribute
+  }
+
+  // Initialize the system
+  initializeMockupSystem();
+});

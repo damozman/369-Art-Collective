@@ -33,7 +33,7 @@ import { getAffiliateCodeFromCookie } from "./middleware/affiliate-tracking";
 import { processShopifyOrder } from "./lib/order-processor";
 import { processCreatorStackPurchase } from "./lib/creatorstack-webhook-processor";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
-import { validateImageQuality, MIN_LONG_SIDE, MIN_SHORT_SIDE } from "./lib/image-validator";
+import { validateImageQuality, getImageDimensions, MIN_LONG_SIDE, MIN_SHORT_SIDE } from "./lib/image-validator";
 import { stripeConnectService } from "./lib/stripe-connect";
 import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from "./lib/payout-service";
 import { emailService } from "./lib/email-service";
@@ -2653,9 +2653,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isPrintifyConfigured()) {
         try {
           console.log("Creating Printify product for artwork:", id);
+          
+          // Get image dimensions for variant qualification
+          let dimensions = null;
+          
+          // Try to get dimensions from local file if it's a relative path
+          if (!artwork.imageUrl.startsWith("http")) {
+            const imagePath = path.join(uploadDir, path.basename(artwork.imageUrl));
+            if (fs.existsSync(imagePath)) {
+              dimensions = getImageDimensions(imagePath);
+            }
+          }
+          
+          if (!dimensions) {
+            console.warn("Could not read image dimensions from local file, skipping variant qualification");
+            throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
+          }
+          
+          console.log(`Image dimensions: ${dimensions.width}×${dimensions.height}px`);
+          
           const printifyResult = await createWallArtProducts(
             imageUrl,
             artwork.title,
+            dimensions.width,
+            dimensions.height,
             artwork.description || undefined
           );
 

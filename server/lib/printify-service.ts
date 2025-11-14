@@ -13,8 +13,88 @@ import {
   publishProduct,
   isPrintifyConfigured,
 } from "./printify";
+import { DpiValidatorService } from "./dpi-validator-service";
+import { PRINTIFY_PRODUCTS } from "@shared/financial-utils";
 
 let cachedShopId: string | null = null;
+
+interface PrintifyVariant {
+  id: number;
+  title: string;
+  cost: number;
+}
+
+interface MappedVariant {
+  id: number;
+  price: number;
+  variantKey: string;
+  title: string;
+}
+
+function parsePrintifyDimensions(title: string): { width: number; height: number } | null {
+  const match = title.match(/(\d+(?:\.\d+)?)\s*[×x]\s*(\d+(?:\.\d+)?)/i);
+  if (!match) return null;
+  
+  const dim1 = parseFloat(match[1]);
+  const dim2 = parseFloat(match[2]);
+  
+  return {
+    width: Math.min(dim1, dim2),
+    height: Math.max(dim1, dim2)
+  };
+}
+
+function matchPrintifyVariantsToQualified(
+  printifyVariants: PrintifyVariant[],
+  qualifiedKeys: string[]
+): MappedVariant[] {
+  const matched: MappedVariant[] = [];
+  const variantDimensions = DpiValidatorService.getAllVariantDimensions();
+  
+  for (const qualifiedKey of qualifiedKeys) {
+    const expectedDims = variantDimensions.get(qualifiedKey);
+    if (!expectedDims) {
+      console.warn(`No dimensions found for variant key: ${qualifiedKey}`);
+      continue;
+    }
+    
+    const normalizedExpected = {
+      width: Math.min(expectedDims.width, expectedDims.height),
+      height: Math.max(expectedDims.width, expectedDims.height)
+    };
+    
+    const printifyVariant = printifyVariants.find(pv => {
+      const dims = parsePrintifyDimensions(pv.title);
+      if (!dims) return false;
+      
+      const tolerance = 0.5;
+      return (
+        Math.abs(dims.width - normalizedExpected.width) <= tolerance &&
+        Math.abs(dims.height - normalizedExpected.height) <= tolerance
+      );
+    });
+    
+    if (printifyVariant) {
+      const productInfo = PRINTIFY_PRODUCTS[qualifiedKey];
+      const price = productInfo?.suggestedRetail 
+        ? Math.floor(productInfo.suggestedRetail * 100)
+        : Math.ceil(printifyVariant.cost * 2.5);
+      
+      matched.push({
+        id: printifyVariant.id,
+        price,
+        variantKey: qualifiedKey,
+        title: printifyVariant.title
+      });
+      
+      console.log(`✓ Matched ${qualifiedKey} (${normalizedExpected.width}×${normalizedExpected.height}") to Printify variant: ${printifyVariant.title}`);
+    } else {
+      console.warn(`⚠ No Printify variant found for ${qualifiedKey} (${normalizedExpected.width}×${normalizedExpected.height}")`);
+    }
+  }
+  
+  return matched;
+}
 
 /**
  * Get the Printify shop ID (cached after first fetch)
@@ -35,10 +115,15 @@ async function getShopId(): Promise<string> {
 
 /**
  * Create wall art products from artwork image
- * For MVP: Creates a poster product
- * Future: Will create multiple product types (canvas, framed, metal, etc.)
+ * Creates products only for variants that meet DPI quality requirements
  */
-export async function createWallArtProducts(imageUrl: string, title: string, description?: string) {
+export async function createWallArtProducts(
+  imageUrl: string, 
+  title: string, 
+  imageWidth: number,
+  imageHeight: number,
+  description?: string
+) {
   if (!isPrintifyConfigured()) {
     throw new Error("Printify is not configured");
   }
@@ -80,45 +165,37 @@ export async function createWallArtProducts(imageUrl: string, title: string, des
   const provider = providers[0];
   console.log(`Using provider: ${provider.title} (ID: ${provider.id})`);
 
-  // Step 4: Get variants (sizes) for this blueprint+provider
+  // Step 4: Determine which variants qualify based on image dimensions
+  const qualifiedKeys = DpiValidatorService.getQualifiedVariantKeys(imageWidth, imageHeight);
+  console.log(`Image ${imageWidth}×${imageHeight}px qualifies for ${qualifiedKeys.length} variants:`, qualifiedKeys);
+  
+  if (qualifiedKeys.length === 0) {
+    throw new Error("Image resolution too low - no product variants qualify for print quality standards");
+  }
+
+  // Step 5: Get variants (sizes) for this blueprint+provider
   const variantsData = await getVariants(posterBlueprint.id, provider.id);
   
   if (!variantsData.variants || variantsData.variants.length === 0) {
     throw new Error("No variants found for this blueprint and provider");
   }
 
-  // Step 5: Select common poster sizes and set pricing
-  // Common sizes: 8x10, 11x14, 16x20, 18x24, 24x36
-  const selectedVariants = (variantsData.variants as any[])
-    .filter((v) => {
-      // Filter for common sizes - adjust as needed
-      const title = v.title?.toLowerCase() || "";
-      return (
-        title.includes("8") ||
-        title.includes("11") ||
-        title.includes("16") ||
-        title.includes("18") ||
-        title.includes("24")
-      );
-    })
-    .slice(0, 10) // Limit to 10 variants for MVP
-    .map((v) => ({
-      id: v.id,
-      price: Math.ceil((v.cost || 1000) * 2.5), // 2.5x markup (adjust as needed)
-    }));
-
-  if (selectedVariants.length === 0) {
-    // Fallback: use all available variants
-    console.warn("No common sizes found, using all variants");
-    (variantsData.variants as any[]).slice(0, 10).forEach((v) => {
-      selectedVariants.push({
-        id: v.id,
-        price: Math.ceil((v.cost || 1000) * 2.5),
-      });
-    });
+  // Step 6: Match Printify variants to qualified variant keys
+  const matchedVariants = matchPrintifyVariantsToQualified(
+    variantsData.variants as PrintifyVariant[],
+    qualifiedKeys
+  );
+  
+  if (matchedVariants.length === 0) {
+    throw new Error("No Printify variants matched the qualified sizes - catalog mismatch");
   }
-
-  console.log(`Selected ${selectedVariants.length} variants`);
+  
+  console.log(`Matched ${matchedVariants.length} Printify variants for qualified sizes`);
+  
+  const selectedVariants = matchedVariants.map(v => ({
+    id: v.id,
+    price: v.price
+  }));
 
   // Step 6: Build print areas (where the artwork goes)
   // Placeholders is an array of {position: "front", height: X, width: Y}

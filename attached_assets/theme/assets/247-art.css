@@ -44,7 +44,7 @@ UPDATED: Nov 13 2025 18:20 EST - Navy/Coral/Teal Rebrand
 .hero-mockup-background img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* Show full image without cropping */
   object-position: center;
   display: block;
 }

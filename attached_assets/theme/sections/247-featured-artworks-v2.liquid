@@ -111,6 +111,8 @@ Tabbed browsing, tight 6-column grid, badge overlays
   background: #f7f8f9;
   margin-bottom: 0.5rem;
   transition: all 0.3s ease;
+  /* Base shadow - always visible */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .artwork-card-v2__image {
@@ -142,14 +144,13 @@ Tabbed browsing, tight 6-column grid, badge overlays
   transform: scale(1.03);
 }
 
-/* Add realistic shadow to the container on hover */
+/* Stronger shadow on hover */
 .artwork-card-v2:hover .artwork-card-v2__image-wrapper {
   box-shadow: 
-    0 20px 50px rgba(0, 0, 0, 0.25),
-    0 10px 25px rgba(0, 0, 0, 0.15),
-    0 5px 10px rgba(0, 0, 0, 0.1),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
+    0 25px 60px rgba(0, 0, 0, 0.4),
+    0 15px 35px rgba(0, 0, 0, 0.3),
+    0 8px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(-6px);
 }
 
 /* Badge Overlays */

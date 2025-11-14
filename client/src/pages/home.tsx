@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -38,9 +38,9 @@ export default function Home() {
   
   const testimonials = featuredTestimonials.slice(0, 7);
 
-  const navLinks = [
+  const navLinks: Array<{ name: string; href: string; isRoute?: boolean }> = [
     { name: "How It Works", href: "#how-it-works" },
-    { name: "For Artists", href: "#for-artists" },
+    { name: "Apply as Artist", href: "/join", isRoute: true },
     { name: "Success Stories", href: "#testimonials" },
     { name: "Shop Art", href: "https://bvhpq0-hy.myshopify.com" },
   ];
@@ -120,16 +120,27 @@ export default function Home() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                className="text-base font-medium text-foreground hover:text-primary transition-colors"
-                data-testid={`link-nav-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                {link.name}
-              </a>
-            ))}
+            {navLinks.map((link) => 
+              link.isRoute ? (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                  data-testid={`link-nav-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  {link.name}
+                </Link>
+              ) : (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="text-base font-medium text-foreground hover:text-primary transition-colors"
+                  data-testid={`link-nav-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  {link.name}
+                </a>
+              )
+            )}
           </nav>
 
           <div className="flex items-center gap-3">
@@ -171,17 +182,29 @@ export default function Home() {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t bg-background">
             <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className="text-lg font-medium text-foreground hover:text-primary transition-colors py-3 px-4 rounded-md hover:bg-accent"
-                  onClick={() => setMobileMenuOpen(false)}
-                  data-testid={`link-mobile-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  {link.name}
-                </a>
-              ))}
+              {navLinks.map((link) => 
+                link.isRoute ? (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    className="text-lg font-medium text-foreground hover:text-primary transition-colors py-3 px-4 rounded-md hover:bg-accent"
+                    onClick={() => setMobileMenuOpen(false)}
+                    data-testid={`link-mobile-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    {link.name}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    className="text-lg font-medium text-foreground hover:text-primary transition-colors py-3 px-4 rounded-md hover:bg-accent"
+                    onClick={() => setMobileMenuOpen(false)}
+                    data-testid={`link-mobile-${link.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    {link.name}
+                  </a>
+                )
+              )}
               <div className="flex flex-col gap-2 pt-4 border-t mt-2">
                 <Button 
                   variant="ghost" 
@@ -585,7 +608,7 @@ export default function Home() {
               <Button 
                 size="lg" 
                 variant="secondary"
-                onClick={() => setLocation("/register")}
+                onClick={() => setLocation("/join")}
                 className="text-lg"
                 data-testid="button-apply-now"
               >

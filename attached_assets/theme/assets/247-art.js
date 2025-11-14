@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Current selection state
   let selectedSize = null;
   let selectedFinish = null;
-  let selectedFrame = 'none';
+  let selectedFrame = 'none';  // Derived from finish selection (Framed = black frame)
 
   // Initialize default selections
   function initializeSelections() {
@@ -186,6 +186,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (radio) {
         radio.checked = true;
         selectedFinish = radio.value;
+        
+        // If "Framed" finish is selected, show frame overlay
+        selectedFrame = (selectedFinish === 'Framed') ? 'black' : 'none';
       }
       
       updateVariant();

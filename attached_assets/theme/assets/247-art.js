@@ -258,13 +258,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Create persistent frame overlay element on page load
   let frameOverlay = null;
   function initFrameOverlay() {
-    const mainGallery = document.querySelector('.gallery__main');
-    if (!mainGallery) return;
+    const mainWrapper = document.querySelector('.gallery__main-wrapper');
+    if (!mainWrapper) return;
 
     frameOverlay = document.createElement('div');
     frameOverlay.className = 'frame-overlay';
     frameOverlay.dataset.frameType = 'none';
-    mainGallery.appendChild(frameOverlay);
+    mainWrapper.appendChild(frameOverlay);
   }
 
   // Visual size preview - uses CSS custom property for dimension-aware scaling

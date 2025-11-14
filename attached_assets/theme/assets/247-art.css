@@ -108,8 +108,8 @@ section.pn247-art-product {
   grid-template-rows: auto !important;
   gap: 0.5rem !important;
   max-width: 100% !important;
-  margin: 1.25rem 0 0 0 !important;
-  padding: 0 0.5rem 1rem !important;
+  margin: 0 !important;
+  padding: 0.5rem !important;
   
   /* Prevent base theme interference */
   width: 100% !important;

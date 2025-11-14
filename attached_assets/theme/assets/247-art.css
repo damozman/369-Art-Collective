@@ -147,7 +147,6 @@ section.pn247-art-product .product__media-gallery {
   grid-column: 1 !important;
   grid-row: 1 !important;
   width: 100% !important;
-  max-width: 650px !important;
   height: auto !important;
   z-index: 1 !important;
   display: grid;
@@ -155,12 +154,12 @@ section.pn247-art-product .product__media-gallery {
   gap: 0.25rem;
   padding: 0 !important;
   margin: 0 !important;
-  align-items: center !important;
+  align-items: start !important;
 }
 
-/* Force all gallery grid children to align at center */
+/* Force all gallery grid children to align at top */
 section.pn247-art-product .product__media-gallery > * {
-  align-self: center !important;
+  align-self: start !important;
   margin-top: 0 !important;
   padding-top: 0 !important;
 }

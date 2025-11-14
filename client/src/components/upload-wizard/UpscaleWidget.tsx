@@ -338,7 +338,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
             <div>
               <h4 className="text-sm font-semibold">Analyzing Print Quality...</h4>
-              <p className="text-xs text-muted-foreground">Checking image resolution and DPI</p>
+              <p className="text-xs text-muted-foreground">Checking image resolution for print products</p>
             </div>
           </div>
         ) : analysis ? (
@@ -356,18 +356,18 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
                   <h4 className="text-sm font-semibold">Print Quality Analysis</h4>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-muted-foreground">Resolution:</span>
-                    <p className="font-medium">{analysis.width} × {analysis.height}px</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Estimated DPI:</span>
-                    <p className="font-medium">{analysis.estimatedDpi} DPI</p>
-                  </div>
+                <div className="text-xs">
+                  <span className="text-muted-foreground">Resolution:</span>
+                  <p className="font-medium">{analysis.width} × {analysis.height}px</p>
                 </div>
 
-                <p className="text-xs text-muted-foreground">{analysis.message}</p>
+                <p className="text-xs text-muted-foreground">
+                  {analysis.meetsMinimum 
+                    ? analysis.variantQualification && analysis.variantQualification.totalQualified < analysis.variantQualification.totalVariants
+                      ? `Image qualifies for ${analysis.variantQualification.totalQualified} variants. Upgrade to 3600×5400 pixels for all sizes.`
+                      : "Image meets quality requirements for all print sizes."
+                    : "Image resolution too low. Minimum 2700×3600 pixels required."}
+                </p>
 
                 {analysis.variantQualification && (
                   <div className="pt-2 border-t space-y-2">

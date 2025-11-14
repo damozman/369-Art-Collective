@@ -419,54 +419,55 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
   // Mockup template definitions
   // TODO: Replace with Shopify metafield data when available
-  // CUSTOM POSITIONING - Each mockup optimized for its specific layout
-  // Each room has unique positioning to match wall space and furniture
+  // CUSTOM MOCKUP IMAGES - AI-generated room scenes designed for consistent overlay placement
+  // These images have fixed dimensions and no dynamic cropping, ensuring overlay stays locked
+  // Images are hosted on Shopify CDN for reliable delivery
   const MOCKUP_TEMPLATES = [
     {
       id: 'living-room-modern',
       name: 'Modern Living Room',
-      desktop_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1920&h=1200&fit=crop&crop=center',
-      mobile_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=1000&fit=crop&crop=top',
-      overlay_x: '38%',  // Positioned on left wall area
-      overlay_y: '28%',  // Upper portion of wall
-      overlay_x_mobile: '50%',  // Centered for mobile
-      overlay_y_mobile: '26%',  // Slightly higher on mobile
+      desktop_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-living-room.png',
+      mobile_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-living-room.png',
+      overlay_x: '50%',  // Centered on clear wall space
+      overlay_y: '35%',  // Upper-center wall area
+      overlay_x_mobile: '50%',  // Same position on mobile
+      overlay_y_mobile: '35%',  // Same position on mobile
       base_width: '420px',
       base_width_mobile: '300px'
     },
     {
       id: 'bedroom-cozy',
       name: 'Cozy Bedroom',
-      desktop_url: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1920&h=1200&fit=crop&crop=center',
-      mobile_url: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&h=1000&fit=crop&crop=top',
-      overlay_x: '52%',  // Slightly right of center above bed
-      overlay_y: '24%',  // Above headboard placement
-      overlay_x_mobile: '50%',  // Centered above bed on mobile
-      overlay_y_mobile: '22%',  // Higher for mobile crop
-      base_width: '380px',
-      base_width_mobile: '270px'
+      desktop_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-bedroom.png',
+      mobile_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-bedroom.png',
+      overlay_x: '50%',  // Centered above bed
+      overlay_y: '30%',  // Above headboard area
+      overlay_x_mobile: '50%',  // Same position on mobile
+      overlay_y_mobile: '30%',  // Same position on mobile
+      base_width: '400px',
+      base_width_mobile: '280px'
     },
     {
       id: 'office-minimalist',
       name: 'Minimalist Office',
-      desktop_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=1200&fit=crop&crop=center',
-      mobile_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=1000&fit=crop&crop=top',
-      overlay_x: '62%',  // Right side wall in office
-      overlay_y: '32%',  // Eye level in office setting
-      overlay_x_mobile: '50%',  // Centered for mobile
-      overlay_y_mobile: '30%',  // Adjusted for mobile view
-      base_width: '390px',
+      desktop_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-office.png',
+      mobile_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-office.png',
+      overlay_x: '50%',  // Centered on clean wall
+      overlay_y: '33%',  // Eye level placement
+      overlay_x_mobile: '50%',  // Same position on mobile
+      overlay_y_mobile: '33%',  // Same position on mobile
+      base_width: '400px',
       base_width_mobile: '280px'
     },
     {
       id: 'gallery-wall',
       name: 'Gallery Wall',
-      desktop_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1920&h=1200&fit=crop&crop=center',
-      mobile_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&h=1000&fit=crop&crop=center',
-      overlay_x: '50%',  // Perfectly centered for gallery
-      overlay_y: '30%',  // Museum-style center placement
-      overlay_x_mobile: '50%',  // Stay centered on mobile
-      overlay_y_mobile: '30%',  // Same position works well
+      desktop_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-gallery.png',
+      mobile_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-gallery.png',
+      overlay_x: '50%',  // Perfectly centered
+      overlay_y: '40%',  // Gallery center placement
+      overlay_x_mobile: '50%',  // Same position on mobile
+      overlay_y_mobile: '40%',  // Same position on mobile
       base_width: '400px',
       base_width_mobile: '280px'
     }

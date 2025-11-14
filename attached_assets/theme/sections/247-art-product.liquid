@@ -112,8 +112,14 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
         {%- endif -%}
       </button>
     </form>
+  </div>
+</section>
 
-    {%- comment -%} Artist Spotlight - MOVED DOWN {%- endcomment -%}
+{%- comment -%} BOTTOM SECTION: Artist Info, Trust Badges, Product Details {%- endcomment -%}
+<section class="product-bottom-content">
+  <div class="product-bottom-wrapper">
+    
+    {%- comment -%} Artist Spotlight {%- endcomment -%}
     {%- if product.metafields['247pn'].artist_id -%}
       <div class="artist-spotlight">
         <div class="artist-spotlight__header">
@@ -132,7 +138,7 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
       </div>
     {%- endif -%}
 
-    {%- comment -%} Product Description - MOVED DOWN {%- endcomment -%}
+    {%- comment -%} Product Description {%- endcomment -%}
     {%- if product.description != blank -%}
       <div class="product__description">
         {{ product.description }}

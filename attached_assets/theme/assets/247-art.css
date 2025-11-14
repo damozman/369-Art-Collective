@@ -52,6 +52,7 @@ section.pn247-art-product .product__media-gallery {
 /* Only add thumbnail column when multiple images exist */
 section.pn247-art-product .product__media-gallery.has-thumbnails {
   grid-template-columns: 80px 1fr;
+  align-items: start;
 }
 
 /* Remove sticky behavior - user prefers natural scroll */
@@ -186,36 +187,65 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   outline-offset: 2px;
 }
 
-/* Thumbnail navigation - Vertical left column (Displate-style) */
-.gallery__thumbnails {
+/* Thumbnail navigation container with scroll buttons */
+.gallery__thumbnails-container {
   grid-column: 1;
   grid-row: 1;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 80px;
+}
+
+/* Scroll buttons */
+.gallery__scroll-btn {
+  width: 80px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.gallery__scroll-btn:hover {
+  background: #fff;
+  color: #2c5f8d;
+  border-color: #2c5f8d;
+  box-shadow: 0 2px 8px rgba(44, 95, 141, 0.15);
+}
+
+.gallery__scroll-btn:active {
+  transform: scale(0.95);
+}
+
+.gallery__scroll-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Thumbnail navigation - Vertical left column (Displate-style) */
+.gallery__thumbnails {
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
   width: 80px;
-  max-height: calc((80px * 6) + (0.75rem * 5)); /* 6 thumbnails + gaps */
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(44, 95, 141, 0.3) transparent;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  scroll-behavior: smooth;
 }
 
+/* Hide scrollbar for Chrome/Safari */
 .gallery__thumbnails::-webkit-scrollbar {
-  width: 4px;
-}
-
-.gallery__thumbnails::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.gallery__thumbnails::-webkit-scrollbar-thumb {
-  background: rgba(44, 95, 141, 0.3);
-  border-radius: 2px;
-}
-
-.gallery__thumbnails::-webkit-scrollbar-thumb:hover {
-  background: rgba(44, 95, 141, 0.5);
+  display: none;
 }
 
 .gallery__thumbnail {

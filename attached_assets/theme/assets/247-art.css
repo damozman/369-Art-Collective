@@ -114,12 +114,12 @@ section.pn247-art-product {
   /* Reset any base theme positioning */
   position: relative !important;
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 260px) !important;
+  grid-template-columns: minmax(0, 650px) minmax(220px, 260px) !important;
   grid-template-rows: auto !important;
   gap: 0.5rem !important;
   max-width: 100% !important;
   margin: 0 !important;
-  padding: 1rem 0.5rem 0.5rem !important; /* Add top buffer from header */
+  padding: 2rem 0.5rem 0.5rem !important; /* Add top buffer from header */
   
   /* Prevent base theme interference */
   width: 100% !important;
@@ -166,9 +166,10 @@ section.pn247-art-product .product__media-gallery > * {
 
 /* Only add thumbnail column when multiple images exist */
 section.pn247-art-product .product__media-gallery.has-thumbnails {
-  grid-template-columns: 70px minmax(0, 0.75fr);
+  grid-template-columns: 70px 1fr;
   align-items: start !important;
   gap: 0.5rem;
+  max-width: 650px;
 }
 
 /* Remove sticky behavior - user prefers natural scroll */

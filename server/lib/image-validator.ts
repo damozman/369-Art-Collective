@@ -41,7 +41,7 @@ export function getImageDimensions(filePath: string): ImageDimensions | null {
 }
 
 // Printify wall art quality requirements (flexible for various orientations):
-// - 18"x24" at 150 DPI = 2700x3600 pixels (minimum for 9/12 medium-sized variants)
+// - 18"x24" at 150 DPI = 2700x3600 pixels (minimum for 8/12 small+medium variants)
 // - 24"x36" at 150 DPI = 3600x5400 pixels (all 12 variants)
 // Requirements: At least 2700px on shortest side, 3600px on longest side
 export const MIN_SHORT_SIDE = 2700;

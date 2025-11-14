@@ -111,12 +111,12 @@ export class DpiValidatorService {
     } else if (estimatedDpi >= 200) {
       recommendation = 'good';
       message = `Good quality at ~${estimatedDpi} DPI. Qualifies for ${qualified.length}/${this.PRODUCT_VARIANTS.length} variants. Upscaling could unlock larger sizes.`;
-    } else if (qualified.length >= 9) {
+    } else if (qualified.length >= 8) {
       recommendation = 'needs_upscaling';
-      message = `Your image qualifies for ${qualified.length}/${this.PRODUCT_VARIANTS.length} variants at ~${estimatedDpi} DPI. Upscaling recommended to unlock all sizes.`;
+      message = `Your image qualifies for ${qualified.length}/${this.PRODUCT_VARIANTS.length} variants at ~${estimatedDpi} DPI. Upscaling recommended to unlock larger sizes.`;
     } else if (qualified.length > 0) {
       recommendation = 'unsuitable';
-      message = `Limited quality: only ${qualified.length}/${this.PRODUCT_VARIANTS.length} variants qualify. Please upload a higher resolution image (minimum 2700×3600 pixels for 9+ variants).`;
+      message = `Limited quality: only ${qualified.length}/${this.PRODUCT_VARIANTS.length} variants qualify. Please upload a higher resolution image (minimum 2700×3600 pixels for 8+ variants).`;
     } else {
       recommendation = 'unsuitable';
       message = `Image resolution too low. No variants qualify. Minimum 2700×3600 pixels required.`;
@@ -134,7 +134,7 @@ export class DpiValidatorService {
       height,
       megapixels: parseFloat(megapixels.toFixed(2)),
       estimatedDpi,
-      meetsMinimum: qualified.length >= 9,
+      meetsMinimum: qualified.length >= 8,
       meetsTarget: qualified.length === this.PRODUCT_VARIANTS.length,
       recommendation,
       message,
@@ -176,11 +176,24 @@ export class DpiValidatorService {
 
   static isAcceptableForPrint(width: number, height: number): boolean {
     const analysis = this.analyzePrintQuality(width, height);
-    return analysis.variantQualification.totalQualified >= 9;
+    return analysis.variantQualification.totalQualified >= 8;
   }
   
   static getQualifiedVariantKeys(width: number, height: number): string[] {
     const analysis = this.analyzePrintQuality(width, height);
     return analysis.variantQualification.qualified.map(v => v.variantKey);
+  }
+  
+  static getVariantDimensions(variantKey: string): { width: number; height: number } | null {
+    const variant = this.PRODUCT_VARIANTS.find(v => v.key === variantKey);
+    return variant ? { width: variant.width, height: variant.height } : null;
+  }
+  
+  static getAllVariantDimensions(): Map<string, { width: number; height: number }> {
+    const map = new Map();
+    for (const variant of this.PRODUCT_VARIANTS) {
+      map.set(variant.key, { width: variant.width, height: variant.height });
+    }
+    return map;
   }
 }

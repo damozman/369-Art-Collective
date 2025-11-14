@@ -12,25 +12,39 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
       
       {%- comment -%} Vertical Thumbnails (Displate-style) {%- endcomment -%}
       {%- if product.images.size > 1 -%}
-        <div class="gallery__thumbnails" id="thumbnail-nav">
-          {%- for image in product.images -%}
-            <button 
-              class="gallery__thumbnail {% if forloop.first %}active{% endif %}"
-              data-image-index="{{ forloop.index0 }}"
-              data-image-id="{{ image.id }}"
-              {%- if image.attached_to_variant? -%}
-                data-variant-ids="{{ image.variants | map: 'id' | join: ',' }}"
-              {%- endif -%}
-              aria-label="View image {{ forloop.index }}"
-              aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"
-            >
-              <img 
-                src="{{ image | img_url: '120x120' }}" 
-                alt="{{ image.alt | default: product.title | escape }}"
-                loading="lazy"
+        <div class="gallery__thumbnails-container">
+          <button class="gallery__scroll-btn gallery__scroll-btn--up" aria-label="Scroll up">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="12,10 8,6 4,10"/>
+            </svg>
+          </button>
+          
+          <div class="gallery__thumbnails" id="thumbnail-nav">
+            {%- for image in product.images -%}
+              <button 
+                class="gallery__thumbnail {% if forloop.first %}active{% endif %}"
+                data-image-index="{{ forloop.index0 }}"
+                data-image-id="{{ image.id }}"
+                {%- if image.attached_to_variant? -%}
+                  data-variant-ids="{{ image.variants | map: 'id' | join: ',' }}"
+                {%- endif -%}
+                aria-label="View image {{ forloop.index }}"
+                aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"
               >
-            </button>
-          {%- endfor -%}
+                <img 
+                  src="{{ image | img_url: '120x120' }}" 
+                  alt="{{ image.alt | default: product.title | escape }}"
+                  loading="lazy"
+                >
+              </button>
+            {%- endfor -%}
+          </div>
+          
+          <button class="gallery__scroll-btn gallery__scroll-btn--down" aria-label="Scroll down">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4,6 8,10 12,6"/>
+            </svg>
+          </button>
         </div>
       {%- endif -%}
       

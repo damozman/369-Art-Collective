@@ -383,3 +383,34 @@ document.addEventListener('DOMContentLoaded', () => {
   firstFinishOption?.classList.add('selected');
   firstFrameOption?.classList.add('selected');
 });
+
+// Thumbnail scroll button functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const thumbnailsContainer = document.querySelector('.gallery__thumbnails');
+  const scrollUpBtn = document.querySelector('.gallery__scroll-btn--up');
+  const scrollDownBtn = document.querySelector('.gallery__scroll-btn--down');
+  
+  if (!thumbnailsContainer || !scrollUpBtn || !scrollDownBtn) return;
+  
+  const scrollAmount = 90; // Scroll by one thumbnail height + gap
+  
+  scrollUpBtn.addEventListener('click', function() {
+    thumbnailsContainer.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+  });
+  
+  scrollDownBtn.addEventListener('click', function() {
+    thumbnailsContainer.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+  });
+  
+  // Update button states based on scroll position
+  function updateScrollButtons() {
+    const atTop = thumbnailsContainer.scrollTop === 0;
+    const atBottom = thumbnailsContainer.scrollTop + thumbnailsContainer.clientHeight >= thumbnailsContainer.scrollHeight - 1;
+    
+    scrollUpBtn.disabled = atTop;
+    scrollDownBtn.disabled = atBottom;
+  }
+  
+  thumbnailsContainer.addEventListener('scroll', updateScrollButtons);
+  updateScrollButtons(); // Initial state
+});

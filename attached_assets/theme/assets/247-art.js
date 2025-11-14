@@ -415,80 +415,50 @@ document.addEventListener('DOMContentLoaded', function() {
   updateScrollButtons(); // Initial state
 });
 
-// ===== HERO MOCKUP SYSTEM (Displate-style) =====
+// ===== GALLERY MOCKUP SYSTEM =====
 document.addEventListener('DOMContentLoaded', function() {
-  // DOM elements
-  const heroSection = document.getElementById('hero-mockup-section');
-  const heroContainer = document.getElementById('hero-mockup-container');
-  const heroBackground = document.getElementById('hero-mockup-background');
-  const heroOverlay = document.getElementById('hero-mockup-overlay');
-  const heroArtwork = document.getElementById('hero-mockup-artwork');
-  const heroFrame = document.getElementById('hero-mockup-frame');
-  const mockupDots = document.getElementById('mockup-dots');
-  const mockupPrev = document.getElementById('mockup-prev');
-  const mockupNext = document.getElementById('mockup-next');
-
-  // Skip if hero section doesn't exist
-  if (!heroSection) {
-    return;
-  }
-
-  // Get mockup image URLs from Liquid-injected data attributes
-  const mockupLivingRoom = heroSection.dataset.mockupLivingRoom;
-  const mockupBedroom = heroSection.dataset.mockupBedroom;
-  const mockupOffice = heroSection.dataset.mockupOffice;
-  const mockupGallery = heroSection.dataset.mockupGallery;
-
-  // CUSTOM MOCKUP IMAGES - AI-generated room scenes designed for consistent overlay placement
-  // These images have fixed dimensions and no dynamic cropping, ensuring overlay stays locked
+  // MOCKUP TEMPLATES - overlay positioning data for room mockup slides
+  // Matches data-mockup-room values: 'living-room', 'bedroom', 'office', 'gallery'
   const MOCKUP_TEMPLATES = [
     {
-      id: 'living-room-modern',
+      id: 'living-room',
       name: 'Modern Living Room',
-      desktop_url: mockupLivingRoom,
-      mobile_url: mockupLivingRoom,
       overlay_x: '50%',  // Centered horizontally
-      overlay_y: '42%',  // Adjusted lower - wall center
+      overlay_y: '42%',  // Wall center
       overlay_x_mobile: '50%',
       overlay_y_mobile: '42%',
-      base_width: '420px',
-      base_width_mobile: '300px'
+      base_width: '28%',  // Percentage of rendered image width
+      base_width_mobile: '35%'
     },
     {
-      id: 'bedroom-cozy',
+      id: 'bedroom',
       name: 'Cozy Bedroom',
-      desktop_url: mockupBedroom,
-      mobile_url: mockupBedroom,
       overlay_x: '50%',  // Centered horizontally
-      overlay_y: '38%',  // Adjusted lower - above bed
+      overlay_y: '38%',  // Above bed
       overlay_x_mobile: '50%',
       overlay_y_mobile: '38%',
-      base_width: '400px',
-      base_width_mobile: '280px'
+      base_width: '26%',
+      base_width_mobile: '32%'
     },
     {
-      id: 'office-minimalist',
+      id: 'office',
       name: 'Minimalist Office',
-      desktop_url: mockupOffice,
-      mobile_url: mockupOffice,
       overlay_x: '50%',  // Centered horizontally
-      overlay_y: '40%',  // Adjusted lower - wall center
+      overlay_y: '40%',  // Wall center
       overlay_x_mobile: '50%',
       overlay_y_mobile: '40%',
-      base_width: '400px',
-      base_width_mobile: '280px'
+      base_width: '26%',
+      base_width_mobile: '32%'
     },
     {
-      id: 'gallery-wall',
+      id: 'gallery',
       name: 'Gallery Wall',
-      desktop_url: mockupGallery,
-      mobile_url: mockupGallery,
       overlay_x: '50%',  // Centered horizontally
-      overlay_y: '45%',  // Adjusted lower - gallery center
+      overlay_y: '45%',  // Gallery center
       overlay_x_mobile: '50%',
       overlay_y_mobile: '45%',
-      base_width: '400px',
-      base_width_mobile: '280px'
+      base_width: '26%',
+      base_width_mobile: '32%'
     }
   ];
 
@@ -502,55 +472,9 @@ document.addEventListener('DOMContentLoaded', function() {
     '24x36': 2.00
   };
 
-  // Validate we have mockup URLs
-  if (!mockupLivingRoom || MOCKUP_TEMPLATES.length === 0) {
-    console.warn('Mockup images not found');
-    return;
-  }
-
   // State management
-  let currentMockupIndex = 0;
   let currentSizeScale = 1.0;
   let currentFrame = 'none';
-  let currentArtworkRatio = 1.0;
-
-  // Calculate artwork aspect ratio
-  if (heroArtwork && heroArtwork.naturalWidth && heroArtwork.naturalHeight) {
-    currentArtworkRatio = heroArtwork.naturalWidth / heroArtwork.naturalHeight;
-  }
-
-  // Initialize mockup system
-  function initializeMockupSystem() {
-    // Show hero section since we have mockups
-    heroSection.setAttribute('data-has-mockups', 'true');
-    heroSection.setAttribute('data-loading', 'false');
-
-    // Create room selector dots
-    createMockupDots();
-
-    // Load first mockup
-    loadMockup(0);
-
-    // Set up event listeners
-    setupMockupControls();
-    setupConfiguratorSync();
-
-    // Get initial size/frame from configurator
-    syncInitialState();
-  }
-
-  // Create room selector dots
-  function createMockupDots() {
-    mockupDots.innerHTML = '';
-    MOCKUP_TEMPLATES.forEach((template, index) => {
-      const dot = document.createElement('button');
-      dot.className = 'mockup-dot';
-      dot.setAttribute('aria-label', `View ${template.name}`);
-      dot.setAttribute('data-mockup-index', index);
-      if (index === 0) dot.classList.add('active');
-      mockupDots.appendChild(dot);
-    });
-  }
 
   // Calculate actual rendered image bounds (handles object-fit: contain letterboxing)
   function calculateImageBounds(img, container) {
@@ -587,20 +511,51 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  // Position overlay based on actual image coordinates
-  function positionOverlay() {
-    const bgImg = heroBackground.querySelector('img');
-    if (!bgImg || !bgImg.complete) {
-      console.log('Overlay positioning skipped - image not ready');
+  // Detect and position overlay on active mockup slide
+  function updateMockupOverlay() {
+    // Find active mockup slide
+    const activeSlide = document.querySelector('.gallery__main-image.active[data-mockup="true"]');
+    
+    if (!activeSlide) {
+      // No mockup slide active, skip
       return;
     }
 
-    const template = MOCKUP_TEMPLATES[currentMockupIndex];
-    if (!template) return;
+    const room = activeSlide.dataset.mockupRoom;
+    const template = MOCKUP_TEMPLATES.find(t => t.id === room);
+    
+    if (!template) {
+      console.warn('No template found for room:', room);
+      return;
+    }
 
-    const bounds = calculateImageBounds(bgImg, heroContainer);
+    // Get mockup elements within the active slide
+    const overlay = activeSlide.querySelector('.mockup-slide__overlay');
+    const background = activeSlide.querySelector('.mockup-slide__background');
+    const artwork = activeSlide.querySelector('.mockup-slide__artwork');
+    const frame = activeSlide.querySelector('.mockup-slide__frame');
+    
+    if (!overlay || !background) {
+      console.warn('Mockup slide elements not found');
+      return;
+    }
+
+    // Wait for background image to load
+    const bgImg = background.tagName === 'IMG' ? background : background.querySelector('img');
+    if (!bgImg || !bgImg.complete) {
+      // Image not loaded yet, wait for load event
+      if (bgImg) {
+        bgImg.addEventListener('load', updateMockupOverlay, { once: true });
+      }
+      return;
+    }
+
+    // Calculate actual rendered image bounds
+    const slideContainer = activeSlide.closest('.gallery__main-wrapper') || activeSlide.parentElement;
+    const bounds = calculateImageBounds(bgImg, slideContainer);
+    
     if (!bounds) {
-      console.log('Overlay positioning skipped - bounds calculation failed');
+      console.warn('Could not calculate image bounds');
       return;
     }
 
@@ -613,12 +568,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const absoluteX = bounds.left + (bounds.width * overlayXPercent);
     const absoluteY = bounds.top + (bounds.height * overlayYPercent);
 
-    // Calculate overlay width based on actual rendered mockup size (not viewport)
-    // This ensures artwork scales proportionally with the mockup image
+    // Calculate overlay width based on actual rendered mockup size
     const baseWidthPercent = parseFloat(isMobile ? template.base_width_mobile : template.base_width) / 100;
     const overlayWidthPx = bounds.width * baseWidthPercent * currentSizeScale;
 
-    console.log('Positioning overlay:', {
+    console.log('Positioning mockup overlay:', {
+      room: room,
       template: template.name,
       bounds: bounds,
       overlayXPercent,
@@ -626,168 +581,103 @@ document.addEventListener('DOMContentLoaded', function() {
       absoluteX,
       absoluteY,
       overlayWidthPx,
-      windowWidth: window.innerWidth
+      sizeScale: currentSizeScale
     });
 
-    // Set overlay position and size in pixels (scales with mockup image)
-    heroOverlay.style.left = `${absoluteX}px`;
-    heroOverlay.style.top = `${absoluteY}px`;
-    heroOverlay.style.width = `${overlayWidthPx}px`;
-    
-    // Update artwork ratio for height calculation
-    heroContainer.style.setProperty('--artwork-ratio', currentArtworkRatio);
-  }
+    // Apply positioning
+    overlay.style.left = `${absoluteX}px`;
+    overlay.style.top = `${absoluteY}px`;
+    overlay.style.width = `${overlayWidthPx}px`;
 
-  // Load mockup template
-  function loadMockup(index) {
-    if (index < 0 || index >= MOCKUP_TEMPLATES.length) return;
-
-    const template = MOCKUP_TEMPLATES[index];
-    currentMockupIndex = index;
-
-    // Determine which URL to use based on viewport
-    const isMobile = window.innerWidth <= 768;
-    const mockupUrl = isMobile ? template.mobile_url : template.desktop_url;
-
-    // Update background image using <img> tag instead of CSS background
-    let bgImg = heroBackground.querySelector('img');
-    if (!bgImg) {
-      bgImg = document.createElement('img');
-      bgImg.alt = template.name;
-      heroBackground.appendChild(bgImg);
-      
-      // Reposition overlay when image loads
-      bgImg.addEventListener('load', positionOverlay);
-    }
-    bgImg.src = mockupUrl;
-
-    // Position overlay immediately if image already loaded
-    if (bgImg.complete) {
-      positionOverlay();
-    }
-
-    // Update dot indicators
-    document.querySelectorAll('.mockup-dot').forEach((dot, i) => {
-      dot.classList.toggle('active', i === index);
-    });
-
-    // Update navigation button states
-    mockupPrev.disabled = index === 0;
-    mockupNext.disabled = index === MOCKUP_TEMPLATES.length - 1;
-  }
-
-  // Setup mockup navigation controls
-  function setupMockupControls() {
-    // Previous button
-    mockupPrev.addEventListener('click', () => {
-      if (currentMockupIndex > 0) {
-        loadMockup(currentMockupIndex - 1);
+    // Update frame visibility
+    if (frame) {
+      frame.setAttribute('data-frame', currentFrame);
+      if (currentFrame === 'none') {
+        frame.style.display = 'none';
+      } else {
+        frame.style.display = 'block';
       }
-    });
-
-    // Next button
-    mockupNext.addEventListener('click', () => {
-      if (currentMockupIndex < MOCKUP_TEMPLATES.length - 1) {
-        loadMockup(currentMockupIndex + 1);
-      }
-    });
-
-    // Dot navigation
-    mockupDots.addEventListener('click', (e) => {
-      if (e.target.classList.contains('mockup-dot')) {
-        const index = parseInt(e.target.getAttribute('data-mockup-index'));
-        loadMockup(index);
-      }
-    });
-
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft' && currentMockupIndex > 0) {
-        loadMockup(currentMockupIndex - 1);
-      } else if (e.key === 'ArrowRight' && currentMockupIndex < MOCKUP_TEMPLATES.length - 1) {
-        loadMockup(currentMockupIndex + 1);
-      }
-    });
-
-    // Responsive mockup switching on resize
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(() => {
-        positionOverlay(); // Recalculate position based on new window size
-      }, 100); // Faster debounce for smoother repositioning
-    });
-  }
-
-  // Setup synchronization with configurator
-  function setupConfiguratorSync() {
-    // Listen for size changes from configurator
-    document.addEventListener('size-changed', (e) => {
-      updateMockupSize(e.detail.size);
-    });
-
-    // Listen for frame changes from configurator
-    document.addEventListener('frame-changed', (e) => {
-      updateMockupFrame(e.detail.frame);
-    });
-
-    // Also listen to DOM changes for size selection
-    const sizeOptions = document.querySelectorAll('[data-option-type="size"] input[type="radio"]');
-    sizeOptions.forEach(radio => {
-      radio.addEventListener('change', function() {
-        updateMockupSize(this.value);
-      });
-    });
-
-    // Listen for frame toggle changes
-    const frameToggles = document.querySelectorAll('.frame-toggle input[type="radio"]');
-    frameToggles.forEach(radio => {
-      radio.addEventListener('change', function() {
-        updateMockupFrame(this.value);
-      });
-    });
-  }
-
-  // Sync initial state from configurator
-  function syncInitialState() {
-    // Get selected size
-    const selectedSizeRadio = document.querySelector('[data-option-type="size"] input[type="radio"]:checked');
-    if (selectedSizeRadio) {
-      updateMockupSize(selectedSizeRadio.value);
-    }
-
-    // Get selected frame
-    const selectedFrameRadio = document.querySelector('.frame-toggle input[type="radio"]:checked');
-    if (selectedFrameRadio) {
-      updateMockupFrame(selectedFrameRadio.value);
     }
   }
 
   // Update mockup size based on variant selection
   function updateMockupSize(sizeValue) {
     // Extract size from variant name (e.g., "8x10 - Canvas" -> "8x10")
-    const sizeMatch = sizeValue.match(/(\d+x\d+)/);
+    const sizeMatch = sizeValue?.match(/(\d+x\d+)/);
     if (!sizeMatch) return;
 
     const size = sizeMatch[1];
     const scaleFactor = SIZE_SCALE_FACTORS[size] || 1.0;
 
     currentSizeScale = scaleFactor;
-    heroContainer.style.setProperty('--size-scale', scaleFactor);
     
     // Reposition overlay with new scale
-    positionOverlay();
+    updateMockupOverlay();
   }
 
   // Update mockup frame based on frame selection
   function updateMockupFrame(frameValue) {
     currentFrame = frameValue;
-    heroFrame.setAttribute('data-frame', frameValue);
-
-    // TODO: Load actual frame PNG assets when available
-    // For now, CSS handles frame styling via data-frame attribute
+    
+    // Update overlay with new frame
+    updateMockupOverlay();
   }
 
-  // Initialize the system
-  initializeMockupSystem();
+  // Listen for size changes from variant configurator
+  const sizeOptions = document.querySelectorAll('[data-option-type="size"] input[type="radio"]');
+  sizeOptions.forEach(radio => {
+    radio.addEventListener('change', function() {
+      updateMockupSize(this.value);
+    });
+  });
+
+  // Listen for frame toggle changes
+  const frameToggles = document.querySelectorAll('.frame-toggle input[type="radio"]');
+  frameToggles.forEach(radio => {
+    radio.addEventListener('change', function() {
+      updateMockupFrame(this.value);
+    });
+  });
+
+  // Listen for gallery slide changes (detect via MutationObserver or existing showImage function)
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        // Class changed on gallery image - check if it became active
+        const target = mutation.target;
+        if (target.classList.contains('active') && target.dataset.mockup === 'true') {
+          updateMockupOverlay();
+        }
+      }
+    });
+  });
+
+  // Observe all gallery main images for class changes
+  const mainImages = document.querySelectorAll('.gallery__main-image');
+  mainImages.forEach(img => {
+    observer.observe(img, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  // Window resize handler
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      updateMockupOverlay();
+    }, 100);
+  });
+
+  // Initial state sync
+  const selectedSizeRadio = document.querySelector('[data-option-type="size"] input[type="radio"]:checked');
+  if (selectedSizeRadio) {
+    updateMockupSize(selectedSizeRadio.value);
+  }
+
+  const selectedFrameRadio = document.querySelector('.frame-toggle input[type="radio"]:checked');
+  if (selectedFrameRadio) {
+    updateMockupFrame(selectedFrameRadio.value);
+  }
+
+  // Initial overlay positioning
+  updateMockupOverlay();
 });

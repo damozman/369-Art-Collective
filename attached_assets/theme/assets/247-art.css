@@ -147,7 +147,7 @@ section.pn247-art-product .product__media-gallery {
   grid-column: 1 !important;
   grid-row: 1 !important;
   width: 100% !important;
-  max-width: 500px !important;
+  max-width: 420px !important;
   height: auto !important;
   z-index: 1 !important;
   display: grid;

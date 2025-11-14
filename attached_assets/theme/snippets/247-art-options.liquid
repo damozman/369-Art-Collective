@@ -123,43 +123,50 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
 
   {%- comment -%} SIZE GUIDE {%- endcomment -%}
   <div class="size-guide">
-    <div class="size-guide__title">Size Guide</div>
-    <table class="size-guide__table">
-      <thead>
-        <tr>
-          <th>Size</th>
-          <th>Dimensions</th>
-          <th>Best For</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>8x10"</td>
-          <td>8" × 10"</td>
-          <td>Desks, shelves</td>
-        </tr>
-        <tr>
-          <td>11x14"</td>
-          <td>11" × 14"</td>
-          <td>Small walls</td>
-        </tr>
-        <tr>
-          <td>16x20"</td>
-          <td>16" × 20"</td>
-          <td>Medium walls</td>
-        </tr>
-        <tr>
-          <td>18x24"</td>
-          <td>18" × 24"</td>
-          <td>Gallery walls</td>
-        </tr>
-        <tr>
-          <td>24x36"</td>
-          <td>24" × 36"</td>
-          <td>Statement pieces</td>
-        </tr>
-      </tbody>
-    </table>
+    <button class="size-guide__toggle" id="size-guide-toggle" type="button">
+      <span>Size Guide</span>
+      <svg class="size-guide__icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="3,5 7,9 11,5"/>
+      </svg>
+    </button>
+    <div class="size-guide__content" id="size-guide-content">
+      <table class="size-guide__table">
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>Dimensions</th>
+            <th>Best For</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>8x10"</td>
+            <td>8" × 10"</td>
+            <td>Desks, shelves</td>
+          </tr>
+          <tr>
+            <td>11x14"</td>
+            <td>11" × 14"</td>
+            <td>Small walls</td>
+          </tr>
+          <tr>
+            <td>16x20"</td>
+            <td>16" × 20"</td>
+            <td>Medium walls</td>
+          </tr>
+          <tr>
+            <td>18x24"</td>
+            <td>18" × 24"</td>
+            <td>Gallery walls</td>
+          </tr>
+          <tr>
+            <td>24x36"</td>
+            <td>24" × 36"</td>
+            <td>Statement pieces</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </div>
@@ -207,6 +214,23 @@ document.addEventListener('DOMContentLoaded', function() {
   sizeOptions[0]?.classList.add('selected');
   finishOptions[0]?.classList.add('selected');
   document.getElementById('no-frame-option')?.classList.add('selected');
+
+  // Size guide toggle
+  const sizeGuideToggle = document.getElementById('size-guide-toggle');
+  const sizeGuideContent = document.getElementById('size-guide-content');
+  
+  if (sizeGuideToggle && sizeGuideContent) {
+    sizeGuideToggle.addEventListener('click', function() {
+      const isOpen = sizeGuideContent.classList.contains('open');
+      if (isOpen) {
+        sizeGuideContent.classList.remove('open');
+        sizeGuideToggle.classList.remove('open');
+      } else {
+        sizeGuideContent.classList.add('open');
+        sizeGuideToggle.classList.add('open');
+      }
+    });
+  }
 });
 
 function updateVariant() {

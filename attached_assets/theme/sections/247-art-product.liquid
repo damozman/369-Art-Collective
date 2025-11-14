@@ -97,6 +97,11 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
     </div>
   </div>
 
+  {%- comment -%} MIDDLE COLUMN: Horizontal Configurator {%- endcomment -%}
+  <div class="product__configurator">
+    {% render '247-art-options', product: product %}
+  </div>
+
   {%- comment -%} RIGHT COLUMN: Product Info {%- endcomment -%}
   <div class="product__info">
     
@@ -106,7 +111,7 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
       <div class="product__vendor">{{ product.vendor }}</div>
     </div>
 
-    {%- comment -%} Price Display - MOVED UP {%- endcomment -%}
+    {%- comment -%} Price Display {%- endcomment -%}
     <div class="product__price" id="product-price">
       {{ product.selected_or_first_available_variant.price | money }}
       {%- if product.selected_or_first_available_variant.compare_at_price > product.selected_or_first_available_variant.price -%}
@@ -115,9 +120,6 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
         </span>
       {%- endif -%}
     </div>
-
-    {%- comment -%} Size & Finish Options - COMPACT CONFIGURATOR {%- endcomment -%}
-    {% render '247-art-options', product: product %}
 
     {%- comment -%} Add to Cart Form {%- endcomment -%}
     <form method="post" action="/cart/add" id="add-to-cart-form" class="add-to-cart-form" enctype="multipart/form-data">

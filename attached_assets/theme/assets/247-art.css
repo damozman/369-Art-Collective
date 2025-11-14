@@ -10,9 +10,9 @@ section.pn247-art-product {
   /* Reset any base theme positioning */
   position: relative !important;
   display: grid !important;
-  grid-template-columns: minmax(0, 1.2fr) minmax(380px, 420px) minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0, 1.2fr) minmax(380px, 480px) !important;
   grid-template-rows: auto !important;
-  gap: 2rem !important;
+  gap: 3rem !important;
   max-width: 1400px !important;
   margin: 0 auto !important;
   padding: 3rem 2rem !important;
@@ -44,8 +44,8 @@ section.pn247-art-product .product__media-gallery {
   width: 100% !important;
   height: auto !important;
   z-index: 1 !important;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 80px 1fr;
   gap: 1rem;
 }
 
@@ -60,6 +60,8 @@ section.pn247-art-product .product__media-gallery {
 
 /* Main image viewer */
 .gallery__main {
+  grid-column: 2;
+  grid-row: 1;
   position: relative;
   width: 100%;
   max-height: clamp(480px, 70vh, 720px);
@@ -176,12 +178,14 @@ section.pn247-art-product .product__media-gallery {
   outline-offset: 2px;
 }
 
-/* Thumbnail navigation */
+/* Thumbnail navigation - Vertical left column (Displate-style) */
 .gallery__thumbnails {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
-  width: 100%;
+  width: 80px;
 }
 
 .gallery__thumbnail {
@@ -352,23 +356,10 @@ section.pn247-art-product .product__media-gallery {
 }
 
 /* ===== PRODUCT INFO ===== */
-/* Middle column: Horizontal Configurator */
-section.pn247-art-product .product__configurator {
-  position: relative !important;
-  grid-column: 2 !important;
-  grid-row: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 1.5rem !important;
-  width: 100% !important;
-  z-index: 2 !important;
-  align-self: start !important;
-}
-
-/* Right column: Product Info */
+/* Right column: Product Info + Configurator combined */
 section.pn247-art-product .product__info {
   position: relative !important;
-  grid-column: 3 !important;
+  grid-column: 2 !important;
   grid-row: 1 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -378,14 +369,26 @@ section.pn247-art-product .product__info {
 }
 
 @media (max-width: 900px) {
-  section.pn247-art-product .product__configurator {
-    grid-column: 1 !important;
-    grid-row: 2 !important;
+  section.pn247-art-product .product__media-gallery {
+    grid-template-columns: 1fr;
+  }
+  
+  .gallery__thumbnails {
+    grid-column: 1;
+    grid-row: 2;
+    flex-direction: row;
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .gallery__main {
+    grid-column: 1;
+    grid-row: 1;
   }
   
   section.pn247-art-product .product__info {
     grid-column: 1 !important;
-    grid-row: 3 !important;
+    grid-row: 2 !important;
   }
 }
 

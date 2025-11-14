@@ -6,7 +6,7 @@ UPDATED: Nov 13 2025 18:20 EST - Navy/Coral/Teal Rebrand
 */
 
 /* ===== CRITICAL LAYOUT RESET & GRID ===== */
-section.247pn-art-product {
+section.pn247-art-product {
   /* Reset any base theme positioning */
   position: relative !important;
   display: grid !important;
@@ -24,20 +24,20 @@ section.247pn-art-product {
 }
 
 /* Force children into grid cells */
-section.247pn-art-product > * {
+section.pn247-art-product > * {
   position: relative !important;
   z-index: 1 !important;
 }
 
 @media (max-width: 900px) {
-  section.247pn-art-product {
+  section.pn247-art-product {
     grid-template-columns: 1fr !important;
     gap: 2rem !important;
   }
 }
 
 /* ===== PRODUCT IMAGE GALLERY ===== */
-section.247pn-art-product .product__media-gallery {
+section.pn247-art-product .product__media-gallery {
   position: relative !important;
   grid-column: 1 !important;
   grid-row: 1 !important;
@@ -51,7 +51,7 @@ section.247pn-art-product .product__media-gallery {
 
 /* Sticky gallery on desktop */
 @media (min-width: 1025px) {
-  section.247pn-art-product .product__media-gallery {
+  section.pn247-art-product .product__media-gallery {
     position: sticky !important;
     top: 2rem !important;
     height: fit-content !important;
@@ -353,7 +353,7 @@ section.247pn-art-product .product__media-gallery {
 
 /* ===== PRODUCT INFO ===== */
 /* Middle column: Horizontal Configurator */
-section.247pn-art-product .product__configurator {
+section.pn247-art-product .product__configurator {
   position: relative !important;
   grid-column: 2 !important;
   grid-row: 1 !important;
@@ -366,7 +366,7 @@ section.247pn-art-product .product__configurator {
 }
 
 /* Right column: Product Info */
-section.247pn-art-product .product__info {
+section.pn247-art-product .product__info {
   position: relative !important;
   grid-column: 3 !important;
   grid-row: 1 !important;
@@ -378,12 +378,12 @@ section.247pn-art-product .product__info {
 }
 
 @media (max-width: 900px) {
-  section.247pn-art-product .product__configurator {
+  section.pn247-art-product .product__configurator {
     grid-column: 1 !important;
     grid-row: 2 !important;
   }
   
-  section.247pn-art-product .product__info {
+  section.pn247-art-product .product__info {
     grid-column: 1 !important;
     grid-row: 3 !important;
   }

@@ -55,7 +55,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/pages/join" component={JoinCreatorverse} />
+      <Route path="/join" component={JoinCreatorverse} />
       <Route path="/creatorstack" component={CreatorStack} />
       <Route path="/creatorstack/login" component={CreatorStackLogin} />
       <Route path="/creatorstack/dashboard" component={CreatorStackDashboard} />

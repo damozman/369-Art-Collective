@@ -419,17 +419,20 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
   // Mockup template definitions
   // TODO: Replace with Shopify metafield data when available
+  // STANDARDIZED POSITIONING - All mockups use same overlay position
+  // Desktop: 50% horizontal (centered), 30% from top
+  // Mobile: 50% horizontal (centered), 28% from top
   const MOCKUP_TEMPLATES = [
     {
       id: 'living-room-modern',
       name: 'Modern Living Room',
       desktop_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1920&h=1200&fit=crop&crop=center',
       mobile_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=1000&fit=crop&crop=top',
-      overlay_x: '35%',
-      overlay_y: '28%',
-      overlay_x_mobile: '50%',  // Centered on mobile
-      overlay_y_mobile: '25%',  // Higher up to match wall placement
-      base_width: '420px',
+      overlay_x: '50%',  // Standardized: centered
+      overlay_y: '30%',  // Standardized: 30% from top
+      overlay_x_mobile: '50%',  // Standardized: centered
+      overlay_y_mobile: '28%',  // Standardized: 28% from top
+      base_width: '400px',
       base_width_mobile: '280px'
     },
     {
@@ -437,34 +440,34 @@ document.addEventListener('DOMContentLoaded', function() {
       name: 'Cozy Bedroom',
       desktop_url: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1920&h=1200&fit=crop&crop=center',
       mobile_url: 'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800&h=1000&fit=crop&crop=top',
-      overlay_x: '40%',
-      overlay_y: '25%',
-      overlay_x_mobile: '50%',  // Centered on mobile
-      overlay_y_mobile: '22%',  // Above bed placement
-      base_width: '380px',
-      base_width_mobile: '260px'
+      overlay_x: '50%',  // Standardized: centered
+      overlay_y: '30%',  // Standardized: 30% from top
+      overlay_x_mobile: '50%',  // Standardized: centered
+      overlay_y_mobile: '28%',  // Standardized: 28% from top
+      base_width: '400px',
+      base_width_mobile: '280px'
     },
     {
       id: 'office-minimalist',
       name: 'Minimalist Office',
       desktop_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&h=1200&fit=crop&crop=center',
       mobile_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=1000&fit=crop&crop=top',
-      overlay_x: '32%',
-      overlay_y: '26%',
-      overlay_x_mobile: '50%',  // Centered on mobile
-      overlay_y_mobile: '28%',  // Wall placement
+      overlay_x: '50%',  // Standardized: centered
+      overlay_y: '30%',  // Standardized: 30% from top
+      overlay_x_mobile: '50%',  // Standardized: centered
+      overlay_y_mobile: '28%',  // Standardized: 28% from top
       base_width: '400px',
-      base_width_mobile: '270px'
+      base_width_mobile: '280px'
     },
     {
       id: 'gallery-wall',
       name: 'Gallery Wall',
       desktop_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=1920&h=1200&fit=crop&crop=center',
       mobile_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&h=1000&fit=crop&crop=center',
-      overlay_x: '50%',  // Centered
-      overlay_y: '30%',
-      overlay_x_mobile: '50%',  // Stay centered on mobile
-      overlay_y_mobile: '30%',  // Same position works for gallery
+      overlay_x: '50%',  // Standardized: centered
+      overlay_y: '30%',  // Standardized: 30% from top
+      overlay_x_mobile: '50%',  // Standardized: centered
+      overlay_y_mobile: '28%',  // Standardized: 28% from top
       base_width: '400px',
       base_width_mobile: '280px'
     }

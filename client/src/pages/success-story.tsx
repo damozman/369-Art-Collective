@@ -284,7 +284,7 @@ export default function SuccessStory() {
                 <ul className="space-y-3 text-sm">
                   <li className="flex gap-2">
                     <Lightbulb className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                    <span>Upload <strong>high-quality</strong> artwork (min 2400x3000px)</span>
+                    <span>Upload <strong>high-quality</strong> artwork (min 2400×1800px)</span>
                   </li>
                   <li className="flex gap-2">
                     <Lightbulb className="w-4 h-4 text-primary shrink-0 mt-0.5" />

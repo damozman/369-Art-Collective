@@ -261,6 +261,10 @@ document.addEventListener('DOMContentLoaded', function() {
 .product-card__image--hover {
   opacity: 0;
   z-index: 2;
+  /* Realistic depth effect for mockups - Similar to Displate */
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.18)) 
+          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12))
+          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
 }
 
 /* On hover: swap images and add subtle zoom */
@@ -270,6 +274,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .product-card:hover .product-card__image--hover {
   opacity: 1;
+  /* Enhance shadow on hover for even more depth */
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.22)) 
+          drop-shadow(0 6px 12px rgba(0, 0, 0, 0.14))
+          drop-shadow(0 3px 6px rgba(0, 0, 0, 0.1));
 }
 
 .product-card:hover .product-card__image img {

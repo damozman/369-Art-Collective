@@ -106,10 +106,10 @@ section.pn247-art-product {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 260px) !important;
   grid-template-rows: auto !important;
-  gap: 0.75rem !important;
-  max-width: 1400px !important;
-  margin: 0 auto !important;
-  padding: 0.5rem 2rem 1.5rem !important;
+  gap: 0.5rem !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 0.5rem 1rem !important;
   
   /* Prevent base theme interference */
   width: 100% !important;
@@ -140,7 +140,7 @@ section.pn247-art-product .product__media-gallery {
   z-index: 1 !important;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 /* Only add thumbnail column when multiple images exist */
@@ -162,9 +162,9 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   grid-row: 1;
   position: relative;
   width: 100%;
-  border-radius: 16px;
+  border-radius: 0;
   overflow: visible;
-  background: #f7f8f9;
+  background: transparent;
   /* Support for preview scaling via CSS custom property */
   --preview-scale: 1;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -180,8 +180,8 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   width: 100%;
   padding-bottom: 110%; /* Taller container for larger image display */
   overflow: hidden;
-  border-radius: 12px;
-  background: #f7f8f9;
+  border-radius: 0;
+  background: #f9fafb;
   /* Apply scale transformation based on custom property */
   transform: scale(var(--preview-scale));
   transform-origin: center center;
@@ -198,7 +198,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   opacity: 0;
   transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
-  border-radius: 16px;
+  border-radius: 0;
 }
 
 .gallery__main-image.active {
@@ -348,7 +348,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   height: 70px;
   flex-shrink: 0;
   border: 2px solid transparent;
-  border-radius: 10px;
+  border-radius: 4px;
   overflow: hidden;
   cursor: pointer;
   background: #f7f8f9;

@@ -417,17 +417,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ===== HERO MOCKUP SYSTEM (Displate-style) =====
 document.addEventListener('DOMContentLoaded', function() {
-  // Mockup template definitions
-  // TODO: Replace with Shopify metafield data when available
+  // DOM elements
+  const heroSection = document.getElementById('hero-mockup-section');
+  const heroContainer = document.getElementById('hero-mockup-container');
+  const heroBackground = document.getElementById('hero-mockup-background');
+  const heroOverlay = document.getElementById('hero-mockup-overlay');
+  const heroArtwork = document.getElementById('hero-mockup-artwork');
+  const heroFrame = document.getElementById('hero-mockup-frame');
+  const mockupDots = document.getElementById('mockup-dots');
+  const mockupPrev = document.getElementById('mockup-prev');
+  const mockupNext = document.getElementById('mockup-next');
+
+  // Skip if hero section doesn't exist
+  if (!heroSection) {
+    return;
+  }
+
+  // Get mockup image URLs from Liquid-injected data attributes
+  const mockupLivingRoom = heroSection.dataset.mockupLivingRoom;
+  const mockupBedroom = heroSection.dataset.mockupBedroom;
+  const mockupOffice = heroSection.dataset.mockupOffice;
+  const mockupGallery = heroSection.dataset.mockupGallery;
+
   // CUSTOM MOCKUP IMAGES - AI-generated room scenes designed for consistent overlay placement
   // These images have fixed dimensions and no dynamic cropping, ensuring overlay stays locked
-  // Images are hosted on Shopify CDN for reliable delivery
   const MOCKUP_TEMPLATES = [
     {
       id: 'living-room-modern',
       name: 'Modern Living Room',
-      desktop_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-living-room.png',
-      mobile_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-living-room.png',
+      desktop_url: mockupLivingRoom,
+      mobile_url: mockupLivingRoom,
       overlay_x: '50%',  // Centered on clear wall space
       overlay_y: '35%',  // Upper-center wall area
       overlay_x_mobile: '50%',  // Same position on mobile
@@ -438,8 +457,8 @@ document.addEventListener('DOMContentLoaded', function() {
     {
       id: 'bedroom-cozy',
       name: 'Cozy Bedroom',
-      desktop_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-bedroom.png',
-      mobile_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-bedroom.png',
+      desktop_url: mockupBedroom,
+      mobile_url: mockupBedroom,
       overlay_x: '50%',  // Centered above bed
       overlay_y: '30%',  // Above headboard area
       overlay_x_mobile: '50%',  // Same position on mobile
@@ -450,8 +469,8 @@ document.addEventListener('DOMContentLoaded', function() {
     {
       id: 'office-minimalist',
       name: 'Minimalist Office',
-      desktop_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-office.png',
-      mobile_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-office.png',
+      desktop_url: mockupOffice,
+      mobile_url: mockupOffice,
       overlay_x: '50%',  // Centered on clean wall
       overlay_y: '33%',  // Eye level placement
       overlay_x_mobile: '50%',  // Same position on mobile
@@ -462,8 +481,8 @@ document.addEventListener('DOMContentLoaded', function() {
     {
       id: 'gallery-wall',
       name: 'Gallery Wall',
-      desktop_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-gallery.png',
-      mobile_url: 'https://cdn.shopify.com/s/files/1/0874/1464/5721/files/mockup-gallery.png',
+      desktop_url: mockupGallery,
+      mobile_url: mockupGallery,
       overlay_x: '50%',  // Perfectly centered
       overlay_y: '40%',  // Gallery center placement
       overlay_x_mobile: '50%',  // Same position on mobile
@@ -483,19 +502,9 @@ document.addEventListener('DOMContentLoaded', function() {
     '24x36': 2.00
   };
 
-  // DOM elements
-  const heroSection = document.getElementById('hero-mockup-section');
-  const heroContainer = document.getElementById('hero-mockup-container');
-  const heroBackground = document.getElementById('hero-mockup-background');
-  const heroOverlay = document.getElementById('hero-mockup-overlay');
-  const heroArtwork = document.getElementById('hero-mockup-artwork');
-  const heroFrame = document.getElementById('hero-mockup-frame');
-  const mockupDots = document.getElementById('mockup-dots');
-  const mockupPrev = document.getElementById('mockup-prev');
-  const mockupNext = document.getElementById('mockup-next');
-
-  // Skip if hero section doesn't exist
-  if (!heroSection || MOCKUP_TEMPLATES.length === 0) {
+  // Validate we have mockup URLs
+  if (!mockupLivingRoom || MOCKUP_TEMPLATES.length === 0) {
+    console.warn('Mockup images not found');
     return;
   }
 

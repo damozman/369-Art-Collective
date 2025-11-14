@@ -17,6 +17,7 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
             name="size" 
             value="{{ size_value }}" 
             id="size-{{ size_value | handle }}"
+            form="add-to-cart-form"
             class="visually-hidden"
             {% if forloop.first %}checked{% endif %}
           >
@@ -48,6 +49,7 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
             name="finish" 
             value="{{ finish_value }}" 
             id="finish-{{ finish_value | handle }}"
+            form="add-to-cart-form"
             class="visually-hidden"
             {% if forloop.first %}checked{% endif %}
           >
@@ -75,6 +77,7 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
         name="frame" 
         value="none" 
         id="frame-none"
+        form="add-to-cart-form"
         class="frame-checkbox"
         checked
       >
@@ -91,6 +94,7 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
         name="frame" 
         value="black" 
         id="frame-black"
+        form="add-to-cart-form"
         class="frame-checkbox"
       >
       <div class="frame-info">
@@ -106,6 +110,7 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
         name="frame" 
         value="white" 
         id="frame-white"
+        form="add-to-cart-form"
         class="frame-checkbox"
       >
       <div class="frame-info">

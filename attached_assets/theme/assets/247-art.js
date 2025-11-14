@@ -242,10 +242,63 @@ document.addEventListener('DOMContentLoaded', () => {
         showImage(imageIndex);
       }
 
+      // Update visual size preview
+      updateSizePreview(selectedSize);
+
+      // Update frame overlay
+      updateFrameOverlay(selectedFrame);
+
       console.log('Variant selected:', matchingVariant);
     } else {
       console.warn('No matching variant found for:', { selectedSize, selectedFinish });
     }
+  }
+
+  // Visual size preview - scales the image based on selected size
+  function updateSizePreview(size) {
+    const mainImageWrapper = document.getElementById('main-image-wrapper');
+    if (!mainImageWrapper) return;
+
+    // Size scale mapping (relative visual representation)
+    const sizeScales = {
+      '8x10': 0.70,
+      '11x14': 0.85,
+      '16x20': 1.00,
+      '18x24': 1.10,
+      '24x36': 1.30,
+      // Fallback patterns
+      'M': 0.85,
+      'L': 1.00,
+      'XL': 1.15
+    };
+
+    const scale = sizeScales[size] || 1.00;
+    
+    // Apply transform with smooth transition
+    mainImageWrapper.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+    mainImageWrapper.style.transform = `scale(${scale})`;
+  }
+
+  // Frame overlay system
+  function updateFrameOverlay(frameType) {
+    // Remove existing frame overlay
+    const existingOverlay = document.querySelector('.frame-overlay');
+    if (existingOverlay) {
+      existingOverlay.remove();
+    }
+
+    // Don't add overlay for "none"
+    if (frameType === 'none') return;
+
+    // Create frame overlay
+    const mainImageWrapper = document.getElementById('main-image-wrapper');
+    if (!mainImageWrapper) return;
+
+    const frameOverlay = document.createElement('div');
+    frameOverlay.className = 'frame-overlay';
+    frameOverlay.dataset.frameType = frameType;
+    
+    mainImageWrapper.parentElement.appendChild(frameOverlay);
   }
 
   // Update price display
@@ -285,6 +338,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (matchingVariant) {
       updatePriceDisplay(matchingVariant.price);
     }
+
+    // Update frame overlay when frame changes
+    updateFrameOverlay(selectedFrame);
   }
 
   // Update availability

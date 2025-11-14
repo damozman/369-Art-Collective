@@ -11,6 +11,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 interface UpscaleWidgetProps {
   selectedFile: File | null;
   onUpscaledFile: (file: File, upscaledUrl: string) => void;
+  onValidationChange?: (status: "pending" | "invalid" | "valid") => void;
 }
 
 interface DpiAnalysis {
@@ -34,7 +35,7 @@ interface QuotaStatus {
   message: string;
 }
 
-export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetProps) {
+export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange }: UpscaleWidgetProps) {
   const { toast } = useToast();
   const [analysis, setAnalysis] = useState<DpiAnalysis | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
@@ -46,6 +47,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isCompletedRef = useRef(false);
   const uploadStartTimeRef = useRef<number>(0);
+  const currentFileTokenRef = useRef<string | null>(null);
 
   const { data: quota } = useQuery<QuotaStatus>({
     queryKey: ['/api/upscale/quota'],
@@ -54,13 +56,21 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
 
   useEffect(() => {
     if (selectedFile) {
-      uploadAndAnalyzeImage();
+      // Generate unique token for this file to prevent race conditions
+      const fileToken = `${selectedFile.name}-${selectedFile.size}-${selectedFile.lastModified}`;
+      currentFileTokenRef.current = fileToken;
+      
+      onValidationChange?.("pending");
+      setAnalysis(null); // Clear stale analysis from previous file
+      uploadAndAnalyzeImage(fileToken);
     } else {
       cleanup();
       setAnalysis(null);
       setJobId(null);
       setProgress(0);
       setImageUrl(null);
+      currentFileTokenRef.current = null;
+      onValidationChange?.("invalid");
     }
     
     return () => cleanup();
@@ -77,7 +87,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
     }
   };
 
-  const uploadAndAnalyzeImage = async () => {
+  const uploadAndAnalyzeImage = async (fileToken: string) => {
     if (!selectedFile) return;
 
     uploadStartTimeRef.current = Date.now();
@@ -98,6 +108,9 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
 
       const uploadData = await uploadResponse.json();
       const uploadedUrl = uploadData.url;
+      
+      // Only update if this is still the current file
+      if (currentFileTokenRef.current !== fileToken) return;
       setImageUrl(uploadedUrl);
 
       const img = new Image();
@@ -110,7 +123,10 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
           });
           const analyzeData = await analyzeResponse.json();
 
-          setAnalysis({
+          // Only process results if this is still the current file
+          if (currentFileTokenRef.current !== fileToken) return;
+
+          const analysisResult = {
             width: img.width,
             height: img.height,
             estimatedDpi: analyzeData.current.estimatedDpi,
@@ -120,9 +136,21 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
             needsUpscale: analyzeData.shouldRecommend,
             recommendedScale: analyzeData.recommendedScale,
             message: analyzeData.current.message,
-          });
+          };
+          setAnalysis(analysisResult);
+          
+          // Report validation status only for current file
+          if (analysisResult.meetsMinimum) {
+            onValidationChange?.("valid");
+          } else {
+            onValidationChange?.("invalid");
+          }
         } catch (error) {
           console.error('Failed to analyze image:', error);
+          // Only report error if this is still the current file
+          if (currentFileTokenRef.current === fileToken) {
+            onValidationChange?.("invalid");
+          }
         } finally {
           // Ensure minimum loading state display time of 250ms for visual consistency
           const MIN_LOADING_TIME = 250;
@@ -138,12 +166,16 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile }: UpscaleWidgetPro
       img.src = uploadedUrl;
     } catch (error) {
       console.error('Failed to upload and analyze image:', error);
-      toast({
-        title: "Upload failed",
-        description: "Could not upload image for analysis",
-        variant: "destructive",
-      });
-      setIsUploading(false);
+      // Only show error and update validation if this is still the current file
+      if (currentFileTokenRef.current === fileToken) {
+        toast({
+          title: "Upload failed",
+          description: "Could not upload image for analysis",
+          variant: "destructive",
+        });
+        setIsUploading(false);
+        onValidationChange?.("invalid");
+      }
     }
   };
 

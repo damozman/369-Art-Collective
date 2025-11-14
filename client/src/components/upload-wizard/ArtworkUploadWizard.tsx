@@ -55,6 +55,7 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageValidationStatus, setImageValidationStatus] = useState<"pending" | "invalid" | "valid">("invalid");
 
   const form = useForm<WizardFormData>({
     resolver: zodResolver(wizardSchema),
@@ -76,8 +77,8 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
 
     // Validate current step fields
     if (currentStep === 1) {
-      if (!selectedFile) {
-        return; // Can't proceed without file
+      if (!selectedFile || imageValidationStatus !== "valid") {
+        return; // Can't proceed without valid file
       }
     } else if (currentStep === 2) {
       isValid = await form.trigger(["title", "description", "tags"]);
@@ -102,8 +103,10 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
     setSelectedFile(file);
     if (file) {
       setPreviewUrl(URL.createObjectURL(file));
+      setImageValidationStatus("pending"); // Reset validation when file changes
     } else {
       setPreviewUrl(null);
+      setImageValidationStatus("invalid");
     }
   };
 
@@ -173,6 +176,7 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
               selectedFile={selectedFile}
               previewUrl={previewUrl}
               onFileChange={handleFileChange}
+              onValidationChange={setImageValidationStatus}
             />
           )}
           {currentStep === 2 && <StepBasicDetails form={form} />}
@@ -205,7 +209,7 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
           <Button
             type="button"
             onClick={handleNext}
-            disabled={currentStep === 1 && !selectedFile}
+            disabled={currentStep === 1 && (!selectedFile || imageValidationStatus !== "valid")}
             data-testid="button-next"
           >
             Next

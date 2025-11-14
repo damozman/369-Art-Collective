@@ -2,88 +2,60 @@
 247 Print Network - Premium Art Product Styles
 Modern 2024/2025 Design - Clean, Contemporary, Artist-Centric
 DEFENSIVE CSS - Overrides base theme
-UPDATED: Nov 14 2025 07:04 EST - Mockup Container Size Reduction (85% width)
+UPDATED: Nov 14 2025 08:20 EST - Mockup slides integrated into gallery
 */
 
-/* ===== HERO MOCKUP SECTION (Displate-style) ===== */
-.hero-mockup-section {
+/* ===== GALLERY MOCKUP SLIDES ===== */
+.gallery__mockup-slide {
   position: relative;
   width: 100%;
-  margin: 0 0 2rem 0;
+  height: 100%;
+}
+
+.mockup-slide__container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: #f9fafb;
 }
 
-.hero-mockup-container {
-  position: relative;
-  width: 85% !important; /* Reduced from 100% by 15% - FORCE OVERRIDE */
-  height: 0;
-  /* 16:9 aspect ratio to match mockup images exactly - NO letterboxing */
-  padding-bottom: 47.8125% !important; /* (9/16) * 0.85 = 56.25% * 0.85 */
-  max-width: 85vw !important;
-  margin: 0 auto !important; /* Center the container */
-  overflow: hidden;
-  background-color: #e5e7eb;
-}
-
-/* Force absolute positioning for all children to work with padding-bottom trick */
-.hero-mockup-container > * {
-  position: absolute;
-  top: 0;
-  left: 0;
+.mockup-slide__background {
   width: 100%;
   height: 100%;
-}
-
-.hero-mockup-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* Mockup background image element */
-.hero-mockup-background img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* Show full image without cropping */
+  object-fit: contain;
   object-position: center;
   display: block;
 }
 
-/* Product artwork overlay container */
-.hero-mockup-overlay {
+.mockup-slide__overlay {
   position: absolute;
   /* Position set via JavaScript based on actual rendered image bounds */
-  /* left and top will be set as pixel values by JS */
   transform: translate(-50%, -50%) scale(var(--size-scale, 1.0));
   transform-origin: center center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  
-  /* Base dimensions */
   width: var(--base-width, 400px);
   aspect-ratio: var(--artwork-ratio, 1);
-  
-  /* Ensure proper layering */
   z-index: 10;
 }
 
-.hero-mockup-artwork {
+.mockup-slide__artwork {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Show full artwork without cropping */
+  object-fit: contain;
   display: block;
   border-radius: 4px;
   position: relative;
   z-index: 10;
 }
 
-/* Frame overlay on top of artwork - PNG/SVG layer */
-.hero-mockup-frame {
+.mockup-slide__frame {
   position: absolute;
-  top: -8px; /* Offset to account for frame width */
+  top: -8px;
   left: -8px;
-  width: calc(100% + 16px); /* Frame extends beyond artwork */
+  width: calc(100% + 16px);
   height: calc(100% + 16px);
   pointer-events: none;
   z-index: 20;
@@ -95,125 +67,36 @@ UPDATED: Nov 14 2025 07:04 EST - Mockup Container Size Reduction (85% width)
   transition: opacity 0.3s ease;
 }
 
-/* Frame visibility states - will load actual PNG assets */
-.hero-mockup-frame[data-frame="black"] {
+.mockup-slide__frame[data-frame="black"],
+.mockup-slide__frame[data-frame="white"] {
   opacity: 1;
-  /* Will be set via JS: background-image: url('frame-black.png'); */
 }
 
-.hero-mockup-frame[data-frame="white"] {
-  opacity: 1;
-  /* Will be set via JS: background-image: url('frame-white.png'); */
-}
-
-.hero-mockup-frame[data-frame="none"] {
+.mockup-slide__frame[data-frame="none"] {
   opacity: 0;
 }
 
-/* Mockup navigation controls */
-.hero-mockup-controls {
+/* Thumbnail labels for mockup slides */
+.thumbnail-label {
   position: absolute;
-  bottom: 2rem;
+  bottom: 4px;
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  z-index: 20;
-}
-
-.hero-mockup-nav {
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
-  border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #2c5f8d;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.hero-mockup-nav:hover {
-  background: #ffffff;
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.hero-mockup-nav:active {
-  transform: scale(0.95);
-}
-
-.hero-mockup-nav:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-/* Room selector dots */
-.hero-mockup-dots {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.mockup-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-  border: 2px solid rgba(44, 95, 141, 0.3);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0;
-}
-
-.mockup-dot:hover {
-  background: rgba(255, 255, 255, 0.8);
-  transform: scale(1.2);
-}
-
-.mockup-dot.active {
-  background: #2c5f8d;
-  border-color: #2c5f8d;
-  transform: scale(1.3);
+  font-size: 10px;
+  color: #ffffff;
+  background: rgba(44, 95, 141, 0.9);
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  font-weight: 500;
 }
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-  .hero-mockup-overlay {
-    /* Position set via JavaScript - no percentage overrides needed */
-    /* Smaller scale on mobile */
+  .mockup-slide__overlay {
     transform: translate(-50%, -50%) scale(calc(var(--size-scale, 1.0) * 0.7));
   }
-  
-  .hero-mockup-controls {
-    bottom: 1rem;
-    gap: 1rem;
-  }
-  
-  .hero-mockup-nav {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .mockup-dot {
-    width: 10px;
-    height: 10px;
-  }
-}
-
-/* Graceful degradation - hide hero section when no mockups configured */
-.hero-mockup-section[data-has-mockups="false"] {
-  display: none;
-}
-
-/* Loading state while mockup data initializes */
-.hero-mockup-section[data-loading="true"] .hero-mockup-container {
-  opacity: 0.5;
-  pointer-events: none;
 }
 
 /* ===== CRITICAL LAYOUT RESET & GRID ===== */

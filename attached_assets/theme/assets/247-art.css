@@ -201,6 +201,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   overflow: hidden;
   border-radius: 0;
   background: transparent;
+  margin: 0;
   /* Container stays fixed - only overlay scales */
   isolation: isolate;
 }

@@ -183,7 +183,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 .gallery__main-wrapper {
   position: relative;
   width: 100%;
-  padding-bottom: 110%; /* Taller container for larger image display */
+  padding-bottom: 66.67%; /* 3:2 landscape aspect ratio for mockup rooms */
   overflow: hidden;
   border-radius: 0;
   background: transparent;

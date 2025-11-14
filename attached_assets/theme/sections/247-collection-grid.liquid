@@ -40,8 +40,20 @@ Premium grid layout with filters and sorting
                     loading="lazy"
                     class="product-card__image--primary"
                   >
-                  {% comment %} Show second image (first mockup) on hover if available {% endcomment %}
-                  {% if product.media[1] and product.media[1].media_type == 'image' %}
+                  {% comment %} Randomize mockup selection (media[1], media[2], or media[3]) {% endcomment %}
+                  {% assign product_id_num = product.id | modulo: 3 %}
+                  {% assign mockup_index = product_id_num | plus: 1 %}
+                  {% assign selected_mockup = product.media[mockup_index] %}
+                  
+                  {% if selected_mockup and selected_mockup.media_type == 'image' %}
+                    <img 
+                      src="{{ selected_mockup | img_url: '600x600' }}" 
+                      alt="{{ product.title }} - Mockup View"
+                      loading="lazy"
+                      class="product-card__image--hover"
+                    >
+                  {% elsif product.media[1] and product.media[1].media_type == 'image' %}
+                    {% comment %} Fallback to first mockup if random selection fails {% endcomment %}
                     <img 
                       src="{{ product.media[1] | img_url: '600x600' }}" 
                       alt="{{ product.title }} - Mockup View"

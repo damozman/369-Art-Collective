@@ -336,14 +336,32 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   >
                 {% endif %}
                 
-                {% comment %}Hover image: use product's second media if available, fallback to mockup_image or primary{% endcomment %}
-                {% if product and product.media[1] and product.media[1].media_type == 'image' %}
-                  <img 
-                    src="{{ product.media[1] | img_url: '600x600' }}" 
-                    alt="{{ product.title }} - Mockup View"
-                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
-                    loading="lazy"
-                  >
+                {% comment %}Hover image: randomize mockup selection for variety{% endcomment %}
+                {% if product %}
+                  {% assign product_id_num = product.id | modulo: 3 %}
+                  {% assign mockup_index = product_id_num | plus: 1 %}
+                  {% assign selected_mockup = product.media[mockup_index] %}
+                  
+                  {% if selected_mockup and selected_mockup.media_type == 'image' %}
+                    <img 
+                      src="{{ selected_mockup | img_url: '600x600' }}" 
+                      alt="{{ product.title }} - Mockup View"
+                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                      loading="lazy"
+                    >
+                  {% elsif product.media[1] and product.media[1].media_type == 'image' %}
+                    <img 
+                      src="{{ product.media[1] | img_url: '600x600' }}" 
+                      alt="{{ product.title }} - Mockup View"
+                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                      loading="lazy"
+                    >
+                  {% endif %}
+                {% endif %}
+                
+                {% comment %}Fallback to manual mockup or primary image{% endcomment %}
+                {% unless product and selected_mockup %}
+                  {% if product and product.media[1] and product.media[1].media_type == 'image' %}
                 {% elsif block.settings.mockup_image != blank %}
                   <img 
                     src="{{ block.settings.mockup_image }}" 
@@ -366,6 +384,7 @@ Tabbed browsing, tight 6-column grid, badge overlays
                     loading="lazy"
                   >
                 {% endif %}
+                {% endunless %}
                 
                 {% if block.settings.badge != blank %}
                   <div class="artwork-card-v2__badge artwork-card-v2__badge--{{ block.settings.badge }}">
@@ -428,15 +447,32 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   >
                 {% endif %}
                 
-                {% comment %}Hover image{% endcomment %}
-                {% if product and product.media[1] and product.media[1].media_type == 'image' %}
-                  <img 
-                    src="{{ product.media[1] | img_url: '600x600' }}" 
-                    alt="{{ product.title }} - Mockup View"
-                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
-                    loading="lazy"
-                  >
-                {% elsif block.settings.mockup_image != blank %}
+                {% comment %}Hover image: randomize mockup selection{% endcomment %}
+                {% if product %}
+                  {% assign product_id_num = product.id | modulo: 3 %}
+                  {% assign mockup_index = product_id_num | plus: 1 %}
+                  {% assign selected_mockup = product.media[mockup_index] %}
+                  
+                  {% if selected_mockup and selected_mockup.media_type == 'image' %}
+                    <img 
+                      src="{{ selected_mockup | img_url: '600x600' }}" 
+                      alt="{{ product.title }} - Mockup View"
+                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                      loading="lazy"
+                    >
+                  {% elsif product.media[1] and product.media[1].media_type == 'image' %}
+                    <img 
+                      src="{{ product.media[1] | img_url: '600x600' }}" 
+                      alt="{{ product.title }} - Mockup View"
+                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                      loading="lazy"
+                    >
+                  {% endif %}
+                {% endif %}
+                
+                {% comment %}Fallback to manual mockup or primary image{% endcomment %}
+                {% unless product and selected_mockup %}
+                  {% if block.settings.mockup_image != blank %}
                   <img 
                     src="{{ block.settings.mockup_image }}" 
                     alt="{{ block.settings.artwork_title }} Mockup"
@@ -458,6 +494,7 @@ Tabbed browsing, tight 6-column grid, badge overlays
                     loading="lazy"
                   >
                 {% endif %}
+                {% endunless %}
                 
                 {% if block.settings.badge != blank %}
                   <div class="artwork-card-v2__badge artwork-card-v2__badge--{{ block.settings.badge }}">
@@ -520,15 +557,32 @@ Tabbed browsing, tight 6-column grid, badge overlays
                   >
                 {% endif %}
                 
-                {% comment %}Hover image{% endcomment %}
-                {% if product and product.media[1] and product.media[1].media_type == 'image' %}
-                  <img 
-                    src="{{ product.media[1] | img_url: '600x600' }}" 
-                    alt="{{ product.title }} - Mockup View"
-                    class="artwork-card-v2__image artwork-card-v2__image--secondary"
-                    loading="lazy"
-                  >
-                {% elsif block.settings.mockup_image != blank %}
+                {% comment %}Hover image: randomize mockup selection{% endcomment %}
+                {% if product %}
+                  {% assign product_id_num = product.id | modulo: 3 %}
+                  {% assign mockup_index = product_id_num | plus: 1 %}
+                  {% assign selected_mockup = product.media[mockup_index] %}
+                  
+                  {% if selected_mockup and selected_mockup.media_type == 'image' %}
+                    <img 
+                      src="{{ selected_mockup | img_url: '600x600' }}" 
+                      alt="{{ product.title }} - Mockup View"
+                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                      loading="lazy"
+                    >
+                  {% elsif product.media[1] and product.media[1].media_type == 'image' %}
+                    <img 
+                      src="{{ product.media[1] | img_url: '600x600' }}" 
+                      alt="{{ product.title }} - Mockup View"
+                      class="artwork-card-v2__image artwork-card-v2__image--secondary"
+                      loading="lazy"
+                    >
+                  {% endif %}
+                {% endif %}
+                
+                {% comment %}Fallback to manual mockup or primary image{% endcomment %}
+                {% unless product and selected_mockup %}
+                  {% if block.settings.mockup_image != blank %}
                   <img 
                     src="{{ block.settings.mockup_image }}" 
                     alt="{{ block.settings.artwork_title }} Mockup"
@@ -550,6 +604,7 @@ Tabbed browsing, tight 6-column grid, badge overlays
                     loading="lazy"
                   >
                 {% endif %}
+                {% endunless %}
                 
                 {% if block.settings.badge != blank %}
                   <div class="artwork-card-v2__badge artwork-card-v2__badge--{{ block.settings.badge }}">

@@ -380,7 +380,7 @@ section.pn247-art-product .product__info {
 
 @media (max-width: 900px) {
   section.pn247-art-product .product__media-gallery {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
   
   .gallery__thumbnails {
@@ -392,8 +392,13 @@ section.pn247-art-product .product__info {
   }
   
   .gallery__main {
-    grid-column: 1;
+    grid-column: 1 !important;
     grid-row: 1;
+  }
+  
+  /* Override desktop thumbnail positioning on mobile */
+  .product__media-gallery.has-thumbnails .gallery__main {
+    grid-column: 1 !important;
   }
   
   section.pn247-art-product .product__info {

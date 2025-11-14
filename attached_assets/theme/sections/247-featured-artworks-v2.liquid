@@ -106,10 +106,11 @@ Tabbed browsing, tight 6-column grid, badge overlays
 .artwork-card-v2__image-wrapper {
   position: relative;
   aspect-ratio: 3 / 4;
-  overflow: hidden;
+  overflow: visible; /* Allow shadows to show */
   border-radius: 8px;
   background: #f7f8f9;
   margin-bottom: 0.5rem;
+  padding: 12px; /* Add space for shadows */
 }
 
 .artwork-card-v2__image {
@@ -120,6 +121,7 @@ Tabbed browsing, tight 6-column grid, badge overlays
   position: absolute;
   top: 0;
   left: 0;
+  border-radius: 8px; /* Apply rounding to images */
 }
 
 .artwork-card-v2__image--primary {
@@ -130,10 +132,10 @@ Tabbed browsing, tight 6-column grid, badge overlays
 .artwork-card-v2__image--secondary {
   z-index: 0;
   opacity: 0;
-  /* Realistic depth effect for mockups - Similar to Displate */
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.18)) 
-          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12))
-          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+  /* Stronger realistic depth effect - visible shadows */
+  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3)) 
+          drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2))
+          drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
 }
 
 .artwork-card-v2:hover .artwork-card-v2__image--primary {
@@ -143,10 +145,10 @@ Tabbed browsing, tight 6-column grid, badge overlays
 .artwork-card-v2:hover .artwork-card-v2__image--secondary {
   opacity: 1;
   transform: scale(1.03);
-  /* Enhance shadow on hover for even more depth */
-  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.22)) 
-          drop-shadow(0 6px 12px rgba(0, 0, 0, 0.14))
-          drop-shadow(0 3px 6px rgba(0, 0, 0, 0.1));
+  /* Much stronger shadow on hover for dramatic depth */
+  filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.35)) 
+          drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25))
+          drop-shadow(0 4px 8px rgba(0, 0, 0, 0.18));
 }
 
 /* Badge Overlays */

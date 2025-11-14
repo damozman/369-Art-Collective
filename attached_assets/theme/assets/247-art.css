@@ -29,7 +29,7 @@ section.247pn-art-product > * {
   z-index: 1 !important;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 900px) {
   section.247pn-art-product {
     grid-template-columns: 1fr !important;
     gap: 2rem !important;
@@ -377,7 +377,7 @@ section.247pn-art-product .product__info {
   z-index: 2 !important;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 900px) {
   section.247pn-art-product .product__configurator {
     grid-column: 1 !important;
     grid-row: 2 !important;

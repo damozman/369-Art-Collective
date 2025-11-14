@@ -613,6 +613,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const absoluteX = bounds.left + (bounds.width * overlayXPercent);
     const absoluteY = bounds.top + (bounds.height * overlayYPercent);
 
+    // Calculate overlay width based on actual rendered mockup size (not viewport)
+    // This ensures artwork scales proportionally with the mockup image
+    const baseWidthPercent = parseFloat(isMobile ? template.base_width_mobile : template.base_width) / 100;
+    const overlayWidthPx = bounds.width * baseWidthPercent * currentSizeScale;
+
     console.log('Positioning overlay:', {
       template: template.name,
       bounds: bounds,
@@ -620,18 +625,17 @@ document.addEventListener('DOMContentLoaded', function() {
       overlayYPercent,
       absoluteX,
       absoluteY,
+      overlayWidthPx,
       windowWidth: window.innerWidth
     });
 
-    // Set overlay position using pixels for X, but keep Y relative to container
-    // to avoid letterboxing drift issues
+    // Set overlay position and size in pixels (scales with mockup image)
     heroOverlay.style.left = `${absoluteX}px`;
-    heroOverlay.style.top = `${overlayYPercent * 100}%`;
-
-    // Update other CSS properties
-    heroContainer.style.setProperty('--base-width', isMobile ? template.base_width_mobile : template.base_width);
+    heroOverlay.style.top = `${absoluteY}px`;
+    heroOverlay.style.width = `${overlayWidthPx}px`;
+    
+    // Update artwork ratio for height calculation
     heroContainer.style.setProperty('--artwork-ratio', currentArtworkRatio);
-    heroContainer.style.setProperty('--size-scale', currentSizeScale);
   }
 
   // Load mockup template

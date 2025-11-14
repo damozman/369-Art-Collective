@@ -1,0 +1,126 @@
+abandoned-factory-1:127  POST https://monorail-edge.shopifysvc.com/unstable/produce_batch net::ERR_BLOCKED_BY_CLIENT
+emit @ abandoned-factory-1:127
+e @ abandoned-factory-1:127
+(anonymous) @ abandoned-factory-1:127
+247-art.js:252 Variant selected: {id: 51511750656297, title: '8x10 / Paper', option1: '8x10', option2: 'Paper', option3: null, …}
+247-art.js:594 Overlay positioning skipped - image not ready
+247-art.js:252 Variant selected: {id: 51511750656297, title: '8x10 / Paper', option1: '8x10', option2: 'Paper', option3: null, …}
+247-art.js:594 Overlay positioning skipped - image not ready
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 443, …}
+favicon.ico:1  GET https://247printnetwork.com/favicon.ico 404 (Not Found)
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 428, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 428, …}
+jcr-widget-app.94649432.js:13  POST https://interactions.one.store/v1/analytics/interactions net::ERR_BLOCKED_BY_CLIENT
+t.sendBeacon @ jcr-widget-app.94649432.js:13
+t._sendAnalyticsData @ jcr-widget-app.94649432.js:13
+(anonymous) @ jcr-widget-app.94649432.js:13
+(anonymous) @ jcr-widget-app.94649432.js:13
+setTimeout
+e.resume @ jcr-widget-app.94649432.js:13
+e @ jcr-widget-app.94649432.js:13
+t._storeEvent @ jcr-widget-app.94649432.js:13
+t.trackVisit @ jcr-widget-app.94649432.js:13
+t.onStartPageView @ jcr-widget-app.94649432.js:13
+t.onNavigationDetected @ jcr-widget-app.94649432.js:13
+t.setupTracking @ jcr-widget-app.94649432.js:13
+(anonymous) @ jcr-widget-app.94649432.js:27
+Promise.then
+D @ jcr-widget-app.94649432.js:27
+(anonymous) @ jcr-widget-app.94649432.js:27
+E.g.onreadystatechange @ jcr-widget-app.94649432.js:27
+XMLHttpRequest.send
+XHR.send @ shop_events_listener-3da45d37.js:1
+value @ bae1676cfwd2530674p4253c800m34e853cbm.js:1
+E @ jcr-widget-app.94649432.js:27
+B @ jcr-widget-app.94649432.js:27
+R @ jcr-widget-app.94649432.js:27
+(anonymous) @ jcr-widget.js?account_id=shopify:bvhpq0-hy.myshopify.com&shop=bvhpq0-hy.myshopify.com:1
+Promise.then
+1711 @ jcr-widget.js?account_id=shopify:bvhpq0-hy.myshopify.com&shop=bvhpq0-hy.myshopify.com:1
+o @ jcr-widget.js?account_id=shopify:bvhpq0-hy.myshopify.com&shop=bvhpq0-hy.myshopify.com:1
+0 @ jcr-widget.js?account_id=shopify:bvhpq0-hy.myshopify.com&shop=bvhpq0-hy.myshopify.com:1
+o @ jcr-widget.js?account_id=shopify:bvhpq0-hy.myshopify.com&shop=bvhpq0-hy.myshopify.com:1
+(anonymous) @ jcr-widget.js?account_id=shopify:bvhpq0-hy.myshopify.com&shop=bvhpq0-hy.myshopify.com:1
+(anonymous) @ jcr-widget.js?account_id=shopify:bvhpq0-hy.myshopify.com&shop=bvhpq0-hy.myshopify.com:1
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 429, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 429, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 366, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 366, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 366, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 366, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 365.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 365.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 361.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 361.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 324, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 324, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 324, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 324, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 296, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 296, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 295.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 295.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 268, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 268, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 265, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 265, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 248, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 248, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 220, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 220, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 173.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 173.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 173.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 173.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 163.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 163.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 162.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 162.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 108.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 108.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 50.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 50.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 50.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 50.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 109, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 109, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 217, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 217, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 293, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 293, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 367.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 367.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 392, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 392, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 392, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 392, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 394, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 394, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 418, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 418, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 462.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 462.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 476.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 476.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 486, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 486, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 520.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 520.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 540, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 540, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 556, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 556, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 590.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 590.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 636, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 636, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 645, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 645, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 644.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 644.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 619, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 619, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 618.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 618.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 599.5, …}
+247-art.js:616 Positioning overlay: {template: 'Modern Living Room', bounds: {…}, overlayXPercent: 0.5, overlayYPercent: 0.42, absoluteX: 599.5, …}

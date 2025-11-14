@@ -141,12 +141,15 @@ section.pn247-art-product .product__media-gallery {
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.5rem;
+  padding: 0;
+  margin: 0;
 }
 
 /* Only add thumbnail column when multiple images exist */
 section.pn247-art-product .product__media-gallery.has-thumbnails {
   grid-template-columns: 70px 1fr;
   align-items: start;
+  gap: 0.5rem;
 }
 
 /* Remove sticky behavior - user prefers natural scroll */
@@ -165,6 +168,8 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   border-radius: 0;
   overflow: visible;
   background: transparent;
+  padding: 0;
+  margin: 0;
   /* Support for preview scaling via CSS custom property */
   --preview-scale: 1;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -181,7 +186,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   padding-bottom: 110%; /* Taller container for larger image display */
   overflow: hidden;
   border-radius: 0;
-  background: #f9fafb;
+  background: transparent;
   /* Apply scale transformation based on custom property */
   transform: scale(var(--preview-scale));
   transform-origin: center center;

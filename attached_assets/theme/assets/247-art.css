@@ -236,7 +236,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   flex-direction: column;
   gap: 0.75rem;
   width: 80px;
-  flex: 1;
+  max-height: 540px; /* 6 thumbnails (80px each) + 5 gaps (0.75rem each) */
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none; /* Hide scrollbar for Firefox */

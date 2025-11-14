@@ -378,6 +378,19 @@ section.pn247-art-product .product__info {
   z-index: 2 !important;
 }
 
+/* ===== BOTTOM CONTENT SECTION ===== */
+section.product-bottom-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.product-bottom-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
 @media (max-width: 900px) {
   section.pn247-art-product .product__media-gallery {
     grid-template-columns: 1fr !important;

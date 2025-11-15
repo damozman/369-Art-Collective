@@ -4888,9 +4888,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const scale = DpiValidatorService.getUpscaleScale(width, height);
       const estimatedCost = ReplicateUpscaleService.estimateCost(scale);
 
+      // Convert local path to publicly accessible URL for Replicate
+      const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+      const host = req.headers.host;
+      const publicImageUrl = imageUrl.startsWith('http') 
+        ? imageUrl 
+        : `${protocol}://${host}${imageUrl}`;
+
       try {
         const { predictionId } = await ReplicateUpscaleService.createUpscaleJob({
-          imageUrl,
+          imageUrl: publicImageUrl,
           scale
         });
 

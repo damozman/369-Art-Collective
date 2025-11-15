@@ -13,9 +13,10 @@ import type { WizardFormData } from "./ArtworkUploadWizard";
 
 interface StepBasicDetailsProps {
   form: UseFormReturn<WizardFormData>;
+  uploadedImageUrl?: string | null;
 }
 
-export function StepBasicDetails({ form }: StepBasicDetailsProps) {
+export function StepBasicDetails({ form, uploadedImageUrl }: StepBasicDetailsProps) {
   const { toast } = useToast();
   const [showAITip, setShowAITip] = useState(false);
 
@@ -36,6 +37,7 @@ export function StepBasicDetails({ form }: StepBasicDetailsProps) {
       const formValues = form.getValues();
       const response = await apiRequest('POST', '/api/ai/generate-content', {
         contentType,
+        imageUrl: uploadedImageUrl,
         artworkTitle: formValues.title,
         existingDescription: formValues.description,
         tags: formValues.tags,

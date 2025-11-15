@@ -3683,7 +3683,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/ai/generate-content", requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
-      const { contentType, artworkTitle, existingDescription, style, medium, colors } = req.body;
+      const { contentType, imageUrl, artworkTitle, existingDescription, style, medium, colors } = req.body;
       
       // Validate content type
       const validTypes = ['title', 'description', 'tags', 'artworkStory', 'suggestedUse'];
@@ -3700,9 +3700,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Artist not found" });
       }
 
-      // Generate content using GPT-4o
+      // Convert relative path to full URL if needed (for vision API)
+      let fullImageUrl = imageUrl;
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+        const host = req.headers.host;
+        fullImageUrl = `${protocol}://${host}${imageUrl}`;
+      }
+
+      // Generate content using GPT-4o (Vision if image provided)
       const { content, tokensUsed } = await generateArtworkContent({
         contentType,
+        imageUrl: fullImageUrl,
         artworkTitle,
         existingDescription,
         style,

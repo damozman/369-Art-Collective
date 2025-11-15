@@ -9,9 +9,10 @@ interface StepImageUploadProps {
   previewUrl: string | null;
   onFileChange: (file: File | null) => void;
   onValidationChange?: (status: "pending" | "invalid" | "valid") => void;
+  onImageUrlChange?: (url: string | null) => void;
 }
 
-export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onValidationChange }: StepImageUploadProps) {
+export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onValidationChange, onImageUrlChange }: StepImageUploadProps) {
   const { toast } = useToast();
   const [currentPreviewUrl, setCurrentPreviewUrl] = useState<string | null>(previewUrl);
 
@@ -30,10 +31,10 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onVali
         });
         return;
       }
-      if (file.size > 10 * 1024 * 1024) {
+      if (file.size > 50 * 1024 * 1024) {
         toast({
           title: "File too large",
-          description: "Maximum file size is 10MB",
+          description: "Maximum file size is 50MB",
           variant: "destructive",
         });
         return;
@@ -60,7 +61,7 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onVali
           <li>• Minimum quality: <strong>150 DPI</strong> for 8×10 inch prints</li>
           <li>• Target quality: <strong>300 DPI</strong> for professional results</li>
           <li>• Supported formats: <strong>PNG, JPG</strong> only</li>
-          <li>• Maximum file size: 10MB</li>
+          <li>• Maximum file size: 50MB</li>
         </ul>
         <p className="text-xs text-blue-700 dark:text-blue-300 mt-2 italic">
           Images below 150 DPI will be rejected. Use our AI upscaler to boost quality if needed!
@@ -126,6 +127,7 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onVali
             selectedFile={selectedFile}
             onUpscaledFile={handleUpscaledFile}
             onValidationChange={onValidationChange}
+            onImageUrlChange={onImageUrlChange}
           />
         </div>
       )}

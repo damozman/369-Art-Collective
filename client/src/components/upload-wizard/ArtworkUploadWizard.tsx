@@ -56,6 +56,7 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [imageValidationStatus, setImageValidationStatus] = useState<"pending" | "invalid" | "valid">("invalid");
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   const form = useForm<WizardFormData>({
     resolver: zodResolver(wizardSchema),
@@ -177,10 +178,11 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
               previewUrl={previewUrl}
               onFileChange={handleFileChange}
               onValidationChange={setImageValidationStatus}
+              onImageUrlChange={setUploadedImageUrl}
             />
           )}
-          {currentStep === 2 && <StepBasicDetails form={form} />}
-          {currentStep === 3 && <StepMarketingContent form={form} />}
+          {currentStep === 2 && <StepBasicDetails form={form} uploadedImageUrl={uploadedImageUrl} />}
+          {currentStep === 3 && <StepMarketingContent form={form} uploadedImageUrl={uploadedImageUrl} />}
           {currentStep === 4 && <StepIPDeclaration form={form} />}
           {currentStep === 5 && (
             <StepReview

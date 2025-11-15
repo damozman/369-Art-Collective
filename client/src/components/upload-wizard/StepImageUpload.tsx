@@ -9,10 +9,11 @@ interface StepImageUploadProps {
   previewUrl: string | null;
   onFileChange: (file: File | null) => void;
   onValidationChange?: (status: "pending" | "invalid" | "valid") => void;
-  onImageUrlChange?: (url: string | null) => void;
+  onOriginalImageUrl?: (url: string | null) => void;
+  onUpscaledImageUrl?: (url: string | null) => void;
 }
 
-export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onValidationChange, onImageUrlChange }: StepImageUploadProps) {
+export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onValidationChange, onOriginalImageUrl, onUpscaledImageUrl }: StepImageUploadProps) {
   const { toast } = useToast();
   const [currentPreviewUrl, setCurrentPreviewUrl] = useState<string | null>(previewUrl);
 
@@ -46,11 +47,14 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onVali
   const handleUpscaledFile = (upscaledFile: File, upscaledUrl: string) => {
     setCurrentPreviewUrl(upscaledUrl);
     onFileChange(upscaledFile);
+    onUpscaledImageUrl?.(upscaledUrl);
   };
 
   const clearFile = () => {
     setCurrentPreviewUrl(null);
     onFileChange(null);
+    onOriginalImageUrl?.(null);
+    onUpscaledImageUrl?.(null);
   };
 
   return (
@@ -127,7 +131,8 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onVali
             selectedFile={selectedFile}
             onUpscaledFile={handleUpscaledFile}
             onValidationChange={onValidationChange}
-            onImageUrlChange={onImageUrlChange}
+            onOriginalImageUrl={onOriginalImageUrl}
+            onUpscaledImageUrl={onUpscaledImageUrl}
           />
         </div>
       )}

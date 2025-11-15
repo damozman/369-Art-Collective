@@ -49,12 +49,36 @@ function loadConfig<T>(filename: string): T {
   return JSON.parse(fs.readFileSync(configPath, "utf-8"));
 }
 
+/**
+ * Convert relative image URL to full public URL for Shopify
+ * Shopify requires publicly accessible URLs to download images
+ */
+function convertToFullImageUrl(imageUrl: string): string {
+  // If already a full URL, return as-is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+
+  // Get the Replit deployment URL
+  const replitUrl = process.env.REPLIT_DOMAINS || 
+                   process.env.REPL_SLUG 
+                     ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
+                     : 'http://0.0.0.0:5000';
+
+  // Convert relative path to full URL
+  const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+  return `${replitUrl}${cleanPath}`;
+}
+
 export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
   if (!isShopifyConfigured()) {
     throw new Error("Shopify is not configured");
   }
 
   try {
+    // Convert artwork image URL to full public URL for Shopify
+    const fullImageUrl = convertToFullImageUrl(artwork.imageUrl);
+    
     // Get product type configuration (defaults to art_print)
     const productType = artwork.productType || "art_print";
     const productTypeConfig = getProductTypeConfig(productType);
@@ -145,7 +169,7 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
           { name: "Size", values: sizes },
           { name: "Finish", values: finishes },
         ],
-        images: [{ src: artwork.imageUrl, alt: artwork.title }],
+        images: [{ src: fullImageUrl, alt: artwork.title }],
         variants,
       },
     };
@@ -161,7 +185,7 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
       productPayload.product.handle = artwork.seoSlug;
     }
 
-    console.log(`[Shopify] Creating product "${artwork.title}" with image URL: ${artwork.imageUrl}`);
+    console.log(`[Shopify] Creating product "${artwork.title}" with image URL: ${fullImageUrl}`);
 
     const apiVersion = "2024-10";
     const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/products.json`;

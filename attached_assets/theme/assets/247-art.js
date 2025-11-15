@@ -665,10 +665,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100);
   });
 
-  // Initial state sync
+  // Initial state sync - default to 8x10 (smallest size) if no size selected
   const selectedSizeRadio = document.querySelector('[data-option-type="size"] input[type="radio"]:checked');
   if (selectedSizeRadio) {
     updateMockupSize(selectedSizeRadio.value);
+  } else {
+    // Default to 8x10 (smallest size) for initial display
+    currentSizeScale = SIZE_SCALE_FACTORS['8x10'] || 0.64;
   }
 
   const selectedFrameRadio = document.querySelector('.frame-toggle input[type="radio"]:checked');

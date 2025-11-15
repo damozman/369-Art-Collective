@@ -124,11 +124,12 @@ export function validatePrompt(prompt: string): { valid: boolean; error?: string
 }
 
 /**
- * Generate marketing content for artwork using GPT-4o
- * This helps artists write compelling titles, descriptions, tags, and stories
+ * Generate marketing content for artwork using GPT-4o Vision
+ * This helps artists write compelling titles, descriptions, tags, and stories by analyzing the actual image
  */
 export async function generateArtworkContent(params: {
   contentType: 'title' | 'description' | 'tags' | 'artworkStory' | 'suggestedUse';
+  imageUrl?: string;
   artworkTitle?: string;
   existingDescription?: string;
   style?: string;
@@ -136,51 +137,79 @@ export async function generateArtworkContent(params: {
   colors?: string;
 }): Promise<{ content: string; tokensUsed: number }> {
   try {
-    const { contentType, artworkTitle, existingDescription, style, medium, colors } = params;
+    const { contentType, imageUrl, artworkTitle, existingDescription, style, medium, colors } = params;
 
     // Build context from existing information
     const context = [];
-    if (artworkTitle) context.push(`Artwork title: "${artworkTitle}"`);
-    if (existingDescription) context.push(`Description: "${existingDescription}"`);
+    if (artworkTitle) context.push(`Current title: "${artworkTitle}"`);
+    if (existingDescription) context.push(`Current description: "${existingDescription}"`);
     if (style) context.push(`Style: ${style}`);
     if (medium) context.push(`Medium: ${medium}`);
     if (colors) context.push(`Colors: ${colors}`);
 
-    const contextString = context.length > 0 ? context.join('\n') : '';
+    const contextString = context.length > 0 ? `\n\nExisting context:\n${context.join('\n')}` : '';
 
     // Generate prompts based on content type
-    let systemPrompt = "You are a professional art curator and copywriter helping artists sell their artwork online. Write compelling, authentic, and engaging content that helps customers connect with the art.";
+    let systemPrompt = "You are a professional art curator and copywriter helping artists sell their artwork online. Analyze the image carefully and write compelling, authentic, and engaging content that accurately describes what you see. Focus on the main subject, composition, colors, mood, and style.";
     let userPrompt = '';
 
     switch (contentType) {
       case 'title':
-        userPrompt = `Generate a compelling, SEO-friendly title for this artwork. The title should be concise (3-7 words), descriptive, and evocative. It should capture the essence of the piece without being generic.\n\n${contextString}\n\nProvide ONLY the title, nothing else.`;
+        userPrompt = `Analyze this artwork image carefully. Generate a compelling, SEO-friendly title that accurately describes the main subject, mood, and style. The title should be concise (3-7 words), descriptive, and evocative.${contextString}\n\nProvide ONLY the title, nothing else.`;
         break;
 
       case 'description':
-        userPrompt = `Write a compelling product description for this artwork (2-3 sentences, 30-50 words). Focus on what makes it special, the emotions it evokes, and why customers would want it in their space. Be authentic and avoid marketing clichés.\n\n${contextString}\n\nProvide ONLY the description, nothing else.`;
+        userPrompt = `Analyze this artwork image carefully. Write a compelling product description (2-3 sentences, 30-50 words) that accurately describes what you see: the subject, composition, colors, and mood. Focus on what makes it special and why customers would want it.${contextString}\n\nProvide ONLY the description, nothing else.`;
         break;
 
       case 'tags':
-        userPrompt = `Generate 5-8 relevant search tags for this artwork. Tags should include style, mood, color themes, and potential use cases. Separate with commas.\n\n${contextString}\n\nProvide ONLY the comma-separated tags, nothing else.`;
+        userPrompt = `Analyze this artwork image carefully. Generate 5-8 relevant search tags based on what you see: the subject, style, colors, mood, and potential use cases. Separate with commas.${contextString}\n\nProvide ONLY the comma-separated tags, nothing else.`;
         break;
 
       case 'artworkStory':
-        userPrompt = `Write an engaging artwork story (4-6 sentences, 60-100 words) that helps customers connect with the piece. Include: the inspiration behind it, the creative process, or the meaning/emotion it conveys. Write in a warm, personal tone as if the artist is speaking directly to the buyer.\n\n${contextString}\n\nProvide ONLY the story, nothing else.`;
+        userPrompt = `Analyze this artwork image carefully. Write an engaging artwork story (4-6 sentences, 60-100 words) based on what you see. Describe the subject, composition, mood, and emotions it conveys. Write in a warm, personal tone.${contextString}\n\nProvide ONLY the story, nothing else.`;
         break;
 
       case 'suggestedUse':
-        userPrompt = `Suggest 2-3 ideal room placements or use cases for this artwork (1 sentence, 20-30 words). Be specific about environments where it would shine (e.g., "Perfect statement piece for modern living rooms or inspiring home offices").\n\n${contextString}\n\nProvide ONLY the suggested use text, nothing else.`;
+        userPrompt = `Analyze this artwork image carefully. Based on the subject, style, and colors you see, suggest 2-3 ideal room placements or use cases (1 sentence, 20-30 words). Be specific about environments where it would shine.${contextString}\n\nProvide ONLY the suggested use text, nothing else.`;
         break;
     }
 
-    // Call GPT-4o for content generation
+    // Build messages array with image support if imageUrl provided
+    const messages: any[] = [
+      { role: "system", content: systemPrompt }
+    ];
+
+    if (imageUrl) {
+      // Use GPT-4o Vision with image
+      messages.push({
+        role: "user",
+        content: [
+          {
+            type: "image_url",
+            image_url: {
+              url: imageUrl,
+              detail: "high" // Use high detail for accurate subject recognition
+            }
+          },
+          {
+            type: "text",
+            text: userPrompt
+          }
+        ]
+      });
+    } else {
+      // Fallback to text-only if no image provided
+      messages.push({
+        role: "user",
+        content: userPrompt
+      });
+    }
+
+    // Call GPT-4o (Vision) for content generation
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
+      messages,
       temperature: 0.7, // Balanced creativity
       max_tokens: 200, // Enough for content but not excessive
     });

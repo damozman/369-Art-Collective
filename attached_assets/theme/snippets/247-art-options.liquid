@@ -43,33 +43,36 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
     <div class="art-options__grid" id="finish-selector">
       {%- assign unique_finishes = product.options_with_values | where: 'name', 'Finish' | first -%}
       {%- for finish_value in unique_finishes.values -%}
-        <div class="art-option" data-option-value="{{ finish_value }}" data-option-type="finish">
-          <input 
-            type="radio" 
-            name="finish" 
-            value="{{ finish_value }}" 
-            id="finish-{{ finish_value | handle }}"
-            form="add-to-cart-form"
-            class="visually-hidden"
-            {% if forloop.first %}checked{% endif %}
-          >
-          <div class="art-option__title">{{ finish_value }}</div>
-          <div class="art-option__subtitle">
-            {%- case finish_value -%}
-              {%- when 'Paper' -%}Smooth matte
-              {%- when 'Canvas' -%}Textured finish
-              {%- when 'Metal' -%}Ultra premium
-              {%- else -%}Premium quality
-            {%- endcase -%}
+        {%- comment -%} Hide "Framed" since it's handled via Frame Options section {%- endcomment -%}
+        {%- unless finish_value == 'Framed' -%}
+          <div class="art-option" data-option-value="{{ finish_value }}" data-option-type="finish">
+            <input 
+              type="radio" 
+              name="finish" 
+              value="{{ finish_value }}" 
+              id="finish-{{ finish_value | handle }}"
+              form="add-to-cart-form"
+              class="visually-hidden"
+              {% if finish_value == 'Paper' %}checked{% endif %}
+            >
+            <div class="art-option__title">{{ finish_value }}</div>
+            <div class="art-option__subtitle">
+              {%- case finish_value -%}
+                {%- when 'Paper' -%}Smooth matte
+                {%- when 'Canvas' -%}Textured finish
+                {%- when 'Metal' -%}Ultra premium
+                {%- else -%}Premium quality
+              {%- endcase -%}
+            </div>
           </div>
-        </div>
+        {%- endunless -%}
       {%- endfor -%}
     </div>
   </div>
 
-  {%- comment -%} FRAME OPTIONS {%- endcomment -%}
-  <div class="frame-options">
-    <label class="art-options__label mb-small">Frame Options</label>
+  {%- comment -%} FRAME OPTIONS (Only for Paper/Poster prints) {%- endcomment -%}
+  <div class="frame-options" id="frame-options-section">
+    <label class="art-options__label mb-small">Frame Options <span class="frame-availability-note">(Available for Paper prints)</span></label>
     
     <div class="frame-toggle" id="no-frame-option" data-frame-type="none">
       <input 
@@ -99,7 +102,7 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
       >
       <div class="frame-info">
         <div class="frame-info__title">Black Frame</div>
-        <div class="frame-info__description">Professional black wood frame with mounting hardware</div>
+        <div class="frame-info__description">Professional black MDF frame with mounting hardware</div>
       </div>
       <div class="frame-price">+$29</div>
     </div>
@@ -115,7 +118,23 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
       >
       <div class="frame-info">
         <div class="frame-info__title">White Frame</div>
-        <div class="frame-info__description">Clean white wood frame with mounting hardware</div>
+        <div class="frame-info__description">Clean white MDF frame with mounting hardware</div>
+      </div>
+      <div class="frame-price">+$29</div>
+    </div>
+
+    <div class="frame-toggle" id="walnut-frame-option" data-frame-type="walnut">
+      <input 
+        type="radio" 
+        name="frame" 
+        value="walnut" 
+        id="frame-walnut"
+        form="add-to-cart-form"
+        class="frame-checkbox"
+      >
+      <div class="frame-info">
+        <div class="frame-info__title">Walnut Frame</div>
+        <div class="frame-info__description">Rich walnut MDF frame with mounting hardware</div>
       </div>
       <div class="frame-price">+$29</div>
     </div>

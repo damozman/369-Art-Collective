@@ -456,12 +456,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Size variant scale factors (based on diagonal proportions)
   const SIZE_SCALE_FACTORS = {
-    '8x10': 0.64,   // 12.81" diagonal
-    '10x10': 0.71,  // 14.14" diagonal (if needed)
+    '8x10': 0.64,   // 12.81" diagonal (smallest)
+    '11x14': 0.88,  // 17.80" diagonal
     '12x16': 1.00,  // 20" diagonal - Base reference
-    '16x16': 1.13,  // 22.63" diagonal (if needed)
+    '16x20': 1.31,  // 25.61" diagonal
     '18x24': 1.50,  // 30" diagonal
-    '24x36': 2.16   // 43.27" diagonal
+    '24x36': 2.16   // 43.27" diagonal (largest)
   };
 
   // State management
@@ -592,13 +592,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Update mockup size based on variant selection
   function updateMockupSize(sizeValue) {
+    console.log('updateMockupSize called with:', sizeValue);
+    
     // Extract size from variant name (e.g., "8x10 - Canvas" -> "8x10")
     const sizeMatch = sizeValue?.match(/(\d+x\d+)/);
-    if (!sizeMatch) return;
+    if (!sizeMatch) {
+      console.warn('No size match found for:', sizeValue);
+      return;
+    }
 
     const size = sizeMatch[1];
     const scaleFactor = SIZE_SCALE_FACTORS[size] || 1.0;
 
+    console.log('Applying size scale:', size, '→', scaleFactor);
     currentSizeScale = scaleFactor;
     
     // Reposition overlay with new scale
@@ -614,8 +620,20 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Listen for size changes from variant configurator
-  const sizeOptions = document.querySelectorAll('[data-option-type="size"] input[type="radio"]');
-  sizeOptions.forEach(radio => {
+  // Listen on the parent containers that have data-option-type="size"
+  const sizeOptionContainers = document.querySelectorAll('[data-option-type="size"]');
+  sizeOptionContainers.forEach(container => {
+    container.addEventListener('click', function() {
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio) {
+        updateMockupSize(radio.value);
+      }
+    });
+  });
+  
+  // Also listen for direct radio button changes (fallback)
+  const sizeRadios = document.querySelectorAll('input[name="size"]');
+  sizeRadios.forEach(radio => {
     radio.addEventListener('change', function() {
       updateMockupSize(this.value);
     });

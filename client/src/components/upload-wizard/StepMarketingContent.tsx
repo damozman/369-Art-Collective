@@ -1,4 +1,5 @@
 import { UseFormReturn } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
@@ -6,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { AIAssistButton } from "@/components/AIAssistButton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { X } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { WizardFormData } from "./ArtworkUploadWizard";
 
 interface StepMarketingContentProps {
@@ -31,6 +34,19 @@ const PREDEFINED_STYLES = [
 export function StepMarketingContent({ form }: StepMarketingContentProps) {
   const { toast } = useToast();
   const selectedStyles = form.watch("styleTags") || [];
+  const [showAITip, setShowAITip] = useState(false);
+
+  useEffect(() => {
+    const hasSeenMarketingTip = localStorage.getItem('hasSeenAIMarketingTip');
+    if (!hasSeenMarketingTip) {
+      setShowAITip(true);
+    }
+  }, []);
+
+  const dismissTip = () => {
+    setShowAITip(false);
+    localStorage.setItem('hasSeenAIMarketingTip', 'true');
+  };
 
   const toggleStyle = (style: string) => {
     const current = form.getValues("styleTags") || [];
@@ -78,6 +94,33 @@ export function StepMarketingContent({ form }: StepMarketingContentProps) {
 
   return (
     <div className="space-y-6">
+      {showAITip && (
+        <Alert className="border-primary/50 bg-primary/5" data-testid="alert-marketing-ai-tip">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex gap-3">
+              <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+              <div className="space-y-1">
+                <AlertTitle className="text-base">AI Marketing Assistant</AlertTitle>
+                <AlertDescription className="text-sm">
+                  Click the <Sparkles className="h-3 w-3 inline mx-1 text-primary" /> icons to generate engaging stories 
+                  and suggested room placements for your artwork. The AI creates compelling marketing content that helps 
+                  customers connect with your art!
+                </AlertDescription>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={dismissTip}
+              className="h-6 w-6 shrink-0"
+              data-testid="button-dismiss-marketing-tip"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </Alert>
+      )}
+
       <FormField
         control={form.control}
         name="artworkStory"

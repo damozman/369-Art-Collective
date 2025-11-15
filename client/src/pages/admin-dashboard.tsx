@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,15 +11,14 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useLocation } from "wouter";
-import { LogOut, CheckCircle, XCircle, Users, Eye, Network, Settings, Flag, MessageSquare, Search, ArrowUpDown, Zap, TrendingUp, DollarSign } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { CheckCircle, XCircle, Eye, Flag, Search, ArrowUpDown, Zap, TrendingUp, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { ArtworkWithArtist, Artist, ViolationReport } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminLayout } from "@/components/layouts/admin-layout";
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedArtwork, setSelectedArtwork] = useState<ArtworkWithArtist | null>(null);
@@ -323,75 +321,8 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold font-serif">Admin Dashboard</h1>
-              <p className="text-sm text-muted-foreground">Review and manage artwork submissions</p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/admin/empire")}
-                data-testid="button-empire"
-              >
-                <Network className="mr-2 h-4 w-4" />
-                Empire Dashboard
-              </Button>
-              <div className="relative">
-                <Button
-                  variant="outline"
-                  onClick={() => setLocation("/admin/artists")}
-                  data-testid="button-manage-artists"
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  Manage Artists
-                </Button>
-                {pendingArtistsCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
-                    className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                    data-testid="badge-pending-artists"
-                  >
-                    {pendingArtistsCount}
-                  </Badge>
-                )}
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/admin/payouts")}
-                data-testid="button-payouts"
-              >
-                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <rect x="2" y="5" width="20" height="14" rx="2"/>
-                  <line x1="2" y1="10" x2="22" y2="10"/>
-                </svg>
-                Payouts
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setLocation("/admin/testimonials")}
-                data-testid="button-testimonials"
-              >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Testimonials
-              </Button>
-              <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/settings")} data-testid="button-settings">
-                <Settings className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={logout} data-testid="button-logout">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Artwork Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="hover-elevate cursor-pointer" onClick={() => handleFilterChange("all")}>
@@ -980,6 +911,7 @@ export default function AdminDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

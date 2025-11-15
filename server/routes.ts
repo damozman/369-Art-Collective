@@ -3700,18 +3700,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Artist not found" });
       }
 
-      // Convert relative path to full URL if needed (for vision API)
-      let fullImageUrl = imageUrl;
-      if (imageUrl && !imageUrl.startsWith('http')) {
-        const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
-        const host = req.headers.host;
-        fullImageUrl = `${protocol}://${host}${imageUrl}`;
+      // Get AI-friendly preview image if needed (handles large files automatically)
+      let aiImageUrl = imageUrl;
+      if (imageUrl) {
+        try {
+          const { getAIPreviewImage, AIContentError } = await import('./lib/vision-preview-helper');
+          
+          // Convert relative path to full URL
+          let fullImageUrl = imageUrl;
+          if (!imageUrl.startsWith('http')) {
+            const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+            const host = req.headers.host;
+            fullImageUrl = `${protocol}://${host}${imageUrl}`;
+          }
+          
+          // Get AI preview (will use original if <20MB, create preview if larger)
+          const previewPath = await getAIPreviewImage(fullImageUrl);
+          
+          // Convert back to full URL if needed
+          if (previewPath && !previewPath.startsWith('http')) {
+            const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
+            const host = req.headers.host;
+            aiImageUrl = `${protocol}://${host}${previewPath}`;
+          } else {
+            aiImageUrl = previewPath;
+          }
+        } catch (error: any) {
+          const { AIContentError, AIContentErrorCode } = await import('./lib/vision-preview-helper');
+          
+          if (error instanceof AIContentError) {
+            return res.status(400).json({
+              status: 'error',
+              code: error.code,
+              userMessage: error.userMessage,
+              developerMessage: error.developerMessage
+            });
+          }
+          throw error;
+        }
       }
 
       // Generate content using GPT-4o (Vision if image provided)
       const { content, tokensUsed } = await generateArtworkContent({
         contentType,
-        imageUrl: fullImageUrl,
+        imageUrl: aiImageUrl,
         artworkTitle,
         existingDescription,
         style,
@@ -3728,7 +3760,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("[ERROR][AI_CONTENT] Content generation failed:", error.message);
-      res.status(500).json({ message: "Failed to generate content. Please try again." });
+      
+      // Return structured error response
+      const { AIContentErrorCode } = await import('./lib/vision-preview-helper');
+      res.status(500).json({ 
+        status: 'error',
+        code: AIContentErrorCode.AI_UNKNOWN_ERROR,
+        userMessage: "Failed to generate content. Please try again in a moment.",
+        developerMessage: error.message || "Unknown error"
+      });
     }
   });
   

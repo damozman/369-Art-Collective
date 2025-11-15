@@ -55,8 +55,8 @@ import NotFound from "@/pages/not-found";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={ComingSoon} />
-      <Route path="/home-full" component={Home} />
+      <Route path="/" component={Home} />
+      <Route path="/coming-soon" component={ComingSoon} />
       <Route path="/join" component={JoinCreatorverse} />
       <Route path="/creatorstack" component={CreatorStack} />
       <Route path="/creatorstack/login" component={CreatorStackLogin} />

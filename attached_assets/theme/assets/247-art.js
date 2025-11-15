@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updatePreview() {
     updateSizePreview(selectedSize);
     updateFrameOverlay(selectedFrame);
-    updatePrice();
+    // Price is updated automatically in updateVariant() - no need to call here
   }
 
   // Update price display
@@ -325,11 +325,10 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log(`Price updated: ${formatted} (variant price: ${variantPrice})`);
   }
 
-  // Update frame price
+  // Update frame price (deprecated - price is now handled directly in updateVariant)
   function updatePrice() {
-    // Re-run the variant matching logic to get the correct price
-    // This handles when frame selection changes without size/finish changing
-    updateVariant();
+    // No-op: Price updates are handled directly when variant changes
+    // This function kept for backwards compatibility
   }
 
   // Update availability

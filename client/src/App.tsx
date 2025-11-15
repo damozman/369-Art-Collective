@@ -83,9 +83,7 @@ function Router() {
       
       <Route path="/artist/dashboard">
         <ProtectedRoute requiredType="artist">
-          <ArtistLayout>
-            <ArtistDashboard />
-          </ArtistLayout>
+          <ArtistDashboard />
         </ProtectedRoute>
       </Route>
       
@@ -153,9 +151,7 @@ function Router() {
       
       <Route path="/admin/dashboard">
         <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminDashboard />
-          </AdminLayout>
+          <AdminDashboard />
         </ProtectedRoute>
       </Route>
       

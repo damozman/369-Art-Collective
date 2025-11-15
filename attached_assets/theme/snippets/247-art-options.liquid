@@ -43,8 +43,12 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
     <div class="art-options__grid" id="finish-selector">
       {%- assign unique_finishes = product.options_with_values | where: 'name', 'Finish' | first -%}
       {%- for finish_value in unique_finishes.values -%}
-        {%- comment -%} Hide "Framed" since it's handled via Frame Options section {%- endcomment -%}
-        {%- unless finish_value == 'Framed' -%}
+        {%- comment -%} Hide all Framed-* variants since they're handled via Frame Options section {%- endcomment -%}
+        {%- assign is_framed = false -%}
+        {%- if finish_value contains 'Framed' -%}
+          {%- assign is_framed = true -%}
+        {%- endif -%}
+        {%- unless is_framed -%}
           <div class="art-option" data-option-value="{{ finish_value }}" data-option-type="finish">
             <input 
               type="radio" 
@@ -233,6 +237,10 @@ document.addEventListener('DOMContentLoaded', function() {
   sizeOptions[0]?.classList.add('selected');
   finishOptions[0]?.classList.add('selected');
   document.getElementById('no-frame-option')?.classList.add('selected');
+  
+  // Initialize frame availability based on default finish (Paper)
+  const defaultFinish = document.querySelector('input[name="finish"]:checked')?.value || 'Paper';
+  updateFrameAvailability(defaultFinish);
 
   // Size guide toggle
   const sizeGuideToggle = document.getElementById('size-guide-toggle');
@@ -253,15 +261,62 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function updateVariant() {
-  // This will be enhanced by the main 247-art.js
   const size = document.querySelector('input[name="size"]:checked')?.value;
-  const finish = document.querySelector('input[name="finish"]:checked')?.value;
-  console.log('Variant updated:', { size, finish });
+  const baseFinish = document.querySelector('input[name="finish"]:checked')?.value;
+  const frame = document.querySelector('input[name="frame"]:checked')?.value;
+  
+  // Map Paper + Frame to Framed-[Color] variants
+  let actualFinish = baseFinish;
+  if (baseFinish === 'Paper' && frame && frame !== 'none') {
+    actualFinish = `Framed-${frame.charAt(0).toUpperCase() + frame.slice(1)}`;
+  }
+  
+  console.log('Variant updated:', { size, baseFinish, frame, actualFinish });
+  
+  // Dispatch custom event with mapped finish
+  document.dispatchEvent(new CustomEvent('variantChange', { 
+    detail: { size, finish: actualFinish }
+  }));
+  
+  // Update frame options availability
+  updateFrameAvailability(baseFinish);
 }
 
 function updatePrice() {
-  // This will be enhanced by the main 247-art.js
   const frame = document.querySelector('input[name="frame"]:checked')?.value;
   console.log('Frame option:', frame);
+  updateVariant(); // Trigger variant update when frame changes
+}
+
+function updateFrameAvailability(finish) {
+  const frameSection = document.getElementById('frame-options-section');
+  const frameToggles = document.querySelectorAll('.frame-toggle');
+  
+  if (finish === 'Paper') {
+    // Enable frame options for Paper
+    frameSection?.classList.remove('disabled');
+    frameToggles.forEach(toggle => {
+      toggle.classList.remove('disabled');
+      const input = toggle.querySelector('input');
+      if (input) input.disabled = false;
+    });
+  } else {
+    // Disable and reset frame options for Canvas/Metal
+    frameSection?.classList.add('disabled');
+    frameToggles.forEach(toggle => {
+      toggle.classList.add('disabled');
+      const input = toggle.querySelector('input');
+      if (input) input.disabled = true;
+    });
+    // Auto-select "No Frame" for Canvas/Metal
+    const noFrameInput = document.getElementById('frame-none');
+    if (noFrameInput) {
+      noFrameInput.checked = true;
+      document.getElementById('no-frame-option')?.classList.add('selected');
+      frameToggles.forEach(t => {
+        if (t.id !== 'no-frame-option') t.classList.remove('selected');
+      });
+    }
+  }
 }
 </script>

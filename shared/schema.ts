@@ -1111,6 +1111,17 @@ export const creatorstackPromptGenerations = pgTable("creatorstack_prompt_genera
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Waitlist - Pre-launch email capture for coming soon page
+export const waitlist = pgTable("waitlist", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  interest: text("interest").notNull(), // customer, artist, both
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  emailIdx: uniqueIndex("waitlist_email_idx").on(table.email),
+}));
+
 // Insert schemas for CreatorStack
 export const insertCreatorstackKitSchema = createInsertSchema(creatorstackKits).omit({
   id: true,
@@ -1169,3 +1180,18 @@ export type InsertCreatorstackPurchase = z.infer<typeof insertCreatorstackPurcha
 
 export type CreatorstackPromptGeneration = typeof creatorstackPromptGenerations.$inferSelect;
 export type InsertCreatorstackPromptGeneration = z.infer<typeof insertCreatorstackPromptGenerationSchema>;
+
+// Waitlist schema and types
+export const insertWaitlistSchema = createInsertSchema(waitlist).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  email: z.string().email("Valid email required"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  interest: z.enum(["customer", "artist", "both"], {
+    errorMap: () => ({ message: "Please select your interest" }),
+  }),
+});
+
+export type Waitlist = typeof waitlist.$inferSelect;
+export type InsertWaitlist = z.infer<typeof insertWaitlistSchema>;

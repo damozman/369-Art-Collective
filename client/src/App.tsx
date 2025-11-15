@@ -10,6 +10,7 @@ import { AdminLayout } from "@/components/layouts/admin-layout";
 import { ArtistLayout } from "@/components/layouts/artist-layout";
 
 import Home from "@/pages/home";
+import ComingSoon from "@/pages/coming-soon";
 import Login from "@/pages/login";
 import AdminLogin from "@/pages/admin-login";
 import Register from "@/pages/register";
@@ -54,7 +55,8 @@ import NotFound from "@/pages/not-found";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={ComingSoon} />
+      <Route path="/home-full" component={Home} />
       <Route path="/join" component={JoinCreatorverse} />
       <Route path="/creatorstack" component={CreatorStack} />
       <Route path="/creatorstack/login" component={CreatorStackLogin} />

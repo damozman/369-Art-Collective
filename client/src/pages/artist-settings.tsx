@@ -410,35 +410,8 @@ export default function ArtistSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <ImageIcon className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold font-serif">Artist Portal</h1>
-                <p className="text-sm text-muted-foreground">Welcome back, {authUser?.name}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => setLocation("/artist/settings")} data-testid="button-settings">
-                <SettingsIcon className="h-5 w-5" />
-              </Button>
-              <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={logout} data-testid="button-logout">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="space-y-6">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => setLocation("/artist/dashboard")} data-testid="button-back">
               <ArrowLeft className="h-5 w-5" />
@@ -990,8 +963,6 @@ export default function ArtistSettings() {
               </Button>
             </CardContent>
           </Card>
-        </div>
-      </main>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent data-testid="dialog-delete-confirm">
@@ -1040,6 +1011,7 @@ export default function ArtistSettings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }

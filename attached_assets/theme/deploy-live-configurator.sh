@@ -5,7 +5,7 @@
 cd "$(dirname "$0")"
 
 echo "🎨 Deploying Live Product Configurator..."
-echo "   Features: Visual size scaling + Frame preview overlays"
+echo "   Features: Visual size scaling + Frame preview overlays + Walnut frame fix"
 echo ""
 
 shopify theme push \
@@ -23,9 +23,9 @@ echo "✅ Deployment complete!"
 echo ""
 echo "📋 What to test:"
 echo "   1. Select different sizes → image should scale visually"
-echo "   2. Select Black/White Frame → realistic frame border appears"
+echo "   2. Select Black/White/Walnut Frame → realistic frame border appears"
 echo "   3. Select No Frame → frame border disappears"
-echo "   4. Price updates correctly (+$29 for frames)"
+echo "   4. Price updates correctly (+$29 for ALL frames including Walnut)"
 echo "   5. Add to cart → correct variant + frame option saved"
 echo ""
 echo "🔗 Test products:"

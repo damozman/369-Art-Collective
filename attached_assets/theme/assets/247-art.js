@@ -186,9 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (radio) {
         radio.checked = true;
         selectedFinish = radio.value;
-        
-        // If "Framed" finish is selected, show frame overlay
-        selectedFrame = (selectedFinish === 'Framed') ? 'black' : 'none';
       }
       
       updateVariant();
@@ -207,7 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedFrame = radio.value;
       }
       
-      // Unified update: both price and visual preview
+      // Update both variant (for correct price) and visual preview
+      updateVariant();
       updatePreview();
     });
   });
@@ -216,14 +214,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateVariant() {
     if (!selectedSize || !selectedFinish) return;
 
+    // Map Paper + Frame to Framed-[Color] variants
+    let actualFinish = selectedFinish;
+    if (selectedFinish === 'Paper' && selectedFrame && selectedFrame !== 'none') {
+      actualFinish = `Framed-${selectedFrame.charAt(0).toUpperCase() + selectedFrame.slice(1)}`;
+      console.log(`Mapped Paper + ${selectedFrame} frame → ${actualFinish} variant`);
+    }
+
     // Find matching variant
     const matchingVariant = variants.find(variant => {
       const options = variant.options || [];
       const title = variant.title || '';
       
-      // Check if variant matches selected size and finish
+      // Check if variant matches selected size and actual finish (mapped)
       const matchesSize = options.includes(selectedSize) || title.includes(selectedSize);
-      const matchesFinish = options.includes(selectedFinish) || title.includes(selectedFinish);
+      const matchesFinish = options.includes(actualFinish) || title.includes(actualFinish);
       
       return matchesSize && matchesFinish;
     });

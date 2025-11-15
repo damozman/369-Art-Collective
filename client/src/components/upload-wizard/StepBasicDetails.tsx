@@ -54,6 +54,16 @@ export function StepBasicDetails({ form, originalImageUrl }: StepBasicDetailsPro
 
       const data = await response.json();
 
+      // Check for structured error response
+      if (data.status === 'error') {
+        toast({
+          variant: "destructive",
+          title: "Generation failed",
+          description: data.userMessage || data.message || "Failed to generate content. Please try again.",
+        });
+        return;
+      }
+
       // Update the form field with generated content
       if (contentType === 'title') {
         form.setValue('title', data.content);
@@ -69,12 +79,16 @@ export function StepBasicDetails({ form, originalImageUrl }: StepBasicDetailsPro
       });
     } catch (error: any) {
       const isAuthError = error.message?.includes('401') || error.message?.includes('Artist access required');
+      
+      // Try to extract user-friendly message from error
+      const errorMessage = error.userMessage || error.message || "Failed to generate content. Please try again.";
+      
       toast({
         variant: "destructive",
         title: isAuthError ? "Login required" : "Generation failed",
         description: isAuthError 
           ? "Please log in as an artist to use AI content assistance."
-          : error.message || "Failed to generate content. Please try again.",
+          : errorMessage,
       });
     }
   };

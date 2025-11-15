@@ -47,7 +47,7 @@ const STEPS: Step[] = [
 ];
 
 interface ArtworkUploadWizardProps {
-  onSubmit: (data: WizardFormData, imageFile: File) => Promise<void>;
+  onSubmit: (data: WizardFormData, uploadedImageUrl?: string, imageFile?: File) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -115,8 +115,11 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
   };
 
   const handleFormSubmit = async (data: WizardFormData) => {
-    if (!selectedFile) return;
-    await onSubmit(data, selectedFile);
+    // Ensure at least one of uploadedImageUrl or selectedFile is present
+    if (!uploadedImageUrl && !selectedFile) {
+      return; // This should never happen due to wizard validation
+    }
+    await onSubmit(data, uploadedImageUrl || undefined, selectedFile || undefined);
   };
 
   return (

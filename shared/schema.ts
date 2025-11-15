@@ -157,6 +157,26 @@ export const admins = pgTable("admins", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Admin Actions Audit Log - Track all admin actions for security and compliance
+export const adminActions = pgTable("admin_actions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  adminId: varchar("admin_id").notNull().references(() => admins.id),
+  adminEmail: text("admin_email").notNull(),
+  actionType: text("action_type").notNull(), // "reset_credits", "grant_comp_tier", "approve_artwork", etc.
+  targetType: text("target_type").notNull(), // "artist", "artwork", "portfolio", etc.
+  targetId: varchar("target_id"), // ID of the affected resource
+  targetEmail: text("target_email"), // Email of affected artist (for quick filtering)
+  details: jsonb("details"), // Additional action-specific data (e.g., tier granted, credits reset amount)
+  notes: text("notes"), // Admin's reason/notes for the action
+  ipAddress: text("ip_address"), // Admin's IP for security tracking
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  adminIdx: index("admin_actions_admin_id_idx").on(table.adminId),
+  targetIdx: index("admin_actions_target_id_idx").on(table.targetId),
+  actionTypeIdx: index("admin_actions_action_type_idx").on(table.actionType),
+  createdAtIdx: index("admin_actions_created_at_idx").on(table.createdAt),
+}));
+
 // Password Reset Tokens - Secure password reset flow
 export const passwordResetTokens = pgTable("password_reset_tokens", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -255,6 +275,11 @@ export const insertAdminSchema = createInsertSchema(admins).omit({
   name: z.string().min(1),
 });
 
+export const insertAdminActionSchema = createInsertSchema(adminActions).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertPortfolioSubmissionSchema = createInsertSchema(portfolioSubmissions).omit({
   id: true,
   createdAt: true,
@@ -300,6 +325,9 @@ export type SubscriptionTrial = typeof subscriptionTrials.$inferSelect;
 
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
 export type Admin = typeof admins.$inferSelect;
+
+export type InsertAdminAction = z.infer<typeof insertAdminActionSchema>;
+export type AdminAction = typeof adminActions.$inferSelect;
 
 export type InsertPortfolioSubmission = z.infer<typeof insertPortfolioSubmissionSchema>;
 export type PortfolioSubmission = typeof portfolioSubmissions.$inferSelect;

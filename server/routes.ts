@@ -4615,6 +4615,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ===== ADMIN TOOLS: CREDIT MANAGEMENT & TIER OVERRIDES =====
+
+  // Admin: Reset artist's upscale credits to max for their current tier
+  app.post("/api/admin/reset-credits", requireAdmin, async (req, res) => {
+    try {
+      const { email, notes } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Artist email is required" });
+      }
+
+      // Find artist by email
+      const artist = await storage.getArtistByEmail(email);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found with that email" });
+      }
+
+      // Reset monthly upscales to 0 (gives them full quota back)
+      await storage.updateArtist(artist.id, {
+        monthlyUpscalesUsed: 0,
+        lastUpscaleResetAt: new Date(),
+      });
+
+      // Log the admin action
+      const admin = req.user!;
+      await db.insert(adminActions).values({
+        adminId: admin.id,
+        adminEmail: admin.email,
+        actionType: "reset_credits",
+        targetType: "artist",
+        targetId: artist.id,
+        targetEmail: artist.email,
+        details: {
+          tier: artist.subscriptionTier,
+          previousUsed: artist.monthlyUpscalesUsed,
+          resetTo: 0,
+        },
+        notes: notes || "Admin reset upscale credits",
+        ipAddress: req.ip,
+      });
+
+      res.json({
+        success: true,
+        message: `Credits reset for ${artist.name} (${artist.email})`,
+        artist: {
+          id: artist.id,
+          name: artist.name,
+          email: artist.email,
+          tier: artist.subscriptionTier,
+          previousUsed: artist.monthlyUpscalesUsed,
+          newQuota: artist.subscriptionTier === 'elite' ? 'unlimited' : 
+                    artist.subscriptionTier === 'pro' ? 25 : 5,
+        },
+      });
+    } catch (error: any) {
+      console.error("Reset credits error:", error);
+      res.status(500).json({ message: error.message || "Failed to reset credits" });
+    }
+  });
+
+  // Admin: Grant complimentary tier to artist (Pro or Elite without Stripe)
+  app.post("/api/admin/grant-comp-tier", requireAdmin, async (req, res) => {
+    try {
+      const { email, tier, notes } = req.body;
+      
+      if (!email || !tier) {
+        return res.status(400).json({ message: "Artist email and tier are required" });
+      }
+
+      if (tier !== 'pro' && tier !== 'elite' && tier !== 'free') {
+        return res.status(400).json({ message: "Tier must be 'free', 'pro', or 'elite'" });
+      }
+
+      // Find artist by email
+      const artist = await storage.getArtistByEmail(email);
+      if (!artist) {
+        return res.status(404).json({ message: "Artist not found with that email" });
+      }
+
+      const previousTier = artist.subscriptionTier;
+
+      // Update artist tier (comp subscription = no Stripe subscription)
+      await storage.updateArtist(artist.id, {
+        subscriptionTier: tier,
+        subscriptionStatus: tier === 'free' ? null : 'comp',
+        // Clear Stripe fields since this is a comp subscription
+        stripeCustomerId: tier === 'free' ? artist.stripeCustomerId : null,
+        stripeSubscriptionId: tier === 'free' ? artist.stripeSubscriptionId : null,
+      });
+
+      // Log the admin action
+      const admin = req.user!;
+      await db.insert(adminActions).values({
+        adminId: admin.id,
+        adminEmail: admin.email,
+        actionType: "grant_comp_tier",
+        targetType: "artist",
+        targetId: artist.id,
+        targetEmail: artist.email,
+        details: {
+          previousTier,
+          newTier: tier,
+          subscriptionStatus: tier === 'free' ? null : 'comp',
+        },
+        notes: notes || `Admin granted ${tier} tier (complimentary)`,
+        ipAddress: req.ip,
+      });
+
+      // Send notification email to artist
+      const tierName = tier.charAt(0).toUpperCase() + tier.slice(1);
+      emailService.sendEmail({
+        recipientEmail: artist.email,
+        recipientType: 'artist',
+        recipientId: artist.id,
+        emailType: 'tier_upgrade',
+        subject: `Welcome to ${tierName} Tier!`,
+        htmlBody: `
+          <p>Hi ${artist.name},</p>
+          <p>Great news! Your account has been upgraded to <strong>${tierName} tier</strong>.</p>
+          <p><strong>Your new benefits:</strong></p>
+          <ul>
+            ${tier === 'pro' ? `
+              <li>35% minimum royalty on all sales</li>
+              <li>Unlimited artwork uploads</li>
+              <li>25 AI upscales per month</li>
+              <li>Homepage featured rotation</li>
+            ` : tier === 'elite' ? `
+              <li>45% royalty guarantee</li>
+              <li>Unlimited artwork uploads</li>
+              <li>Unlimited AI upscales</li>
+              <li>Guaranteed homepage placement</li>
+              <li>Priority artwork review</li>
+            ` : `
+              <li>30% royalty on all sales</li>
+              <li>Up to 20 artworks</li>
+              <li>5 AI upscales per month</li>
+            `}
+          </ul>
+          <p>Log in to your dashboard to start using your new benefits!</p>
+          <p>Best regards,<br>247 Print Network Team</p>
+        `,
+        textBody: `Hi ${artist.name},\n\nYour account has been upgraded to ${tierName} tier!\n\nBest regards,\n247 Print Network Team`,
+      }).catch(err => {
+        console.error('Failed to send tier upgrade email:', err);
+      });
+
+      res.json({
+        success: true,
+        message: `${tierName} tier granted to ${artist.name} (${artist.email})`,
+        artist: {
+          id: artist.id,
+          name: artist.name,
+          email: artist.email,
+          previousTier,
+          newTier: tier,
+          subscriptionStatus: tier === 'free' ? null : 'comp',
+        },
+      });
+    } catch (error: any) {
+      console.error("Grant comp tier error:", error);
+      res.status(500).json({ message: error.message || "Failed to grant tier" });
+    }
+  });
+
   // Get AI upscale usage analytics
   app.get("/api/admin/analytics/upscales", requireAdmin, async (req, res) => {
     try {

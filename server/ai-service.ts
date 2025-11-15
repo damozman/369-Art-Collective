@@ -49,7 +49,7 @@ export async function generateAiImage(
 }
 
 /**
- * Save an image buffer to the uploads directory
+ * Save an image buffer to object storage
  */
 export async function saveAiImage(
   imageBuffer: Buffer,
@@ -57,20 +57,22 @@ export async function saveAiImage(
   generationType: "artist_studio" | "customer_portrait"
 ): Promise<string> {
   try {
-    // Ensure uploads directory exists
-    const uploadsDir = path.join(process.cwd(), "uploads", "ai-generated");
-    await fs.mkdir(uploadsDir, { recursive: true });
+    const { ObjectStorageService } = await import("./objectStorage");
+    const objectStorage = new ObjectStorageService();
 
     // Generate unique filename
     const timestamp = Date.now();
     const filename = `${generationType}_${userId}_${timestamp}.png`;
-    const filepath = path.join(uploadsDir, filename);
 
-    // Save the file
-    await fs.writeFile(filepath, imageBuffer);
+    // Upload to object storage
+    const imageUrl = await objectStorage.uploadFile({
+      directory: objectStorage.getAiGeneratedDir(),
+      filename,
+      buffer: imageBuffer,
+      contentType: "image/png",
+    });
 
-    // Return relative path for database storage
-    return `/uploads/ai-generated/${filename}`;
+    return imageUrl;
   } catch (error: any) {
     console.error("Error saving AI image:", error);
     throw new Error(`Failed to save AI image: ${error.message}`);

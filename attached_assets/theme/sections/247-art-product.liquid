@@ -6,7 +6,6 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
 {{ '247-art.css' | asset_url | stylesheet_tag }}
 
 <style>
-/* Emergency override for white space */
 main#MainContent,
 #MainContent {
   padding-top: 0 !important;
@@ -17,74 +16,61 @@ main#MainContent,
   padding-top: 0 !important;
 }
 
-/* Product page grid: centered with explicit dimensions */
 .pn247-art-product {
-  display: grid !important;
-  grid-template-columns: auto minmax(320px, 420px) !important;
-  gap: 1.5rem !important;
-  justify-content: center !important;
-  max-width: 1686px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  padding-left: 2rem !important;
-  padding-right: 2rem !important;
-  padding-top: 3rem !important;
-  padding-bottom: 3rem !important;
+  display: grid;
+  grid-template-columns: auto 420px;
+  gap: 1.5rem;
+  justify-content: center;
+  max-width: 1686px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
 }
 
-/* Media gallery: explicit width to accommodate thumbnails + mockup */
 .product__media-gallery {
-  display: flex !important;
-  gap: 1rem !important;
-  align-items: flex-start !important;
-  width: 1171px !important;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  width: 1171px;
 }
 
-/* Main mockup display area */
 .gallery__main {
-  width: 1035px !important;
-  max-width: 100% !important;
+  width: 1035px;
+  max-width: 100%;
 }
 
-/* ===== RESPONSIVE BREAKPOINTS ===== */
-
-/* Medium screens: stack config below gallery */
 @media (max-width: 1200px) {
   .pn247-art-product {
-    grid-template-columns: 1fr !important;
-    gap: 2rem !important;
-    max-width: 100% !important;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-width: 100%;
   }
   
   .product__media-gallery {
-    width: 100% !important;
-    max-width: 1171px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    width: 100%;
+    max-width: 1171px;
+    margin: 0 auto;
   }
   
   .gallery__main {
-    width: 100% !important;
-    max-width: 1035px !important;
+    width: 100%;
+    max-width: 1035px;
   }
 }
 
-/* Small screens: stack thumbnails above mockup, reduce sizes */
 @media (max-width: 640px) {
   .product__media-gallery {
-    flex-direction: column !important;
-    width: 100% !important;
+    flex-direction: column;
+    width: 100%;
   }
   
   .gallery__main {
-    width: 100% !important;
-    max-width: 1035px !important;
+    width: 100%;
+    max-width: 1035px;
   }
   
   .pn247-art-product {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-    gap: 1.5rem !important;
+    padding: 3rem 1rem;
+    gap: 1.5rem;
   }
 }
 </style>

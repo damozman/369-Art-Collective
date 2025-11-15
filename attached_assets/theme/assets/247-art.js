@@ -594,6 +594,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Apply size scale via CSS variable for smooth GPU-accelerated scaling
     overlay.style.setProperty('--size-scale', currentSizeScale);
 
+    // Set aspect ratio based on actual artwork dimensions (prevents letterboxing gaps)
+    if (artwork && artwork.naturalWidth && artwork.naturalHeight) {
+      const actualArtworkRatio = artwork.naturalWidth / artwork.naturalHeight;
+      overlay.style.setProperty('--artwork-ratio', actualArtworkRatio);
+      console.log('Setting overlay aspect ratio from artwork:', actualArtworkRatio);
+    }
+
     // Update frame visibility via data attribute (CSS handles opacity)
     if (frame) {
       frame.setAttribute('data-frame', currentFrame);
@@ -613,18 +620,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const size = sizeMatch[1];
     const scaleFactor = SIZE_SCALE_FACTORS[size] || 1.0;
-    const aspectRatio = SIZE_ASPECT_RATIOS[size] || 1.0;
 
-    console.log('Applying size scale:', size, '→', scaleFactor, 'aspect ratio:', aspectRatio);
+    console.log('Applying size scale:', size, '→', scaleFactor);
     currentSizeScale = scaleFactor;
     
-    // Update aspect ratio on all mockup overlays
-    const overlays = document.querySelectorAll('.mockup-slide__overlay');
-    overlays.forEach(overlay => {
-      overlay.style.setProperty('--artwork-ratio', aspectRatio);
-    });
-    
-    // Reposition overlay with new scale
+    // Reposition overlay with new scale (aspect ratio is set from actual artwork in updateMockupOverlay)
     updateMockupOverlay();
   }
 
@@ -708,12 +708,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Default to 8x10 (smallest size) for initial display
     const defaultSize = '8x10';
     currentSizeScale = SIZE_SCALE_FACTORS[defaultSize] || 0.64;
-    
-    // Set default aspect ratio on all mockup overlays
-    const overlays = document.querySelectorAll('.mockup-slide__overlay');
-    overlays.forEach(overlay => {
-      overlay.style.setProperty('--artwork-ratio', SIZE_ASPECT_RATIOS[defaultSize] || 0.8);
-    });
+    // Aspect ratio will be set from actual artwork in updateMockupOverlay
   }
 
   const selectedFrameRadio = document.querySelector('.frame-toggle input[type="radio"]:checked');

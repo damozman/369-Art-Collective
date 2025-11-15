@@ -464,6 +464,16 @@ document.addEventListener('DOMContentLoaded', function() {
     '24x36': 2.16   // 43.27" diagonal (largest)
   };
 
+  // Size aspect ratios (width/height) for mockup container
+  const SIZE_ASPECT_RATIOS = {
+    '8x10': 0.8,      // 8÷10 = 0.8
+    '11x14': 0.786,   // 11÷14 ≈ 0.786
+    '12x16': 0.75,    // 12÷16 = 0.75
+    '16x20': 0.8,     // 16÷20 = 0.8
+    '18x24': 0.75,    // 18÷24 = 0.75
+    '24x36': 0.667    // 24÷36 ≈ 0.667
+  };
+
   // State management
   let currentSizeScale = 1.0;
   let currentFrame = 'none';
@@ -603,9 +613,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const size = sizeMatch[1];
     const scaleFactor = SIZE_SCALE_FACTORS[size] || 1.0;
+    const aspectRatio = SIZE_ASPECT_RATIOS[size] || 1.0;
 
-    console.log('Applying size scale:', size, '→', scaleFactor);
+    console.log('Applying size scale:', size, '→', scaleFactor, 'aspect ratio:', aspectRatio);
     currentSizeScale = scaleFactor;
+    
+    // Update aspect ratio on all mockup overlays
+    const overlays = document.querySelectorAll('.mockup-slide__overlay');
+    overlays.forEach(overlay => {
+      overlay.style.setProperty('--artwork-ratio', aspectRatio);
+    });
     
     // Reposition overlay with new scale
     updateMockupOverlay();
@@ -689,7 +706,14 @@ document.addEventListener('DOMContentLoaded', function() {
     updateMockupSize(selectedSizeRadio.value);
   } else {
     // Default to 8x10 (smallest size) for initial display
-    currentSizeScale = SIZE_SCALE_FACTORS['8x10'] || 0.64;
+    const defaultSize = '8x10';
+    currentSizeScale = SIZE_SCALE_FACTORS[defaultSize] || 0.64;
+    
+    // Set default aspect ratio on all mockup overlays
+    const overlays = document.querySelectorAll('.mockup-slide__overlay');
+    overlays.forEach(overlay => {
+      overlay.style.setProperty('--artwork-ratio', SIZE_ASPECT_RATIOS[defaultSize] || 0.8);
+    });
   }
 
   const selectedFrameRadio = document.querySelector('.frame-toggle input[type="radio"]:checked');

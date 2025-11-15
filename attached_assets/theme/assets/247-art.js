@@ -307,42 +307,29 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Update price display
-  function updatePriceDisplay(basePrice) {
+  function updatePriceDisplay(variantPrice) {
     if (!priceDisplay) return;
 
-    // Frame pricing
-    const framePrices = {
-      'none': 0,
-      'black': 2900, // $29.00 in cents
-      'white': 2900
-    };
+    // Shopify returns prices as strings like "48.00"
+    // For Framed-* variants, the price already includes the frame upcharge
+    // So we just display the variant price as-is
+    const priceValue = parseFloat(variantPrice) || 0;
 
-    const framePrice = framePrices[selectedFrame] || 0;
-    const totalPrice = basePrice + framePrice;
-
-    // Format price (Shopify uses cents)
+    // Format price
     const formatted = new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
-    }).format(totalPrice / 100);
+    }).format(priceValue);
 
     priceDisplay.textContent = formatted;
+    console.log(`Price updated: ${formatted} (variant price: ${variantPrice})`);
   }
 
   // Update frame price
   function updatePrice() {
-    // Get current variant to recalculate total
-    const matchingVariant = variants.find(variant => {
-      const options = variant.options || [];
-      const title = variant.title || '';
-      const matchesSize = options.includes(selectedSize) || title.includes(selectedSize);
-      const matchesFinish = options.includes(selectedFinish) || title.includes(selectedFinish);
-      return matchesSize && matchesFinish;
-    });
-
-    if (matchingVariant) {
-      updatePriceDisplay(matchingVariant.price);
-    }
+    // Re-run the variant matching logic to get the correct price
+    // This handles when frame selection changes without size/finish changing
+    updateVariant();
   }
 
   // Update availability

@@ -171,6 +171,81 @@ export class ObjectStorageService {
     }
   }
 
+  /**
+   * Read an object as a Buffer
+   * @param objectPath - URL path like "/objects/artwork-uploads/file.jpg"
+   */
+  async readObjectAsBuffer(objectPath: string): Promise<Buffer> {
+    const file = await this.getFile(objectPath);
+    const chunks: Buffer[] = [];
+    
+    const stream = file.createReadStream();
+    
+    return new Promise((resolve, reject) => {
+      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', reject);
+    });
+  }
+
+  /**
+   * Write a Buffer to object storage (with security validation)
+   * @param objectPath - URL path like "/objects/ai-previews/file.jpg"
+   * @param buffer - File buffer
+   * @param contentType - MIME type
+   */
+  async putObjectFromBuffer(
+    objectPath: string,
+    buffer: Buffer,
+    contentType: string
+  ): Promise<void> {
+    // Validate path starts with /objects/
+    if (!objectPath.startsWith('/objects/')) {
+      throw new Error('Invalid object path: must start with /objects/');
+    }
+    
+    // Validate path is within allowed directories
+    const allowedPrefixes = [
+      this.getArtworkUploadsDir(),
+      this.getAiGeneratedDir(),
+      this.getAiPreviewsDir(),
+    ];
+    
+    const isAllowed = allowedPrefixes.some(prefix => objectPath.startsWith(prefix));
+    
+    if (!isAllowed) {
+      throw new Error(`Security: Upload path must be within configured directories`);
+    }
+    
+    // Parse and upload
+    const { bucketName, objectName } = parseObjectPath(objectPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+    
+    await file.save(buffer, {
+      contentType,
+      metadata: {
+        cacheControl: "public, max-age=31536000",
+      },
+    });
+  }
+
+  /**
+   * Check if an object exists
+   * @param objectPath - URL path like "/objects/artwork-uploads/file.jpg"
+   */
+  async objectExists(objectPath: string): Promise<boolean> {
+    try {
+      await this.getFile(objectPath);
+      return true;
+    } catch (error: any) {
+      if (error.name === "ObjectNotFoundError") {
+        return false;
+      }
+      throw error;
+    }
+  }
+
   // Check if a file exists in object storage
   async fileExists(objectPath: string): Promise<boolean> {
     try {

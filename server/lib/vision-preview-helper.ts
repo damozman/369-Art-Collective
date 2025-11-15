@@ -2,11 +2,11 @@ import sharp from "sharp";
 import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { ObjectStorageService } from "../objectStorage";
 
 const MAX_OPENAI_IMAGE_SIZE_BYTES = 20 * 1024 * 1024; // 20MB limit
 const AI_PREVIEW_MAX_DIMENSION = 2048; // Max width/height for AI analysis
 const AI_PREVIEW_QUALITY = 80; // JPEG quality (0-100)
-const AI_PREVIEW_DIR = path.join(process.cwd(), "uploads", "ai-previews");
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 
 // Error codes for AI content generation
@@ -30,18 +30,9 @@ export class AIContentError extends Error {
   }
 }
 
-// Ensure AI preview directory exists
-async function ensurePreviewDir(): Promise<void> {
-  try {
-    await fs.mkdir(AI_PREVIEW_DIR, { recursive: true });
-  } catch (error) {
-    console.error("[AI_PREVIEW] Failed to create preview directory:", error);
-  }
-}
-
-// Generate hash for caching
-function generateFileHash(filePath: string): string {
-  return crypto.createHash('sha256').update(filePath).digest('hex').substring(0, 16);
+// Generate hash for caching (using URL instead of file path)
+function generateFileHash(imageUrl: string): string {
+  return crypto.createHash('sha256').update(imageUrl).digest('hex').substring(0, 16);
 }
 
 // Check if a file path is safe (within uploads directory)
@@ -51,23 +42,29 @@ function isSafeFilePath(filePath: string): boolean {
   return resolvedPath.startsWith(uploadsPath);
 }
 
-// Extract local file path from URL
-function extractLocalPath(imageUrl: string): string | null {
+// Extract storage path and type from URL
+function parseImageUrl(imageUrl: string): { type: "object-storage" | "filesystem" | "unknown", path: string } | null {
   try {
-    // Handle relative paths like "/uploads/..."
-    if (imageUrl.startsWith('/uploads/')) {
-      // Strip leading slash before joining to avoid absolute path issues
-      const relativePath = imageUrl.replace(/^\//, '');
-      return path.join(process.cwd(), relativePath);
+    // Handle object storage URLs like "/objects/..."
+    if (imageUrl.startsWith('/objects/')) {
+      return { type: "object-storage", path: imageUrl };
     }
     
-    // Handle full URLs like "https://domain.com/uploads/..."
+    // Handle filesystem URLs like "/uploads/..." (legacy)
+    if (imageUrl.startsWith('/uploads/')) {
+      const relativePath = imageUrl.replace(/^\//, '');
+      return { type: "filesystem", path: path.join(process.cwd(), relativePath) };
+    }
+    
+    // Handle full URLs
     if (imageUrl.startsWith('http')) {
       const url = new URL(imageUrl);
+      if (url.pathname.startsWith('/objects/')) {
+        return { type: "object-storage", path: url.pathname };
+      }
       if (url.pathname.startsWith('/uploads/')) {
-        // Strip leading slash before joining to avoid absolute path issues
         const relativePath = url.pathname.replace(/^\//, '');
-        return path.join(process.cwd(), relativePath);
+        return { type: "filesystem", path: path.join(process.cwd(), relativePath) };
       }
     }
     
@@ -79,19 +76,33 @@ function extractLocalPath(imageUrl: string): string | null {
 
 // Get or create AI-friendly preview image
 export async function getAIPreviewImage(imageUrl: string): Promise<string> {
-  await ensurePreviewDir();
+  // Parse the image URL to determine storage type
+  const parsed = parseImageUrl(imageUrl);
   
-  // Extract local file path
-  const localPath = extractLocalPath(imageUrl);
-  
-  if (!localPath) {
+  if (!parsed) {
     throw new AIContentError(
       AIContentErrorCode.AI_IMAGE_INVALID,
       "Invalid image URL. Please upload your image directly.",
-      `Cannot process non-local image URL: ${imageUrl}`
+      `Cannot process image URL: ${imageUrl}`
     );
   }
   
+  // Branch by storage type
+  if (parsed.type === "filesystem") {
+    return await getAIPreviewImageFilesystem(imageUrl, parsed.path);
+  } else if (parsed.type === "object-storage") {
+    return await getAIPreviewImageObjectStorage(imageUrl, parsed.path);
+  }
+  
+  throw new AIContentError(
+    AIContentErrorCode.AI_IMAGE_INVALID,
+    "Invalid image storage type.",
+    `Unknown storage type for: ${imageUrl}`
+  );
+}
+
+// Handle filesystem images (legacy)
+async function getAIPreviewImageFilesystem(imageUrl: string, localPath: string): Promise<string> {
   // Security check: ensure file is within uploads directory
   if (!isSafeFilePath(localPath)) {
     throw new AIContentError(
@@ -123,19 +134,22 @@ export async function getAIPreviewImage(imageUrl: string): Promise<string> {
   }
   
   // Generate preview filename
-  const fileHash = generateFileHash(localPath);
+  const fileHash = generateFileHash(imageUrl);
   const ext = path.extname(localPath);
   const basename = path.basename(localPath, ext);
   const previewFilename = `${basename}_${fileHash}_preview.jpg`;
-  const previewPath = path.join(AI_PREVIEW_DIR, previewFilename);
-  const previewUrl = `/uploads/ai-previews/${previewFilename}`;
   
-  // Check if preview already exists
+  // For filesystem images, still use object storage for previews if available
+  const objectStorage = new ObjectStorageService();
+  const previewObjectPath = `${objectStorage.getAiPreviewsDir()}/${previewFilename}`;
+  
+  // Check if preview already exists in object storage
   try {
-    await fs.access(previewPath);
-    const previewStats = await fs.stat(previewPath);
-    console.log(`[AI_PREVIEW] Using cached preview (${(previewStats.size / 1024 / 1024).toFixed(2)}MB): ${previewUrl}`);
-    return previewUrl;
+    const exists = await objectStorage.objectExists(previewObjectPath);
+    if (exists) {
+      console.log(`[AI_PREVIEW] Using cached preview from object storage: ${previewObjectPath}`);
+      return previewObjectPath;
+    }
   } catch (error) {
     // Preview doesn't exist, create it
   }
@@ -149,29 +163,29 @@ export async function getAIPreviewImage(imageUrl: string): Promise<string> {
     
     // Resize if needed
     const maxDim = Math.max(metadata.width || 0, metadata.height || 0);
+    let previewBuffer: Buffer;
+    
     if (maxDim > AI_PREVIEW_MAX_DIMENSION) {
-      await image
+      previewBuffer = await image
         .resize(AI_PREVIEW_MAX_DIMENSION, AI_PREVIEW_MAX_DIMENSION, {
           fit: 'inside',
           withoutEnlargement: true
         })
         .jpeg({ quality: AI_PREVIEW_QUALITY })
-        .toFile(previewPath);
+        .toBuffer();
     } else {
       // Just convert to JPEG with compression
-      await image
+      previewBuffer = await image
         .jpeg({ quality: AI_PREVIEW_QUALITY })
-        .toFile(previewPath);
+        .toBuffer();
     }
     
-    const previewStats = await fs.stat(previewPath);
-    const previewSize = previewStats.size;
+    const previewSize = previewBuffer.length;
     
-    console.log(`[AI_PREVIEW] Preview created (${(previewSize / 1024 / 1024).toFixed(2)}MB): ${previewUrl}`);
+    console.log(`[AI_PREVIEW] Preview created (${(previewSize / 1024 / 1024).toFixed(2)}MB)`);
     
     // Verify preview is under limit
     if (previewSize >= MAX_OPENAI_IMAGE_SIZE_BYTES) {
-      // If still too large, throw error with guidance
       throw new AIContentError(
         AIContentErrorCode.AI_IMAGE_TOO_LARGE,
         "Your image is extremely large and cannot be processed for AI analysis. Try uploading a smaller version of your artwork.",
@@ -179,7 +193,127 @@ export async function getAIPreviewImage(imageUrl: string): Promise<string> {
       );
     }
     
-    return previewUrl;
+    // Upload to object storage
+    await objectStorage.putObjectFromBuffer(previewObjectPath, previewBuffer, "image/jpeg");
+    
+    return previewObjectPath;
+  } catch (error: any) {
+    if (error instanceof AIContentError) {
+      throw error;
+    }
+    
+    throw new AIContentError(
+      AIContentErrorCode.AI_PREVIEW_GENERATION_FAILED,
+      "Failed to process your image for AI analysis. Please try a different image format.",
+      `Sharp processing error: ${error.message}`
+    );
+  }
+}
+
+// Handle object storage images (new)
+async function getAIPreviewImageObjectStorage(imageUrl: string, objectPath: string): Promise<string> {
+  const objectStorage = new ObjectStorageService();
+  
+  // Check if original file exists
+  try {
+    const exists = await objectStorage.objectExists(objectPath);
+    if (!exists) {
+      throw new AIContentError(
+        AIContentErrorCode.AI_IMAGE_FETCH_FAILED,
+        "Image file not found. Please try uploading again.",
+        `Object not found: ${objectPath}`
+      );
+    }
+  } catch (error: any) {
+    if (error instanceof AIContentError) throw error;
+    throw new AIContentError(
+      AIContentErrorCode.AI_IMAGE_FETCH_FAILED,
+      "Failed to access image. Please try uploading again.",
+      `Object storage error: ${error.message}`
+    );
+  }
+  
+  // Download the image to a buffer
+  let imageBuffer: Buffer;
+  try {
+    imageBuffer = await objectStorage.readObjectAsBuffer(objectPath);
+  } catch (error: any) {
+    throw new AIContentError(
+      AIContentErrorCode.AI_IMAGE_FETCH_FAILED,
+      "Failed to download image. Please try again.",
+      `Download error: ${error.message}`
+    );
+  }
+  
+  const fileSize = imageBuffer.length;
+  
+  // If file is already under 20MB, use original
+  if (fileSize < MAX_OPENAI_IMAGE_SIZE_BYTES) {
+    console.log(`[AI_PREVIEW] Using original image (${(fileSize / 1024 / 1024).toFixed(2)}MB): ${imageUrl}`);
+    return imageUrl;
+  }
+  
+  // Generate preview filename
+  const fileHash = generateFileHash(imageUrl);
+  const ext = path.extname(objectPath);
+  const basename = path.basename(objectPath, ext);
+  const previewFilename = `${basename}_${fileHash}_preview.jpg`;
+  const previewObjectPath = `${objectStorage.getAiPreviewsDir()}/${previewFilename}`;
+  
+  // Check if preview already exists
+  try {
+    const exists = await objectStorage.objectExists(previewObjectPath);
+    if (exists) {
+      console.log(`[AI_PREVIEW] Using cached preview: ${previewObjectPath}`);
+      return previewObjectPath;
+    }
+  } catch (error) {
+    // Preview doesn't exist, create it
+  }
+  
+  // Create downsized JPEG preview from buffer
+  try {
+    console.log(`[AI_PREVIEW] Creating preview for ${basename}${ext} (original: ${(fileSize / 1024 / 1024).toFixed(2)}MB)`);
+    
+    const image = sharp(imageBuffer);
+    const metadata = await image.metadata();
+    
+    // Resize if needed
+    const maxDim = Math.max(metadata.width || 0, metadata.height || 0);
+    let previewBuffer: Buffer;
+    
+    if (maxDim > AI_PREVIEW_MAX_DIMENSION) {
+      previewBuffer = await image
+        .resize(AI_PREVIEW_MAX_DIMENSION, AI_PREVIEW_MAX_DIMENSION, {
+          fit: 'inside',
+          withoutEnlargement: true
+        })
+        .jpeg({ quality: AI_PREVIEW_QUALITY })
+        .toBuffer();
+    } else {
+      // Just convert to JPEG with compression
+      previewBuffer = await image
+        .jpeg({ quality: AI_PREVIEW_QUALITY })
+        .toBuffer();
+    }
+    
+    const previewSize = previewBuffer.length;
+    
+    console.log(`[AI_PREVIEW] Preview created (${(previewSize / 1024 / 1024).toFixed(2)}MB)`);
+    
+    // Verify preview is under limit
+    if (previewSize >= MAX_OPENAI_IMAGE_SIZE_BYTES) {
+      throw new AIContentError(
+        AIContentErrorCode.AI_IMAGE_TOO_LARGE,
+        "Your image is extremely large and cannot be processed for AI analysis. Try uploading a smaller version of your artwork.",
+        `Preview still exceeds 20MB after compression: ${(previewSize / 1024 / 1024).toFixed(2)}MB`
+      );
+    }
+    
+    // Upload preview to object storage
+    await objectStorage.putObjectFromBuffer(previewObjectPath, previewBuffer, "image/jpeg");
+    
+    return previewObjectPath;
   } catch (error: any) {
     if (error instanceof AIContentError) {
       throw error;

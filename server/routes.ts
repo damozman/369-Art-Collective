@@ -4818,8 +4818,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { imageUrl, fileHash, width, height, fileSize } = req.body;
 
       if (!imageUrl || !fileHash || !width || !height || !fileSize) {
+        const { UpscaleErrorCode } = await import('./lib/replicate-upscale-service');
         return res.status(400).json({ 
-          message: "Image URL, file hash, dimensions, and file size are required" 
+          status: 'error',
+          code: UpscaleErrorCode.INVALID_IMAGE,
+          userMessage: "Invalid image data. Please try uploading your image again.",
+          developerMessage: "Image URL, file hash, dimensions, and file size are required"
         });
       }
 
@@ -4907,7 +4911,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const { predictionId } = await ReplicateUpscaleService.createUpscaleJob({
           imageUrl: publicImageUrl,
-          scale
+          scale,
+          width,
+          height
         });
 
         const tier = artist.subscriptionTier || 'free';
@@ -4953,6 +4959,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error: any) {
         console.error("Upscale request error:", error);
         
+        // Extract user-friendly error message if available
+        const { UpscaleError, UpscaleErrorCode } = await import('./lib/replicate-upscale-service');
+        const isUpscaleError = error.name === 'UpscaleError';
+        const userMessage = isUpscaleError ? error.userMessage : "The AI upscaling service is temporarily unavailable. Please try again in a moment.";
+        const errorCode = isUpscaleError ? error.code : UpscaleErrorCode.UNKNOWN_ERROR;
+        const devMessage = error.message || "Failed to create upscale job";
+        
         await UpscaleDeduplicationService.recordFailedAttempt({
           fileHash,
           artistId,
@@ -4960,14 +4973,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tier: artist.subscriptionTier || 'free',
           ipAddress,
           originalUrl: imageUrl,
-          errorMessage: error.message || "Failed to create upscale job"
+          errorMessage: devMessage
         });
 
-        res.status(500).json({ message: "Failed to start upscaling" });
+        // Use 400 for client errors (IMAGE_TOO_LARGE), 500 for server errors
+        const statusCode = errorCode === UpscaleErrorCode.IMAGE_TOO_LARGE ? 400 : 500;
+        
+        res.status(statusCode).json({ 
+          status: 'error',
+          code: errorCode,
+          userMessage,
+          developerMessage: devMessage
+        });
       }
     } catch (error: any) {
-      console.error("Upscale request error:", error);
-      res.status(500).json({ message: "Failed to process upscale request" });
+      console.error("Upscale request error (outer):", error);
+      
+      // Maintain consistent error response format even for unexpected errors
+      const { UpscaleErrorCode } = await import('./lib/replicate-upscale-service');
+      res.status(500).json({ 
+        status: 'error',
+        code: UpscaleErrorCode.UNKNOWN_ERROR,
+        userMessage: "An unexpected error occurred. Please try again in a moment.",
+        developerMessage: error.message || "Failed to process upscale request"
+      });
     }
   });
 
@@ -5030,19 +5059,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
               jobId: job.id
             });
           } else if (replicateStatus.status === 'failed') {
+            // Use user-friendly error message if available
+            const userMessage = replicateStatus.userMessage || "The AI upscaling service encountered an error. Please try again.";
+            const devError = replicateStatus.error || "Upscaling failed";
+            const errorCode = replicateStatus.errorCode;
+            
             await storage.updateUpscaleJob(job.id, {
               status: 'failed',
-              errorMessage: replicateStatus.error || "Upscaling failed"
+              errorMessage: devError
             });
 
             await storage.updateUpscaleUsageByJobId(job.id, {
               status: 'failed',
-              errorMessage: replicateStatus.error || "Upscaling failed"
+              errorMessage: devError
             });
 
             return res.json({
               status: 'failed',
-              error: replicateStatus.error || "Upscaling failed",
+              code: errorCode,
+              userMessage,
               jobId: job.id
             });
           }

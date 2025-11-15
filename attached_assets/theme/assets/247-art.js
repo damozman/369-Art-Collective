@@ -289,10 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
       frame.setAttribute('data-frame', frameType);
     });
     
-    // Also update the currentFrame variable for mockup overlay positioning
-    if (typeof updateMockupFrame === 'function') {
-      updateMockupFrame(frameType);
-    }
+    // Notify mockup system of frame change via custom event
+    const event = new CustomEvent('frameChanged', { detail: { frameType } });
+    document.dispatchEvent(event);
   }
 
   // Unified update function for all preview changes
@@ -582,14 +581,9 @@ document.addEventListener('DOMContentLoaded', function() {
     overlay.style.top = `${absoluteY}px`;
     overlay.style.width = `${overlayWidthPx}px`;
 
-    // Update frame visibility
+    // Update frame visibility via data attribute (CSS handles opacity)
     if (frame) {
       frame.setAttribute('data-frame', currentFrame);
-      if (currentFrame === 'none') {
-        frame.style.display = 'none';
-      } else {
-        frame.style.display = 'block';
-      }
     }
   }
 
@@ -624,7 +618,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Listen for frame toggle changes
+  // Listen for frame toggle changes from configurator
+  document.addEventListener('frameChanged', function(event) {
+    const frameType = event.detail.frameType;
+    currentFrame = frameType;
+    // Reposition overlay to apply frame change to active mockup
+    updateMockupOverlay();
+  });
+  
+  // Also listen to direct radio button changes (fallback)
   const frameToggles = document.querySelectorAll('.frame-toggle input[type="radio"]');
   frameToggles.forEach(radio => {
     radio.addEventListener('change', function() {

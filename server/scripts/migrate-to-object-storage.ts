@@ -12,9 +12,9 @@
 import fs from "fs/promises";
 import path from "path";
 import { ObjectStorageService } from "../objectStorage";
-import { db } from "../../db";
-import { artworks, portfolioSubmissions, aiImages } from "../../db/schema";
-import { eq, like } from "drizzle-orm";
+import { db } from "../lib/db";
+import { artworks, portfolioSubmissions } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 
@@ -23,7 +23,6 @@ interface MigrationStats {
   uploadedFiles: number;
   updatedArtworks: number;
   updatedPortfolios: number;
-  updatedAiImages: number;
   errors: string[];
 }
 
@@ -125,18 +124,6 @@ async function updateDatabaseRecords(
       console.log(`  Updated ${updatedPortfolios.length} portfolio submission(s)`);
       stats.updatedPortfolios += updatedPortfolios.length;
     }
-    
-    // Update AI images
-    const updatedAiImages = await db
-      .update(aiImages)
-      .set({ imageUrl: newUrl })
-      .where(eq(aiImages.imageUrl, oldUrl))
-      .returning();
-    
-    if (updatedAiImages.length > 0) {
-      console.log(`  Updated ${updatedAiImages.length} AI image(s)`);
-      stats.updatedAiImages += updatedAiImages.length;
-    }
   } catch (error: any) {
     const errorMsg = `Failed to update database for ${oldUrl}: ${error.message}`;
     console.error(`✗ ${errorMsg}`);
@@ -152,7 +139,6 @@ async function main() {
     uploadedFiles: 0,
     updatedArtworks: 0,
     updatedPortfolios: 0,
-    updatedAiImages: 0,
     errors: [],
   };
   
@@ -212,7 +198,7 @@ async function main() {
   console.log(`\nStep 3: Updating database records...\n`);
   
   // Update database records
-  for (const [oldUrl, newUrl] of urlMappings.entries()) {
+  for (const [oldUrl, newUrl] of Array.from(urlMappings.entries())) {
     await updateDatabaseRecords(oldUrl, newUrl, stats);
   }
   
@@ -222,7 +208,6 @@ async function main() {
   console.log(`Files uploaded: ${stats.uploadedFiles}`);
   console.log(`Artworks updated: ${stats.updatedArtworks}`);
   console.log(`Portfolio submissions updated: ${stats.updatedPortfolios}`);
-  console.log(`AI images updated: ${stats.updatedAiImages}`);
   
   if (stats.errors.length > 0) {
     console.log(`\nErrors encountered: ${stats.errors.length}`);

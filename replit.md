@@ -27,7 +27,7 @@ The system uses a scalable client-server architecture with distinct frontend and
 - **Backend Framework:** Node.js.
 - **Database:** PostgreSQL (Neon-powered) with Drizzle ORM.
 - **Authentication:** Session-based with HTTP-only cookies, bcrypt hashing, and CSRF protection.
-- **AI Generation System:** Integration with OpenAI DALL-E 3 (for Print Network) and GPT-4o (for CreatorStack) via Replit AI Integrations, featuring a dual-balance credit system and token usage tracking.
+- **AI Generation System:** Integration with OpenAI DALL-E 3 (for Print Network) and GPT-4o Vision (for CreatorStack) via Replit AI Integrations, featuring a dual-balance credit system and token usage tracking. Vision Preview Helper automatically generates downsized JPEG previews (~2048px, <20MB) for large high-resolution images before sending to OpenAI Vision API, with file-based caching to optimize performance. Structured error handling system (AI_IMAGE_TOO_LARGE, AI_IMAGE_FETCH_FAILED, etc.) provides user-friendly error messages instead of technical API failures.
 - **Shopify Integration:** Automated product creation, order capture via HMAC-verified webhooks, and automated theme/navigation deployment. Product structure supports 16 variants per artwork, with smart collections for organization.
 - **Printify Integration:** Automated Print-on-Demand product creation aligned with 4 wall art types, with automated mockup image sync to Shopify product galleries.
 - **Stripe Connect:** For automated artist royalty payouts and subscription management.

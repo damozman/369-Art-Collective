@@ -23,7 +23,9 @@ import {
   insertTestimonialSchema,
   insertInfluencerSchema,
   influencerApplicationSchema,
+  adminActions,
 } from "@shared/schema";
+import { db } from "./lib/db";
 import crypto from "crypto";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured, updateProductStatus } from "./lib/shopify";
 import { createWallArtProducts } from "./lib/printify-service";

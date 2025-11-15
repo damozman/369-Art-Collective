@@ -6,6 +6,7 @@ import fs from "fs";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { storage } from "./storage";
+import { ObjectStorageService } from "./objectStorage";
 import {
   insertArtistSchema,
   insertAdminSchema,
@@ -33,7 +34,7 @@ import { getAffiliateCodeFromCookie } from "./middleware/affiliate-tracking";
 import { processShopifyOrder } from "./lib/order-processor";
 import { processCreatorStackPurchase } from "./lib/creatorstack-webhook-processor";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
-import { validateImageQuality, getImageDimensions, MIN_LONG_SIDE, MIN_SHORT_SIDE } from "./lib/image-validator";
+import { validateImageQuality, validateImageQualityFromBuffer, getImageDimensions, MIN_LONG_SIDE, MIN_SHORT_SIDE } from "./lib/image-validator";
 import { stripeConnectService } from "./lib/stripe-connect";
 import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from "./lib/payout-service";
 import { emailService } from "./lib/email-service";
@@ -52,17 +53,9 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure multer for file uploads
-const multerStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const safeName = file.originalname.replace(/\s+/g, "-").toLowerCase();
-    cb(null, `${Date.now()}-${safeName}`);
-  },
-});
-
+// Configure multer for file uploads (using memory storage for object storage)
 const upload = multer({
-  storage: multerStorage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit to accommodate upscaled images
   fileFilter: (_req, file, cb) => {
     const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
@@ -558,7 +551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve uploaded files
+  // Serve uploaded files (legacy filesystem - for development only)
   app.use("/uploads", (req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     next();
@@ -568,6 +561,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.sendFile(filePath);
     } else {
       res.status(404).json({ error: "File not found" });
+    }
+  });
+
+  // Serve images from object storage (production persistent storage)
+  app.get("/objects/*", async (req, res) => {
+    try {
+      const objectStorage = new ObjectStorageService();
+      const objectPath = req.path; // e.g., /objects/artwork-uploads/123-image.jpg
+      const file = await objectStorage.getFile(objectPath);
+      await objectStorage.downloadObject(file, res);
+    } catch (error: any) {
+      if (error.name === "ObjectNotFoundError") {
+        return res.status(404).json({ error: "Image not found" });
+      }
+      console.error("Object storage error:", error);
+      return res.status(500).json({ error: "Failed to retrieve image" });
     }
   });
 
@@ -2286,8 +2295,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check upload limits before accepting file
       const artist = await storage.getArtistById(req.user!.id);
       if (!artist) {
-        // Clean up uploaded file
-        fs.unlinkSync(path.join(uploadDir, req.file.filename));
         return res.status(404).json({ error: "Artist not found" });
       }
 
@@ -2297,8 +2304,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const FREE_TIER_LIMIT = 20;
         
         if (artworks.length >= FREE_TIER_LIMIT) {
-          // Clean up uploaded file
-          fs.unlinkSync(path.join(uploadDir, req.file.filename));
           return res.status(403).json({ 
             error: `Upload limit reached. Free tier allows ${FREE_TIER_LIMIT} artworks. Upgrade to Pro or Elite for unlimited uploads.`,
             upgradeRequired: true,
@@ -2309,13 +2314,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Validate image quality for Printify requirements
-      const filePath = path.join(uploadDir, req.file.filename);
-      const validation = validateImageQuality(filePath);
+      // Validate image quality for Printify requirements (using buffer)
+      const validation = validateImageQualityFromBuffer(req.file.buffer);
       
       if (!validation.valid) {
-        // Delete the uploaded file if it doesn't meet quality requirements
-        fs.unlinkSync(filePath);
         return res.status(400).json({ 
           error: validation.message || "Image quality check failed",
           minLongSide: MIN_LONG_SIDE,
@@ -2325,17 +2327,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       console.log(`[Upload] Image validated: ${validation.dimensions?.width}×${validation.dimensions?.height} pixels`);
-      const imageUrl = `/uploads/${req.file.filename}`;
+      
+      // Upload to object storage
+      const objectStorage = new ObjectStorageService();
+      const safeName = req.file.originalname.replace(/\s+/g, "-").toLowerCase();
+      const filename = `${Date.now()}-${safeName}`;
+      const imageUrl = await objectStorage.uploadFile({
+        directory: objectStorage.getArtworkUploadsDir(),
+        filename,
+        buffer: req.file.buffer,
+        contentType: req.file.mimetype,
+      });
+      
       res.status(201).json({ imageUrl });
     } catch (error: any) {
       console.error("Upload error:", error);
-      // Clean up file if there was an error
-      if (req.file) {
-        const filePath = path.join(uploadDir, req.file.filename);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      }
       res.status(500).json({ error: error.message || "Upload failed" });
     }
   });
@@ -2347,20 +2353,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No file uploaded" });
       }
       
-      const imageUrl = `/uploads/${req.file.filename}`;
-      console.log(`[Upload Design] File uploaded for upscale widget: ${req.file.filename}`);
+      // Upload to object storage
+      const objectStorage = new ObjectStorageService();
+      const safeName = req.file.originalname.replace(/\s+/g, "-").toLowerCase();
+      const filename = `${Date.now()}-${safeName}`;
+      const imageUrl = await objectStorage.uploadFile({
+        directory: objectStorage.getArtworkUploadsDir(),
+        filename,
+        buffer: req.file.buffer,
+        contentType: req.file.mimetype,
+      });
+      
+      console.log(`[Upload Design] File uploaded for upscale widget: ${filename}`);
       
       // Return URL in format expected by UpscaleWidget (key: 'url', not 'imageUrl')
       res.status(200).json({ url: imageUrl });
     } catch (error: any) {
       console.error("Upload design error:", error);
-      // Clean up file if there was an error
-      if (req.file) {
-        const filePath = path.join(uploadDir, req.file.filename);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      }
       res.status(500).json({ error: error.message || "Upload failed" });
     }
   });
@@ -2381,35 +2390,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Enforce 2-3 image requirement
       if (files.length < 2) {
-        // Clean up uploaded files
-        files.forEach(file => {
-          const filePath = path.join(uploadDir, file.filename);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        });
         return res.status(400).json({ error: "Please upload at least 2 portfolio images" });
       }
       
       if (files.length > 3) {
-        // Clean up uploaded files
-        files.forEach(file => {
-          const filePath = path.join(uploadDir, file.filename);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        });
         return res.status(400).json({ error: "Maximum 3 portfolio images allowed" });
       }
       
       // Validate each image's quality
       const validatedFiles = [];
       for (const file of files) {
-        const filePath = path.join(uploadDir, file.filename);
-        const validation = validateImageQuality(filePath);
+        const validation = validateImageQualityFromBuffer(file.buffer);
         
         if (!validation.valid) {
-          // Clean up all uploaded files on any failure
-          files.forEach(f => {
-            const fPath = path.join(uploadDir, f.filename);
-            if (fs.existsSync(fPath)) fs.unlinkSync(fPath);
-          });
           return res.status(400).json({ 
             error: `Image "${file.originalname}" ${validation.message || "does not meet quality requirements"}`,
             minLongSide: MIN_LONG_SIDE,
@@ -2419,17 +2412,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         validatedFiles.push({
-          filename: file.filename,
+          originalname: file.originalname,
           dimensions: validation.dimensions
         });
       }
       
       console.log(`[Portfolio Upload] ${files.length} images validated for artist ${req.user!.id}`);
       
-      // Create portfolio submission records
+      // Upload all files to object storage and create portfolio submission records
+      const objectStorage = new ObjectStorageService();
       const portfolioSubmissions = [];
+      
       for (const file of files) {
-        const imageUrl = `/uploads/${file.filename}`;
+        const safeName = file.originalname.replace(/\s+/g, "-").toLowerCase();
+        const filename = `${Date.now()}-${safeName}`;
+        const imageUrl = await objectStorage.uploadFile({
+          directory: objectStorage.getArtworkUploadsDir(),
+          filename,
+          buffer: file.buffer,
+          contentType: file.mimetype,
+        });
+        
         const submission = await storage.createPortfolioSubmission({
           artistId: req.user!.id,
           imageUrl,
@@ -2444,14 +2447,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Portfolio upload error:", error);
-      // Clean up files if there was an error
-      if (req.files) {
-        const files = req.files as Express.Multer.File[];
-        files.forEach(file => {
-          const filePath = path.join(uploadDir, file.filename);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        });
-      }
       res.status(500).json({ error: error.message || "Portfolio upload failed" });
     }
   });

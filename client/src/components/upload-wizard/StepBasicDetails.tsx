@@ -1,10 +1,14 @@
 import { UseFormReturn } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { AIAssistButton } from "@/components/AIAssistButton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { WizardFormData } from "./ArtworkUploadWizard";
 
 interface StepBasicDetailsProps {
@@ -13,6 +17,19 @@ interface StepBasicDetailsProps {
 
 export function StepBasicDetails({ form }: StepBasicDetailsProps) {
   const { toast } = useToast();
+  const [showAITip, setShowAITip] = useState(false);
+
+  useEffect(() => {
+    const hasSeenTip = localStorage.getItem('hasSeenAIAssistTip');
+    if (!hasSeenTip) {
+      setShowAITip(true);
+    }
+  }, []);
+
+  const dismissTip = () => {
+    setShowAITip(false);
+    localStorage.setItem('hasSeenAIAssistTip', 'true');
+  };
 
   const generateContent = async (contentType: string) => {
     try {
@@ -53,6 +70,33 @@ export function StepBasicDetails({ form }: StepBasicDetailsProps) {
 
   return (
     <div className="space-y-4">
+      {showAITip && (
+        <Alert className="border-primary/50 bg-primary/5" data-testid="alert-ai-tip">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex gap-3">
+              <Sparkles className="h-5 w-5 text-primary mt-0.5" />
+              <div className="space-y-1">
+                <AlertTitle className="text-base">AI Content Assistant Available!</AlertTitle>
+                <AlertDescription className="text-sm">
+                  Look for the <Sparkles className="h-3 w-3 inline mx-1 text-primary" /> sparkle icons next to each field. 
+                  Click them to automatically generate compelling titles, descriptions, and tags using AI - even when fields are empty! 
+                  The AI analyzes your artwork to create professional, SEO-optimized content.
+                </AlertDescription>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={dismissTip}
+              className="h-6 w-6 shrink-0"
+              data-testid="button-dismiss-ai-tip"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </Alert>
+      )}
+
       <FormField
         control={form.control}
         name="title"

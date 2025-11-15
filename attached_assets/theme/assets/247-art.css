@@ -69,7 +69,6 @@ body.template-product .shopify-section:first-child {
   height: 100%;
   pointer-events: none;
   z-index: 20;
-  border-radius: 4px;
   opacity: 0;
   transition: opacity 0.3s ease, box-shadow 0.3s ease;
 }

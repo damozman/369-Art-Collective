@@ -1,0 +1,8 @@
+{
+  "sections": {
+    "search-results": {
+      "type": "247-search-results"
+    }
+  },
+  "order": ["search-results"]
+}

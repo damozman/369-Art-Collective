@@ -6,17 +6,6 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
 {{ '247-art.css' | asset_url | stylesheet_tag }}
 
 <style>
-/* ===== CSS CUSTOM PROPERTIES FOR PRECISE LAYOUT ===== */
-:root {
-  --mockup-width: 1035px;
-  --thumb-width: 120px;
-  --media-gap: 1rem;
-  --config-min: 320px;
-  --config-max: 420px;
-  --section-gap: 1.5rem;
-  --section-padding: 2rem;
-}
-
 /* Emergency override for white space */
 main#MainContent,
 #MainContent {
@@ -31,14 +20,14 @@ main#MainContent,
 /* Product page grid: centered with explicit dimensions */
 .pn247-art-product {
   display: grid !important;
-  grid-template-columns: auto minmax(var(--config-min), var(--config-max)) !important;
-  gap: var(--section-gap) !important;
+  grid-template-columns: auto minmax(320px, 420px) !important;
+  gap: 1.5rem !important;
   justify-content: center !important;
-  max-width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap) + var(--config-max) + var(--section-gap) + 2 * var(--section-padding)) !important;
+  max-width: 1686px !important;
   margin-left: auto !important;
   margin-right: auto !important;
-  padding-left: var(--section-padding) !important;
-  padding-right: var(--section-padding) !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
   padding-top: 3rem !important;
   padding-bottom: 3rem !important;
 }
@@ -46,14 +35,14 @@ main#MainContent,
 /* Media gallery: explicit width to accommodate thumbnails + mockup */
 .product__media-gallery {
   display: flex !important;
-  gap: var(--media-gap) !important;
+  gap: 1rem !important;
   align-items: flex-start !important;
-  width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap)) !important;
+  width: 1171px !important;
 }
 
 /* Main mockup display area */
 .gallery__main {
-  width: var(--mockup-width) !important;
+  width: 1035px !important;
   max-width: 100% !important;
 }
 
@@ -69,13 +58,14 @@ main#MainContent,
   
   .product__media-gallery {
     width: 100% !important;
-    max-width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap)) !important;
+    max-width: 1171px !important;
     margin-left: auto !important;
     margin-right: auto !important;
   }
   
   .gallery__main {
-    width: min(100%, var(--mockup-width)) !important;
+    width: 100% !important;
+    max-width: 1035px !important;
   }
 }
 
@@ -87,7 +77,8 @@ main#MainContent,
   }
   
   .gallery__main {
-    width: min(100%, var(--mockup-width)) !important;
+    width: 100% !important;
+    max-width: 1035px !important;
   }
   
   .pn247-art-product {

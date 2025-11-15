@@ -105,37 +105,47 @@ export class ObjectStorageService {
       throw new ObjectNotFoundError();
     }
 
-    const parts = objectPath.slice(1).split("/");
-    if (parts.length < 2) {
-      throw new ObjectNotFoundError();
-    }
-
-    const objectName = parts.slice(1).join("/");
+    // Map /objects/* URLs to configured directory paths
+    // objectPath examples: /objects/artwork-uploads/file.jpg
+    // env dirs examples: /bucket-name/artwork-uploads
     
-    // Try to find the file in the appropriate bucket
-    // We'll infer the bucket from environment variables
     const artworkDir = this.getArtworkUploadsDir();
     const aiPreviewsDir = this.getAiPreviewsDir();
     const aiGeneratedDir = this.getAiGeneratedDir();
 
-    // Extract bucket names
-    const artworkBucket = parseObjectPath(artworkDir).bucketName;
-    const previewsBucket = parseObjectPath(aiPreviewsDir).bucketName;
-    const generatedBucket = parseObjectPath(aiGeneratedDir).bucketName;
-
-    // Try each bucket
-    const bucketsToTry = Array.from(new Set([artworkBucket, previewsBucket, generatedBucket]));
+    // Determine which directory this path belongs to
+    let targetDir: string | null = null;
     
-    for (const bucketName of bucketsToTry) {
-      const bucket = objectStorageClient.bucket(bucketName);
-      const file = bucket.file(objectName);
-      const [exists] = await file.exists();
-      if (exists) {
-        return file;
-      }
+    if (objectPath.startsWith("/objects/artwork-uploads/")) {
+      targetDir = artworkDir;
+    } else if (objectPath.startsWith("/objects/ai-previews/")) {
+      targetDir = aiPreviewsDir;
+    } else if (objectPath.startsWith("/objects/ai-generated/")) {
+      targetDir = aiGeneratedDir;
     }
-
-    throw new ObjectNotFoundError();
+    
+    if (!targetDir) {
+      throw new ObjectNotFoundError();
+    }
+    
+    // Extract the filename from the object path
+    // /objects/artwork-uploads/file.jpg -> file.jpg
+    const pathParts = objectPath.split("/");
+    const filename = pathParts.slice(3).join("/"); // Skip '', 'objects', 'directory-name'
+    
+    // Construct full path: /bucket-name/directory-name/filename
+    const fullPath = `${targetDir}/${filename}`;
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+    
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+    
+    const [exists] = await file.exists();
+    if (!exists) {
+      throw new ObjectNotFoundError();
+    }
+    
+    return file;
   }
 
   // Downloads an object to the response

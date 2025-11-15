@@ -310,19 +310,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function updatePriceDisplay(variantPrice) {
     if (!priceDisplay) return;
 
-    // Shopify returns prices as strings like "48.00"
+    // Shopify Liquid returns prices in CENTS (e.g., 4800 = $48.00)
     // For Framed-* variants, the price already includes the frame upcharge
-    // So we just display the variant price as-is
-    const priceValue = parseFloat(variantPrice) || 0;
+    const priceInCents = parseInt(variantPrice) || 0;
+    const priceInDollars = priceInCents / 100;
 
     // Format price
     const formatted = new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
-    }).format(priceValue);
+    }).format(priceInDollars);
 
     priceDisplay.textContent = formatted;
-    console.log(`Price updated: ${formatted} (variant price: ${variantPrice})`);
+    console.log(`Price updated: ${formatted} (${priceInCents} cents)`);
   }
 
   // Update frame price (deprecated - price is now handled directly in updateVariant)

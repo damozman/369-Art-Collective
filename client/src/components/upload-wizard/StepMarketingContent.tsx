@@ -60,6 +60,15 @@ export function StepMarketingContent({ form, originalImageUrl }: StepMarketingCo
 
   const generateContent = async (contentType: string) => {
     try {
+      if (!originalImageUrl) {
+        toast({
+          title: "Image Required",
+          description: "Please upload an image first before generating AI content.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const formValues = form.getValues();
       const response = await apiRequest('POST', '/api/ai/generate-content', {
         contentType,

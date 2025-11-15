@@ -300,6 +300,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       const upscaledFile = new File([blob], selectedFile!.name, { type: selectedFile!.type });
       
       onUpscaledFile(upscaledFile, upscaledUrl);
+      onUpscaledImageUrl?.(upscaledUrl);
       
       toast({
         title: "Image upscaled!",

@@ -648,7 +648,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
-      </main>
+      </div>
 
       <Dialog open={!!selectedArtwork} onOpenChange={(open) => !open && setSelectedArtwork(null)}>
         <DialogContent className="max-w-3xl">
@@ -911,7 +911,6 @@ export default function AdminDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
     </AdminLayout>
   );
 }

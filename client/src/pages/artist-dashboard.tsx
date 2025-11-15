@@ -1,15 +1,14 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
-import { Upload, LogOut, Image as ImageIcon, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Settings, Eye, EyeOff, Crown, Sparkles, ExternalLink, BarChart3, Archive, RefreshCw, Zap, TrendingUp } from "lucide-react";
+import { Upload, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Eye, EyeOff, Crown, Sparkles, ExternalLink, BarChart3, Archive, RefreshCw, Zap, TrendingUp, Settings, Image as ImageIcon } from "lucide-react";
 import { useSubscriptionStatus, getTrialStatusText, type SubscriptionStatus } from "@/hooks/use-subscription-status";
-import { ThemeToggle } from "@/components/theme-toggle";
 import type { Artwork } from "@shared/schema";
+import { ArtistLayout } from "@/components/layouts/artist-layout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -523,7 +522,6 @@ function FeaturedStatusCard({
 }
 
 export default function ArtistDashboard() {
-  const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
@@ -664,34 +662,8 @@ export default function ArtistDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <ImageIcon className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold font-serif">Artist Portal</h1>
-                <p className="text-sm text-muted-foreground">Welcome back, {user?.name}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => setLocation("/artist/settings")} data-testid="button-settings">
-                <Settings className="h-5 w-5" />
-              </Button>
-              <ThemeToggle />
-              <Button variant="ghost" size="icon" onClick={logout} data-testid="button-logout">
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ArtistLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-start justify-between mb-6">
             <div>
@@ -1124,7 +1096,7 @@ export default function ArtistDashboard() {
             </Card>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </ArtistLayout>
   );
 }

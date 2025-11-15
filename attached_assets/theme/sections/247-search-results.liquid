@@ -1,0 +1,663 @@
+{% comment %}
+  Search Results Section with Filters
+{% endcomment %}
+
+<div class="search-results-container">
+  <div class="search-wrapper">
+    {%- assign search_term = search.terms | default: '' -%}
+    
+    {%- comment -%} Search Header {%- endcomment -%}
+    <div class="search-header">
+      <h1 class="search-title">Search Results</h1>
+      {%- if search_term != '' -%}
+        <p class="search-query">
+          Showing results for <strong>"{{ search_term }}"</strong>
+        </p>
+      {%- endif -%}
+      {%- if search.results_count > 0 -%}
+        <p class="search-count">{{ search.results_count }} {% if search.results_count == 1 %}artwork{% else %}artworks{% endif %} found</p>
+      {%- endif -%}
+    </div>
+
+    {%- if search.performed -%}
+      {%- if search.results_count == 0 -%}
+        {%- comment -%} No Results State {%- endcomment -%}
+        <div class="no-results">
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M35 65C51.5685 65 65 51.5685 65 35C65 18.4315 51.5685 5 35 5C18.4315 5 5 18.4315 5 35C5 51.5685 18.4315 65 35 65Z" stroke="#e5e5e5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M75 75L56.25 56.25" stroke="#e5e5e5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h2>No artwork found</h2>
+          <p>We couldn't find any results for "{{ search_term }}"</p>
+          <div class="no-results-suggestions">
+            <p>Try:</p>
+            <ul>
+              <li>Using different keywords</li>
+              <li>Checking your spelling</li>
+              <li>Browsing our <a href="/collections/all">full collection</a></li>
+            </ul>
+          </div>
+        </div>
+      {%- else -%}
+        {%- comment -%} Results Grid {%- endcomment -%}
+        <div class="search-content">
+          {%- comment -%} Filter Sidebar {%- endcomment -%}
+          <aside class="search-filters">
+            <div class="filter-section">
+              <h3 class="filter-title">Filter By</h3>
+              
+              {%- comment -%} Collection Filter {%- endcomment -%}
+              <div class="filter-group">
+                <button type="button" class="filter-accordion" aria-expanded="true">
+                  Collection
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-options" id="collection-filters">
+                  {%- assign collections = collections | where: "all_products_count", ">" , 0 -%}
+                  {%- for collection in collections limit: 8 -%}
+                    <label class="filter-option">
+                      <input type="checkbox" name="collection" value="{{ collection.handle }}" class="filter-checkbox" />
+                      <span>{{ collection.title }}</span>
+                      <span class="filter-count">({{ collection.all_products_count }})</span>
+                    </label>
+                  {%- endfor -%}
+                </div>
+              </div>
+
+              {%- comment -%} Size Filter {%- endcomment -%}
+              <div class="filter-group">
+                <button type="button" class="filter-accordion" aria-expanded="true">
+                  Size
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-options" id="size-filters">
+                  <label class="filter-option">
+                    <input type="checkbox" name="size" value="8x10" class="filter-checkbox" />
+                    <span>8" × 10"</span>
+                  </label>
+                  <label class="filter-option">
+                    <input type="checkbox" name="size" value="12x16" class="filter-checkbox" />
+                    <span>12" × 16"</span>
+                  </label>
+                  <label class="filter-option">
+                    <input type="checkbox" name="size" value="18x24" class="filter-checkbox" />
+                    <span>18" × 24"</span>
+                  </label>
+                  <label class="filter-option">
+                    <input type="checkbox" name="size" value="24x36" class="filter-checkbox" />
+                    <span>24" × 36"</span>
+                  </label>
+                </div>
+              </div>
+
+              {%- comment -%} Finish Filter {%- endcomment -%}
+              <div class="filter-group">
+                <button type="button" class="filter-accordion" aria-expanded="true">
+                  Finish
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-options" id="finish-filters">
+                  <label class="filter-option">
+                    <input type="checkbox" name="finish" value="paper" class="filter-checkbox" />
+                    <span>Paper</span>
+                  </label>
+                  <label class="filter-option">
+                    <input type="checkbox" name="finish" value="canvas" class="filter-checkbox" />
+                    <span>Canvas</span>
+                  </label>
+                  <label class="filter-option">
+                    <input type="checkbox" name="finish" value="metal" class="filter-checkbox" />
+                    <span>Metal</span>
+                  </label>
+                  <label class="filter-option">
+                    <input type="checkbox" name="finish" value="framed" class="filter-checkbox" />
+                    <span>Framed</span>
+                  </label>
+                </div>
+              </div>
+
+              {%- comment -%} Price Range Filter {%- endcomment -%}
+              <div class="filter-group">
+                <button type="button" class="filter-accordion" aria-expanded="true">
+                  Price
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <div class="filter-options" id="price-filters">
+                  <label class="filter-option">
+                    <input type="checkbox" name="price" value="0-25" class="filter-checkbox" />
+                    <span>Under $25</span>
+                  </label>
+                  <label class="filter-option">
+                    <input type="checkbox" name="price" value="25-50" class="filter-checkbox" />
+                    <span>$25 - $50</span>
+                  </label>
+                  <label class="filter-option">
+                    <input type="checkbox" name="price" value="50-100" class="filter-checkbox" />
+                    <span>$50 - $100</span>
+                  </label>
+                  <label class="filter-option">
+                    <input type="checkbox" name="price" value="100+" class="filter-checkbox" />
+                    <span>$100+</span>
+                  </label>
+                </div>
+              </div>
+
+              <button type="button" class="clear-filters-btn">Clear All Filters</button>
+            </div>
+          </aside>
+
+          {%- comment -%} Products Grid {%- endcomment -%}
+          <div class="search-products">
+            <div class="products-grid" id="search-products-grid">
+              {%- for item in search.results -%}
+                {%- if item.object_type == 'product' -%}
+                  <div class="product-card" data-product-handle="{{ item.handle }}">
+                    <a href="{{ item.url }}" class="product-link">
+                      <div class="product-image">
+                        {%- if item.featured_image -%}
+                          <img 
+                            src="{{ item.featured_image | img_url: '600x' }}" 
+                            alt="{{ item.title | escape }}"
+                            loading="lazy"
+                          />
+                        {%- else -%}
+                          <div class="product-image-placeholder">
+                            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                              <rect width="80" height="80" fill="#f5f5f5"/>
+                              <path d="M20 60L35 45L45 55L60 40L60 60H20Z" fill="#e5e5e5"/>
+                            </svg>
+                          </div>
+                        {%- endif -%}
+                      </div>
+                      <div class="product-info">
+                        <h3 class="product-title">{{ item.title }}</h3>
+                        {%- if item.vendor != blank and item.vendor != 'Your Store' -%}
+                          <p class="product-artist">by {{ item.vendor }}</p>
+                        {%- endif -%}
+                        <p class="product-price">
+                          {%- if item.price_varies -%}
+                            From {{ item.price_min | money }}
+                          {%- else -%}
+                            {{ item.price | money }}
+                          {%- endif -%}
+                        </p>
+                      </div>
+                    </a>
+                  </div>
+                {%- endif -%}
+              {%- endfor -%}
+            </div>
+
+            {%- if paginate.pages > 1 -%}
+              <div class="pagination">
+                {%- if paginate.previous -%}
+                  <a href="{{ paginate.previous.url }}" class="pagination-btn">Previous</a>
+                {%- endif -%}
+                
+                <span class="pagination-info">Page {{ paginate.current_page }} of {{ paginate.pages }}</span>
+                
+                {%- if paginate.next -%}
+                  <a href="{{ paginate.next.url }}" class="pagination-btn">Next</a>
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+          </div>
+        </div>
+      {%- endif -%}
+    {%- else -%}
+      {%- comment -%} Initial Search State {%- endcomment -%}
+      <div class="search-empty">
+        <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M43.75 78.125C62.5568 78.125 77.6042 63.0775 77.6042 44.2708C77.6042 25.4641 62.5568 10.4167 43.75 10.4167C24.9432 10.4167 9.89583 25.4641 9.89583 44.2708C9.89583 63.0775 24.9432 78.125 43.75 78.125Z" stroke="#6366f1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M90.1042 90.625L67.0833 67.6042" stroke="#6366f1" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h2>Start searching</h2>
+        <p>Enter a search term above to discover our artwork collection</p>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+<style>
+  /* Search Results Container */
+  .search-results-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  .search-wrapper {
+    min-height: 60vh;
+  }
+
+  /* Search Header */
+  .search-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .search-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 1rem 0;
+  }
+
+  .search-query {
+    font-size: 1.125rem;
+    color: #666;
+    margin: 0.5rem 0;
+  }
+
+  .search-count {
+    font-size: 0.9375rem;
+    color: #999;
+    margin: 0.5rem 0 0 0;
+  }
+
+  /* Search Content - Sidebar + Grid */
+  .search-content {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 3rem;
+  }
+
+  /* Filter Sidebar */
+  .search-filters {
+    position: sticky;
+    top: 120px;
+    height: fit-content;
+  }
+
+  .filter-section {
+    background: #fafafa;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .filter-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 1.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .filter-group {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 1.5rem;
+  }
+
+  .filter-group:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .filter-accordion {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: none;
+    border: none;
+    padding: 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .filter-accordion svg {
+    transition: transform 0.3s;
+  }
+
+  .filter-accordion[aria-expanded="false"] svg {
+    transform: rotate(-90deg);
+  }
+
+  .filter-options {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .filter-accordion[aria-expanded="false"] + .filter-options {
+    max-height: 0;
+    margin-top: 0;
+  }
+
+  .filter-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    color: #1a1a1a;
+  }
+
+  .filter-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  .filter-count {
+    margin-left: auto;
+    color: #999;
+    font-size: 0.875rem;
+  }
+
+  .clear-filters-btn {
+    width: 100%;
+    padding: 0.875rem;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+  }
+
+  .clear-filters-btn:hover {
+    background: #f5f5f5;
+    border-color: #0A1628;
+    color: #1a1a1a;
+  }
+
+  /* Products Grid */
+  .search-products {
+    flex: 1;
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+
+  .product-card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .product-card:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transform: translateY(-4px);
+  }
+
+  .product-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  .product-image {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    background: #fafafa;
+    overflow: hidden;
+  }
+
+  .product-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .product-image-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .product-info {
+    padding: 1.25rem;
+  }
+
+  .product-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.4;
+  }
+
+  .product-artist {
+    font-size: 0.9375rem;
+    color: #666;
+    margin: 0 0 0.75rem 0;
+  }
+
+  .product-price {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #6366f1;
+    margin: 0;
+  }
+
+  /* No Results State */
+  .no-results,
+  .search-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .no-results svg,
+  .search-empty svg {
+    margin: 0 auto 2rem;
+  }
+
+  .no-results h2,
+  .search-empty h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 1rem 0;
+  }
+
+  .no-results p,
+  .search-empty p {
+    font-size: 1.125rem;
+    color: #666;
+    margin: 0 0 2rem 0;
+  }
+
+  .no-results-suggestions {
+    background: #fafafa;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .no-results-suggestions p {
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+  }
+
+  .no-results-suggestions ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .no-results-suggestions li {
+    padding: 0.5rem 0;
+    color: #666;
+  }
+
+  .no-results-suggestions a {
+    color: #6366f1;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .no-results-suggestions a:hover {
+    text-decoration: underline;
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e5e5e5;
+  }
+
+  .pagination-btn {
+    padding: 0.75rem 1.5rem;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    color: #1a1a1a;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .pagination-btn:hover {
+    background: #f5f5f5;
+    border-color: #6366f1;
+    color: #6366f1;
+  }
+
+  .pagination-info {
+    color: #666;
+    font-size: 0.9375rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .search-content {
+      grid-template-columns: 1fr;
+    }
+
+    .search-filters {
+      position: static;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .search-results-container {
+      padding: 2rem 1.25rem;
+    }
+
+    .search-title {
+      font-size: 2rem;
+    }
+
+    .products-grid {
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .search-content {
+      gap: 2rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .products-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  (function() {
+    // Filter accordion functionality
+    const filterAccordions = document.querySelectorAll('.filter-accordion');
+    filterAccordions.forEach(accordion => {
+      accordion.addEventListener('click', function() {
+        const isExpanded = this.getAttribute('aria-expanded') === 'true';
+        this.setAttribute('aria-expanded', !isExpanded);
+      });
+    });
+
+    // Clear filters
+    const clearFiltersBtn = document.querySelector('.clear-filters-btn');
+    if (clearFiltersBtn) {
+      clearFiltersBtn.addEventListener('click', function() {
+        const checkboxes = document.querySelectorAll('.filter-checkbox');
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = false;
+        });
+        // Optionally trigger filter update here
+      });
+    }
+
+    // Filter functionality (client-side filtering)
+    const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
+    filterCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        applyFilters();
+      });
+    });
+
+    function applyFilters() {
+      const selectedCollections = Array.from(document.querySelectorAll('input[name="collection"]:checked')).map(cb => cb.value);
+      const selectedSizes = Array.from(document.querySelectorAll('input[name="size"]:checked')).map(cb => cb.value);
+      const selectedFinishes = Array.from(document.querySelectorAll('input[name="finish"]:checked')).map(cb => cb.value);
+      const selectedPrices = Array.from(document.querySelectorAll('input[name="price"]:checked')).map(cb => cb.value);
+
+      const productCards = document.querySelectorAll('.product-card');
+      
+      productCards.forEach(card => {
+        let show = true;
+
+        // Collection filter
+        if (selectedCollections.length > 0) {
+          // Note: This is simplified - in production you'd need to check product collections
+          // For now, show all if any collection is selected
+        }
+
+        // Size filter (would need product metadata)
+        // Finish filter (would need product metadata)
+        // Price filter (would need product price data)
+
+        card.style.display = show ? 'block' : 'none';
+      });
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Search Results",
+  "settings": []
+}
+{% endschema %}

@@ -34,6 +34,7 @@ import AdminPayouts from "@/pages/admin-payouts";
 import AdminTestimonials from "@/pages/admin-testimonials";
 import AdminEmpire from "@/pages/admin-empire";
 import AdminSettings from "@/pages/admin-settings";
+import AdminTools from "@/pages/admin-tools";
 import AdminInfluencers from "@/pages/admin-influencers";
 import AdminChallenges from "@/pages/admin-challenges";
 import AdminArchivedArtworks from "@/pages/admin-archived-artworks";
@@ -209,6 +210,14 @@ function Router() {
         <ProtectedRoute requiredType="admin">
           <AdminLayout>
             <AdminSettings />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/tools">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminTools />
           </AdminLayout>
         </ProtectedRoute>
       </Route>

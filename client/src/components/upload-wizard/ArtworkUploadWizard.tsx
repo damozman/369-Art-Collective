@@ -56,6 +56,9 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [imageValidationStatus, setImageValidationStatus] = useState<"pending" | "invalid" | "valid">("invalid");
+  
+  // Dual image tracking: original for AI (<20MB), upscaled for submission (print quality)
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   const form = useForm<WizardFormData>({
@@ -178,11 +181,12 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
               previewUrl={previewUrl}
               onFileChange={handleFileChange}
               onValidationChange={setImageValidationStatus}
-              onImageUrlChange={setUploadedImageUrl}
+              onOriginalImageUrl={setOriginalImageUrl}
+              onUpscaledImageUrl={setUploadedImageUrl}
             />
           )}
-          {currentStep === 2 && <StepBasicDetails form={form} uploadedImageUrl={uploadedImageUrl} />}
-          {currentStep === 3 && <StepMarketingContent form={form} uploadedImageUrl={uploadedImageUrl} />}
+          {currentStep === 2 && <StepBasicDetails form={form} originalImageUrl={originalImageUrl} />}
+          {currentStep === 3 && <StepMarketingContent form={form} originalImageUrl={originalImageUrl} />}
           {currentStep === 4 && <StepIPDeclaration form={form} />}
           {currentStep === 5 && (
             <StepReview

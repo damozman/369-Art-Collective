@@ -14,7 +14,7 @@ import type { WizardFormData } from "./ArtworkUploadWizard";
 
 interface StepMarketingContentProps {
   form: UseFormReturn<WizardFormData>;
-  uploadedImageUrl?: string | null;
+  originalImageUrl?: string | null;
 }
 
 const PREDEFINED_STYLES = [
@@ -32,7 +32,7 @@ const PREDEFINED_STYLES = [
   "Colorful",
 ];
 
-export function StepMarketingContent({ form, uploadedImageUrl }: StepMarketingContentProps) {
+export function StepMarketingContent({ form, originalImageUrl }: StepMarketingContentProps) {
   const { toast } = useToast();
   const selectedStyles = form.watch("styleTags") || [];
   const [showAITip, setShowAITip] = useState(false);
@@ -63,7 +63,7 @@ export function StepMarketingContent({ form, uploadedImageUrl }: StepMarketingCo
       const formValues = form.getValues();
       const response = await apiRequest('POST', '/api/ai/generate-content', {
         contentType,
-        imageUrl: uploadedImageUrl,
+        imageUrl: originalImageUrl,
         artworkTitle: formValues.title,
         existingDescription: formValues.description,
         style: formValues.styleTags?.join(', '),

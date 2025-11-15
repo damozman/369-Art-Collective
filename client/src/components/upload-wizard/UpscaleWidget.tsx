@@ -12,7 +12,8 @@ interface UpscaleWidgetProps {
   selectedFile: File | null;
   onUpscaledFile: (file: File, upscaledUrl: string) => void;
   onValidationChange?: (status: "pending" | "invalid" | "valid") => void;
-  onImageUrlChange?: (url: string | null) => void;
+  onOriginalImageUrl?: (url: string | null) => void;
+  onUpscaledImageUrl?: (url: string | null) => void;
 }
 
 interface ProductVariantQualification{
@@ -51,7 +52,7 @@ interface QuotaStatus {
   message: string;
 }
 
-export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange, onImageUrlChange }: UpscaleWidgetProps) {
+export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange, onOriginalImageUrl, onUpscaledImageUrl }: UpscaleWidgetProps) {
   const { toast } = useToast();
   const [analysis, setAnalysis] = useState<DpiAnalysis | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
@@ -85,7 +86,8 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       setJobId(null);
       setProgress(0);
       setImageUrl(null);
-      onImageUrlChange?.(null);
+      onOriginalImageUrl?.(null);
+      onUpscaledImageUrl?.(null);
       currentFileTokenRef.current = null;
       onValidationChange?.("invalid");
     }
@@ -129,7 +131,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       // Only update if this is still the current file
       if (currentFileTokenRef.current !== fileToken) return;
       setImageUrl(uploadedUrl);
-      onImageUrlChange?.(uploadedUrl);
+      onOriginalImageUrl?.(uploadedUrl);
 
       const img = new Image();
       img.onload = async () => {

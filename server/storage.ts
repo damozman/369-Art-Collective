@@ -30,6 +30,7 @@ import {
   creatorstackPromptGenerations,
   upscaleJobs,
   upscaleUsage,
+  waitlist,
   type Artist,
   type InsertArtist,
   type Admin,
@@ -66,6 +67,8 @@ import {
   type InsertAiCredit,
   type AiCreditPurchase,
   type InsertAiCreditPurchase,
+  type Waitlist,
+  type InsertWaitlist,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db, isDatabaseConfigured } from "./lib/db";
@@ -419,6 +422,10 @@ export interface IStorage {
   updateUpscaleUsageByJobId(jobId: string, updates: Partial<any>): Promise<void>;
   getArtistById(id: string): Promise<Artist | undefined>;
   getAllUpscaleUsage(): Promise<any[]>;
+  
+  // Waitlist methods
+  createWaitlistEntry(entry: InsertWaitlist): Promise<Waitlist>;
+  getAllWaitlistEntries(): Promise<Waitlist[]>;
 }
 
 // PostgreSQL storage implementation using Drizzle ORM
@@ -2522,6 +2529,22 @@ class PostgresStorage implements IStorage {
       .from(upscaleUsage)
       .orderBy(desc(upscaleUsage.createdAt));
   }
+  
+  // Waitlist methods
+  async createWaitlistEntry(entry: InsertWaitlist): Promise<Waitlist> {
+    const [created] = await db
+      .insert(waitlist)
+      .values(entry)
+      .returning();
+    return created;
+  }
+  
+  async getAllWaitlistEntries(): Promise<Waitlist[]> {
+    return await db
+      .select()
+      .from(waitlist)
+      .orderBy(desc(waitlist.createdAt));
+  }
 }
 
 // In-memory storage implementation (fallback)
@@ -2532,6 +2555,7 @@ class MemStorage implements IStorage {
   private violationReports: Map<string, ViolationReport> = new Map();
   private artworks: Map<string, Artwork> = new Map();
   private subscriptionTrials: Map<string, SubscriptionTrial> = new Map();
+  private waitlist: Map<string, Waitlist> = new Map();
 
   async getArtist(id: string): Promise<Artist | undefined> {
     const artist = this.artists.get(id);
@@ -3419,6 +3443,26 @@ class MemStorage implements IStorage {
   async getAllUpscaleUsage(): Promise<any[]> {
     console.log("MemStorage: getAllUpscaleUsage (stub)");
     return [];
+  }
+  
+  // Waitlist methods
+  async createWaitlistEntry(entry: InsertWaitlist): Promise<Waitlist> {
+    const created: Waitlist = {
+      id: randomUUID(),
+      email: entry.email,
+      name: entry.name,
+      interest: entry.interest,
+      createdAt: new Date(),
+    };
+    this.waitlist.set(created.id, created);
+    console.log("MemStorage: Created waitlist entry:", created.email);
+    return created;
+  }
+  
+  async getAllWaitlistEntries(): Promise<Waitlist[]> {
+    return Array.from(this.waitlist.values()).sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
   }
 }
 

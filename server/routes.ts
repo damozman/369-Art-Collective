@@ -5091,6 +5091,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to check quota" });
     }
   });
+  
+  // ========================================
+  // COMING SOON PAGE ROUTES (PUBLIC)
+  // ========================================
+  
+  // Unlock coming soon page with password
+  app.post("/api/coming-soon/unlock", async (req, res) => {
+    try {
+      const { password } = req.body;
+      
+      // Simple password check - can be enhanced with env variable
+      const validPasswords = ["247tester", "printtester"];
+      
+      if (validPasswords.includes(password)) {
+        // Set a signed cookie to mark as unlocked
+        req.session.comingSoonUnlocked = true;
+        await new Promise<void>((resolve, reject) => {
+          req.session.save((err: any) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+        
+        return res.json({ success: true, message: "Access granted" });
+      } else {
+        return res.status(401).json({ success: false, message: "Invalid password" });
+      }
+    } catch (error: any) {
+      console.error("Unlock error:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  });
+  
+  // Check unlock status
+  app.get("/api/coming-soon/status", async (req, res) => {
+    res.json({ unlocked: !!req.session.comingSoonUnlocked });
+  });
+  
+  // Join waitlist (public endpoint)
+  const waitlistLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 submissions per IP
+    message: "Too many waitlist submissions. Please try again later.",
+  });
+  
+  app.post("/api/waitlist", waitlistLimiter, async (req, res) => {
+    try {
+      const { insertWaitlistSchema } = await import("@shared/schema");
+      const data = insertWaitlistSchema.parse(req.body);
+      
+      // Check if email already exists
+      const existingEntries = await storage.getAllWaitlistEntries();
+      if (existingEntries.some(entry => entry.email === data.email)) {
+        return res.status(400).json({ message: "This email is already on the waitlist" });
+      }
+      
+      const entry = await storage.createWaitlistEntry(data);
+      
+      // Send notification email to admin (best-effort)
+      try {
+        await emailService.sendWaitlistNotification({
+          email: entry.email,
+          name: entry.name,
+          interest: entry.interest,
+        });
+      } catch (emailError) {
+        console.error("Failed to send waitlist notification:", emailError);
+        // Don't fail the request if email fails
+      }
+      
+      res.json({ 
+        success: true,
+        message: "Successfully joined the waitlist!",
+        entry: { id: entry.id, email: entry.email, name: entry.name }
+      });
+    } catch (error: any) {
+      console.error("Waitlist signup error:", error);
+      
+      if (error.name === "ZodError") {
+        return res.status(400).json({ 
+          message: "Invalid input", 
+          errors: error.errors 
+        });
+      }
+      
+      res.status(500).json({ message: "Failed to join waitlist" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

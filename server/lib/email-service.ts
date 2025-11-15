@@ -2451,6 +2451,51 @@ Best regards,
       metadata: { artistName, tier },
     });
   }
+  
+  // Waitlist notification - notify admin when someone joins waitlist
+  async sendWaitlistNotification(params: { email: string; name: string; interest: string }) {
+    const { email, name, interest } = params;
+    const subject = `🎨 New Waitlist Signup: ${name}`;
+    
+    const bodyHtml = `
+      <div class="success">
+        <h2>New Person Joined the Waitlist!</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Interest:</strong> ${interest === 'both' ? 'Customer & Artist' : interest.charAt(0).toUpperCase() + interest.slice(1)}</p>
+      </div>
+      <p>Someone has just joined the 247 Print Network waitlist. Follow up with them when you're ready to launch!</p>
+    `;
+    
+    const textBody = `
+New Waitlist Signup!
+
+Name: ${name}
+Email: ${email}
+Interest: ${interest === 'both' ? 'Customer & Artist' : interest}
+
+This person is interested in 247 Print Network and has joined the waitlist. Follow up with them when you're ready to launch!
+    `.trim();
+    
+    const htmlBody = this.renderEmailLayout({
+      title: 'New Waitlist Signup',
+      headerColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      bodyHtml
+    });
+    
+    // Send to admin email - can be configured via env
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@247print.com';
+    
+    return this.sendEmail({
+      recipientEmail: adminEmail,
+      recipientType: 'admin',
+      emailType: 'waitlist_notification',
+      subject,
+      htmlBody,
+      textBody,
+      metadata: { waitlistEmail: email, waitlistName: name, interest },
+    });
+  }
 }
 
 export const emailService = new EmailService();

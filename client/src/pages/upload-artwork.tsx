@@ -58,26 +58,34 @@ export default function UploadArtwork() {
   const hasReachedLimit = isFree && artworkCount >= FREE_TIER_LIMIT;
   const canUpload = !hasReachedLimit;
 
-  async function handleWizardSubmit(data: WizardFormData, imageFile: File) {
+  async function handleWizardSubmit(data: WizardFormData, uploadedImageUrl?: string, imageFile?: File) {
     setIsUploading(true);
 
     try {
-      // Upload image first
-      const formData = new FormData();
-      formData.append("file", imageFile);
+      // Use pre-uploaded URL if available, otherwise upload the file
+      let imageUrl = uploadedImageUrl;
+      
+      if (!imageUrl && imageFile) {
+        // Fallback: Upload image if URL not provided
+        const formData = new FormData();
+        formData.append("file", imageFile);
 
-      const uploadResponse = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
 
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        throw new Error(errorData.error || "File upload failed");
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.error || "File upload failed");
+        }
+
+        const uploadData = await uploadResponse.json();
+        imageUrl = uploadData.imageUrl;
+      } else if (!imageUrl) {
+        throw new Error("No image URL or file provided");
       }
-
-      const { imageUrl } = await uploadResponse.json();
 
       // Parse tags from comma-separated string
       const tags = data.tags

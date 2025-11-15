@@ -214,7 +214,17 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
         fileSize: selectedFile.size,
       });
 
-      return await response.json();
+      const data = await response.json();
+      
+      // If backend returned an error status, throw it so onError handler processes it
+      if (data.status === 'error') {
+        const error = new Error(data.userMessage || data.message || 'Upscale failed');
+        (error as any).code = data.code;
+        (error as any).userMessage = data.userMessage;
+        throw error;
+      }
+      
+      return data;
     },
     onSuccess: (data) => {
       if (data.cached || data.status === 'completed') {
@@ -226,9 +236,12 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       queryClient.invalidateQueries({ queryKey: ['/api/upscale/quota'] });
     },
     onError: (error: any) => {
+      // Use user-friendly message from backend if available
+      const errorMessage = error.userMessage || error.message || "The AI upscaling service encountered an error. Please try again.";
+      
       toast({
         title: "Upscale failed",
-        description: error.message || "Failed to upscale image",
+        description: errorMessage,
         variant: "destructive",
       });
       setProgress(0);
@@ -258,9 +271,13 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
           if (isCompletedRef.current) return;
           isCompletedRef.current = true;
           cleanup();
+          
+          // Use user-friendly error message from backend (userMessage field)
+          const errorMessage = data.userMessage || data.error || "The AI upscaling service encountered an error. Please try again.";
+          
           toast({
             title: "Upscale failed",
-            description: data.error || "Failed to upscale image",
+            description: errorMessage,
             variant: "destructive",
           });
           setProgress(0);

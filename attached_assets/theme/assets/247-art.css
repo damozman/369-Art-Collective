@@ -63,23 +63,35 @@ body.template-product .shopify-section:first-child {
 
 .mockup-slide__frame {
   position: absolute;
-  top: -8px;
-  left: -8px;
-  width: calc(100% + 16px);
-  height: calc(100% + 16px);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   z-index: 20;
   border-radius: 4px;
-  background-size: 100% 100%;
-  background-position: center;
-  background-repeat: no-repeat;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, box-shadow 0.3s ease;
 }
 
-.mockup-slide__frame[data-frame="black"],
+.mockup-slide__frame[data-frame="black"] {
+  opacity: 1;
+  box-shadow: 
+    inset 0 0 0 12px #1a1a1a,
+    inset 0 0 0 14px #2a2a2a,
+    inset 0 0 0 16px #1a1a1a,
+    inset 0 0 24px rgba(0, 0, 0, 0.4),
+    0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
 .mockup-slide__frame[data-frame="white"] {
   opacity: 1;
+  box-shadow: 
+    inset 0 0 0 12px #f5f5f5,
+    inset 0 0 0 14px #e8e8e8,
+    inset 0 0 0 16px #f5f5f5,
+    inset 0 0 16px rgba(0, 0, 0, 0.06),
+    0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .mockup-slide__frame[data-frame="none"] {
@@ -232,44 +244,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   pointer-events: auto;
 }
 
-/* ===== LIVE PRODUCT CONFIGURATOR - FRAME OVERLAY ===== */
-.frame-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 5;
-  border-radius: 16px;
-  opacity: 0;
-  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
-              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.frame-overlay.active {
-  opacity: 1;
-}
-
-/* Black frame styling */
-.frame-overlay[data-frame-type="black"] {
-  box-shadow: 
-    inset 0 0 0 12px #1a1a1a,
-    inset 0 0 0 14px #2a2a2a,
-    inset 0 0 0 16px #1a1a1a,
-    inset 0 0 24px rgba(0, 0, 0, 0.4),
-    0 4px 20px rgba(0, 0, 0, 0.25);
-}
-
-/* White frame styling */
-.frame-overlay[data-frame-type="white"] {
-  box-shadow: 
-    inset 0 0 0 12px #f5f5f5,
-    inset 0 0 0 14px #e8e8e8,
-    inset 0 0 0 16px #f5f5f5,
-    inset 0 0 16px rgba(0, 0, 0, 0.06),
-    0 4px 20px rgba(0, 0, 0, 0.15);
-}
+/* Frame overlay system removed - frames now appear on individual mockup slides */
 
 /* Zoom button overlay - temporarily hidden */
 .gallery__zoom-btn {

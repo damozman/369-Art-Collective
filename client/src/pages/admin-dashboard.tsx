@@ -41,7 +41,7 @@ export default function AdminDashboard() {
 
   // Query for pending artists count
   const { data: artists } = useQuery<Artist[]>({
-    queryKey: ["/api/artists/all"],
+    queryKey: ["/api/admin/artists"],
   });
 
   // Query for violation reports of selected artwork

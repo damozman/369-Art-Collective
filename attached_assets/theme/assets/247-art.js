@@ -255,17 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Create persistent frame overlay element on page load
-  let frameOverlay = null;
-  function initFrameOverlay() {
-    const mainWrapper = document.querySelector('.gallery__main-wrapper');
-    if (!mainWrapper) return;
-
-    frameOverlay = document.createElement('div');
-    frameOverlay.className = 'frame-overlay';
-    frameOverlay.dataset.frameType = 'none';
-    mainWrapper.appendChild(frameOverlay);
-  }
+  // Frame overlay system removed - frames now controlled directly on mockup slides
 
   // Visual size preview - uses CSS custom property for dimension-aware scaling
   function updateSizePreview(size) {
@@ -291,18 +281,17 @@ document.addEventListener('DOMContentLoaded', () => {
     mainGallery.style.setProperty('--preview-scale', scale);
   }
 
-  // Frame overlay system - toggles classes instead of DOM recreation
+  // Update all mockup slide frames
   function updateFrameOverlay(frameType) {
-    if (!frameOverlay) return;
-
-    // Update frame type data attribute and classes
-    frameOverlay.dataset.frameType = frameType;
+    // Update all mockup slide frames
+    const allFrames = document.querySelectorAll('.mockup-slide__frame');
+    allFrames.forEach(frame => {
+      frame.setAttribute('data-frame', frameType);
+    });
     
-    // Toggle visibility
-    if (frameType === 'none') {
-      frameOverlay.classList.remove('active');
-    } else {
-      frameOverlay.classList.add('active');
+    // Also update the currentFrame variable for mockup overlay positioning
+    if (typeof updateMockupFrame === 'function') {
+      updateMockupFrame(frameType);
     }
   }
 
@@ -368,11 +357,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initialize on page load
-  initFrameOverlay();
-  
   if (variants.length > 0) {
     initializeSelections();
   }
+  
+  // Initialize all mockup frames to 'none' on load
+  const allFrames = document.querySelectorAll('.mockup-slide__frame');
+  allFrames.forEach(frame => {
+    frame.setAttribute('data-frame', 'none');
+  });
 
   // Set initial selected states for option cards
   const firstSizeOption = document.querySelector('[data-option-type="size"]');

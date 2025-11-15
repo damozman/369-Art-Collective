@@ -62,7 +62,7 @@ export default function AdminArtistDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/artists/all"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/artists"] });
       toast({
         title: "Artist deleted",
         description: "The artist account has been disabled successfully",

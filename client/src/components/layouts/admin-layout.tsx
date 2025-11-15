@@ -38,6 +38,7 @@ import {
   Share2,
   Archive,
   Calculator,
+  Wrench,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -118,6 +119,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     {
       group: "Account",
       items: [
+        {
+          label: "Admin Tools",
+          path: "/admin/tools",
+          icon: Wrench,
+        },
         {
           label: "Settings",
           path: "/admin/settings",

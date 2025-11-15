@@ -454,14 +454,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   ];
 
-  // Size variant scale factors
+  // Size variant scale factors (based on diagonal proportions)
   const SIZE_SCALE_FACTORS = {
-    '8x10': 0.60,
-    '10x10': 0.75,
-    '12x16': 1.00,  // Base reference
-    '16x16': 1.20,
-    '18x24': 1.50,
-    '24x36': 2.00
+    '8x10': 0.64,   // 12.81" diagonal
+    '10x10': 0.71,  // 14.14" diagonal (if needed)
+    '12x16': 1.00,  // 20" diagonal - Base reference
+    '16x16': 1.13,  // 22.63" diagonal (if needed)
+    '18x24': 1.50,  // 30" diagonal
+    '24x36': 2.16   // 43.27" diagonal
   };
 
   // State management
@@ -560,9 +560,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const absoluteX = bounds.left + (bounds.width * overlayXPercent);
     const absoluteY = bounds.top + (bounds.height * overlayYPercent);
 
-    // Calculate overlay width based on actual rendered mockup size
+    // Calculate base overlay width (before size scaling)
     const baseWidthPercent = parseFloat(isMobile ? template.base_width_mobile : template.base_width) / 100;
-    const overlayWidthPx = bounds.width * baseWidthPercent * currentSizeScale;
+    const baseOverlayWidthPx = bounds.width * baseWidthPercent;
 
     console.log('Positioning mockup overlay:', {
       room: room,
@@ -572,14 +572,17 @@ document.addEventListener('DOMContentLoaded', function() {
       overlayYPercent,
       absoluteX,
       absoluteY,
-      overlayWidthPx,
+      baseOverlayWidthPx,
       sizeScale: currentSizeScale
     });
 
-    // Apply positioning
+    // Apply positioning and size
     overlay.style.left = `${absoluteX}px`;
     overlay.style.top = `${absoluteY}px`;
-    overlay.style.width = `${overlayWidthPx}px`;
+    overlay.style.width = `${baseOverlayWidthPx}px`;
+    
+    // Apply size scale via CSS variable for smooth GPU-accelerated scaling
+    overlay.style.setProperty('--size-scale', currentSizeScale);
 
     // Update frame visibility via data attribute (CSS handles opacity)
     if (frame) {

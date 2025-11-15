@@ -71,6 +71,8 @@ body.template-product .shopify-section:first-child {
   z-index: 20;
   opacity: 0;
   transition: opacity 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .mockup-slide__frame[data-frame="black"] {

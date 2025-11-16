@@ -26,16 +26,18 @@ Complete working product page extracted from your cached browser version and res
 **Replit Location:** `attached_assets/theme/assets/247-art.js`  
 **Contains:** Frame interactions, size scaling, variant selection, gallery navigation
 
-### File 3: `247-art-product.liquid` (Layout template) ⚠️ **RECONSTRUCTED**
+### File 3: `247-art-product.liquid` (Layout template) ✅ **FIXED**
 **Shopify Location:** `Sections/247-art-product.liquid`  
 **Replit Location:** `attached_assets/theme/sections/247-art-product.liquid`  
-**Contains:** HTML structure for 3-column layout
+**Contains:** HTML structure for 2-column grid layout
 
-**⚠️ IMPORTANT:** This file was corrupted (missing first ~70 lines) and has been reconstructed with:
-- Complete opening structure with gallery thumbnails
-- Proper `{%- if product.featured_image -%}` wrapper (fixes the Liquid syntax error)
-- All mockup room previews (living, bedroom, office, gallery)
-- Product info and configurator integration
+**✅ FIXED:** Rebuilt with correct CSS class names:
+- Uses `pn247-art-product` (matches CSS selector)
+- Uses `product__media-gallery` (matches CSS selector)
+- Uses `product__info` (matches CSS selector)
+- Proper `{%- if product.featured_image -%}` wrapper (fixes Liquid syntax error)
+- All mockup room previews (living, bedroom, office, gallery) with correct structure
+- Complete thumbnail navigation and gallery system
 
 ---
 

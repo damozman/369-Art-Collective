@@ -30,11 +30,7 @@ Fully integrated with Shopify product data, variants, and cart
             aria-label="View image {{ forloop.index }}"
           >
             {% if media.media_type == 'image' %}
-              <img 
-                src="{{ media.preview_image | image_url: width: 120 }}" 
-                alt="{{ media.alt | escape }}"
-                loading="lazy"
-              >
+              <img src="{{ media.preview_image | image_url: width: 120 }}" alt="{{ media.alt | escape }}" loading="lazy">
             {% endif %}
           </button>
         {% endfor %}
@@ -60,13 +56,7 @@ Fully integrated with Shopify product data, variants, and cart
           </svg>
         </button>
         
-        <img 
-          id="mainProductImage"
-          src="{{ featured_image | image_url: width: 1200 }}" 
-          alt="{{ featured_image.alt | escape | default: product.title }}" 
-          class="product-page__main-image"
-          data-testid="image-main"
-        >
+        <img id="mainProductImage" src="{{ featured_image | image_url: width: 1200 }}" alt="{{ featured_image.alt | escape | default: product.title }}" class="product-page__main-image" data-testid="image-main">
       </div>
     </div>
 
@@ -367,11 +357,7 @@ Fully integrated with Shopify product data, variants, and cart
             <a href="{{ related_product.url }}" class="similar-card" data-testid="card-similar-{{ forloop.index }}">
               <div class="similar-card__image">
                 {% if related_product.featured_image %}
-                  <img 
-                    src="{{ related_product.featured_image | image_url: width: 400 }}" 
-                    alt="{{ related_product.title | escape }}"
-                    loading="lazy"
-                  >
+                  <img src="{{ related_product.featured_image | image_url: width: 400 }}" alt="{{ related_product.title | escape }}" loading="lazy">
                 {% endif %}
               </div>
             </a>

@@ -64,7 +64,6 @@
 
       {%- comment -%} Main Gallery Display Area {%- endcomment -%}
       <div class="gallery__main" id="gallery-main">
-        <div class="gallery__main-wrapper">
         
         {%- comment -%} Mockup Room Preview Slides {%- endcomment -%}
         <div class="gallery__main-image gallery__mockup-slide active" 
@@ -151,7 +150,6 @@
             {%- endif -%}
           >
         {%- endfor -%}
-        </div>
       </div>
     </div>
   {%- else -%}

@@ -708,6 +708,7 @@
 }
 
 .mockup-slide__background {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -717,16 +718,14 @@
   position: absolute;
   transform-origin: center center;
   transform: translate(-50%, -50%) scale(var(--size-scale, 1.0));
-  transition: transform 0.3s ease, left 0.3s ease, top 0.3s ease, width 0.3s ease;
   pointer-events: none;
-  aspect-ratio: var(--artwork-ratio, 0.8);
+  transition: transform 0.3s ease, left 0.3s ease, top 0.3s ease, width 0.3s ease;
 }
 
 .mockup-slide__artwork {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
   display: block;
+  width: 100%;
+  height: auto;
 }
 
 .mockup-slide__frame {

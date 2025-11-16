@@ -6,6 +6,18 @@ Premium Displate-inspired layout with artist spotlight and enhanced product pres
 {{ '247-art.css' | asset_url | stylesheet_tag }}
 
 <style>
+/* ===== CSS CUSTOM PROPERTIES FOR PRECISE LAYOUT ===== */
+:root {
+  --mockup-width: 1035px;
+  --thumb-width: 120px;
+  --media-gap: 1rem;
+  --config-min: 320px;
+  --config-max: 420px;
+  --section-gap: 3rem;
+  --section-padding: 2rem;
+}
+
+/* Emergency override for white space */
 main#MainContent,
 #MainContent {
   padding-top: 0 !important;
@@ -16,61 +28,72 @@ main#MainContent,
   padding-top: 0 !important;
 }
 
+/* Product page grid: centered with explicit dimensions */
 .pn247-art-product {
-  display: grid;
-  grid-template-columns: auto 420px;
-  gap: 1.5rem;
-  justify-content: center;
-  max-width: 1686px;
-  margin: 0 auto;
-  padding: 3rem 2rem;
+  display: grid !important;
+  grid-template-columns: auto minmax(var(--config-min), var(--config-max)) !important;
+  gap: var(--section-gap) !important;
+  justify-content: center !important;
+  max-width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap) + var(--config-max) + var(--section-gap) + 2 * var(--section-padding)) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: var(--section-padding) !important;
+  padding-right: var(--section-padding) !important;
+  padding-top: 3rem !important;
+  padding-bottom: 3rem !important;
 }
 
+/* Media gallery: explicit width to accommodate thumbnails + mockup */
 .product__media-gallery {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-  width: 1171px;
+  display: flex !important;
+  gap: var(--media-gap) !important;
+  align-items: flex-start !important;
+  width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap)) !important;
 }
 
+/* Main mockup display area */
 .gallery__main {
-  width: 1035px;
-  max-width: 100%;
+  width: var(--mockup-width) !important;
+  max-width: 100% !important;
 }
 
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+
+/* Medium screens: stack config below gallery */
 @media (max-width: 1200px) {
   .pn247-art-product {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    max-width: 100%;
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+    max-width: 100% !important;
   }
   
   .product__media-gallery {
-    width: 100%;
-    max-width: 1171px;
-    margin: 0 auto;
+    width: 100% !important;
+    max-width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap)) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
   }
   
   .gallery__main {
-    width: 100%;
-    max-width: 1035px;
+    width: min(100%, var(--mockup-width)) !important;
   }
 }
 
+/* Small screens: stack thumbnails above mockup, reduce sizes */
 @media (max-width: 640px) {
   .product__media-gallery {
-    flex-direction: column;
-    width: 100%;
+    flex-direction: column !important;
+    width: 100% !important;
   }
   
   .gallery__main {
-    width: 100%;
-    max-width: 1035px;
+    width: min(100%, var(--mockup-width)) !important;
   }
   
   .pn247-art-product {
-    padding: 3rem 1rem;
-    gap: 1.5rem;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    gap: 1.5rem !important;
   }
 }
 </style>
@@ -103,8 +126,6 @@ main#MainContent,
               <img 
                 src="{{ 'mockup-living-room.png' | asset_url }}" 
                 alt="Living Room Preview"
-                width="120"
-                height="120"
                 loading="eager"
               >
               <span class="thumbnail-label">Living Room</span>
@@ -121,8 +142,6 @@ main#MainContent,
               <img 
                 src="{{ 'mockup-bedroom.png' | asset_url }}" 
                 alt="Bedroom Preview"
-                width="120"
-                height="120"
                 loading="lazy"
               >
               <span class="thumbnail-label">Bedroom</span>
@@ -139,8 +158,6 @@ main#MainContent,
               <img 
                 src="{{ 'mockup-office.png' | asset_url }}" 
                 alt="Office Preview"
-                width="120"
-                height="120"
                 loading="lazy"
               >
               <span class="thumbnail-label">Office</span>
@@ -157,8 +174,6 @@ main#MainContent,
               <img 
                 src="{{ 'mockup-gallery.png' | asset_url }}" 
                 alt="Gallery Preview"
-                width="120"
-                height="120"
                 loading="lazy"
               >
               <span class="thumbnail-label">Gallery</span>
@@ -177,10 +192,8 @@ main#MainContent,
                 aria-pressed="false"
               >
                 <img 
-                  src="{{ image | image_url: '120x120' }}" 
+                  src="{{ image | img_url: '120x120' }}" 
                   alt="{{ image.alt | default: product.title | escape }}"
-                  width="120"
-                  height="120"
                   loading="lazy"
                 >
               </button>
@@ -206,14 +219,10 @@ main#MainContent,
             <div class="mockup-slide__container">
               <img src="{{ 'mockup-living-room.png' | asset_url }}" 
                    alt="Modern Living Room Preview" 
-                   width="1920"
-                   height="1080"
                    class="mockup-slide__background">
               <div class="mockup-slide__overlay">
-                <img src="{{ product.featured_image | image_url: '1024x1024' }}" 
+                <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
                      alt="{{ product.title | escape }}" 
-                     width="1024"
-                     height="1024"
                      class="mockup-slide__artwork">
                 <div class="mockup-slide__frame" data-frame="none"></div>
               </div>
@@ -227,14 +236,10 @@ main#MainContent,
             <div class="mockup-slide__container">
               <img src="{{ 'mockup-bedroom.png' | asset_url }}" 
                    alt="Cozy Bedroom Preview" 
-                   width="1920"
-                   height="1080"
                    class="mockup-slide__background">
               <div class="mockup-slide__overlay">
-                <img src="{{ product.featured_image | image_url: '1024x1024' }}" 
+                <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
                      alt="{{ product.title | escape }}" 
-                     width="1024"
-                     height="1024"
                      class="mockup-slide__artwork">
                 <div class="mockup-slide__frame" data-frame="none"></div>
               </div>
@@ -248,14 +253,10 @@ main#MainContent,
             <div class="mockup-slide__container">
               <img src="{{ 'mockup-office.png' | asset_url }}" 
                    alt="Professional Office Preview" 
-                   width="1920"
-                   height="1080"
                    class="mockup-slide__background">
               <div class="mockup-slide__overlay">
-                <img src="{{ product.featured_image | image_url: '1024x1024' }}" 
+                <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
                      alt="{{ product.title | escape }}" 
-                     width="1024"
-                     height="1024"
                      class="mockup-slide__artwork">
                 <div class="mockup-slide__frame" data-frame="none"></div>
               </div>
@@ -269,14 +270,10 @@ main#MainContent,
             <div class="mockup-slide__container">
               <img src="{{ 'mockup-gallery.png' | asset_url }}" 
                    alt="Art Gallery Preview" 
-                   width="1920"
-                   height="1080"
                    class="mockup-slide__background">
               <div class="mockup-slide__overlay">
-                <img src="{{ product.featured_image | image_url: '1024x1024' }}" 
+                <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
                      alt="{{ product.title | escape }}" 
-                     width="1024"
-                     height="1024"
                      class="mockup-slide__artwork">
                 <div class="mockup-slide__frame" data-frame="none"></div>
               </div>
@@ -286,7 +283,7 @@ main#MainContent,
           {%- comment -%} Regular Product Images {%- endcomment -%}
           {%- for image in product.images -%}
             <img 
-              src="{{ image | image_url: '1024x1024' }}" 
+              src="{{ image | img_url: '1024x1024' }}" 
               alt="{{ image.alt | default: product.title | escape }}"
               width="1024"
               height="1024"
@@ -447,7 +444,7 @@ main#MainContent,
     </svg>
   </button>
   <div class="lightbox__content">
-    <img src="{{ 'mockup-living-room.png' | asset_url }}" alt="" id="lightbox-image" width="1920" height="1920">
+    <img src="" alt="" id="lightbox-image">
   </div>
   <div class="lightbox__nav">
     <button class="lightbox__prev" id="lightbox-prev" aria-label="Previous image">

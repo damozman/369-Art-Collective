@@ -1,0 +1,2651 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ancient Forest Canopy &ndash; 247 Print Network</title>
+  
+  
+    <meta name="description" content="Towering old-growth trees reaching skyward with dappled sunlight filtering through leaves. The Story Behind This Artwork Deep in Olympic National Park, this 500-year-old forest grove represents untouched wilderness. Perfect For Nature centers, eco-friendly businesses, home decor Created by Sarah Chen">
+  
+
+  <link rel="canonical" href="https://247printnetwork.com/products/ancient-forest-canopy">
+
+  <script>window.performance && window.performance.mark && window.performance.mark('shopify.content_for_header.start');</script><meta id="shopify-digital-wallet" name="shopify-digital-wallet" content="/92521562409/digital_wallets/dialog">
+<meta name="shopify-checkout-api-token" content="b3b62f1167426b7cab091d5f905472f2">
+<meta id="in-context-paypal-metadata" data-shop-id="92521562409" data-venmo-supported="true" data-environment="production" data-locale="en_US" data-paypal-v4="true" data-currency="USD">
+<link rel="alternate" type="application/json+oembed" href="https://247printnetwork.com/products/ancient-forest-canopy.oembed">
+<script async="async" src="/checkouts/internal/preloads.js?locale=en-US"></script>
+<link rel="preconnect" href="https://shop.app" crossorigin="anonymous">
+<script async="async" src="https://shop.app/checkouts/internal/preloads.js?locale=en-US&shop_id=92521562409" crossorigin="anonymous"></script>
+<script id="apple-pay-shop-capabilities" type="application/json">{"shopId":92521562409,"countryCode":"US","currencyCode":"USD","merchantCapabilities":["supports3DS"],"merchantId":"gid:\/\/shopify\/Shop\/92521562409","merchantName":"247 Print Network","requiredBillingContactFields":["postalAddress","email"],"requiredShippingContactFields":["postalAddress","email"],"shippingType":"shipping","supportedNetworks":["visa","masterCard","amex","discover","elo","jcb"],"total":{"type":"pending","label":"247 Print Network","amount":"1.00"},"shopifyPaymentsEnabled":true,"supportsSubscriptions":true}</script>
+<script id="shopify-features" type="application/json">{"accessToken":"b3b62f1167426b7cab091d5f905472f2","betas":["rich-media-storefront-analytics"],"domain":"247printnetwork.com","predictiveSearch":true,"shopId":92521562409,"locale":"en"}</script>
+<script>var Shopify = Shopify || {};
+Shopify.shop = "bvhpq0-hy.myshopify.com";
+Shopify.locale = "en";
+Shopify.currency = {"active":"USD","rate":"1.0"};
+Shopify.country = "US";
+Shopify.theme = {"name":"247pn-art-starter-theme","id":179686146345,"schema_name":"247 Print Network","schema_version":"1.0.0","theme_store_id":null,"role":"main"};
+Shopify.theme.handle = "null";
+Shopify.theme.style = {"id":null,"handle":null};
+Shopify.cdnHost = "247printnetwork.com/cdn";
+Shopify.routes = Shopify.routes || {};
+Shopify.routes.root = "/";</script>
+<script type="module">!function(o){(o.Shopify=o.Shopify||{}).modules=!0}(window);</script>
+<script>!function(o){function n(){var o=[];function n(){o.push(Array.prototype.slice.apply(arguments))}return n.q=o,n}var t=o.Shopify=o.Shopify||{};t.loadFeatures=n(),t.autoloadFeatures=n()}(window);</script>
+<script>
+  window.ShopifyPay = window.ShopifyPay || {};
+  window.ShopifyPay.apiHost = "shop.app\/pay";
+  window.ShopifyPay.redirectState = "pending";
+</script>
+<script id="shop-js-analytics" type="application/json">{"pageType":"product"}</script>
+<script defer="defer" async type="module" src="//247printnetwork.com/cdn/shopifycloud/shop-js/modules/v2/client.init-shop-cart-sync_COMZFrEa.en.esm.js"></script>
+<script defer="defer" async type="module" src="//247printnetwork.com/cdn/shopifycloud/shop-js/modules/v2/chunk.common_CdXrxk3f.esm.js"></script>
+<script type="module">
+  await import("//247printnetwork.com/cdn/shopifycloud/shop-js/modules/v2/client.init-shop-cart-sync_COMZFrEa.en.esm.js");
+await import("//247printnetwork.com/cdn/shopifycloud/shop-js/modules/v2/chunk.common_CdXrxk3f.esm.js");
+
+  window.Shopify.SignInWithShop?.initShopCartSync?.({"fedCMEnabled":true,"windoidEnabled":true});
+
+</script>
+<script>
+  window.Shopify = window.Shopify || {};
+  if (!window.Shopify.featureAssets) window.Shopify.featureAssets = {};
+  window.Shopify.featureAssets['shop-js'] = {"shop-cart-sync":["modules/v2/client.shop-cart-sync_CRSPkpKa.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js"],"init-fed-cm":["modules/v2/client.init-fed-cm_DO1JVZ96.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js"],"init-windoid":["modules/v2/client.init-windoid_hXardXh0.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js"],"init-shop-email-lookup-coordinator":["modules/v2/client.init-shop-email-lookup-coordinator_jpxQlUsx.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js"],"shop-toast-manager":["modules/v2/client.shop-toast-manager_C-K0q6-t.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js"],"shop-button":["modules/v2/client.shop-button_B6dBoDg5.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js"],"shop-login-button":["modules/v2/client.shop-login-button_BHRMsoBb.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js","modules/v2/chunk.modal_C89cmTvN.esm.js"],"shop-cash-offers":["modules/v2/client.shop-cash-offers_p6Pw3nax.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js","modules/v2/chunk.modal_C89cmTvN.esm.js"],"avatar":["modules/v2/client.avatar_BTnouDA3.en.esm.js"],"init-shop-cart-sync":["modules/v2/client.init-shop-cart-sync_COMZFrEa.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js"],"init-shop-for-new-customer-accounts":["modules/v2/client.init-shop-for-new-customer-accounts_BNQiNx4m.en.esm.js","modules/v2/client.shop-login-button_BHRMsoBb.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js","modules/v2/chunk.modal_C89cmTvN.esm.js"],"pay-button":["modules/v2/client.pay-button_CRuQ9trT.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js"],"init-customer-accounts-sign-up":["modules/v2/client.init-customer-accounts-sign-up_Q1yheB3t.en.esm.js","modules/v2/client.shop-login-button_BHRMsoBb.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js","modules/v2/chunk.modal_C89cmTvN.esm.js"],"checkout-modal":["modules/v2/client.checkout-modal_DtXVhFgQ.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js","modules/v2/chunk.modal_C89cmTvN.esm.js"],"init-customer-accounts":["modules/v2/client.init-customer-accounts_B5rMd0lj.en.esm.js","modules/v2/client.shop-login-button_BHRMsoBb.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js","modules/v2/chunk.modal_C89cmTvN.esm.js"],"lead-capture":["modules/v2/client.lead-capture_CmGCXBh3.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js","modules/v2/chunk.modal_C89cmTvN.esm.js"],"shop-follow-button":["modules/v2/client.shop-follow-button_CV5C02lv.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js","modules/v2/chunk.modal_C89cmTvN.esm.js"],"shop-login":["modules/v2/client.shop-login_Bz_Zm_XZ.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js","modules/v2/chunk.modal_C89cmTvN.esm.js"],"payment-terms":["modules/v2/client.payment-terms_D7XnU2ez.en.esm.js","modules/v2/chunk.common_CdXrxk3f.esm.js","modules/v2/chunk.modal_C89cmTvN.esm.js"]};
+</script>
+<script>(function() {
+  var isLoaded = false;
+  function asyncLoad() {
+    if (isLoaded) return;
+    isLoaded = true;
+    var urls = ["https:\/\/cdn.one.store\/javascript\/dist\/1.0\/jcr-widget.js?account_id=shopify:bvhpq0-hy.myshopify.com\u0026shop=bvhpq0-hy.myshopify.com"];
+    for (var i = 0; i < urls.length; i++) {
+      var s = document.createElement('script');
+      s.type = 'text/javascript';
+      s.async = true;
+      s.src = urls[i];
+      var x = document.getElementsByTagName('script')[0];
+      x.parentNode.insertBefore(s, x);
+    }
+  };
+  if(window.attachEvent) {
+    window.attachEvent('onload', asyncLoad);
+  } else {
+    window.addEventListener('load', asyncLoad, false);
+  }
+})();</script>
+<script id="__st">var __st={"a":92521562409,"offset":-21600,"reqid":"1a3d464a-6a33-496c-bbc7-9de49501f4e7-1763269387","pageurl":"247printnetwork.com\/products\/ancient-forest-canopy","u":"1220f48f0cc9","p":"product","rtyp":"product","rid":9875835453737};</script>
+<script>window.ShopifyPaypalV4VisibilityTracking = true;</script>
+<script id="captcha-bootstrap">!function(){'use strict';const t='contact',e='account',n='new_comment',o=[[t,t],['blogs',n],['comments',n],[t,'customer']],c=[[e,'customer_login'],[e,'guest_login'],[e,'recover_customer_password'],[e,'create_customer']],r=t=>t.map((([t,e])=>`form[action*='/${t}']:not([data-nocaptcha='true']) input[name='form_type'][value='${e}']`)).join(','),a=t=>()=>t?[...document.querySelectorAll(t)].map((t=>t.form)):[];function s(){const t=[...o],e=r(t);return a(e)}const i='password',u='form_key',d=['recaptcha-v3-token','g-recaptcha-response','h-captcha-response',i],f=()=>{try{return window.sessionStorage}catch{return}},m='__shopify_v',_=t=>t.elements[u];function p(t,e,n=!1){try{const o=window.sessionStorage,c=JSON.parse(o.getItem(e)),{data:r}=function(t){const{data:e,action:n}=t;return t[m]||n?{data:e,action:n}:{data:t,action:n}}(c);for(const[e,n]of Object.entries(r))t.elements[e]&&(t.elements[e].value=n);n&&o.removeItem(e)}catch(o){console.error('form repopulation failed',{error:o})}}const l='form_type',E='cptcha';function T(t){t.dataset[E]=!0}const w=window,h=w.document,L='Shopify',v='ce_forms',y='captcha';let A=!1;((t,e)=>{const n=(g='f06e6c50-85a8-45c8-87d0-21a2b65856fe',I='https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js',D={infoText:'Protected by hCaptcha',privacyText:'Privacy',termsText:'Terms'},(t,e,n)=>{const o=w[L][v],c=o.bindForm;if(c)return c(t,g,e,D).then(n);var r;o.q.push([[t,g,e,D],n]),r=I,A||(h.body.append(Object.assign(h.createElement('script'),{id:'captcha-provider',async:!0,src:r})),A=!0)});var g,I,D;w[L]=w[L]||{},w[L][v]=w[L][v]||{},w[L][v].q=[],w[L][y]=w[L][y]||{},w[L][y].protect=function(t,e){n(t,void 0,e),T(t)},Object.freeze(w[L][y]),function(t,e,n,w,h,L){const[v,y,A,g]=function(t,e,n){const i=e?o:[],u=t?c:[],d=[...i,...u],f=r(d),m=r(i),_=r(d.filter((([t,e])=>n.includes(e))));return[a(f),a(m),a(_),s()]}(w,h,L),I=t=>{const e=t.target;return e instanceof HTMLFormElement?e:e&&e.form},D=t=>v().includes(t);t.addEventListener('submit',(t=>{const e=I(t);if(!e)return;const n=D(e)&&!e.dataset.hcaptchaBound&&!e.dataset.recaptchaBound,o=_(e),c=g().includes(e)&&(!o||!o.value);(n||c)&&t.preventDefault(),c&&!n&&(function(t){try{if(!f())return;!function(t){const e=f();if(!e)return;const n=_(t);if(!n)return;const o=n.value;o&&e.removeItem(o)}(t);const e=Array.from(Array(32),(()=>Math.random().toString(36)[2])).join('');!function(t,e){_(t)||t.append(Object.assign(document.createElement('input'),{type:'hidden',name:u})),t.elements[u].value=e}(t,e),function(t,e){const n=f();if(!n)return;const o=[...t.querySelectorAll(`input[type='${i}']`)].map((({name:t})=>t)),c=[...d,...o],r={};for(const[a,s]of new FormData(t).entries())c.includes(a)||(r[a]=s);n.setItem(e,JSON.stringify({[m]:1,action:t.action,data:r}))}(t,e)}catch(e){console.error('failed to persist form',e)}}(e),e.submit())}));const S=(t,e)=>{t&&!t.dataset[E]&&(n(t,e.some((e=>e===t))),T(t))};for(const o of['focusin','change'])t.addEventListener(o,(t=>{const e=I(t);D(e)&&S(e,y())}));const B=e.get('form_key'),M=e.get(l),P=B&&M;t.addEventListener('DOMContentLoaded',(()=>{const t=y();if(P)for(const e of t)e.elements[l].value===M&&p(e,B);[...new Set([...A(),...v().filter((t=>'true'===t.dataset.shopifyCaptcha))])].forEach((e=>S(e,t)))}))}(h,new URLSearchParams(w.location.search),n,t,e,['guest_login'])})(!0,!0)}();</script>
+<script integrity="sha256-52AcMU7V7pcBOXWImdc/TAGTFKeNjmkeM1Pvks/DTgc=" data-source-attribution="shopify.loadfeatures" defer="defer" src="//247printnetwork.com/cdn/shopifycloud/storefront/assets/storefront/load_feature-81c60534.js" crossorigin="anonymous"></script>
+<script crossorigin="anonymous" defer="defer" src="//247printnetwork.com/cdn/shopifycloud/storefront/assets/shopify_pay/storefront-65b4c6d7.js?v=20250812"></script>
+<script data-source-attribution="shopify.dynamic_checkout.dynamic.init">var Shopify=Shopify||{};Shopify.PaymentButton=Shopify.PaymentButton||{isStorefrontPortableWallets:!0,init:function(){window.Shopify.PaymentButton.init=function(){};var t=document.createElement("script");t.src="https://247printnetwork.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",t.type="module",document.head.appendChild(t)}};
+</script>
+<script data-source-attribution="shopify.dynamic_checkout.buyer_consent">
+  function portableWalletsHideBuyerConsent(e){var t=document.getElementById("shopify-buyer-consent"),n=document.getElementById("shopify-subscription-policy-button");t&&n&&(t.classList.add("hidden"),t.setAttribute("aria-hidden","true"),n.removeEventListener("click",e))}function portableWalletsShowBuyerConsent(e){var t=document.getElementById("shopify-buyer-consent"),n=document.getElementById("shopify-subscription-policy-button");t&&n&&(t.classList.remove("hidden"),t.removeAttribute("aria-hidden"),n.addEventListener("click",e))}window.Shopify?.PaymentButton&&(window.Shopify.PaymentButton.hideBuyerConsent=portableWalletsHideBuyerConsent,window.Shopify.PaymentButton.showBuyerConsent=portableWalletsShowBuyerConsent);
+</script>
+<script data-source-attribution="shopify.dynamic_checkout.cart.bootstrap">document.addEventListener("DOMContentLoaded",(function(){function t(){return document.querySelector("shopify-accelerated-checkout-cart, shopify-accelerated-checkout")}if(t())Shopify.PaymentButton.init();else{new MutationObserver((function(e,n){t()&&(Shopify.PaymentButton.init(),n.disconnect())})).observe(document.body,{childList:!0,subtree:!0})}}));
+</script>
+<link id="shopify-accelerated-checkout-styles" rel="stylesheet" media="screen" href="https://247printnetwork.com/cdn/shopifycloud/portable-wallets/latest/accelerated-checkout-backwards-compat.css" crossorigin="anonymous">
+<style id="shopify-accelerated-checkout-cart">
+        #shopify-buyer-consent {
+  margin-top: 1em;
+  display: inline-block;
+  width: 100%;
+}
+
+#shopify-buyer-consent.hidden {
+  display: none;
+}
+
+#shopify-subscription-policy-button {
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+#shopify-subscription-policy-button::before {
+  box-shadow: none;
+}
+
+      </style>
+
+<script>window.performance && window.performance.mark && window.performance.mark('shopify.content_for_header.end');</script>
+
+  <link href="//247printnetwork.com/cdn/shop/t/7/assets/247-art.css?v=58301417993579965611763257410" rel="stylesheet" type="text/css" media="all" />
+  <script src="//247printnetwork.com/cdn/shop/t/7/assets/247-art.js?v=9816020292053399471763263326" type="text/javascript"></script>
+<meta property="og:image" content="https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521" />
+<meta property="og:image:secure_url" content="https://cdn.shopify.com/s/files/1/0925/2156/2409/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521" />
+<meta property="og:image:width" content="800" />
+<meta property="og:image:height" content="1000" />
+<meta property="og:image:alt" content="Ancient Forest Canopy" />
+<link href="https://monorail-edge.shopifysvc.com" rel="dns-prefetch">
+<script>(function(){if ("sendBeacon" in navigator && "performance" in window) {try {var session_token_from_headers = performance.getEntriesByType('navigation')[0].serverTiming.find(x => x.name == '_s').description;} catch {var session_token_from_headers = undefined;}var session_cookie_matches = document.cookie.match(/_shopify_s=([^;]*)/);var session_token_from_cookie = session_cookie_matches && session_cookie_matches.length === 2 ? session_cookie_matches[1] : "";var session_token = session_token_from_headers || session_token_from_cookie || "";function handle_abandonment_event(e) {var entries = performance.getEntries().filter(function(entry) {return /monorail-edge.shopifysvc.com/.test(entry.name);});if (!window.abandonment_tracked && entries.length === 0) {window.abandonment_tracked = true;var currentMs = Date.now();var navigation_start = performance.timing.navigationStart;var payload = {shop_id: 92521562409,url: window.location.href,navigation_start,duration: currentMs - navigation_start,session_token,page_type: "product"};window.navigator.sendBeacon("https://monorail-edge.shopifysvc.com/v1/produce", JSON.stringify({schema_id: "online_store_buyer_site_abandonment/1.1",payload: payload,metadata: {event_created_at_ms: currentMs,event_sent_at_ms: currentMs}}));}}window.addEventListener('pagehide', handle_abandonment_event);}}());</script>
+<script id="web-pixels-manager-setup">(function e(e,d,r,n,o){if(void 0===o&&(o={}),!Boolean(null===(a=null===(i=window.Shopify)||void 0===i?void 0:i.analytics)||void 0===a?void 0:a.replayQueue)){var i,a;window.Shopify=window.Shopify||{};var t=window.Shopify;t.analytics=t.analytics||{};var s=t.analytics;s.replayQueue=[],s.publish=function(e,d,r){return s.replayQueue.push([e,d,r]),!0};try{self.performance.mark("wpm:start")}catch(e){}var l=function(){var e={modern:/Edge?\/(1{2}[4-9]|1[2-9]\d|[2-9]\d{2}|\d{4,})\.\d+(\.\d+|)|Firefox\/(1{2}[4-9]|1[2-9]\d|[2-9]\d{2}|\d{4,})\.\d+(\.\d+|)|Chrom(ium|e)\/(9{2}|\d{3,})\.\d+(\.\d+|)|(Maci|X1{2}).+ Version\/(15\.\d+|(1[6-9]|[2-9]\d|\d{3,})\.\d+)([,.]\d+|)( \(\w+\)|)( Mobile\/\w+|) Safari\/|Chrome.+OPR\/(9{2}|\d{3,})\.\d+\.\d+|(CPU[ +]OS|iPhone[ +]OS|CPU[ +]iPhone|CPU IPhone OS|CPU iPad OS)[ +]+(15[._]\d+|(1[6-9]|[2-9]\d|\d{3,})[._]\d+)([._]\d+|)|Android:?[ /-](13[3-9]|1[4-9]\d|[2-9]\d{2}|\d{4,})(\.\d+|)(\.\d+|)|Android.+Firefox\/(13[5-9]|1[4-9]\d|[2-9]\d{2}|\d{4,})\.\d+(\.\d+|)|Android.+Chrom(ium|e)\/(13[3-9]|1[4-9]\d|[2-9]\d{2}|\d{4,})\.\d+(\.\d+|)|SamsungBrowser\/([2-9]\d|\d{3,})\.\d+/,legacy:/Edge?\/(1[6-9]|[2-9]\d|\d{3,})\.\d+(\.\d+|)|Firefox\/(5[4-9]|[6-9]\d|\d{3,})\.\d+(\.\d+|)|Chrom(ium|e)\/(5[1-9]|[6-9]\d|\d{3,})\.\d+(\.\d+|)([\d.]+$|.*Safari\/(?![\d.]+ Edge\/[\d.]+$))|(Maci|X1{2}).+ Version\/(10\.\d+|(1[1-9]|[2-9]\d|\d{3,})\.\d+)([,.]\d+|)( \(\w+\)|)( Mobile\/\w+|) Safari\/|Chrome.+OPR\/(3[89]|[4-9]\d|\d{3,})\.\d+\.\d+|(CPU[ +]OS|iPhone[ +]OS|CPU[ +]iPhone|CPU IPhone OS|CPU iPad OS)[ +]+(10[._]\d+|(1[1-9]|[2-9]\d|\d{3,})[._]\d+)([._]\d+|)|Android:?[ /-](13[3-9]|1[4-9]\d|[2-9]\d{2}|\d{4,})(\.\d+|)(\.\d+|)|Mobile Safari.+OPR\/([89]\d|\d{3,})\.\d+\.\d+|Android.+Firefox\/(13[5-9]|1[4-9]\d|[2-9]\d{2}|\d{4,})\.\d+(\.\d+|)|Android.+Chrom(ium|e)\/(13[3-9]|1[4-9]\d|[2-9]\d{2}|\d{4,})\.\d+(\.\d+|)|Android.+(UC? ?Browser|UCWEB|U3)[ /]?(15\.([5-9]|\d{2,})|(1[6-9]|[2-9]\d|\d{3,})\.\d+)\.\d+|SamsungBrowser\/(5\.\d+|([6-9]|\d{2,})\.\d+)|Android.+MQ{2}Browser\/(14(\.(9|\d{2,})|)|(1[5-9]|[2-9]\d|\d{3,})(\.\d+|))(\.\d+|)|K[Aa][Ii]OS\/(3\.\d+|([4-9]|\d{2,})\.\d+)(\.\d+|)/},d=e.modern,r=e.legacy,n=navigator.userAgent;return n.match(d)?"modern":n.match(r)?"legacy":"unknown"}(),u="modern"===l?"modern":"legacy",c=(null!=n?n:{modern:"",legacy:""})[u],f=function(e){return[e.baseUrl,"/wpm","/b",e.hashVersion,"modern"===e.buildTarget?"m":"l",".js"].join("")}({baseUrl:d,hashVersion:r,buildTarget:u}),m=function(e){var d=e.version,r=e.bundleTarget,n=e.surface,o=e.pageUrl,i=e.monorailEndpoint;return{emit:function(e){var a=e.status,t=e.errorMsg,s=(new Date).getTime(),l=JSON.stringify({metadata:{event_sent_at_ms:s},events:[{schema_id:"web_pixels_manager_load/3.1",payload:{version:d,bundle_target:r,page_url:o,status:a,surface:n,error_msg:t},metadata:{event_created_at_ms:s}}]});if(!i)return console&&console.warn&&console.warn("[Web Pixels Manager] No Monorail endpoint provided, skipping logging."),!1;try{return self.navigator.sendBeacon.bind(self.navigator)(i,l)}catch(e){}var u=new XMLHttpRequest;try{return u.open("POST",i,!0),u.setRequestHeader("Content-Type","text/plain"),u.send(l),!0}catch(e){return console&&console.warn&&console.warn("[Web Pixels Manager] Got an unhandled error while logging to Monorail."),!1}}}}({version:r,bundleTarget:l,surface:e.surface,pageUrl:self.location.href,monorailEndpoint:e.monorailEndpoint});try{o.browserTarget=l,function(e){var d=e.src,r=e.async,n=void 0===r||r,o=e.onload,i=e.onerror,a=e.sri,t=e.scriptDataAttributes,s=void 0===t?{}:t,l=document.createElement("script"),u=document.querySelector("head"),c=document.querySelector("body");if(l.async=n,l.src=d,a&&(l.integrity=a,l.crossOrigin="anonymous"),s)for(var f in s)if(Object.prototype.hasOwnProperty.call(s,f))try{l.dataset[f]=s[f]}catch(e){}if(o&&l.addEventListener("load",o),i&&l.addEventListener("error",i),u)u.appendChild(l);else{if(!c)throw new Error("Did not find a head or body element to append the script");c.appendChild(l)}}({src:f,async:!0,onload:function(){if(!function(){var e,d;return Boolean(null===(d=null===(e=window.Shopify)||void 0===e?void 0:e.analytics)||void 0===d?void 0:d.initialized)}()){var d=window.webPixelsManager.init(e)||void 0;if(d){var r=window.Shopify.analytics;r.replayQueue.forEach((function(e){var r=e[0],n=e[1],o=e[2];d.publishCustomEvent(r,n,o)})),r.replayQueue=[],r.publish=d.publishCustomEvent,r.visitor=d.visitor,r.initialized=!0}}},onerror:function(){return m.emit({status:"failed",errorMsg:"".concat(f," has failed to load")})},sri:function(e){var d=/^sha384-[A-Za-z0-9+/=]+$/;return"string"==typeof e&&d.test(e)}(c)?c:"",scriptDataAttributes:o}),m.emit({status:"loading"})}catch(e){m.emit({status:"failed",errorMsg:(null==e?void 0:e.message)||"Unknown error"})}}})({shopId: 92521562409,storefrontBaseUrl: "https://247printnetwork.com",extensionsBaseUrl: "https://extensions.shopifycdn.com/cdn/shopifycloud/web-pixels-manager",monorailEndpoint: "https://monorail-edge.shopifysvc.com/unstable/produce_batch",surface: "storefront-renderer",enabledBetaFlags: ["2dca8a86"],webPixelsConfigList: [{"id":"shopify-app-pixel","configuration":"{}","eventPayloadVersion":"v1","runtimeContext":"STRICT","scriptVersion":"0450","apiClientId":"shopify-pixel","type":"APP","privacyPurposes":["ANALYTICS","MARKETING"]},{"id":"shopify-custom-pixel","eventPayloadVersion":"v1","runtimeContext":"LAX","scriptVersion":"0450","apiClientId":"shopify-pixel","type":"CUSTOM","privacyPurposes":["ANALYTICS","MARKETING"]}],isMerchantRequest: false,initData: {"shop":{"name":"247 Print Network","paymentSettings":{"currencyCode":"USD"},"myshopifyDomain":"bvhpq0-hy.myshopify.com","countryCode":"US","storefrontUrl":"https:\/\/247printnetwork.com"},"customer":null,"cart":null,"checkout":null,"productVariants":[{"price":{"amount":19.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51511719887145","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-8x10-paper","title":"8x10 \/ Paper","untranslatedTitle":"8x10 \/ Paper"},{"price":{"amount":39.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51511720018217","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-8x10-canvas","title":"8x10 \/ Canvas","untranslatedTitle":"8x10 \/ Canvas"},{"price":{"amount":48.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783428905","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-8x10-framed-black","title":"8x10 \/ Framed-Black","untranslatedTitle":"8x10 \/ Framed-Black"},{"price":{"amount":48.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783461673","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-8x10-framed-white","title":"8x10 \/ Framed-White","untranslatedTitle":"8x10 \/ Framed-White"},{"price":{"amount":48.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783494441","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-8x10-framed-walnut","title":"8x10 \/ Framed-Walnut","untranslatedTitle":"8x10 \/ Framed-Walnut"},{"price":{"amount":59.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51516286402857","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-8x10-metal","title":"8x10 \/ Metal","untranslatedTitle":"8x10 \/ Metal"},{"price":{"amount":25.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783527209","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-11x14-paper","title":"11x14 \/ Paper","untranslatedTitle":"11x14 \/ Paper"},{"price":{"amount":51.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783559977","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-11x14-canvas","title":"11x14 \/ Canvas","untranslatedTitle":"11x14 \/ Canvas"},{"price":{"amount":54.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783592745","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-11x14-framed-black","title":"11x14 \/ Framed-Black","untranslatedTitle":"11x14 \/ Framed-Black"},{"price":{"amount":54.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783625513","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-11x14-framed-white","title":"11x14 \/ Framed-White","untranslatedTitle":"11x14 \/ Framed-White"},{"price":{"amount":54.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783658281","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-11x14-framed-walnut","title":"11x14 \/ Framed-Walnut","untranslatedTitle":"11x14 \/ Framed-Walnut"},{"price":{"amount":77.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783691049","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-11x14-metal","title":"11x14 \/ Metal","untranslatedTitle":"11x14 \/ Metal"},{"price":{"amount":29.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51511719919913","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-12x16-paper","title":"12x16 \/ Paper","untranslatedTitle":"12x16 \/ Paper"},{"price":{"amount":59.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51511720050985","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-12x16-canvas","title":"12x16 \/ Canvas","untranslatedTitle":"12x16 \/ Canvas"},{"price":{"amount":58.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783723817","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-12x16-framed-black","title":"12x16 \/ Framed-Black","untranslatedTitle":"12x16 \/ Framed-Black"},{"price":{"amount":58.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783756585","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-12x16-framed-white","title":"12x16 \/ Framed-White","untranslatedTitle":"12x16 \/ Framed-White"},{"price":{"amount":58.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783789353","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-12x16-framed-walnut","title":"12x16 \/ Framed-Walnut","untranslatedTitle":"12x16 \/ Framed-Walnut"},{"price":{"amount":89.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51516286468393","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-12x16-metal","title":"12x16 \/ Metal","untranslatedTitle":"12x16 \/ Metal"},{"price":{"amount":38.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783822121","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-16x20-paper","title":"16x20 \/ Paper","untranslatedTitle":"16x20 \/ Paper"},{"price":{"amount":78.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783854889","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-16x20-canvas","title":"16x20 \/ Canvas","untranslatedTitle":"16x20 \/ Canvas"},{"price":{"amount":67.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783887657","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-16x20-framed-black","title":"16x20 \/ Framed-Black","untranslatedTitle":"16x20 \/ Framed-Black"},{"price":{"amount":67.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783920425","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-16x20-framed-white","title":"16x20 \/ Framed-White","untranslatedTitle":"16x20 \/ Framed-White"},{"price":{"amount":67.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783953193","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-16x20-framed-walnut","title":"16x20 \/ Framed-Walnut","untranslatedTitle":"16x20 \/ Framed-Walnut"},{"price":{"amount":118.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746783985961","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-16x20-metal","title":"16x20 \/ Metal","untranslatedTitle":"16x20 \/ Metal"},{"price":{"amount":48.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51511719952681","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-18x24-paper","title":"18x24 \/ Paper","untranslatedTitle":"18x24 \/ Paper"},{"price":{"amount":98.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51511720083753","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-18x24-canvas","title":"18x24 \/ Canvas","untranslatedTitle":"18x24 \/ Canvas"},{"price":{"amount":77.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746784018729","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-18x24-framed-black","title":"18x24 \/ Framed-Black","untranslatedTitle":"18x24 \/ Framed-Black"},{"price":{"amount":77.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746784051497","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-18x24-framed-white","title":"18x24 \/ Framed-White","untranslatedTitle":"18x24 \/ Framed-White"},{"price":{"amount":77.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746784084265","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-18x24-framed-walnut","title":"18x24 \/ Framed-Walnut","untranslatedTitle":"18x24 \/ Framed-Walnut"},{"price":{"amount":148.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51516286533929","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-18x24-metal","title":"18x24 \/ Metal","untranslatedTitle":"18x24 \/ Metal"},{"price":{"amount":76.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51511719985449","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-24x36-paper","title":"24x36 \/ Paper","untranslatedTitle":"24x36 \/ Paper"},{"price":{"amount":156.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51511720116521","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-24x36-canvas","title":"24x36 \/ Canvas","untranslatedTitle":"24x36 \/ Canvas"},{"price":{"amount":105.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746784117033","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-24x36-framed-black","title":"24x36 \/ Framed-Black","untranslatedTitle":"24x36 \/ Framed-Black"},{"price":{"amount":105.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746784149801","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-24x36-framed-white","title":"24x36 \/ Framed-White","untranslatedTitle":"24x36 \/ Framed-White"},{"price":{"amount":105.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51746784182569","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-24x36-framed-walnut","title":"24x36 \/ Framed-Walnut","untranslatedTitle":"24x36 \/ Framed-Walnut"},{"price":{"amount":236.0,"currencyCode":"USD"},"product":{"title":"Ancient Forest Canopy","vendor":"Sarah Chen","id":"9875835453737","untranslatedTitle":"Ancient Forest Canopy","url":"\/products\/ancient-forest-canopy","type":"Art Print"},"id":"51516286599465","image":{"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"sku":"9875835453737-24x36-metal","title":"24x36 \/ Metal","untranslatedTitle":"24x36 \/ Metal"}],"purchasingCompany":null},},"https://247printnetwork.com/cdn","ae1676cfwd2530674p4253c800m34e853cb",{"modern":"","legacy":""},{"shopId":"92521562409","storefrontBaseUrl":"https:\/\/247printnetwork.com","extensionBaseUrl":"https:\/\/extensions.shopifycdn.com\/cdn\/shopifycloud\/web-pixels-manager","surface":"storefront-renderer","enabledBetaFlags":"[\"2dca8a86\"]","isMerchantRequest":"false","hashVersion":"ae1676cfwd2530674p4253c800m34e853cb","publish":"custom","events":"[[\"page_viewed\",{}],[\"product_viewed\",{\"productVariant\":{\"price\":{\"amount\":19.0,\"currencyCode\":\"USD\"},\"product\":{\"title\":\"Ancient Forest Canopy\",\"vendor\":\"Sarah Chen\",\"id\":\"9875835453737\",\"untranslatedTitle\":\"Ancient Forest Canopy\",\"url\":\"\/products\/ancient-forest-canopy\",\"type\":\"Art Print\"},\"id\":\"51511719887145\",\"image\":{\"src\":\"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521\"},\"sku\":\"9875835453737-8x10-paper\",\"title\":\"8x10 \/ Paper\",\"untranslatedTitle\":\"8x10 \/ Paper\"}}]]"});</script><script>
+  window.ShopifyAnalytics = window.ShopifyAnalytics || {};
+  window.ShopifyAnalytics.meta = window.ShopifyAnalytics.meta || {};
+  window.ShopifyAnalytics.meta.currency = 'USD';
+  var meta = {"product":{"id":9875835453737,"gid":"gid:\/\/shopify\/Product\/9875835453737","vendor":"Sarah Chen","type":"Art Print","variants":[{"id":51511719887145,"price":1900,"name":"Ancient Forest Canopy - 8x10 \/ Paper","public_title":"8x10 \/ Paper","sku":"9875835453737-8x10-paper"},{"id":51511720018217,"price":3900,"name":"Ancient Forest Canopy - 8x10 \/ Canvas","public_title":"8x10 \/ Canvas","sku":"9875835453737-8x10-canvas"},{"id":51746783428905,"price":4800,"name":"Ancient Forest Canopy - 8x10 \/ Framed-Black","public_title":"8x10 \/ Framed-Black","sku":"9875835453737-8x10-framed-black"},{"id":51746783461673,"price":4800,"name":"Ancient Forest Canopy - 8x10 \/ Framed-White","public_title":"8x10 \/ Framed-White","sku":"9875835453737-8x10-framed-white"},{"id":51746783494441,"price":4800,"name":"Ancient Forest Canopy - 8x10 \/ Framed-Walnut","public_title":"8x10 \/ Framed-Walnut","sku":"9875835453737-8x10-framed-walnut"},{"id":51516286402857,"price":5900,"name":"Ancient Forest Canopy - 8x10 \/ Metal","public_title":"8x10 \/ Metal","sku":"9875835453737-8x10-metal"},{"id":51746783527209,"price":2500,"name":"Ancient Forest Canopy - 11x14 \/ Paper","public_title":"11x14 \/ Paper","sku":"9875835453737-11x14-paper"},{"id":51746783559977,"price":5100,"name":"Ancient Forest Canopy - 11x14 \/ Canvas","public_title":"11x14 \/ Canvas","sku":"9875835453737-11x14-canvas"},{"id":51746783592745,"price":5400,"name":"Ancient Forest Canopy - 11x14 \/ Framed-Black","public_title":"11x14 \/ Framed-Black","sku":"9875835453737-11x14-framed-black"},{"id":51746783625513,"price":5400,"name":"Ancient Forest Canopy - 11x14 \/ Framed-White","public_title":"11x14 \/ Framed-White","sku":"9875835453737-11x14-framed-white"},{"id":51746783658281,"price":5400,"name":"Ancient Forest Canopy - 11x14 \/ Framed-Walnut","public_title":"11x14 \/ Framed-Walnut","sku":"9875835453737-11x14-framed-walnut"},{"id":51746783691049,"price":7700,"name":"Ancient Forest Canopy - 11x14 \/ Metal","public_title":"11x14 \/ Metal","sku":"9875835453737-11x14-metal"},{"id":51511719919913,"price":2900,"name":"Ancient Forest Canopy - 12x16 \/ Paper","public_title":"12x16 \/ Paper","sku":"9875835453737-12x16-paper"},{"id":51511720050985,"price":5900,"name":"Ancient Forest Canopy - 12x16 \/ Canvas","public_title":"12x16 \/ Canvas","sku":"9875835453737-12x16-canvas"},{"id":51746783723817,"price":5800,"name":"Ancient Forest Canopy - 12x16 \/ Framed-Black","public_title":"12x16 \/ Framed-Black","sku":"9875835453737-12x16-framed-black"},{"id":51746783756585,"price":5800,"name":"Ancient Forest Canopy - 12x16 \/ Framed-White","public_title":"12x16 \/ Framed-White","sku":"9875835453737-12x16-framed-white"},{"id":51746783789353,"price":5800,"name":"Ancient Forest Canopy - 12x16 \/ Framed-Walnut","public_title":"12x16 \/ Framed-Walnut","sku":"9875835453737-12x16-framed-walnut"},{"id":51516286468393,"price":8900,"name":"Ancient Forest Canopy - 12x16 \/ Metal","public_title":"12x16 \/ Metal","sku":"9875835453737-12x16-metal"},{"id":51746783822121,"price":3800,"name":"Ancient Forest Canopy - 16x20 \/ Paper","public_title":"16x20 \/ Paper","sku":"9875835453737-16x20-paper"},{"id":51746783854889,"price":7800,"name":"Ancient Forest Canopy - 16x20 \/ Canvas","public_title":"16x20 \/ Canvas","sku":"9875835453737-16x20-canvas"},{"id":51746783887657,"price":6700,"name":"Ancient Forest Canopy - 16x20 \/ Framed-Black","public_title":"16x20 \/ Framed-Black","sku":"9875835453737-16x20-framed-black"},{"id":51746783920425,"price":6700,"name":"Ancient Forest Canopy - 16x20 \/ Framed-White","public_title":"16x20 \/ Framed-White","sku":"9875835453737-16x20-framed-white"},{"id":51746783953193,"price":6700,"name":"Ancient Forest Canopy - 16x20 \/ Framed-Walnut","public_title":"16x20 \/ Framed-Walnut","sku":"9875835453737-16x20-framed-walnut"},{"id":51746783985961,"price":11800,"name":"Ancient Forest Canopy - 16x20 \/ Metal","public_title":"16x20 \/ Metal","sku":"9875835453737-16x20-metal"},{"id":51511719952681,"price":4800,"name":"Ancient Forest Canopy - 18x24 \/ Paper","public_title":"18x24 \/ Paper","sku":"9875835453737-18x24-paper"},{"id":51511720083753,"price":9800,"name":"Ancient Forest Canopy - 18x24 \/ Canvas","public_title":"18x24 \/ Canvas","sku":"9875835453737-18x24-canvas"},{"id":51746784018729,"price":7700,"name":"Ancient Forest Canopy - 18x24 \/ Framed-Black","public_title":"18x24 \/ Framed-Black","sku":"9875835453737-18x24-framed-black"},{"id":51746784051497,"price":7700,"name":"Ancient Forest Canopy - 18x24 \/ Framed-White","public_title":"18x24 \/ Framed-White","sku":"9875835453737-18x24-framed-white"},{"id":51746784084265,"price":7700,"name":"Ancient Forest Canopy - 18x24 \/ Framed-Walnut","public_title":"18x24 \/ Framed-Walnut","sku":"9875835453737-18x24-framed-walnut"},{"id":51516286533929,"price":14800,"name":"Ancient Forest Canopy - 18x24 \/ Metal","public_title":"18x24 \/ Metal","sku":"9875835453737-18x24-metal"},{"id":51511719985449,"price":7600,"name":"Ancient Forest Canopy - 24x36 \/ Paper","public_title":"24x36 \/ Paper","sku":"9875835453737-24x36-paper"},{"id":51511720116521,"price":15600,"name":"Ancient Forest Canopy - 24x36 \/ Canvas","public_title":"24x36 \/ Canvas","sku":"9875835453737-24x36-canvas"},{"id":51746784117033,"price":10500,"name":"Ancient Forest Canopy - 24x36 \/ Framed-Black","public_title":"24x36 \/ Framed-Black","sku":"9875835453737-24x36-framed-black"},{"id":51746784149801,"price":10500,"name":"Ancient Forest Canopy - 24x36 \/ Framed-White","public_title":"24x36 \/ Framed-White","sku":"9875835453737-24x36-framed-white"},{"id":51746784182569,"price":10500,"name":"Ancient Forest Canopy - 24x36 \/ Framed-Walnut","public_title":"24x36 \/ Framed-Walnut","sku":"9875835453737-24x36-framed-walnut"},{"id":51516286599465,"price":23600,"name":"Ancient Forest Canopy - 24x36 \/ Metal","public_title":"24x36 \/ Metal","sku":"9875835453737-24x36-metal"}],"remote":false},"page":{"pageType":"product","resourceType":"product","resourceId":9875835453737}};
+  for (var attr in meta) {
+    window.ShopifyAnalytics.meta[attr] = meta[attr];
+  }
+</script>
+<script class="analytics">
+  (function () {
+    var customDocumentWrite = function(content) {
+      var jquery = null;
+
+      if (window.jQuery) {
+        jquery = window.jQuery;
+      } else if (window.Checkout && window.Checkout.$) {
+        jquery = window.Checkout.$;
+      }
+
+      if (jquery) {
+        jquery('body').append(content);
+      }
+    };
+
+    var hasLoggedConversion = function(token) {
+      if (token) {
+        return document.cookie.indexOf('loggedConversion=' + token) !== -1;
+      }
+      return false;
+    }
+
+    var setCookieIfConversion = function(token) {
+      if (token) {
+        var twoMonthsFromNow = new Date(Date.now());
+        twoMonthsFromNow.setMonth(twoMonthsFromNow.getMonth() + 2);
+
+        document.cookie = 'loggedConversion=' + token + '; expires=' + twoMonthsFromNow;
+      }
+    }
+
+    var trekkie = window.ShopifyAnalytics.lib = window.trekkie = window.trekkie || [];
+    if (trekkie.integrations) {
+      return;
+    }
+    trekkie.methods = [
+      'identify',
+      'page',
+      'ready',
+      'track',
+      'trackForm',
+      'trackLink'
+    ];
+    trekkie.factory = function(method) {
+      return function() {
+        var args = Array.prototype.slice.call(arguments);
+        args.unshift(method);
+        trekkie.push(args);
+        return trekkie;
+      };
+    };
+    for (var i = 0; i < trekkie.methods.length; i++) {
+      var key = trekkie.methods[i];
+      trekkie[key] = trekkie.factory(key);
+    }
+    trekkie.load = function(config) {
+      trekkie.config = config || {};
+      trekkie.config.initialDocumentCookie = document.cookie;
+      var first = document.getElementsByTagName('script')[0];
+      var script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.onerror = function(e) {
+        var scriptFallback = document.createElement('script');
+        scriptFallback.type = 'text/javascript';
+        scriptFallback.onerror = function(error) {
+                var Monorail = {
+      produce: function produce(monorailDomain, schemaId, payload) {
+        var currentMs = new Date().getTime();
+        var event = {
+          schema_id: schemaId,
+          payload: payload,
+          metadata: {
+            event_created_at_ms: currentMs,
+            event_sent_at_ms: currentMs
+          }
+        };
+        return Monorail.sendRequest("https://" + monorailDomain + "/v1/produce", JSON.stringify(event));
+      },
+      sendRequest: function sendRequest(endpointUrl, payload) {
+        // Try the sendBeacon API
+        if (window && window.navigator && typeof window.navigator.sendBeacon === 'function' && typeof window.Blob === 'function' && !Monorail.isIos12()) {
+          var blobData = new window.Blob([payload], {
+            type: 'text/plain'
+          });
+
+          if (window.navigator.sendBeacon(endpointUrl, blobData)) {
+            return true;
+          } // sendBeacon was not successful
+
+        } // XHR beacon
+
+        var xhr = new XMLHttpRequest();
+
+        try {
+          xhr.open('POST', endpointUrl);
+          xhr.setRequestHeader('Content-Type', 'text/plain');
+          xhr.send(payload);
+        } catch (e) {
+          console.log(e);
+        }
+
+        return false;
+      },
+      isIos12: function isIos12() {
+        return window.navigator.userAgent.lastIndexOf('iPhone; CPU iPhone OS 12_') !== -1 || window.navigator.userAgent.lastIndexOf('iPad; CPU OS 12_') !== -1;
+      }
+    };
+    Monorail.produce('monorail-edge.shopifysvc.com',
+      'trekkie_storefront_load_errors/1.1',
+      {shop_id: 92521562409,
+      theme_id: 179686146345,
+      app_name: "storefront",
+      context_url: window.location.href,
+      source_url: "//247printnetwork.com/cdn/s/trekkie.storefront.308893168db1679b4a9f8a086857af995740364f.min.js"});
+
+        };
+        scriptFallback.async = true;
+        scriptFallback.src = '//247printnetwork.com/cdn/s/trekkie.storefront.308893168db1679b4a9f8a086857af995740364f.min.js';
+        first.parentNode.insertBefore(scriptFallback, first);
+      };
+      script.async = true;
+      script.src = '//247printnetwork.com/cdn/s/trekkie.storefront.308893168db1679b4a9f8a086857af995740364f.min.js';
+      first.parentNode.insertBefore(script, first);
+    };
+    trekkie.load(
+      {"Trekkie":{"appName":"storefront","development":false,"defaultAttributes":{"shopId":92521562409,"isMerchantRequest":null,"themeId":179686146345,"themeCityHash":"16652138781857422186","contentLanguage":"en","currency":"USD","eventMetadataId":"56b2f6d9-5bc1-4456-bcbe-004d68b1f1b6"},"isServerSideCookieWritingEnabled":true,"monorailRegion":"shop_domain","enabledBetaFlags":["f0df213a"]},"Session Attribution":{},"S2S":{"facebookCapiEnabled":false,"source":"trekkie-storefront-renderer","apiClientId":580111}}
+    );
+
+    var loaded = false;
+    trekkie.ready(function() {
+      if (loaded) return;
+      loaded = true;
+
+      window.ShopifyAnalytics.lib = window.trekkie;
+
+      var originalDocumentWrite = document.write;
+      document.write = customDocumentWrite;
+      try { window.ShopifyAnalytics.merchantGoogleAnalytics.call(this); } catch(error) {};
+      document.write = originalDocumentWrite;
+
+      window.ShopifyAnalytics.lib.page(null,{"pageType":"product","resourceType":"product","resourceId":9875835453737,"shopifyEmitted":true});
+
+      var match = window.location.pathname.match(/checkouts\/(.+)\/(thank_you|post_purchase)/)
+      var token = match? match[1]: undefined;
+      if (!hasLoggedConversion(token)) {
+        setCookieIfConversion(token);
+        window.ShopifyAnalytics.lib.track("Viewed Product",{"currency":"USD","variantId":51511719887145,"productId":9875835453737,"productGid":"gid:\/\/shopify\/Product\/9875835453737","name":"Ancient Forest Canopy - 8x10 \/ Paper","price":"19.00","sku":"9875835453737-8x10-paper","brand":"Sarah Chen","variant":"8x10 \/ Paper","category":"Art Print","nonInteraction":true,"remote":false},undefined,undefined,{"shopifyEmitted":true});
+      window.ShopifyAnalytics.lib.track("monorail:\/\/trekkie_storefront_viewed_product\/1.1",{"currency":"USD","variantId":51511719887145,"productId":9875835453737,"productGid":"gid:\/\/shopify\/Product\/9875835453737","name":"Ancient Forest Canopy - 8x10 \/ Paper","price":"19.00","sku":"9875835453737-8x10-paper","brand":"Sarah Chen","variant":"8x10 \/ Paper","category":"Art Print","nonInteraction":true,"remote":false,"referer":"https:\/\/247printnetwork.com\/products\/ancient-forest-canopy"});
+      }
+    });
+
+
+        var eventsListenerScript = document.createElement('script');
+        eventsListenerScript.async = true;
+        eventsListenerScript.src = "//247printnetwork.com/cdn/shopifycloud/storefront/assets/shop_events_listener-3da45d37.js";
+        document.getElementsByTagName('head')[0].appendChild(eventsListenerScript);
+
+})();</script>
+<script
+  defer
+  src="https://247printnetwork.com/cdn/shopifycloud/perf-kit/shopify-perf-kit-2.1.2.min.js"
+  data-application="storefront-renderer"
+  data-shop-id="92521562409"
+  data-render-region="gcp-us-central1"
+  data-page-type="product"
+  data-theme-instance-id="179686146345"
+  data-theme-name="247 Print Network"
+  data-theme-version="1.0.0"
+  data-monorail-region="shop_domain"
+  data-resource-timing-sampling-rate="10"
+  data-shs="true"
+  data-shs-beacon="true"
+  data-shs-export-with-fetch="true"
+  data-shs-logs-sample-rate="1"
+></script>
+</head>
+
+<body class="template-product">
+  <div id="shopify-section-header" class="shopify-section">
+
+<header class="site-header" role="banner">
+  <div class="header-wrapper">
+    <div class="header-logo">
+      
+        <a href="/" class="site-title">247 Print Network</a>
+      
+    </div>
+
+    <nav class="header-nav desktop-nav" role="navigation">
+      
+        <ul class="nav-menu">
+          
+            <li class="nav-item">
+              <a href="/" class="nav-link">Home</a>
+              
+              
+            </li>
+          
+            <li class="nav-item has-dropdown">
+              <a href="#" class="nav-link">Browse Art</a>
+              
+              
+                <ul class="dropdown-menu">
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections">All Artwork</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/abstract">Abstract</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/landscape">Landscape</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/nature">Nature</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/urban">Urban</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/portrait">Portrait</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/modern">Modern</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/minimalist">Minimalist</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/colorful">Colorful</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/wildlife">Wildlife</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/botanical">Botanical</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="nav-item has-dropdown">
+              <a href="#" class="nav-link">Shop by Artist</a>
+              
+              
+                <ul class="dropdown-menu">
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections">All Artists</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/art-by-sarah-chen">Sarah Chen</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/art-by-marcus-rodriguez">Marcus Rodriguez</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/art-by-yuki-tanaka">Yuki Tanaka</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/art-by-elena-kowalski">Elena Kowalski</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/art-by-nina-volkov">Nina Volkov</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/art-by-raj-patel">Raj Patel</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/art-by-liam-anderson">Liam Anderson</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/art-by-amara-johnson">Amara Johnson</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/art-by-sofia-martinez">Sofia Martinez</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/art-by-david-oconnor">David O'Connor</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="nav-item has-dropdown">
+              <a href="#" class="nav-link">Featured</a>
+              
+              
+                <ul class="dropdown-menu">
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/new-arrivals">New Arrivals</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/best-sellers">Best Sellers</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/collections/featured">Featured Collection</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="nav-item has-dropdown">
+              <a href="#" class="nav-link">About</a>
+              
+              
+                <ul class="dropdown-menu">
+                  
+                    <li class="dropdown-item">
+                      <a href="/pages/about">About Us</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/pages/creators">Meet the Creators</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/pages/join">Join as an Artist</a>
+                    </li>
+                  
+                    <li class="dropdown-item">
+                      <a href="/pages/faq">FAQs</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="nav-item">
+              <a href="/pages/contact" class="nav-link">Contact</a>
+              
+              
+            </li>
+          
+        </ul>
+      
+    </nav>
+
+    <div class="header-actions">
+      <a href="/cart" class="cart-link">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 16C4.9 16 4.01 16.9 4.01 18C4.01 19.1 4.9 20 6 20C7.1 20 8 19.1 8 18C8 16.9 7.1 16 6 16ZM0 0V2H2L5.6 9.59L4.24 12.04C4.09 12.32 4 12.65 4 13C4 14.1 4.9 15 6 15H18V13H6.42C6.28 13 6.17 12.89 6.17 12.75L6.2 12.63L7.1 11H14.55C15.3 11 15.96 10.58 16.3 9.97L19.88 3.5C19.95 3.34 20 3.17 20 3C20 2.45 19.55 2 19 2H4.21L3.27 0H0ZM16 16C14.9 16 14.01 16.9 14.01 18C14.01 19.1 14.9 20 16 20C17.1 20 18 19.1 18 18C18 16.9 17.1 16 16 16Z" fill="currentColor"/>
+        </svg>
+        <span class="cart-count">0</span>
+      </a>
+      
+      <div class="artist-dropdown">
+        <button type="button" class="artist-link-subtle" aria-expanded="false">
+          Sell Your Art
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M3 5L6 8L9 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="artist-dropdown-menu">
+          <a href="https://247portal.replit.app/join" class="artist-dropdown-item">Apply as Artist</a>
+          <a href="https://247portal.replit.app/login" class="artist-dropdown-item">Artist Portal</a>
+        </div>
+      </div>
+      
+      <button class="mobile-nav-toggle" aria-expanded="false" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+    </div>
+  </div>
+
+  <nav class="mobile-nav" role="navigation" aria-label="Mobile navigation">
+    <div class="mobile-nav-overlay"></div>
+    <div class="mobile-nav-drawer">
+      <div class="mobile-nav-header">
+        <span class="mobile-nav-title">Menu</span>
+        <button class="mobile-nav-close" aria-label="Close menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+      
+      
+        <ul class="mobile-nav-menu">
+          
+            <li class="mobile-nav-item">
+              
+                <a href="/" class="mobile-nav-link">Home</a>
+              
+            </li>
+          
+            <li class="mobile-nav-item has-submenu">
+              
+                <button class="mobile-nav-link mobile-nav-accordion" aria-expanded="false">
+                  Browse Art
+                  <svg class="accordion-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <ul class="mobile-submenu">
+                  
+                    <li>
+                      <a href="/collections" class="mobile-submenu-link">All Artwork</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/abstract" class="mobile-submenu-link">Abstract</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/landscape" class="mobile-submenu-link">Landscape</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/nature" class="mobile-submenu-link">Nature</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/urban" class="mobile-submenu-link">Urban</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/portrait" class="mobile-submenu-link">Portrait</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/modern" class="mobile-submenu-link">Modern</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/minimalist" class="mobile-submenu-link">Minimalist</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/colorful" class="mobile-submenu-link">Colorful</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/wildlife" class="mobile-submenu-link">Wildlife</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/botanical" class="mobile-submenu-link">Botanical</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="mobile-nav-item has-submenu">
+              
+                <button class="mobile-nav-link mobile-nav-accordion" aria-expanded="false">
+                  Shop by Artist
+                  <svg class="accordion-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <ul class="mobile-submenu">
+                  
+                    <li>
+                      <a href="/collections" class="mobile-submenu-link">All Artists</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/art-by-sarah-chen" class="mobile-submenu-link">Sarah Chen</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/art-by-marcus-rodriguez" class="mobile-submenu-link">Marcus Rodriguez</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/art-by-yuki-tanaka" class="mobile-submenu-link">Yuki Tanaka</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/art-by-elena-kowalski" class="mobile-submenu-link">Elena Kowalski</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/art-by-nina-volkov" class="mobile-submenu-link">Nina Volkov</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/art-by-raj-patel" class="mobile-submenu-link">Raj Patel</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/art-by-liam-anderson" class="mobile-submenu-link">Liam Anderson</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/art-by-amara-johnson" class="mobile-submenu-link">Amara Johnson</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/art-by-sofia-martinez" class="mobile-submenu-link">Sofia Martinez</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/art-by-david-oconnor" class="mobile-submenu-link">David O'Connor</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="mobile-nav-item has-submenu">
+              
+                <button class="mobile-nav-link mobile-nav-accordion" aria-expanded="false">
+                  Featured
+                  <svg class="accordion-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <ul class="mobile-submenu">
+                  
+                    <li>
+                      <a href="/collections/new-arrivals" class="mobile-submenu-link">New Arrivals</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/best-sellers" class="mobile-submenu-link">Best Sellers</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/featured" class="mobile-submenu-link">Featured Collection</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="mobile-nav-item has-submenu">
+              
+                <button class="mobile-nav-link mobile-nav-accordion" aria-expanded="false">
+                  About
+                  <svg class="accordion-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <ul class="mobile-submenu">
+                  
+                    <li>
+                      <a href="/pages/about" class="mobile-submenu-link">About Us</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/pages/creators" class="mobile-submenu-link">Meet the Creators</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/pages/join" class="mobile-submenu-link">Join as an Artist</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/pages/faq" class="mobile-submenu-link">FAQs</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="mobile-nav-item">
+              
+                <a href="/pages/contact" class="mobile-nav-link">Contact</a>
+              
+            </li>
+          
+        </ul>
+      
+      
+      <div class="mobile-nav-divider"></div>
+      
+      <div class="mobile-artist-block">
+        <h4 class="mobile-artist-title">Create with Us</h4>
+        <div class="mobile-artist-links">
+          <a href="https://247portal.replit.app/join" class="mobile-artist-link">Apply as Artist</a>
+          <a href="https://247portal.replit.app/login" class="mobile-artist-link">Portal Login</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<style>
+  /* Base Header Styles - Modern Clean Design */
+  .site-header {
+    background: #fff;
+    color: #1a1a1a;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e5e5e5;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+  }
+  
+  .header-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  
+  .header-logo .site-title {
+    color: #1a1a1a;
+    text-decoration: none;
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  .header-logo img {
+    max-height: 50px;
+    width: auto;
+  }
+
+  /* Desktop Navigation */
+  .desktop-nav {
+    flex: 1;
+    margin: 0 3rem;
+  }
+  
+  .nav-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 2.5rem;
+    justify-content: center;
+  }
+  
+  .nav-item {
+    position: relative;
+  }
+  
+  .nav-link {
+    color: #1a1a1a;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 0.5rem 0;
+    transition: color 0.2s;
+    display: block;
+  }
+  
+  .nav-link:hover {
+    color: #6366f1;
+  }
+  
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #fff;
+    min-width: 220px;
+    padding: 0.75rem 0;
+    list-style: none;
+    margin: 0.5rem 0 0 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    border: 1px solid #e5e5e5;
+    z-index: 100;
+  }
+  
+  .has-dropdown:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  
+  .dropdown-item a {
+    display: block;
+    padding: 0.75rem 1.5rem;
+    color: #1a1a1a;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+  }
+  
+  .dropdown-item a:hover {
+    background: #f5f5f5;
+    color: #6366f1;
+  }
+
+  /* Header Actions */
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  /* Subtle Artist Dropdown */
+  .artist-dropdown {
+    position: relative;
+  }
+  
+  .artist-link-subtle {
+    color: #666;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  
+  .artist-link-subtle:hover,
+  .artist-link-subtle:focus {
+    color: #0A1628;
+    background: #f5f5f5;
+  }
+  
+  .artist-link-subtle:focus {
+    outline: 2px solid #FF8A5B;
+    outline-offset: 2px;
+  }
+  
+  .artist-link-subtle svg {
+    transition: transform 0.2s;
+  }
+  
+  .artist-link-subtle[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+  
+  .artist-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #fff;
+    min-width: 180px;
+    padding: 0.5rem 0;
+    margin-top: 0.5rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    border: 1px solid #e5e5e5;
+    z-index: 100;
+    pointer-events: none;
+  }
+  
+  .artist-dropdown.is-open .artist-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  
+  .artist-dropdown-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #1a1a1a;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: background 0.2s;
+  }
+  
+  .artist-dropdown-item:hover {
+    background: #f5f5f5;
+    color: #FF8A5B;
+  }
+  
+  .cart-link {
+    color: #1a1a1a;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+  
+  .cart-link:hover {
+    background: #f5f5f5;
+    border-color: #0A1628;
+  }
+
+  .cart-count {
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  /* Mobile Toggle Button - Larger & More Prominent */
+  .mobile-nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    padding: 0.75rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+
+  .mobile-nav-toggle:hover {
+    background: #f5f5f5;
+  }
+
+  .hamburger-line {
+    width: 28px;
+    height: 3px;
+    background: #1a1a1a;
+    border-radius: 2px;
+    transition: all 0.3s;
+  }
+
+  .mobile-nav-toggle[aria-expanded="true"] .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translateY(10px);
+  }
+
+  .mobile-nav-toggle[aria-expanded="true"] .hamburger-line:nth-child(2) {
+    opacity: 0;
+  }
+
+  .mobile-nav-toggle[aria-expanded="true"] .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translateY(-10px);
+  }
+
+  /* Mobile Navigation */
+  .mobile-nav {
+    display: none;
+  }
+
+  .mobile-nav-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+
+  .mobile-nav-drawer {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 90%;
+    max-width: 450px;
+    height: 100vh;
+    background: #fff;
+    z-index: 1000;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .mobile-nav.active .mobile-nav-overlay {
+    display: block;
+  }
+
+  .mobile-nav.active .mobile-nav-drawer {
+    right: 0;
+  }
+
+  .mobile-nav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2rem 1.5rem;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .mobile-nav-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .mobile-nav-close {
+    background: #f5f5f5;
+    border: none;
+    color: #1a1a1a;
+    cursor: pointer;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+
+  .mobile-nav-close:hover {
+    background: #e5e5e5;
+  }
+
+  .mobile-nav-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .mobile-nav-item {
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .mobile-nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    color: #1a1a1a;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 1.05rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .mobile-nav-link:hover {
+    background: #f5f5f5;
+    padding-left: 2rem;
+  }
+
+  .accordion-icon {
+    transition: transform 0.3s;
+  }
+
+  .mobile-nav-accordion[aria-expanded="true"] .accordion-icon {
+    transform: rotate(180deg);
+  }
+
+  .mobile-submenu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: #fafafa;
+  }
+
+  .mobile-nav-accordion[aria-expanded="true"] + .mobile-submenu {
+    max-height: 500px;
+  }
+
+  .mobile-submenu-link {
+    display: block;
+    padding: 1rem 2.5rem;
+    color: #666;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: all 0.2s;
+  }
+
+  .mobile-submenu-link:hover {
+    background: #f0f0f0;
+    color: #1a1a1a;
+    padding-left: 3rem;
+  }
+  
+  .mobile-nav-divider {
+    height: 1px;
+    background: #e5e5e5;
+    margin: 1.5rem 0;
+  }
+  
+  .mobile-artist-block {
+    padding: 1.5rem;
+    background: #fafafa;
+    border-radius: 8px;
+    margin: 0 1.5rem 1.5rem;
+  }
+  
+  .mobile-artist-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 1rem 0;
+  }
+  
+  .mobile-artist-links {
+    display: flex;
+    gap: 0.75rem;
+  }
+  
+  .mobile-artist-link {
+    flex: 1;
+    padding: 0.875rem 1rem;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  
+  .mobile-artist-link:first-child {
+    background: #fff;
+    border: 1px solid #FF8A5B;
+    color: #FF8A5B;
+  }
+  
+  .mobile-artist-link:first-child:hover {
+    background: #FF8A5B;
+    color: #fff;
+  }
+  
+  .mobile-artist-link:last-child {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    color: #1a1a1a;
+  }
+  
+  .mobile-artist-link:last-child:hover {
+    background: #f5f5f5;
+    border-color: #0A1628;
+  }
+
+  /* Responsive Breakpoints - Mobile First */
+  @media (max-width: 1024px) {
+    .desktop-nav {
+      display: none;
+    }
+    
+    .artist-dropdown {
+      display: none;
+    }
+
+    .mobile-nav-toggle {
+      display: flex;
+    }
+
+    .mobile-nav {
+      display: block;
+    }
+
+    .cart-link span:not(.cart-count) {
+      display: none;
+    }
+  }
+
+  /* Mobile Optimization - 48px Touch Targets */
+  @media (max-width: 768px) {
+    .site-header {
+      padding: 0.75rem 1.25rem;
+      min-height: 3.5rem;
+    }
+
+    .header-wrapper {
+      min-height: 3.5rem;
+      gap: 1rem;
+    }
+
+    .header-logo .site-title {
+      font-size: 1.125rem;
+      line-height: 1.4;
+      font-weight: 700;
+    }
+
+    .header-logo img {
+      max-height: 44px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .cart-link {
+      width: 3rem;
+      height: 3rem;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      min-width: 0;
+    }
+
+    .cart-link svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    .cart-count {
+      font-size: 1rem;
+    }
+
+    .mobile-nav-toggle {
+      width: 3rem;
+      height: 3rem;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
+
+    .hamburger-line {
+      width: 26px;
+      height: 3px;
+    }
+  }
+
+  /* Extra Small Mobile - Tighter Spacing */
+  @media (max-width: 640px) {
+    .site-header {
+      padding: 0.75rem 0.75rem;
+    }
+
+    .header-wrapper {
+      gap: 0.75rem;
+    }
+
+    .header-logo .site-title {
+      font-size: 1.2rem;
+    }
+
+    .header-actions {
+      gap: 0.5rem;
+    }
+
+    .cart-count {
+      font-size: 0.95rem;
+    }
+  }
+</style>
+
+<script>
+  (function() {
+    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+    const mobileNav = document.querySelector('.mobile-nav');
+    const mobileNavClose = document.querySelector('.mobile-nav-close');
+    const mobileNavOverlay = document.querySelector('.mobile-nav-overlay');
+    const accordions = document.querySelectorAll('.mobile-nav-accordion');
+
+    function openMobileNav() {
+      mobileNav.classList.add('active');
+      mobileNavToggle.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileNav() {
+      mobileNav.classList.remove('active');
+      mobileNavToggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+
+    // Artist Dropdown
+    const artistDropdown = document.querySelector('.artist-dropdown');
+    const artistButton = document.querySelector('.artist-link-subtle');
+    
+    if (artistButton) {
+      artistButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = artistDropdown.classList.contains('is-open');
+        artistDropdown.classList.toggle('is-open');
+        artistButton.setAttribute('aria-expanded', !isOpen);
+      });
+      
+      // Close on click outside
+      document.addEventListener('click', function(e) {
+        if (!artistDropdown.contains(e.target)) {
+          artistDropdown.classList.remove('is-open');
+          artistButton.setAttribute('aria-expanded', 'false');
+        }
+      });
+      
+      // Close on Escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && artistDropdown.classList.contains('is-open')) {
+          artistDropdown.classList.remove('is-open');
+          artistButton.setAttribute('aria-expanded', 'false');
+          artistButton.focus();
+        }
+      });
+    }
+    
+    if (mobileNavToggle) {
+      mobileNavToggle.addEventListener('click', function() {
+        if (mobileNav.classList.contains('active')) {
+          closeMobileNav();
+        } else {
+          openMobileNav();
+        }
+      });
+    }
+
+    if (mobileNavClose) {
+      mobileNavClose.addEventListener('click', closeMobileNav);
+    }
+
+    if (mobileNavOverlay) {
+      mobileNavOverlay.addEventListener('click', closeMobileNav);
+    }
+
+    accordions.forEach(function(accordion) {
+      accordion.addEventListener('click', function() {
+        const isExpanded = this.getAttribute('aria-expanded') === 'true';
+        this.setAttribute('aria-expanded', !isExpanded);
+      });
+    });
+  })();
+</script>
+
+
+</div>
+  
+  <main role="main">
+    <div id="shopify-section-template--24985543835945__product_page" class="shopify-section">
+
+<link href="//247printnetwork.com/cdn/shop/t/7/assets/247-art.css?v=58301417993579965611763257410" rel="stylesheet" type="text/css" media="all" />
+
+<style>
+/* ===== CSS CUSTOM PROPERTIES FOR PRECISE LAYOUT ===== */
+:root {
+  --mockup-width: 1000px;
+  --thumb-width: 120px;
+  --media-gap: 1rem;
+  --config-min: 320px;
+  --config-max: 420px;
+  --section-gap: 3rem;
+  --section-padding: 2rem;
+}
+
+/* Emergency override for white space */
+main#MainContent,
+#MainContent {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+.shopify-section {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Product page grid: centered with explicit dimensions */
+.pn247-art-product {
+  display: grid !important;
+  grid-template-columns: auto minmax(var(--config-min), var(--config-max)) !important;
+  gap: var(--section-gap) !important;
+  justify-content: center !important;
+  max-width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap) + var(--config-max) + var(--section-gap) + 2 * var(--section-padding)) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: var(--section-padding) !important;
+  padding-right: var(--section-padding) !important;
+  padding-top: 3rem !important;
+  padding-bottom: 3rem !important;
+}
+
+/* Media gallery: explicit width to accommodate thumbnails + mockup */
+.product__media-gallery {
+  display: flex !important;
+  gap: var(--media-gap) !important;
+  align-items: flex-start !important;
+  width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap)) !important;
+}
+
+/* Main mockup display area */
+.gallery__main {
+  width: var(--mockup-width) !important;
+  max-width: 100% !important;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+
+/* Medium screens: stack config below gallery */
+@media (max-width: 1200px) {
+  .pn247-art-product {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+    max-width: 100% !important;
+  }
+  
+  .product__media-gallery {
+    width: 100% !important;
+    max-width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap)) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  
+  .gallery__main {
+    width: min(100%, var(--mockup-width)) !important;
+  }
+}
+
+/* Small screens: stack thumbnails above mockup, reduce sizes */
+@media (max-width: 640px) {
+  .product__media-gallery {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .gallery__main {
+    width: min(100%, var(--mockup-width)) !important;
+  }
+  
+  .pn247-art-product {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    gap: 1.5rem !important;
+  }
+}
+</style><section class="pn247-art-product"><div class="product__media-gallery has-thumbnails"><div class="gallery__thumbnails-container">
+          <button class="gallery__scroll-btn gallery__scroll-btn--up" aria-label="Scroll up">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="12,10 8,6 4,10"/>
+            </svg>
+          </button>
+          
+          <div class="gallery__thumbnails" id="thumbnail-nav"><button 
+              class="gallery__thumbnail active"
+              data-mockup="true"
+              data-mockup-room="living-room"
+              data-image-index="0"
+              aria-label="View mockup - Living Room"
+              aria-pressed="true"
+            >
+              <img 
+                src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-living-room.png?v=108054845391383226371763103282" 
+                alt="Living Room Preview"
+                loading="eager"
+              >
+              <span class="thumbnail-label">Living Room</span>
+            </button>
+            
+            <button 
+              class="gallery__thumbnail"
+              data-mockup="true"
+              data-mockup-room="bedroom"
+              data-image-index="1"
+              aria-label="View mockup - Bedroom"
+              aria-pressed="false"
+            >
+              <img 
+                src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-bedroom.png?v=28171443396540865651763103282" 
+                alt="Bedroom Preview"
+                loading="lazy"
+              >
+              <span class="thumbnail-label">Bedroom</span>
+            </button>
+            
+            <button 
+              class="gallery__thumbnail"
+              data-mockup="true"
+              data-mockup-room="office"
+              data-image-index="2"
+              aria-label="View mockup - Office"
+              aria-pressed="false"
+            >
+              <img 
+                src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-office.png?v=177325741133500054051763103282" 
+                alt="Office Preview"
+                loading="lazy"
+              >
+              <span class="thumbnail-label">Office</span>
+            </button>
+            
+            <button 
+              class="gallery__thumbnail"
+              data-mockup="true"
+              data-mockup-room="gallery"
+              data-image-index="3"
+              aria-label="View mockup - Gallery"
+              aria-pressed="false"
+            >
+              <img 
+                src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-gallery.png?v=16568939759836725951763103282" 
+                alt="Gallery Preview"
+                loading="lazy"
+              >
+              <span class="thumbnail-label">Gallery</span>
+            </button><button 
+                class="gallery__thumbnail"
+                data-image-index="4"
+                data-image-id="53679016837417"aria-label="View image 1"
+                aria-pressed="false"
+              >
+                <img 
+                  src="//247printnetwork.com/cdn/shop/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf_120x120.jpg?v=1762809521" 
+                  alt="Ancient Forest Canopy"
+                  loading="lazy"
+                >
+              </button><button 
+                class="gallery__thumbnail"
+                data-image-index="5"
+                data-image-id="53697168113961"aria-label="View image 2"
+                aria-pressed="false"
+              >
+                <img 
+                  src="//247printnetwork.com/cdn/shop/files/ancient-forest-canopy_120x120.jpg?v=1763080066" 
+                  alt="Product mockup"
+                  loading="lazy"
+                >
+              </button><button 
+                class="gallery__thumbnail"
+                data-image-index="6"
+                data-image-id="53697168376105"aria-label="View image 3"
+                aria-pressed="false"
+              >
+                <img 
+                  src="//247printnetwork.com/cdn/shop/files/ancient-forest-canopy_5b6e3af4-397f-4ef8-8e6d-66e5da9ddcca_120x120.jpg?v=1763080071" 
+                  alt="Product mockup"
+                  loading="lazy"
+                >
+              </button><button 
+                class="gallery__thumbnail"
+                data-image-index="7"
+                data-image-id="53697169162537"aria-label="View image 4"
+                aria-pressed="false"
+              >
+                <img 
+                  src="//247printnetwork.com/cdn/shop/files/ancient-forest-canopy_10741d3f-f153-4a00-97e4-a8351d37c2cc_120x120.jpg?v=1763080074" 
+                  alt="Product mockup"
+                  loading="lazy"
+                >
+              </button><button 
+                class="gallery__thumbnail"
+                data-image-index="8"
+                data-image-id="53697169195305"aria-label="View image 5"
+                aria-pressed="false"
+              >
+                <img 
+                  src="//247printnetwork.com/cdn/shop/files/ancient-forest-canopy_bb288e06-baad-4250-a980-f745bf2f95b5_120x120.jpg?v=1763080077" 
+                  alt="Product mockup"
+                  loading="lazy"
+                >
+              </button></div>
+          
+          <button class="gallery__scroll-btn gallery__scroll-btn--down" aria-label="Scroll down">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4,6 8,10 12,6"/>
+            </svg>
+          </button>
+        </div><div class="gallery__main">
+        <div class="gallery__main-wrapper" id="main-image-wrapper"><div class="gallery__main-image gallery__mockup-slide active" 
+               data-mockup="true" 
+               data-mockup-room="living-room"
+               data-image-index="0">
+            <div class="mockup-slide__container">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-living-room.png?v=108054845391383226371763103282" 
+                   alt="Modern Living Room Preview" 
+                   class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="//247printnetwork.com/cdn/shop/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf_1024x1024.jpg?v=1762809521" 
+                     alt="Ancient Forest Canopy" 
+                     class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="gallery__main-image gallery__mockup-slide" 
+               data-mockup="true" 
+               data-mockup-room="bedroom"
+               data-image-index="1">
+            <div class="mockup-slide__container">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-bedroom.png?v=28171443396540865651763103282" 
+                   alt="Cozy Bedroom Preview" 
+                   class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="//247printnetwork.com/cdn/shop/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf_1024x1024.jpg?v=1762809521" 
+                     alt="Ancient Forest Canopy" 
+                     class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="gallery__main-image gallery__mockup-slide" 
+               data-mockup="true" 
+               data-mockup-room="office"
+               data-image-index="2">
+            <div class="mockup-slide__container">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-office.png?v=177325741133500054051763103282" 
+                   alt="Professional Office Preview" 
+                   class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="//247printnetwork.com/cdn/shop/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf_1024x1024.jpg?v=1762809521" 
+                     alt="Ancient Forest Canopy" 
+                     class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="gallery__main-image gallery__mockup-slide" 
+               data-mockup="true" 
+               data-mockup-room="gallery"
+               data-image-index="3">
+            <div class="mockup-slide__container">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-gallery.png?v=16568939759836725951763103282" 
+                   alt="Art Gallery Preview" 
+                   class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="//247printnetwork.com/cdn/shop/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf_1024x1024.jpg?v=1762809521" 
+                     alt="Ancient Forest Canopy" 
+                     class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div><img 
+              src="//247printnetwork.com/cdn/shop/files/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf_1024x1024.jpg?v=1762809521" 
+              alt="Ancient Forest Canopy"
+              width="1024"
+              height="1024"
+              loading="lazy"
+              class="gallery__main-image"
+              data-image-id="53679016837417"
+              data-image-index="4"><img 
+              src="//247printnetwork.com/cdn/shop/files/ancient-forest-canopy_1024x1024.jpg?v=1763080066" 
+              alt="Product mockup"
+              width="1024"
+              height="1024"
+              loading="lazy"
+              class="gallery__main-image"
+              data-image-id="53697168113961"
+              data-image-index="5"><img 
+              src="//247printnetwork.com/cdn/shop/files/ancient-forest-canopy_5b6e3af4-397f-4ef8-8e6d-66e5da9ddcca_1024x1024.jpg?v=1763080071" 
+              alt="Product mockup"
+              width="1024"
+              height="1024"
+              loading="lazy"
+              class="gallery__main-image"
+              data-image-id="53697168376105"
+              data-image-index="6"><img 
+              src="//247printnetwork.com/cdn/shop/files/ancient-forest-canopy_10741d3f-f153-4a00-97e4-a8351d37c2cc_1024x1024.jpg?v=1763080074" 
+              alt="Product mockup"
+              width="1024"
+              height="1024"
+              loading="lazy"
+              class="gallery__main-image"
+              data-image-id="53697169162537"
+              data-image-index="7"><img 
+              src="//247printnetwork.com/cdn/shop/files/ancient-forest-canopy_bb288e06-baad-4250-a980-f745bf2f95b5_1024x1024.jpg?v=1763080077" 
+              alt="Product mockup"
+              width="1024"
+              height="1024"
+              loading="lazy"
+              class="gallery__main-image"
+              data-image-id="53697169195305"
+              data-image-index="8"></div><button class="gallery__zoom-btn" id="zoom-trigger" aria-label="Zoom image">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="8" cy="8" r="6"/>
+            <line x1="13" y1="13" x2="18" y2="18"/>
+            <line x1="8" y1="5" x2="8" y2="11"/>
+            <line x1="5" y1="8" x2="11" y2="8"/>
+          </svg>
+        </button>
+      </div></div><div class="product__info"><div>
+      <div class="product__vendor">Sarah Chen</div>
+      <h1 class="product__title">Ancient Forest Canopy</h1>
+    </div>
+
+<div class="art-options"><div class="art-options__section">
+    <label class="art-options__label">Choose Size</label>
+    <div class="art-options__grid" id="size-selector"><div class="art-option" data-option-value="8x10" data-option-type="size">
+          <input 
+            type="radio" 
+            name="size" 
+            value="8x10" 
+            id="size-8x10"
+            form="add-to-cart-form"
+            class="visually-hidden"
+            checked
+          >
+          <div class="art-option__title">8x10</div>
+          <div class="art-option__subtitle">Perfect for desks</div>
+        </div><div class="art-option" data-option-value="11x14" data-option-type="size">
+          <input 
+            type="radio" 
+            name="size" 
+            value="11x14" 
+            id="size-11x14"
+            form="add-to-cart-form"
+            class="visually-hidden"
+            
+          >
+          <div class="art-option__title">11x14</div>
+          <div class="art-option__subtitle">Small wall accent</div>
+        </div><div class="art-option" data-option-value="12x16" data-option-type="size">
+          <input 
+            type="radio" 
+            name="size" 
+            value="12x16" 
+            id="size-12x16"
+            form="add-to-cart-form"
+            class="visually-hidden"
+            
+          >
+          <div class="art-option__title">12x16</div>
+          <div class="art-option__subtitle">Premium print</div>
+        </div><div class="art-option" data-option-value="16x20" data-option-type="size">
+          <input 
+            type="radio" 
+            name="size" 
+            value="16x20" 
+            id="size-16x20"
+            form="add-to-cart-form"
+            class="visually-hidden"
+            
+          >
+          <div class="art-option__title">16x20</div>
+          <div class="art-option__subtitle">Statement piece</div>
+        </div><div class="art-option" data-option-value="18x24" data-option-type="size">
+          <input 
+            type="radio" 
+            name="size" 
+            value="18x24" 
+            id="size-18x24"
+            form="add-to-cart-form"
+            class="visually-hidden"
+            
+          >
+          <div class="art-option__title">18x24</div>
+          <div class="art-option__subtitle">Gallery wall</div>
+        </div><div class="art-option" data-option-value="24x36" data-option-type="size">
+          <input 
+            type="radio" 
+            name="size" 
+            value="24x36" 
+            id="size-24x36"
+            form="add-to-cart-form"
+            class="visually-hidden"
+            
+          >
+          <div class="art-option__title">24x36</div>
+          <div class="art-option__subtitle">Large format</div>
+        </div></div>
+  </div><div class="art-options__section">
+    <label class="art-options__label">Choose Finish</label>
+    <div class="art-options__grid" id="finish-selector"><div class="art-option" data-option-value="Paper" data-option-type="finish">
+            <input 
+              type="radio" 
+              name="finish" 
+              value="Paper" 
+              id="finish-paper"
+              form="add-to-cart-form"
+              class="visually-hidden"
+              checked
+            >
+            <div class="art-option__title">Paper</div>
+            <div class="art-option__subtitle">Smooth matte</div>
+          </div><div class="art-option" data-option-value="Canvas" data-option-type="finish">
+            <input 
+              type="radio" 
+              name="finish" 
+              value="Canvas" 
+              id="finish-canvas"
+              form="add-to-cart-form"
+              class="visually-hidden"
+              
+            >
+            <div class="art-option__title">Canvas</div>
+            <div class="art-option__subtitle">Textured finish</div>
+          </div><div class="art-option" data-option-value="Metal" data-option-type="finish">
+            <input 
+              type="radio" 
+              name="finish" 
+              value="Metal" 
+              id="finish-metal"
+              form="add-to-cart-form"
+              class="visually-hidden"
+              
+            >
+            <div class="art-option__title">Metal</div>
+            <div class="art-option__subtitle">Ultra premium</div>
+          </div></div>
+  </div><div class="frame-options" id="frame-options-section">
+    <label class="art-options__label mb-small">Frame Options <span class="frame-availability-note">(Available for Paper prints)</span></label>
+    
+    <div class="frame-toggle" id="no-frame-option" data-frame-type="none">
+      <input 
+        type="radio" 
+        name="frame" 
+        value="none" 
+        id="frame-none"
+        form="add-to-cart-form"
+        class="frame-checkbox"
+        checked
+      >
+      <div class="frame-info">
+        <div class="frame-info__title">No Frame</div>
+        <div class="frame-info__description">Unframed print ready to frame yourself</div>
+      </div>
+      <div class="frame-price">Included</div>
+    </div>
+
+    <div class="frame-toggle" id="black-frame-option" data-frame-type="black">
+      <input 
+        type="radio" 
+        name="frame" 
+        value="black" 
+        id="frame-black"
+        form="add-to-cart-form"
+        class="frame-checkbox"
+      >
+      <div class="frame-info">
+        <div class="frame-info__title">Black Frame</div>
+        <div class="frame-info__description">Professional black MDF frame with mounting hardware</div>
+      </div>
+      <div class="frame-price">+$29</div>
+    </div>
+
+    <div class="frame-toggle" id="white-frame-option" data-frame-type="white">
+      <input 
+        type="radio" 
+        name="frame" 
+        value="white" 
+        id="frame-white"
+        form="add-to-cart-form"
+        class="frame-checkbox"
+      >
+      <div class="frame-info">
+        <div class="frame-info__title">White Frame</div>
+        <div class="frame-info__description">Clean white MDF frame with mounting hardware</div>
+      </div>
+      <div class="frame-price">+$29</div>
+    </div>
+
+    <div class="frame-toggle" id="walnut-frame-option" data-frame-type="walnut">
+      <input 
+        type="radio" 
+        name="frame" 
+        value="walnut" 
+        id="frame-walnut"
+        form="add-to-cart-form"
+        class="frame-checkbox"
+      >
+      <div class="frame-info">
+        <div class="frame-info__title">Walnut Frame</div>
+        <div class="frame-info__description">Rich walnut MDF frame with mounting hardware</div>
+      </div>
+      <div class="frame-price">+$29</div>
+    </div>
+  </div><div class="size-guide">
+    <button class="size-guide__toggle" id="size-guide-toggle" type="button">
+      <span>Size Guide</span>
+      <svg class="size-guide__icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="3,5 7,9 11,5"/>
+      </svg>
+    </button>
+    <div class="size-guide__content" id="size-guide-content">
+      <table class="size-guide__table">
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>Dimensions</th>
+            <th>Best For</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>8x10"</td>
+            <td>8" × 10"</td>
+            <td>Desks, shelves</td>
+          </tr>
+          <tr>
+            <td>11x14"</td>
+            <td>11" × 14"</td>
+            <td>Small walls</td>
+          </tr>
+          <tr>
+            <td>16x20"</td>
+            <td>16" × 20"</td>
+            <td>Medium walls</td>
+          </tr>
+          <tr>
+            <td>18x24"</td>
+            <td>18" × 24"</td>
+            <td>Gallery walls</td>
+          </tr>
+          <tr>
+            <td>24x36"</td>
+            <td>24" × 36"</td>
+            <td>Statement pieces</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Premium option selector interactions
+document.addEventListener('DOMContentLoaded', function() {
+  // Size selection
+  const sizeOptions = document.querySelectorAll('[data-option-type="size"]');
+  sizeOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      sizeOptions.forEach(opt => opt.classList.remove('selected'));
+      this.classList.add('selected');
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      updateVariant();
+    });
+  });
+
+  // Finish selection
+  const finishOptions = document.querySelectorAll('[data-option-type="finish"]');
+  finishOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      finishOptions.forEach(opt => opt.classList.remove('selected'));
+      this.classList.add('selected');
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      updateVariant();
+    });
+  });
+
+  // Frame selection
+  const frameToggles = document.querySelectorAll('.frame-toggle');
+  frameToggles.forEach(toggle => {
+    toggle.addEventListener('click', function() {
+      frameToggles.forEach(t => t.classList.remove('selected'));
+      this.classList.add('selected');
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      updatePrice();
+    });
+  });
+
+  // Set initial selected states
+  sizeOptions[0]?.classList.add('selected');
+  finishOptions[0]?.classList.add('selected');
+  document.getElementById('no-frame-option')?.classList.add('selected');
+  
+  // Initialize frame availability based on default finish (Paper)
+  const defaultFinish = document.querySelector('input[name="finish"]:checked')?.value || 'Paper';
+  updateFrameAvailability(defaultFinish);
+
+  // Size guide toggle
+  const sizeGuideToggle = document.getElementById('size-guide-toggle');
+  const sizeGuideContent = document.getElementById('size-guide-content');
+  
+  if (sizeGuideToggle && sizeGuideContent) {
+    sizeGuideToggle.addEventListener('click', function() {
+      const isOpen = sizeGuideContent.classList.contains('open');
+      if (isOpen) {
+        sizeGuideContent.classList.remove('open');
+        sizeGuideToggle.classList.remove('open');
+      } else {
+        sizeGuideContent.classList.add('open');
+        sizeGuideToggle.classList.add('open');
+      }
+    });
+  }
+});
+
+function updateVariant() {
+  const size = document.querySelector('input[name="size"]:checked')?.value;
+  const baseFinish = document.querySelector('input[name="finish"]:checked')?.value;
+  const frame = document.querySelector('input[name="frame"]:checked')?.value;
+  
+  // Map Paper + Frame to Framed-[Color] variants
+  let actualFinish = baseFinish;
+  if (baseFinish === 'Paper' && frame && frame !== 'none') {
+    actualFinish = `Framed-${frame.charAt(0).toUpperCase() + frame.slice(1)}`;
+  }
+  
+  console.log('Variant updated:', { size, baseFinish, frame, actualFinish });
+  
+  // Dispatch custom event with mapped finish
+  document.dispatchEvent(new CustomEvent('variantChange', { 
+    detail: { size, finish: actualFinish }
+  }));
+  
+  // Update frame options availability
+  updateFrameAvailability(baseFinish);
+}
+
+function updatePrice() {
+  const frame = document.querySelector('input[name="frame"]:checked')?.value;
+  console.log('Frame option:', frame);
+  updateVariant(); // Trigger variant update when frame changes
+}
+
+function updateFrameAvailability(finish) {
+  const frameSection = document.getElementById('frame-options-section');
+  const frameToggles = document.querySelectorAll('.frame-toggle');
+  
+  if (finish === 'Paper') {
+    // Enable frame options for Paper
+    frameSection?.classList.remove('disabled');
+    frameToggles.forEach(toggle => {
+      toggle.classList.remove('disabled');
+      const input = toggle.querySelector('input');
+      if (input) input.disabled = false;
+    });
+  } else {
+    // Disable and reset frame options for Canvas/Metal
+    frameSection?.classList.add('disabled');
+    frameToggles.forEach(toggle => {
+      toggle.classList.add('disabled');
+      const input = toggle.querySelector('input');
+      if (input) input.disabled = true;
+    });
+    // Auto-select "No Frame" for Canvas/Metal
+    const noFrameInput = document.getElementById('frame-none');
+    if (noFrameInput) {
+      noFrameInput.checked = true;
+      document.getElementById('no-frame-option')?.classList.add('selected');
+      frameToggles.forEach(t => {
+        if (t.id !== 'no-frame-option') t.classList.remove('selected');
+      });
+    }
+  }
+}
+</script>
+
+<div class="product__price" id="product-price">
+      $19.00
+</div><form method="post" action="/cart/add" id="add-to-cart-form" class="add-to-cart-form" enctype="multipart/form-data">
+      <input type="hidden" name="id" id="selected-variant-id" value="51511719887145">
+      
+      <input type="hidden" name="properties[ArtworkID]" value="fc63dbd4-da2a-4dd8-a6fc-7f6e7b4a2c69"><input type="hidden" name="properties[ArtistID]" value="SC">
+      
+      <button 
+        type="submit" 
+        class="button--add-to-cart"
+        
+      >Add to Cart</button>
+    </form>
+  </div>
+</section><section class="product-bottom-content">
+  <div class="product-bottom-wrapper"><div class="artist-spotlight">
+        <div class="artist-spotlight__header"><div class="artist-spotlight__avatar-placeholder">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="24" fill="#e5e5e5"/>
+              <path d="M24 24c3.3 0 6-2.7 6-6s-2.7-6-6-6-6 2.7-6 6 2.7 6 6 6zm0 3c-4 0-12 2-12 6v3h24v-3c0-4-8-6-12-6z" fill="#999"/>
+            </svg>
+          </div>
+          <h2 class="artist-spotlight__name">Sarah Chen</h2>
+        </div><p class="artist-spotlight__bio">Towering old-growth trees reaching skyward with dappled sunlight filtering through leaves.
+The Story Behind This Artwork
+Deep in Olympic National Park, this 500-year-old forest grove represents unt...</p></div><div class="product__description">
+        <p>Towering old-growth trees reaching skyward with dappled sunlight filtering through leaves.</p><div style="margin-top: 1.5rem;">
+<h3 style="font-weight: 600; margin-bottom: 0.5rem;">The Story Behind This Artwork</h3>
+<p style="color: #555;">Deep in Olympic National Park, this 500-year-old forest grove represents untouched wilderness.</p>
+</div><div style="margin-top: 1.5rem;">
+<h3 style="font-weight: 600; margin-bottom: 0.5rem;">Perfect For</h3>
+<p style="color: #555;">Nature centers, eco-friendly businesses, home decor</p>
+</div><div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e5e5;"><p style="font-style: italic;">Created by <strong>Sarah Chen</strong></p></div>
+      </div><div class="trust-badges">
+      <div class="trust-badge">
+        <div class="trust-badge__icon"></div>
+        <div class="trust-badge__title">Artist Royalties</div>
+        <div class="trust-badge__description">Support independent artists</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge__icon"></div>
+        <div class="trust-badge__title">Fast Shipping</div>
+        <div class="trust-badge__description">Ships in 3-5 business days</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge__icon"></div>
+        <div class="trust-badge__title">Quality Guaranteed</div>
+        <div class="trust-badge__description">Premium materials</div>
+      </div>
+    </div><div class="product-details">
+      <div class="product-details__item">
+        <div class="product-details__label">Material</div>
+        <div class="product-details__value">Museum-quality paper or canvas</div>
+      </div>
+      <div class="product-details__item">
+        <div class="product-details__label">Print Method</div>
+        <div class="product-details__value">Giclée printing for vibrant colors</div>
+      </div>
+      <div class="product-details__item">
+        <div class="product-details__label">Durability</div>
+        <div class="product-details__value">Fade-resistant inks, built to last</div>
+      </div><div class="product-details__item">
+          <div class="product-details__label">Artist</div>
+          <div class="product-details__value">Sarah Chen</div>
+        </div></div>
+<div class="merch-upsell">
+  <div class="merch-upsell__header">
+    <h2 class="merch-upsell__title">Love this design?</h2>
+    <p class="merch-upsell__subtitle">Also available on apparel & accessories</p>
+  </div>
+
+  <div class="merch-upsell__grid"><div class="merch-card">
+      <div class="merch-card__badge">Coming Soon</div>
+      <div class="merch-card__image-placeholder">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <path d="M20 25h40M20 25l-5 5v30h50V30l-5-5M20 25l5-5h30l5 5M40 35v25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="merch-card__info">
+        <h3 class="merch-card__title">Premium T-Shirt</h3>
+        <p class="merch-card__description">100% cotton, sizes S-XXL</p>
+        <div class="merch-card__price">From $28</div>
+      </div>
+      <button class="merch-card__button" disabled>Notify Me</button>
+    </div><div class="merch-card">
+      <div class="merch-card__badge">Coming Soon</div>
+      <div class="merch-card__image-placeholder">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <rect x="20" y="25" width="35" height="30" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M55 35h5c2.76 0 5 2.24 5 5s-2.24 5-5 5h-5" stroke="currentColor" stroke-width="2"/>
+          <line x1="25" y1="55" x2="50" y2="55" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="merch-card__info">
+        <h3 class="merch-card__title">Ceramic Mug</h3>
+        <p class="merch-card__description">11oz, dishwasher safe</p>
+        <div class="merch-card__price">$18</div>
+      </div>
+      <button class="merch-card__button" disabled>Notify Me</button>
+    </div><div class="merch-card">
+      <div class="merch-card__badge">Coming Soon</div>
+      <div class="merch-card__image-placeholder">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <rect x="25" y="30" width="30" height="35" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M30 30V25c0-5.52 4.48-10 10-10s10 4.48 10 10v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="merch-card__info">
+        <h3 class="merch-card__title">Tote Bag</h3>
+        <p class="merch-card__description">Canvas, eco-friendly</p>
+        <div class="merch-card__price">$22</div>
+      </div>
+      <button class="merch-card__button" disabled>Notify Me</button>
+    </div><div class="merch-card">
+      <div class="merch-card__badge">Coming Soon</div>
+      <div class="merch-card__image-placeholder">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <rect x="28" y="15" width="24" height="50" rx="3" stroke="currentColor" stroke-width="2"/>
+          <circle cx="40" cy="60" r="2" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="merch-card__info">
+        <h3 class="merch-card__title">Phone Case</h3>
+        <p class="merch-card__description">Multiple models available</p>
+        <div class="merch-card__price">$24</div>
+      </div>
+      <button class="merch-card__button" disabled>Notify Me</button>
+    </div>
+
+  </div><div class="merch-upsell__footer">
+    <p class="merch-upsell__footer-text">
+      Want to see your favorite artwork on other products? 
+      <a href="/pages/contact" class="merch-upsell__footer-link">Let us know</a>
+    </p>
+  </div>
+</div>
+
+<style>
+.merch-upsell {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.merch-upsell__header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.merch-upsell__title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.merch-upsell__subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1rem;
+}
+
+.merch-upsell__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.merch-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.merch-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.merch-card__badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.merch-card__image-placeholder {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 12px;
+  color: #6366f1;
+}
+
+.merch-card__info {
+  margin-bottom: 1rem;
+}
+
+.merch-card__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.merch-card__description {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.5rem;
+}
+
+.merch-card__price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #6366f1;
+}
+
+.merch-card__button {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 28px;
+  color: #6366f1;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.merch-card__button:not(:disabled):hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.5);
+  transform: scale(1.02);
+}
+
+.merch-upsell__footer {
+  text-align: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.merch-upsell__footer-text {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+}
+
+.merch-upsell__footer-link {
+  color: #6366f1;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.merch-upsell__footer-link:hover {
+  color: #8b5cf6;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .merch-upsell__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .merch-upsell__title {
+    font-size: 1.5rem;
+  }
+}
+</style>
+  </div>
+</section><div class="lightbox" id="image-lightbox">
+  <button class="lightbox__close" id="lightbox-close" aria-label="Close lightbox">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+  <div class="lightbox__content">
+    <img src="" alt="" id="lightbox-image">
+  </div>
+  <div class="lightbox__nav">
+    <button class="lightbox__prev" id="lightbox-prev" aria-label="Previous image">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    <button class="lightbox__next" id="lightbox-next" aria-label="Next image">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+  </div>
+</div><script>
+  window.product = {"id":9875835453737,"title":"Ancient Forest Canopy","handle":"ancient-forest-canopy","description":"\u003cp\u003eTowering old-growth trees reaching skyward with dappled sunlight filtering through leaves.\u003c\/p\u003e\u003cdiv style=\"margin-top: 1.5rem;\"\u003e\n\u003ch3 style=\"font-weight: 600; margin-bottom: 0.5rem;\"\u003eThe Story Behind This Artwork\u003c\/h3\u003e\n\u003cp style=\"color: #555;\"\u003eDeep in Olympic National Park, this 500-year-old forest grove represents untouched wilderness.\u003c\/p\u003e\n\u003c\/div\u003e\u003cdiv style=\"margin-top: 1.5rem;\"\u003e\n\u003ch3 style=\"font-weight: 600; margin-bottom: 0.5rem;\"\u003ePerfect For\u003c\/h3\u003e\n\u003cp style=\"color: #555;\"\u003eNature centers, eco-friendly businesses, home decor\u003c\/p\u003e\n\u003c\/div\u003e\u003cdiv style=\"margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e5e5;\"\u003e\u003cp style=\"font-style: italic;\"\u003eCreated by \u003cstrong\u003eSarah Chen\u003c\/strong\u003e\u003c\/p\u003e\u003c\/div\u003e","published_at":"2025-11-10T15:54:32-06:00","created_at":"2025-11-10T15:18:41-06:00","vendor":"Sarah Chen","type":"Art Print","tags":["Artist:Sarah Chen","Finish:Canvas","Finish:Framed","Finish:Metal","Finish:Paper","New","Style:Forest","Style:Nature","Style:Peaceful","wall-art"],"price":1900,"price_min":1900,"price_max":23600,"available":true,"price_varies":true,"compare_at_price":null,"compare_at_price_min":0,"compare_at_price_max":0,"compare_at_price_varies":false,"variants":[{"id":51511719887145,"title":"8x10 \/ Paper","option1":"8x10","option2":"Paper","option3":null,"sku":"9875835453737-8x10-paper","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 8x10 \/ Paper","public_title":"8x10 \/ Paper","options":["8x10","Paper"],"price":1900,"weight":113,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51511720018217,"title":"8x10 \/ Canvas","option1":"8x10","option2":"Canvas","option3":null,"sku":"9875835453737-8x10-canvas","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 8x10 \/ Canvas","public_title":"8x10 \/ Canvas","options":["8x10","Canvas"],"price":3900,"weight":544,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783428905,"title":"8x10 \/ Framed-Black","option1":"8x10","option2":"Framed-Black","option3":null,"sku":"9875835453737-8x10-framed-black","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 8x10 \/ Framed-Black","public_title":"8x10 \/ Framed-Black","options":["8x10","Framed-Black"],"price":4800,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783461673,"title":"8x10 \/ Framed-White","option1":"8x10","option2":"Framed-White","option3":null,"sku":"9875835453737-8x10-framed-white","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 8x10 \/ Framed-White","public_title":"8x10 \/ Framed-White","options":["8x10","Framed-White"],"price":4800,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783494441,"title":"8x10 \/ Framed-Walnut","option1":"8x10","option2":"Framed-Walnut","option3":null,"sku":"9875835453737-8x10-framed-walnut","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 8x10 \/ Framed-Walnut","public_title":"8x10 \/ Framed-Walnut","options":["8x10","Framed-Walnut"],"price":4800,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51516286402857,"title":"8x10 \/ Metal","option1":"8x10","option2":"Metal","option3":null,"sku":"9875835453737-8x10-metal","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 8x10 \/ Metal","public_title":"8x10 \/ Metal","options":["8x10","Metal"],"price":5900,"weight":907,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783527209,"title":"11x14 \/ Paper","option1":"11x14","option2":"Paper","option3":null,"sku":"9875835453737-11x14-paper","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 11x14 \/ Paper","public_title":"11x14 \/ Paper","options":["11x14","Paper"],"price":2500,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783559977,"title":"11x14 \/ Canvas","option1":"11x14","option2":"Canvas","option3":null,"sku":"9875835453737-11x14-canvas","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 11x14 \/ Canvas","public_title":"11x14 \/ Canvas","options":["11x14","Canvas"],"price":5100,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783592745,"title":"11x14 \/ Framed-Black","option1":"11x14","option2":"Framed-Black","option3":null,"sku":"9875835453737-11x14-framed-black","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 11x14 \/ Framed-Black","public_title":"11x14 \/ Framed-Black","options":["11x14","Framed-Black"],"price":5400,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783625513,"title":"11x14 \/ Framed-White","option1":"11x14","option2":"Framed-White","option3":null,"sku":"9875835453737-11x14-framed-white","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 11x14 \/ Framed-White","public_title":"11x14 \/ Framed-White","options":["11x14","Framed-White"],"price":5400,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783658281,"title":"11x14 \/ Framed-Walnut","option1":"11x14","option2":"Framed-Walnut","option3":null,"sku":"9875835453737-11x14-framed-walnut","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 11x14 \/ Framed-Walnut","public_title":"11x14 \/ Framed-Walnut","options":["11x14","Framed-Walnut"],"price":5400,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783691049,"title":"11x14 \/ Metal","option1":"11x14","option2":"Metal","option3":null,"sku":"9875835453737-11x14-metal","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 11x14 \/ Metal","public_title":"11x14 \/ Metal","options":["11x14","Metal"],"price":7700,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51511719919913,"title":"12x16 \/ Paper","option1":"12x16","option2":"Paper","option3":null,"sku":"9875835453737-12x16-paper","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 12x16 \/ Paper","public_title":"12x16 \/ Paper","options":["12x16","Paper"],"price":2900,"weight":159,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51511720050985,"title":"12x16 \/ Canvas","option1":"12x16","option2":"Canvas","option3":null,"sku":"9875835453737-12x16-canvas","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 12x16 \/ Canvas","public_title":"12x16 \/ Canvas","options":["12x16","Canvas"],"price":5900,"weight":907,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783723817,"title":"12x16 \/ Framed-Black","option1":"12x16","option2":"Framed-Black","option3":null,"sku":"9875835453737-12x16-framed-black","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 12x16 \/ Framed-Black","public_title":"12x16 \/ Framed-Black","options":["12x16","Framed-Black"],"price":5800,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783756585,"title":"12x16 \/ Framed-White","option1":"12x16","option2":"Framed-White","option3":null,"sku":"9875835453737-12x16-framed-white","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 12x16 \/ Framed-White","public_title":"12x16 \/ Framed-White","options":["12x16","Framed-White"],"price":5800,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783789353,"title":"12x16 \/ Framed-Walnut","option1":"12x16","option2":"Framed-Walnut","option3":null,"sku":"9875835453737-12x16-framed-walnut","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 12x16 \/ Framed-Walnut","public_title":"12x16 \/ Framed-Walnut","options":["12x16","Framed-Walnut"],"price":5800,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51516286468393,"title":"12x16 \/ Metal","option1":"12x16","option2":"Metal","option3":null,"sku":"9875835453737-12x16-metal","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 12x16 \/ Metal","public_title":"12x16 \/ Metal","options":["12x16","Metal"],"price":8900,"weight":1361,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783822121,"title":"16x20 \/ Paper","option1":"16x20","option2":"Paper","option3":null,"sku":"9875835453737-16x20-paper","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 16x20 \/ Paper","public_title":"16x20 \/ Paper","options":["16x20","Paper"],"price":3800,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783854889,"title":"16x20 \/ Canvas","option1":"16x20","option2":"Canvas","option3":null,"sku":"9875835453737-16x20-canvas","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 16x20 \/ Canvas","public_title":"16x20 \/ Canvas","options":["16x20","Canvas"],"price":7800,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783887657,"title":"16x20 \/ Framed-Black","option1":"16x20","option2":"Framed-Black","option3":null,"sku":"9875835453737-16x20-framed-black","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 16x20 \/ Framed-Black","public_title":"16x20 \/ Framed-Black","options":["16x20","Framed-Black"],"price":6700,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783920425,"title":"16x20 \/ Framed-White","option1":"16x20","option2":"Framed-White","option3":null,"sku":"9875835453737-16x20-framed-white","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 16x20 \/ Framed-White","public_title":"16x20 \/ Framed-White","options":["16x20","Framed-White"],"price":6700,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783953193,"title":"16x20 \/ Framed-Walnut","option1":"16x20","option2":"Framed-Walnut","option3":null,"sku":"9875835453737-16x20-framed-walnut","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 16x20 \/ Framed-Walnut","public_title":"16x20 \/ Framed-Walnut","options":["16x20","Framed-Walnut"],"price":6700,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746783985961,"title":"16x20 \/ Metal","option1":"16x20","option2":"Metal","option3":null,"sku":"9875835453737-16x20-metal","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 16x20 \/ Metal","public_title":"16x20 \/ Metal","options":["16x20","Metal"],"price":11800,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51511719952681,"title":"18x24 \/ Paper","option1":"18x24","option2":"Paper","option3":null,"sku":"9875835453737-18x24-paper","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 18x24 \/ Paper","public_title":"18x24 \/ Paper","options":["18x24","Paper"],"price":4800,"weight":272,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51511720083753,"title":"18x24 \/ Canvas","option1":"18x24","option2":"Canvas","option3":null,"sku":"9875835453737-18x24-canvas","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 18x24 \/ Canvas","public_title":"18x24 \/ Canvas","options":["18x24","Canvas"],"price":9800,"weight":1588,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746784018729,"title":"18x24 \/ Framed-Black","option1":"18x24","option2":"Framed-Black","option3":null,"sku":"9875835453737-18x24-framed-black","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 18x24 \/ Framed-Black","public_title":"18x24 \/ Framed-Black","options":["18x24","Framed-Black"],"price":7700,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746784051497,"title":"18x24 \/ Framed-White","option1":"18x24","option2":"Framed-White","option3":null,"sku":"9875835453737-18x24-framed-white","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 18x24 \/ Framed-White","public_title":"18x24 \/ Framed-White","options":["18x24","Framed-White"],"price":7700,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746784084265,"title":"18x24 \/ Framed-Walnut","option1":"18x24","option2":"Framed-Walnut","option3":null,"sku":"9875835453737-18x24-framed-walnut","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 18x24 \/ Framed-Walnut","public_title":"18x24 \/ Framed-Walnut","options":["18x24","Framed-Walnut"],"price":7700,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51516286533929,"title":"18x24 \/ Metal","option1":"18x24","option2":"Metal","option3":null,"sku":"9875835453737-18x24-metal","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 18x24 \/ Metal","public_title":"18x24 \/ Metal","options":["18x24","Metal"],"price":14800,"weight":2041,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51511719985449,"title":"24x36 \/ Paper","option1":"24x36","option2":"Paper","option3":null,"sku":"9875835453737-24x36-paper","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 24x36 \/ Paper","public_title":"24x36 \/ Paper","options":["24x36","Paper"],"price":7600,"weight":499,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51511720116521,"title":"24x36 \/ Canvas","option1":"24x36","option2":"Canvas","option3":null,"sku":"9875835453737-24x36-canvas","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 24x36 \/ Canvas","public_title":"24x36 \/ Canvas","options":["24x36","Canvas"],"price":15600,"weight":2722,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746784117033,"title":"24x36 \/ Framed-Black","option1":"24x36","option2":"Framed-Black","option3":null,"sku":"9875835453737-24x36-framed-black","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 24x36 \/ Framed-Black","public_title":"24x36 \/ Framed-Black","options":["24x36","Framed-Black"],"price":10500,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746784149801,"title":"24x36 \/ Framed-White","option1":"24x36","option2":"Framed-White","option3":null,"sku":"9875835453737-24x36-framed-white","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 24x36 \/ Framed-White","public_title":"24x36 \/ Framed-White","options":["24x36","Framed-White"],"price":10500,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51746784182569,"title":"24x36 \/ Framed-Walnut","option1":"24x36","option2":"Framed-Walnut","option3":null,"sku":"9875835453737-24x36-framed-walnut","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 24x36 \/ Framed-Walnut","public_title":"24x36 \/ Framed-Walnut","options":["24x36","Framed-Walnut"],"price":10500,"weight":0,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]},{"id":51516286599465,"title":"24x36 \/ Metal","option1":"24x36","option2":"Metal","option3":null,"sku":"9875835453737-24x36-metal","requires_shipping":true,"taxable":true,"featured_image":null,"available":true,"name":"Ancient Forest Canopy - 24x36 \/ Metal","public_title":"24x36 \/ Metal","options":["24x36","Metal"],"price":23600,"weight":3175,"compare_at_price":null,"inventory_management":null,"barcode":null,"requires_selling_plan":false,"selling_plan_allocations":[]}],"images":["\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521","\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy.jpg?v=1763080066","\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy_5b6e3af4-397f-4ef8-8e6d-66e5da9ddcca.jpg?v=1763080071","\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy_10741d3f-f153-4a00-97e4-a8351d37c2cc.jpg?v=1763080074","\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy_bb288e06-baad-4250-a980-f745bf2f95b5.jpg?v=1763080077"],"featured_image":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521","options":["Size","Finish"],"media":[{"alt":"Ancient Forest Canopy","id":43688600109353,"position":1,"preview_image":{"aspect_ratio":0.8,"height":1000,"width":800,"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521"},"aspect_ratio":0.8,"height":1000,"media_type":"image","src":"\/\/247printnetwork.com\/cdn\/shop\/files\/photo-1506905925346-21bda4d32df4_288220b2-c54b-4f4d-b64c-5becdc31dddf.jpg?v=1762809521","width":800},{"alt":"Product mockup","id":43705863536937,"position":2,"preview_image":{"aspect_ratio":1.0,"height":1200,"width":1200,"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy.jpg?v=1763080066"},"aspect_ratio":1.0,"height":1200,"media_type":"image","src":"\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy.jpg?v=1763080066","width":1200},{"alt":"Product mockup","id":43705863635241,"position":3,"preview_image":{"aspect_ratio":1.0,"height":1200,"width":1200,"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy_5b6e3af4-397f-4ef8-8e6d-66e5da9ddcca.jpg?v=1763080071"},"aspect_ratio":1.0,"height":1200,"media_type":"image","src":"\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy_5b6e3af4-397f-4ef8-8e6d-66e5da9ddcca.jpg?v=1763080071","width":1200},{"alt":"Product mockup","id":43705864061225,"position":4,"preview_image":{"aspect_ratio":1.0,"height":1200,"width":1200,"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy_10741d3f-f153-4a00-97e4-a8351d37c2cc.jpg?v=1763080074"},"aspect_ratio":1.0,"height":1200,"media_type":"image","src":"\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy_10741d3f-f153-4a00-97e4-a8351d37c2cc.jpg?v=1763080074","width":1200},{"alt":"Product mockup","id":43705864093993,"position":5,"preview_image":{"aspect_ratio":1.0,"height":1200,"width":1200,"src":"\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy_bb288e06-baad-4250-a980-f745bf2f95b5.jpg?v=1763080077"},"aspect_ratio":1.0,"height":1200,"media_type":"image","src":"\/\/247printnetwork.com\/cdn\/shop\/files\/ancient-forest-canopy_bb288e06-baad-4250-a980-f745bf2f95b5.jpg?v=1763080077","width":1200}],"requires_selling_plan":false,"selling_plan_groups":[],"content":"\u003cp\u003eTowering old-growth trees reaching skyward with dappled sunlight filtering through leaves.\u003c\/p\u003e\u003cdiv style=\"margin-top: 1.5rem;\"\u003e\n\u003ch3 style=\"font-weight: 600; margin-bottom: 0.5rem;\"\u003eThe Story Behind This Artwork\u003c\/h3\u003e\n\u003cp style=\"color: #555;\"\u003eDeep in Olympic National Park, this 500-year-old forest grove represents untouched wilderness.\u003c\/p\u003e\n\u003c\/div\u003e\u003cdiv style=\"margin-top: 1.5rem;\"\u003e\n\u003ch3 style=\"font-weight: 600; margin-bottom: 0.5rem;\"\u003ePerfect For\u003c\/h3\u003e\n\u003cp style=\"color: #555;\"\u003eNature centers, eco-friendly businesses, home decor\u003c\/p\u003e\n\u003c\/div\u003e\u003cdiv style=\"margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e5e5;\"\u003e\u003cp style=\"font-style: italic;\"\u003eCreated by \u003cstrong\u003eSarah Chen\u003c\/strong\u003e\u003c\/p\u003e\u003c\/div\u003e"};
+</script>
+
+<script src="//247printnetwork.com/cdn/shop/t/7/assets/247-art.js?v=9816020292053399471763263326" defer></script>
+
+
+</div>
+  </main>
+
+  <div id="shopify-section-footer" class="shopify-section">
+
+<footer class="site-footer" role="contentinfo">
+  <div class="footer-wrapper">
+    <nav class="footer-nav">
+      <ul class="footer-menu">
+        
+          
+            <li class="footer-column">
+              <h4 class="footer-title">Shop</h4>
+              
+              
+                <ul class="footer-submenu">
+                  
+                    <li>
+                      <a href="/collections">All Artwork</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/new-arrivals">New Arrivals</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/best-sellers">Best Sellers</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/featured">Featured</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="footer-column">
+              <h4 class="footer-title">Popular Styles</h4>
+              
+              
+                <ul class="footer-submenu">
+                  
+                    <li>
+                      <a href="/collections/abstract">Abstract</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/landscape">Landscape</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/nature">Nature</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/urban">Urban</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/modern">Modern</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections/minimalist">Minimalist</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="footer-column">
+              <h4 class="footer-title">Artists</h4>
+              
+              
+                <ul class="footer-submenu">
+                  
+                    <li>
+                      <a href="/pages/creators">Meet the Creators</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/pages/join">Join as an Artist</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/collections">Browse Artists</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="footer-column">
+              <h4 class="footer-title">Support</h4>
+              
+              
+                <ul class="footer-submenu">
+                  
+                    <li>
+                      <a href="/pages/contact">Contact Us</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/pages/faq">FAQs</a>
+                    </li>
+                  
+                    <li>
+                      <a href="/pages/about">About Us</a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+        
+        
+        <li class="footer-column footer-column--artists">
+          <h4 class="footer-title">For Artists</h4>
+          <ul class="footer-submenu">
+            <li><a href="https://247portal.replit.app/join" class="footer-artist-link">Apply Now</a></li>
+            <li><a href="https://247portal.replit.app/login">Portal Login</a></li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="footer-bottom">
+      <p class="copyright">© 2025 247 Print Network. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: #1a1a1a;
+    color: #ccc;
+    padding: 3rem 2rem 1rem;
+    margin-top: 4rem;
+  }
+  
+  .footer-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  .footer-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .footer-column {
+    /* Column styling */
+  }
+  
+  .footer-title {
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+  
+  .footer-submenu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .footer-submenu li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .footer-submenu a {
+    color: #ccc;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  
+  .footer-submenu a:hover {
+    color: #fff;
+  }
+  
+  .footer-column--artists .footer-title {
+    color: #aaa;
+    font-size: 0.85rem;
+  }
+  
+  .footer-artist-link {
+    color: #FF8A5B !important;
+  }
+  
+  .footer-artist-link:hover {
+    color: #FF6B6B !important;
+  }
+  
+  .footer-bottom {
+    border-top: 1px solid #333;
+    padding-top: 1.5rem;
+    margin-top: 2rem;
+    text-align: center;
+  }
+  
+  .copyright {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #888;
+  }
+
+  @media (max-width: 768px) {
+    .footer-menu {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+
+</div>
+</body>
+</html>

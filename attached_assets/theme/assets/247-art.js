@@ -17,6 +17,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentImageIndex = 0;
 
+  // Helper: Extract image source from either <img> or mockup slide <div>
+  function getImageSource(element) {
+    if (!element) return null;
+    
+    // If element is a mockup slide div, get nested artwork image
+    if (element.dataset.mockup === 'true') {
+      const nestedImg = element.querySelector('.mockup-slide__artwork');
+      return nestedImg ? nestedImg.src : null;
+    }
+    
+    // If element is a regular img tag, return its src directly
+    return element.src || null;
+  }
+
+  // Helper: Extract alt text from either <img> or mockup slide <div>
+  function getImageAlt(element) {
+    if (!element) return '';
+    
+    // If element is a mockup slide div, get nested artwork image alt
+    if (element.dataset.mockup === 'true') {
+      const nestedImg = element.querySelector('.mockup-slide__artwork');
+      return nestedImg ? nestedImg.alt : '';
+    }
+    
+    // If element is a regular img tag, return its alt directly
+    return element.alt || '';
+  }
+
   // Switch to specific image
   function showImage(index) {
     if (index < 0 || index >= mainImages.length) return;
@@ -45,8 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function openLightbox(index) {
     if (!mainImages[index]) return;
     
-    const imageSrc = mainImages[index].src;
-    const imageAlt = mainImages[index].alt;
+    const imageSrc = getImageSource(mainImages[index]);
+    const imageAlt = getImageAlt(mainImages[index]);
+    
+    if (!imageSrc) {
+      console.warn('Could not extract image source for lightbox');
+      return;
+    }
     
     lightboxImage.src = imageSrc;
     lightboxImage.alt = imageAlt;
@@ -66,8 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Update lightbox image without reopening
     if (lightbox.classList.contains('active') && mainImages[newIndex]) {
-      lightboxImage.src = mainImages[newIndex].src;
-      lightboxImage.alt = mainImages[newIndex].alt;
+      const imageSrc = getImageSource(mainImages[newIndex]);
+      const imageAlt = getImageAlt(mainImages[newIndex]);
+      
+      if (imageSrc) {
+        lightboxImage.src = imageSrc;
+        lightboxImage.alt = imageAlt;
+      }
     }
     
     // Update main gallery
@@ -80,8 +118,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Update lightbox image without reopening
     if (lightbox.classList.contains('active') && mainImages[newIndex]) {
-      lightboxImage.src = mainImages[newIndex].src;
-      lightboxImage.alt = mainImages[newIndex].alt;
+      const imageSrc = getImageSource(mainImages[newIndex]);
+      const imageAlt = getImageAlt(mainImages[newIndex]);
+      
+      if (imageSrc) {
+        lightboxImage.src = imageSrc;
+        lightboxImage.alt = imageAlt;
+      }
     }
     
     // Update main gallery

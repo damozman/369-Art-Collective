@@ -777,7 +777,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0.75rem 0;
-  max-height: 600px;
+  max-height: calc((120px * 7) + (0.75rem * 6));
   scrollbar-width: thin;
   scrollbar-color: #d1d5db transparent;
 }

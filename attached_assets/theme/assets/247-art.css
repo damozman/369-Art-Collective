@@ -771,15 +771,15 @@
 }
 
 .gallery__thumbnails {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 0.75rem 0;
-  max-height: calc((120px * 7) + (0.75rem * 6));
-  scrollbar-width: thin;
-  scrollbar-color: #d1d5db transparent;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0.75rem 0 !important;
+  max-height: calc((120px * 7) + (0.75rem * 6)) !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #d1d5db transparent !important;
 }
 
 .gallery__thumbnails::-webkit-scrollbar {

@@ -14,19 +14,21 @@ Complete working product page extracted from your cached browser version and res
 
 ---
 
-## 📦 **Files to Upload (3 files)**
+## 📦 **Files to Upload (11 files total)**
 
-### File 1: `247-art.css` (COMPLETE VERSION - 1,487 lines)
+### Code Files (3 files)
+
+#### File 1: `247-art.css` (COMPLETE VERSION - 1,487 lines)
 **Shopify Location:** `Assets/247-art.css`  
 **Replit Location:** `attached_assets/theme/assets/247-art.css`  
 **Contains:** Layout grid, gallery styles, configurator buttons, frame overlays, all interactions
 
-### File 2: `247-art.js` (COMPLETE VERSION - 756 lines)
+#### File 2: `247-art.js` (COMPLETE VERSION - 756 lines)
 **Shopify Location:** `Assets/247-art.js`  
 **Replit Location:** `attached_assets/theme/assets/247-art.js`  
 **Contains:** Frame interactions, size scaling, variant selection, gallery navigation
 
-### File 3: `247-art-product.liquid` (Layout template) ✅ **FIXED**
+#### File 3: `247-art-product.liquid` (Layout template) ✅ **FIXED**
 **Shopify Location:** `Sections/247-art-product.liquid`  
 **Replit Location:** `attached_assets/theme/sections/247-art-product.liquid`  
 **Contains:** HTML structure for 2-column grid layout
@@ -38,6 +40,64 @@ Complete working product page extracted from your cached browser version and res
 - Proper `{%- if product.featured_image -%}` wrapper (fixes Liquid syntax error)
 - All mockup room previews (living, bedroom, office, gallery) with correct structure
 - Complete thumbnail navigation and gallery system
+
+---
+
+### Mockup Image Files (8 files) ✅ **NEW**
+
+**IMPORTANT:** These images are required for the room preview system to work!
+
+#### Full-Size Mockup Images (4 files - for main slider):
+
+**File 4: `mockup-living.png`**
+- **Shopify Location:** `Assets/mockup-living.png`
+- **Replit Location:** `attached_assets/theme/assets/mockup-living.png`
+- **Size:** 1.1MB
+- **Purpose:** Living room mockup background
+
+**File 5: `mockup-bedroom.png`**
+- **Shopify Location:** `Assets/mockup-bedroom.png`
+- **Replit Location:** `attached_assets/theme/assets/mockup-bedroom.png`
+- **Size:** 1.3MB
+- **Purpose:** Bedroom mockup background
+
+**File 6: `mockup-office.png`**
+- **Shopify Location:** `Assets/mockup-office.png`
+- **Replit Location:** `attached_assets/theme/assets/mockup-office.png`
+- **Size:** 1.1MB
+- **Purpose:** Office mockup background
+
+**File 7: `mockup-gallery.png`**
+- **Shopify Location:** `Assets/mockup-gallery.png`
+- **Replit Location:** `attached_assets/theme/assets/mockup-gallery.png`
+- **Size:** 824KB
+- **Purpose:** Gallery mockup background
+
+#### Thumbnail Images (4 files - for sidebar navigation):
+
+**File 8: `mockup-living-thumb.png`**
+- **Shopify Location:** `Assets/mockup-living-thumb.png`
+- **Replit Location:** `attached_assets/theme/assets/mockup-living-thumb.png`
+- **Size:** 5.5KB (120x120px)
+- **Purpose:** Living room thumbnail in left sidebar
+
+**File 9: `mockup-bedroom-thumb.png`**
+- **Shopify Location:** `Assets/mockup-bedroom-thumb.png`
+- **Replit Location:** `attached_assets/theme/assets/mockup-bedroom-thumb.png`
+- **Size:** 7.6KB (120x120px)
+- **Purpose:** Bedroom thumbnail in left sidebar
+
+**File 10: `mockup-office-thumb.png`**
+- **Shopify Location:** `Assets/mockup-office-thumb.png`
+- **Replit Location:** `attached_assets/theme/assets/mockup-office-thumb.png`
+- **Size:** 5.2KB (120x120px)
+- **Purpose:** Office thumbnail in left sidebar
+
+**File 11: `mockup-gallery-thumb.png`**
+- **Shopify Location:** `Assets/mockup-gallery-thumb.png`
+- **Replit Location:** `attached_assets/theme/assets/mockup-gallery-thumb.png`
+- **Size:** 2KB (120x120px)
+- **Purpose:** Gallery thumbnail in left sidebar
 
 ---
 
@@ -80,7 +140,7 @@ You're now in the Theme Code Editor!
    - Click the green **"Save"** button in top-right corner
    - Wait for "Saved" confirmation message
 
-✅ **File 1 of 3 uploaded!**
+✅ **File 1 of 11 uploaded!**
 
 ---
 
@@ -104,7 +164,7 @@ You're now in the Theme Code Editor!
    - Click the green **"Save"** button
    - Wait for "Saved" confirmation
 
-✅ **File 2 of 3 uploaded!**
+✅ **File 2 of 11 uploaded!**
 
 ---
 
@@ -128,7 +188,64 @@ You're now in the Theme Code Editor!
    - Click the green **"Save"** button
    - Wait for "Saved" confirmation
 
-✅ **File 3 of 3 uploaded!**
+✅ **File 3 of 11 uploaded!**
+
+---
+
+### **Step 6: Upload Mockup Image Files (8 files)**
+
+**CRITICAL:** These images are required for the room preview functionality to work!
+
+You'll need to upload 8 PNG files (4 full-size + 4 thumbnails) to the Assets folder.
+
+#### **Upload Method: Drag & Drop (Fastest)**
+
+1. **In Shopify Theme Editor:**
+   - Make sure you're still in "Edit code" view
+   - Click the **"Assets"** folder in the left sidebar
+
+2. **In Your Computer's File Explorer:**
+   - Navigate to your Replit project folder
+   - Find: `attached_assets/theme/assets/`
+   - You should see these 8 PNG files:
+     - `mockup-living.png`
+     - `mockup-bedroom.png`
+     - `mockup-office.png`
+     - `mockup-gallery.png`
+     - `mockup-living-thumb.png`
+     - `mockup-bedroom-thumb.png`
+     - `mockup-office-thumb.png`
+     - `mockup-gallery-thumb.png`
+
+3. **Upload Files:**
+   - Select ALL 8 PNG files at once
+   - Drag them into the Shopify Assets folder area
+   - Wait for upload progress bars to complete
+   - You should see "8 files uploaded successfully"
+
+**Alternative: Upload One-by-One**
+
+If drag & drop doesn't work, upload each file individually:
+
+1. In Shopify Theme Editor, click **"Assets"** folder
+2. Click **"Add a new asset"** button at top
+3. Click **"Upload file"**
+4. Browse to your file and upload
+5. Repeat for all 8 PNG files
+
+**Verify All Files Uploaded:**
+
+After uploading, scroll through the Assets folder and verify you see:
+- ✅ `mockup-living.png`
+- ✅ `mockup-bedroom.png`
+- ✅ `mockup-office.png`
+- ✅ `mockup-gallery.png`
+- ✅ `mockup-living-thumb.png`
+- ✅ `mockup-bedroom-thumb.png`
+- ✅ `mockup-office-thumb.png`
+- ✅ `mockup-gallery-thumb.png`
+
+✅ **Files 4-11 of 11 uploaded!**
 
 ---
 
@@ -434,14 +551,29 @@ overlay.style.setProperty('--size-scale', 0.64);
 
 ## 📝 **Summary**
 
-**What you're uploading:**
-1. ✅ `247-art.css` - Adds missing mockup overlay transform CSS
-2. ✅ `247-art-product.liquid` - Updates mockup width from 1000px → 850px
+**What you're uploading (11 files total):**
+
+**Code Files (3 files):**
+1. ✅ `247-art.css` - Complete styling (1,487 lines) - configurator buttons, gallery, frames, layout
+2. ✅ `247-art.js` - Complete interactions (756 lines) - size scaling, frame selection, room switching
+3. ✅ `247-art-product.liquid` - Complete template structure with correct CSS class names
+
+**Mockup Images (8 files):**
+4. ✅ `mockup-living.png` - Living room background (1.1MB)
+5. ✅ `mockup-bedroom.png` - Bedroom background (1.3MB)
+6. ✅ `mockup-office.png` - Office background (1.1MB)
+7. ✅ `mockup-gallery.png` - Gallery background (824KB)
+8. ✅ `mockup-living-thumb.png` - Living room thumbnail (5.5KB)
+9. ✅ `mockup-bedroom-thumb.png` - Bedroom thumbnail (7.6KB)
+10. ✅ `mockup-office-thumb.png` - Office thumbnail (5.2KB)
+11. ✅ `mockup-gallery-thumb.png` - Gallery thumbnail (2KB)
 
 **What will work after upload:**
-- ✅ Size buttons resize artwork smoothly
-- ✅ Frame selector adds/removes frames
-- ✅ Room thumbnails switch backgrounds while keeping artwork
+- ✅ Size buttons resize artwork smoothly on mockup previews
+- ✅ Frame selector adds/removes frames in real-time
+- ✅ Room thumbnails switch between 4 different backgrounds
+- ✅ Artwork maintains selected size/frame across all rooms
+- ✅ Three-column layout (thumbnails, slider, configurator) aligned at top
 - ✅ No horizontal scroll on 1440px+ screens
 
 **Expected user experience:**
@@ -451,11 +583,18 @@ Users can now see artwork in different sizes and frames in realistic room mockup
 
 ## 🚨 **IMPORTANT REMINDER**
 
-You must upload **BOTH files** for the complete fix:
-1. `247-art.css` (contains the critical transform CSS)
-2. `247-art-product.liquid` (updates the width)
+You must upload **ALL 11 files** for the complete fix:
 
-Uploading only one file will result in incomplete functionality!
+**Code Files (3):**
+1. `247-art.css` (critical transform CSS + complete styling)
+2. `247-art.js` (all interactions)
+3. `247-art-product.liquid` (template structure)
+
+**Mockup Images (8):**
+4-7. Full-size room mockups (living, bedroom, office, gallery)
+8-11. Thumbnail images for sidebar navigation
+
+Uploading only some files will result in incomplete or broken functionality!
 
 ---
 

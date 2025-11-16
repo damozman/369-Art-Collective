@@ -1,0 +1,43 @@
+========================================
+SHOPIFY TEMPLATE RESTORE - ERROR-FREE
+========================================
+
+These files are from commit 93e7b67 - the LAST error-free state
+before layout changes introduced problems.
+
+UPLOAD THESE 3 FILES TO SHOPIFY:
+========================================
+
+1. sections/247-art-product.liquid
+   ↓ DOWNLOAD: WITH-NEW-IMAGE-FILTERS.liquid
+   ✅ Uses new image_url filter (not deprecated img_url)
+   ✅ 497 lines, complete with schema
+   ✅ All variants available for purchase
+
+2. snippets/247-art-options.liquid
+   ↓ DOWNLOAD: 247-art-options-FIXED-FILTERS.liquid
+   ✅ Frame color options working
+   ✅ 322 lines, complete configurator
+   ✅ No deprecated filters
+
+3. snippets/247-art-lineitem-properties.liquid
+   ↓ DOWNLOAD: 247-art-lineitem-PROPERLY-FIXED.liquid
+   ✅ Handles both old & new metafield formats
+   ✅ Sends ArtworkID and ArtistID to backend
+   ✅ No syntax errors
+
+========================================
+WHAT YOU'RE GETTING BACK:
+========================================
+✅ ZERO Shopify validation errors
+✅ All product variants purchasable
+✅ Frame color options working
+✅ Modern Shopify filters
+✅ Configurator functioning
+✅ Cart tracking (artwork_id, artist_id)
+
+========================================
+COMMIT REFERENCE: 93e7b67
+"Update image rendering to use Shopify's image URL filter"
+Date: November 16, 2025 00:03:25 UTC
+========================================

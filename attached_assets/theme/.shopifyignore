@@ -1,1 +1,21 @@
+# Preserve store-specific settings
 config/settings_data.json
+
+# Deployment scripts and documentation
+deploy-*.sh
+*.md
+MOCKUP-SYSTEM-SPEC.md
+
+# Backup and temporary files
+*.backup
+*.CORRUPT
+*.incomplete-backup
+*.tmp
+*.swp
+*~
+
+# Development files
+.DS_Store
+.git
+.gitignore
+node_modules/

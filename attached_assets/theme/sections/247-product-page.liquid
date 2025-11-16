@@ -383,6 +383,15 @@ Fully integrated with Shopify product data, variants, and cart
 {% endif %}
 
 <style>
+/* ===== CSS CUSTOM PROPERTIES FOR PRECISE LAYOUT ===== */
+:root {
+  --thumb-width: 120px;
+  --mockup-width: 1000px;
+  --config-min: 320px;
+  --config-max: 420px;
+  --grid-gap: 2rem;
+}
+
 /* Product Page Container */
 .product-page {
   background: #fff;
@@ -393,8 +402,8 @@ Fully integrated with Shopify product data, variants, and cart
   max-width: 1600px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 100px 1fr 420px;
-  gap: 2rem;
+  grid-template-columns: var(--thumb-width) var(--mockup-width) minmax(var(--config-min), var(--config-max));
+  gap: var(--grid-gap);
 }
 
 /* Thumbnail Gallery */

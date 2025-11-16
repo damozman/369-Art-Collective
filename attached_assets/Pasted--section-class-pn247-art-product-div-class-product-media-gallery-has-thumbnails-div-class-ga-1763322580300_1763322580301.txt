@@ -1,0 +1,362 @@
+<section class="pn247-art-product"><div class="product__media-gallery has-thumbnails"><div class="gallery__thumbnails-container">
+          <button class="gallery__scroll-btn gallery__scroll-btn--up" aria-label="Scroll up" disabled="">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="12,10 8,6 4,10"></polyline>
+            </svg>
+          </button>
+          
+          <div class="gallery__thumbnails" id="thumbnail-nav"><button class="gallery__thumbnail active" data-mockup="true" data-mockup-room="living-room" data-image-index="0" aria-label="View mockup - Living Room" aria-pressed="true">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-living-room.png?v=108054845391383226371763103282" alt="Living Room Preview" width="120" height="120" loading="eager">
+              <span class="thumbnail-label">Living Room</span>
+            </button>
+            
+            <button class="gallery__thumbnail" data-mockup="true" data-mockup-room="bedroom" data-image-index="1" aria-label="View mockup - Bedroom" aria-pressed="false">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-bedroom.png?v=28171443396540865651763103282" alt="Bedroom Preview" width="120" height="120" loading="lazy">
+              <span class="thumbnail-label">Bedroom</span>
+            </button>
+            
+            <button class="gallery__thumbnail" data-mockup="true" data-mockup-room="office" data-image-index="2" aria-label="View mockup - Office" aria-pressed="false">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-office.png?v=177325741133500054051763103282" alt="Office Preview" width="120" height="120" loading="lazy">
+              <span class="thumbnail-label">Office</span>
+            </button>
+            
+            <button class="gallery__thumbnail" data-mockup="true" data-mockup-room="gallery" data-image-index="3" aria-label="View mockup - Gallery" aria-pressed="false">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-gallery.png?v=16568939759836725951763103282" alt="Gallery Preview" width="120" height="120" loading="lazy">
+              <span class="thumbnail-label">Gallery</span>
+            </button><button class="gallery__thumbnail" data-image-index="4" data-image-id="53679017001257" aria-label="View image 1" aria-pressed="false">
+                <img src="files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8.jpg" alt="Azure Dreams" width="120" height="120" loading="lazy">
+              </button><button class="gallery__thumbnail" data-image-index="5" data-image-id="53697172275497" aria-label="View image 2" aria-pressed="false">
+                <img src="files/azure-dreams.jpg" alt="Product mockup" width="120" height="120" loading="lazy">
+              </button><button class="gallery__thumbnail" data-image-index="6" data-image-id="53697172570409" aria-label="View image 3" aria-pressed="false">
+                <img src="files/azure-dreams_29bd0aa4-7211-4cf7-b525-c47575c5e090.jpg" alt="Product mockup" width="120" height="120" loading="lazy">
+              </button><button class="gallery__thumbnail" data-image-index="7" data-image-id="53697173455145" aria-label="View image 4" aria-pressed="false">
+                <img src="files/azure-dreams_033b484d-85aa-4f6b-8146-0de9c0430006.jpg" alt="Product mockup" width="120" height="120" loading="lazy">
+              </button><button class="gallery__thumbnail" data-image-index="8" data-image-id="53697173881129" aria-label="View image 5" aria-pressed="false">
+                <img src="files/azure-dreams_56f9bc76-dd55-4ff4-834e-6149b43bcad2.jpg" alt="Product mockup" width="120" height="120" loading="lazy">
+              </button></div>
+          
+          <button class="gallery__scroll-btn gallery__scroll-btn--down" aria-label="Scroll down">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4,6 8,10 12,6"></polyline>
+            </svg>
+          </button>
+        </div><div class="gallery__main" style="--preview-scale: 0.7;">
+        <div class="gallery__main-wrapper" id="main-image-wrapper"><div class="gallery__main-image gallery__mockup-slide active" data-mockup="true" data-mockup-room="living-room" data-image-index="0">
+            <div class="mockup-slide__container">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-living-room.png?v=108054845391383226371763103282" alt="Modern Living Room Preview" width="1920" height="1080" class="mockup-slide__background">
+              <div class="mockup-slide__overlay" style="left: 372.5px; top: 215.991px; width: 208.6px; --size-scale: 0.64;">
+                <img src="files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8.jpg" alt="Azure Dreams" width="1024" height="1024" class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="gallery__main-image gallery__mockup-slide" data-mockup="true" data-mockup-room="bedroom" data-image-index="1">
+            <div class="mockup-slide__container">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-bedroom.png?v=28171443396540865651763103282" alt="Cozy Bedroom Preview" width="1920" height="1080" class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8.jpg" alt="Azure Dreams" width="1024" height="1024" class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="gallery__main-image gallery__mockup-slide" data-mockup="true" data-mockup-room="office" data-image-index="2">
+            <div class="mockup-slide__container">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-office.png?v=177325741133500054051763103282" alt="Professional Office Preview" width="1920" height="1080" class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8.jpg" alt="Azure Dreams" width="1024" height="1024" class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="gallery__main-image gallery__mockup-slide" data-mockup="true" data-mockup-room="gallery" data-image-index="3">
+            <div class="mockup-slide__container">
+              <img src="//247printnetwork.com/cdn/shop/t/7/assets/mockup-gallery.png?v=16568939759836725951763103282" alt="Art Gallery Preview" width="1920" height="1080" class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8.jpg" alt="Azure Dreams" width="1024" height="1024" class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div><img src="files/photo-1541961017774-22349e4a1262_64c5ace1-89d0-44cd-bf48-8e301dfd20d8.jpg" alt="Azure Dreams" width="1024" height="1024" loading="lazy" class="gallery__main-image" data-image-id="53679017001257" data-image-index="4"><img src="files/azure-dreams.jpg" alt="Product mockup" width="1024" height="1024" loading="lazy" class="gallery__main-image" data-image-id="53697172275497" data-image-index="5"><img src="files/azure-dreams_29bd0aa4-7211-4cf7-b525-c47575c5e090.jpg" alt="Product mockup" width="1024" height="1024" loading="lazy" class="gallery__main-image" data-image-id="53697172570409" data-image-index="6"><img src="files/azure-dreams_033b484d-85aa-4f6b-8146-0de9c0430006.jpg" alt="Product mockup" width="1024" height="1024" loading="lazy" class="gallery__main-image" data-image-id="53697173455145" data-image-index="7"><img src="files/azure-dreams_56f9bc76-dd55-4ff4-834e-6149b43bcad2.jpg" alt="Product mockup" width="1024" height="1024" loading="lazy" class="gallery__main-image" data-image-id="53697173881129" data-image-index="8"></div><button class="gallery__zoom-btn" id="zoom-trigger" aria-label="Zoom image">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="8" cy="8" r="6"></circle>
+            <line x1="13" y1="13" x2="18" y2="18"></line>
+            <line x1="8" y1="5" x2="8" y2="11"></line>
+            <line x1="5" y1="8" x2="11" y2="8"></line>
+          </svg>
+        </button>
+      </div></div><div class="product__info"><div>
+      <div class="product__vendor">Marcus Rodriguez</div>
+      <h1 class="product__title">Azure Dreams</h1>
+    </div>
+
+<div class="art-options"><div class="art-options__section">
+    <label class="art-options__label">Choose Size</label>
+    <div class="art-options__grid" id="size-selector"><div class="art-option selected" data-option-value="8x10" data-option-type="size">
+          <input type="radio" name="size" value="8x10" id="size-8x10" form="add-to-cart-form" class="visually-hidden" checked="">
+          <div class="art-option__title">8x10</div>
+          <div class="art-option__subtitle">Perfect for desks</div>
+        </div><div class="art-option" data-option-value="11x14" data-option-type="size">
+          <input type="radio" name="size" value="11x14" id="size-11x14" form="add-to-cart-form" class="visually-hidden">
+          <div class="art-option__title">11x14</div>
+          <div class="art-option__subtitle">Small wall accent</div>
+        </div><div class="art-option" data-option-value="12x16" data-option-type="size">
+          <input type="radio" name="size" value="12x16" id="size-12x16" form="add-to-cart-form" class="visually-hidden">
+          <div class="art-option__title">12x16</div>
+          <div class="art-option__subtitle">Premium print</div>
+        </div><div class="art-option" data-option-value="16x20" data-option-type="size">
+          <input type="radio" name="size" value="16x20" id="size-16x20" form="add-to-cart-form" class="visually-hidden">
+          <div class="art-option__title">16x20</div>
+          <div class="art-option__subtitle">Statement piece</div>
+        </div><div class="art-option" data-option-value="18x24" data-option-type="size">
+          <input type="radio" name="size" value="18x24" id="size-18x24" form="add-to-cart-form" class="visually-hidden">
+          <div class="art-option__title">18x24</div>
+          <div class="art-option__subtitle">Gallery wall</div>
+        </div><div class="art-option" data-option-value="24x36" data-option-type="size">
+          <input type="radio" name="size" value="24x36" id="size-24x36" form="add-to-cart-form" class="visually-hidden">
+          <div class="art-option__title">24x36</div>
+          <div class="art-option__subtitle">Large format</div>
+        </div></div>
+  </div><div class="art-options__section">
+    <label class="art-options__label">Choose Finish</label>
+    <div class="art-options__grid" id="finish-selector"><div class="art-option selected" data-option-value="Paper" data-option-type="finish">
+            <input type="radio" name="finish" value="Paper" id="finish-paper" form="add-to-cart-form" class="visually-hidden" checked="">
+            <div class="art-option__title">Paper</div>
+            <div class="art-option__subtitle">Smooth matte</div>
+          </div><div class="art-option" data-option-value="Canvas" data-option-type="finish">
+            <input type="radio" name="finish" value="Canvas" id="finish-canvas" form="add-to-cart-form" class="visually-hidden">
+            <div class="art-option__title">Canvas</div>
+            <div class="art-option__subtitle">Textured finish</div>
+          </div><div class="art-option" data-option-value="Metal" data-option-type="finish">
+            <input type="radio" name="finish" value="Metal" id="finish-metal" form="add-to-cart-form" class="visually-hidden">
+            <div class="art-option__title">Metal</div>
+            <div class="art-option__subtitle">Ultra premium</div>
+          </div></div>
+  </div><div class="frame-options" id="frame-options-section">
+    <label class="art-options__label mb-small">Frame Options <span class="frame-availability-note">(Available for Paper prints)</span></label>
+    
+    <div class="frame-toggle selected" id="no-frame-option" data-frame-type="none">
+      <input type="radio" name="frame" value="none" id="frame-none" form="add-to-cart-form" class="frame-checkbox" checked="">
+      <div class="frame-info">
+        <div class="frame-info__title">No Frame</div>
+        <div class="frame-info__description">Unframed print ready to frame yourself</div>
+      </div>
+      <div class="frame-price">Included</div>
+    </div>
+
+    <div class="frame-toggle" id="black-frame-option" data-frame-type="black">
+      <input type="radio" name="frame" value="black" id="frame-black" form="add-to-cart-form" class="frame-checkbox">
+      <div class="frame-info">
+        <div class="frame-info__title">Black Frame</div>
+        <div class="frame-info__description">Professional black MDF frame with mounting hardware</div>
+      </div>
+      <div class="frame-price">+$29</div>
+    </div>
+
+    <div class="frame-toggle" id="white-frame-option" data-frame-type="white">
+      <input type="radio" name="frame" value="white" id="frame-white" form="add-to-cart-form" class="frame-checkbox">
+      <div class="frame-info">
+        <div class="frame-info__title">White Frame</div>
+        <div class="frame-info__description">Clean white MDF frame with mounting hardware</div>
+      </div>
+      <div class="frame-price">+$29</div>
+    </div>
+
+    <div class="frame-toggle" id="walnut-frame-option" data-frame-type="walnut">
+      <input type="radio" name="frame" value="walnut" id="frame-walnut" form="add-to-cart-form" class="frame-checkbox">
+      <div class="frame-info">
+        <div class="frame-info__title">Walnut Frame</div>
+        <div class="frame-info__description">Rich walnut MDF frame with mounting hardware</div>
+      </div>
+      <div class="frame-price">+$29</div>
+    </div>
+  </div><div class="size-guide">
+    <button class="size-guide__toggle" id="size-guide-toggle" type="button">
+      <span>Size Guide</span>
+      <svg class="size-guide__icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="3,5 7,9 11,5"></polyline>
+      </svg>
+    </button>
+    <div class="size-guide__content" id="size-guide-content">
+      <table class="size-guide__table">
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>Dimensions</th>
+            <th>Best For</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>8x10"</td>
+            <td>8" × 10"</td>
+            <td>Desks, shelves</td>
+          </tr>
+          <tr>
+            <td>11x14"</td>
+            <td>11" × 14"</td>
+            <td>Small walls</td>
+          </tr>
+          <tr>
+            <td>16x20"</td>
+            <td>16" × 20"</td>
+            <td>Medium walls</td>
+          </tr>
+          <tr>
+            <td>18x24"</td>
+            <td>18" × 24"</td>
+            <td>Gallery walls</td>
+          </tr>
+          <tr>
+            <td>24x36"</td>
+            <td>24" × 36"</td>
+            <td>Statement pieces</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Premium option selector interactions
+document.addEventListener('DOMContentLoaded', function() {
+  // Size selection
+  const sizeOptions = document.querySelectorAll('[data-option-type="size"]');
+  sizeOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      sizeOptions.forEach(opt => opt.classList.remove('selected'));
+      this.classList.add('selected');
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      updateVariant();
+    });
+  });
+
+  // Finish selection
+  const finishOptions = document.querySelectorAll('[data-option-type="finish"]');
+  finishOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      finishOptions.forEach(opt => opt.classList.remove('selected'));
+      this.classList.add('selected');
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      updateVariant();
+    });
+  });
+
+  // Frame selection
+  const frameToggles = document.querySelectorAll('.frame-toggle');
+  frameToggles.forEach(toggle => {
+    toggle.addEventListener('click', function() {
+      frameToggles.forEach(t => t.classList.remove('selected'));
+      this.classList.add('selected');
+      const radio = this.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      updatePrice();
+    });
+  });
+
+  // Set initial selected states
+  sizeOptions[0]?.classList.add('selected');
+  finishOptions[0]?.classList.add('selected');
+  document.getElementById('no-frame-option')?.classList.add('selected');
+  
+  // Initialize frame availability based on default finish (Paper)
+  const defaultFinish = document.querySelector('input[name="finish"]:checked')?.value || 'Paper';
+  updateFrameAvailability(defaultFinish);
+
+  // Size guide toggle
+  const sizeGuideToggle = document.getElementById('size-guide-toggle');
+  const sizeGuideContent = document.getElementById('size-guide-content');
+  
+  if (sizeGuideToggle && sizeGuideContent) {
+    sizeGuideToggle.addEventListener('click', function() {
+      const isOpen = sizeGuideContent.classList.contains('open');
+      if (isOpen) {
+        sizeGuideContent.classList.remove('open');
+        sizeGuideToggle.classList.remove('open');
+      } else {
+        sizeGuideContent.classList.add('open');
+        sizeGuideToggle.classList.add('open');
+      }
+    });
+  }
+});
+
+function updateVariant() {
+  const size = document.querySelector('input[name="size"]:checked')?.value;
+  const baseFinish = document.querySelector('input[name="finish"]:checked')?.value;
+  const frame = document.querySelector('input[name="frame"]:checked')?.value;
+  
+  // Map Paper + Frame to Framed-[Color] variants
+  let actualFinish = baseFinish;
+  if (baseFinish === 'Paper' && frame && frame !== 'none') {
+    actualFinish = `Framed-${frame.charAt(0).toUpperCase() + frame.slice(1)}`;
+  }
+  
+  console.log('Variant updated:', { size, baseFinish, frame, actualFinish });
+  
+  // Dispatch custom event with mapped finish
+  document.dispatchEvent(new CustomEvent('variantChange', { 
+    detail: { size, finish: actualFinish }
+  }));
+  
+  // Update frame options availability
+  updateFrameAvailability(baseFinish);
+}
+
+function updatePrice() {
+  const frame = document.querySelector('input[name="frame"]:checked')?.value;
+  console.log('Frame option:', frame);
+  updateVariant(); // Trigger variant update when frame changes
+}
+
+function updateFrameAvailability(finish) {
+  const frameSection = document.getElementById('frame-options-section');
+  const frameToggles = document.querySelectorAll('.frame-toggle');
+  
+  if (finish === 'Paper') {
+    // Enable frame options for Paper
+    frameSection?.classList.remove('disabled');
+    frameToggles.forEach(toggle => {
+      toggle.classList.remove('disabled');
+      const input = toggle.querySelector('input');
+      if (input) input.disabled = false;
+    });
+  } else {
+    // Disable and reset frame options for Canvas/Metal
+    frameSection?.classList.add('disabled');
+    frameToggles.forEach(toggle => {
+      toggle.classList.add('disabled');
+      const input = toggle.querySelector('input');
+      if (input) input.disabled = true;
+    });
+    // Auto-select "No Frame" for Canvas/Metal
+    const noFrameInput = document.getElementById('frame-none');
+    if (noFrameInput) {
+      noFrameInput.checked = true;
+      document.getElementById('no-frame-option')?.classList.add('selected');
+      frameToggles.forEach(t => {
+        if (t.id !== 'no-frame-option') t.classList.remove('selected');
+      });
+    }
+  }
+}
+</script>
+
+<div class="product__price" id="product-price">$19.00</div><form method="post" action="/cart/add" id="add-to-cart-form" class="add-to-cart-form" enctype="multipart/form-data">
+      <input type="hidden" name="id" id="selected-variant-id" value="51511722541353">
+      
+      
+<input type="hidden" name="properties[ArtworkID]" value="46f12085-e9cb-4909-891d-771c1ce906e4">
+<input type="hidden" name="properties[ArtistID]" value="MR">
+
+      
+      <button type="submit" class="button--add-to-cart">Add to Cart</button>
+    </form>
+  </div>
+</section>

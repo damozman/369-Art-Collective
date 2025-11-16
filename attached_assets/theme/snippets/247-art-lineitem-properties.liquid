@@ -1,7 +1,3 @@
-{%- assign pn_meta = product.metafields['247pn'] -%}
-{%- if pn_meta.artwork_id -%}
-<input type="hidden" name="properties[ArtworkID]" value="{{ pn_meta.artwork_id.value | default: pn_meta.artwork_id }}">
-{%- endif -%}
-{%- if pn_meta.artist_id -%}
-<input type="hidden" name="properties[ArtistID]" value="{{ pn_meta.artist_id.value | default: pn_meta.artist_id }}">
-{%- endif -%}
+
+<input type="hidden" name="properties[ArtworkID]" value="{{ product.metafields['247pn'].artwork_id }}">
+<input type="hidden" name="properties[ArtistID]" value="{{ product.metafields['247pn'].artist_id }}">

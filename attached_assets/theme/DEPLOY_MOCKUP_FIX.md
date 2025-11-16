@@ -7,6 +7,8 @@ The mockup overlay system now has the CSS it needs to work. Your JavaScript has 
 **Changes Made:**
 1. ✅ Added mockup overlay CSS to `247-art.css` (transform, positioning, frames)
 2. ✅ Updated mockup width to 850px in `247-art-product.liquid` (better 1440px viewport fit)
+3. ✅ Added thumbnail gallery with vertical scroll (7 thumbnails visible)
+4. ✅ Fixed vertical alignment - all columns now align at top with no buffer spacing
 
 ---
 

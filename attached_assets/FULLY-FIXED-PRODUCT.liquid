@@ -1,0 +1,497 @@
+{% comment %}
+247PN Art Product Section
+Premium Displate-inspired layout with artist spotlight and enhanced product presentation
+{% endcomment %}
+
+{{ '247-art.css' | asset_url | stylesheet_tag }}
+
+<style>
+main#MainContent,
+#MainContent {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+.shopify-section {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.pn247-art-product {
+  display: grid;
+  grid-template-columns: auto 420px;
+  gap: 1.5rem;
+  justify-content: center;
+  max-width: 1686px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.product__media-gallery {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  width: 1171px;
+}
+
+.gallery__main {
+  width: 1035px;
+  max-width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .pn247-art-product {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-width: 100%;
+  }
+  
+  .product__media-gallery {
+    width: 100%;
+    max-width: 1171px;
+    margin: 0 auto;
+  }
+  
+  .gallery__main {
+    width: 100%;
+    max-width: 1035px;
+  }
+}
+
+@media (max-width: 640px) {
+  .product__media-gallery {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .gallery__main {
+    width: 100%;
+    max-width: 1035px;
+  }
+  
+  .pn247-art-product {
+    padding: 3rem 1rem;
+    gap: 1.5rem;
+  }
+}
+</style>
+
+{%- comment -%} ===== PRODUCT DETAILS SECTION ===== {%- endcomment -%}
+<section class="pn247-art-product">
+  {%- comment -%} LEFT COLUMN: Product Image Gallery {%- endcomment -%}
+  <div class="product__media-gallery {% if product.images.size > 1 %}has-thumbnails{% endif %}">
+    {%- if product.images.size > 0 -%}
+      
+      {%- comment -%} Vertical Thumbnails (Displate-style) {%- endcomment -%}
+      {%- if product.images.size > 1 -%}
+        <div class="gallery__thumbnails-container">
+          <button class="gallery__scroll-btn gallery__scroll-btn--up" aria-label="Scroll up">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="12,10 8,6 4,10"/>
+            </svg>
+          </button>
+          
+          <div class="gallery__thumbnails" id="thumbnail-nav">
+            {%- comment -%} Mockup Thumbnails {%- endcomment -%}
+            <button 
+              class="gallery__thumbnail active"
+              data-mockup="true"
+              data-mockup-room="living-room"
+              data-image-index="0"
+              aria-label="View mockup - Living Room"
+              aria-pressed="true"
+            >
+              <img 
+                src="{{ 'mockup-living-room.png' | asset_url }}" 
+                alt="Living Room Preview"
+                width="120"
+                height="120"
+                loading="eager"
+              >
+              <span class="thumbnail-label">Living Room</span>
+            </button>
+            
+            <button 
+              class="gallery__thumbnail"
+              data-mockup="true"
+              data-mockup-room="bedroom"
+              data-image-index="1"
+              aria-label="View mockup - Bedroom"
+              aria-pressed="false"
+            >
+              <img 
+                src="{{ 'mockup-bedroom.png' | asset_url }}" 
+                alt="Bedroom Preview"
+                width="120"
+                height="120"
+                loading="lazy"
+              >
+              <span class="thumbnail-label">Bedroom</span>
+            </button>
+            
+            <button 
+              class="gallery__thumbnail"
+              data-mockup="true"
+              data-mockup-room="office"
+              data-image-index="2"
+              aria-label="View mockup - Office"
+              aria-pressed="false"
+            >
+              <img 
+                src="{{ 'mockup-office.png' | asset_url }}" 
+                alt="Office Preview"
+                width="120"
+                height="120"
+                loading="lazy"
+              >
+              <span class="thumbnail-label">Office</span>
+            </button>
+            
+            <button 
+              class="gallery__thumbnail"
+              data-mockup="true"
+              data-mockup-room="gallery"
+              data-image-index="3"
+              aria-label="View mockup - Gallery"
+              aria-pressed="false"
+            >
+              <img 
+                src="{{ 'mockup-gallery.png' | asset_url }}" 
+                alt="Gallery Preview"
+                width="120"
+                height="120"
+                loading="lazy"
+              >
+              <span class="thumbnail-label">Gallery</span>
+            </button>
+            
+            {%- comment -%} Regular Product Image Thumbnails {%- endcomment -%}
+            {%- for image in product.images -%}
+              <button 
+                class="gallery__thumbnail"
+                data-image-index="{{ forloop.index0 | plus: 4 }}"
+                data-image-id="{{ image.id }}"
+                {%- if image.attached_to_variant? -%}
+                  data-variant-ids="{{ image.variants | map: 'id' | join: ',' }}"
+                {%- endif -%}
+                aria-label="View image {{ forloop.index }}"
+                aria-pressed="false"
+              >
+                <img 
+                  src="{{ image | image_url: width: 120, height: 120 }}" 
+                  alt="{{ image.alt | default: product.title | escape }}"
+                  width="120"
+                  height="120"
+                  loading="lazy"
+                >
+              </button>
+            {%- endfor -%}
+          </div>
+          
+          <button class="gallery__scroll-btn gallery__scroll-btn--down" aria-label="Scroll down">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4,6 8,10 12,6"/>
+            </svg>
+          </button>
+        </div>
+      {%- endif -%}
+      
+      {%- comment -%} Main Image Viewer {%- endcomment -%}
+      <div class="gallery__main">
+        <div class="gallery__main-wrapper" id="main-image-wrapper">
+          {%- comment -%} Mockup Slides - Injected before product images {%- endcomment -%}
+          <div class="gallery__main-image gallery__mockup-slide active" 
+               data-mockup="true" 
+               data-mockup-room="living-room"
+               data-image-index="0">
+            <div class="mockup-slide__container">
+              <img src="{{ 'mockup-living-room.png' | asset_url }}" 
+                   alt="Modern Living Room Preview" 
+                   width="1920"
+                   height="1080"
+                   class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="{{ product.featured_image | image_url: width: 1024, height: 1024 }}" 
+                     alt="{{ product.title | escape }}" 
+                     width="1024"
+                     height="1024"
+                     class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="gallery__main-image gallery__mockup-slide" 
+               data-mockup="true" 
+               data-mockup-room="bedroom"
+               data-image-index="1">
+            <div class="mockup-slide__container">
+              <img src="{{ 'mockup-bedroom.png' | asset_url }}" 
+                   alt="Cozy Bedroom Preview" 
+                   width="1920"
+                   height="1080"
+                   class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="{{ product.featured_image | image_url: width: 1024, height: 1024 }}" 
+                     alt="{{ product.title | escape }}" 
+                     width="1024"
+                     height="1024"
+                     class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="gallery__main-image gallery__mockup-slide" 
+               data-mockup="true" 
+               data-mockup-room="office"
+               data-image-index="2">
+            <div class="mockup-slide__container">
+              <img src="{{ 'mockup-office.png' | asset_url }}" 
+                   alt="Professional Office Preview" 
+                   width="1920"
+                   height="1080"
+                   class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="{{ product.featured_image | image_url: width: 1024, height: 1024 }}" 
+                     alt="{{ product.title | escape }}" 
+                     width="1024"
+                     height="1024"
+                     class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="gallery__main-image gallery__mockup-slide" 
+               data-mockup="true" 
+               data-mockup-room="gallery"
+               data-image-index="3">
+            <div class="mockup-slide__container">
+              <img src="{{ 'mockup-gallery.png' | asset_url }}" 
+                   alt="Art Gallery Preview" 
+                   width="1920"
+                   height="1080"
+                   class="mockup-slide__background">
+              <div class="mockup-slide__overlay">
+                <img src="{{ product.featured_image | image_url: width: 1024, height: 1024 }}" 
+                     alt="{{ product.title | escape }}" 
+                     width="1024"
+                     height="1024"
+                     class="mockup-slide__artwork">
+                <div class="mockup-slide__frame" data-frame="none"></div>
+              </div>
+            </div>
+          </div>
+          
+          {%- comment -%} Regular Product Images {%- endcomment -%}
+          {%- for image in product.images -%}
+            <img 
+              src="{{ image | image_url: width: 1024, height: 1024 }}" 
+              alt="{{ image.alt | default: product.title | escape }}"
+              width="1024"
+              height="1024"
+              loading="lazy"
+              class="gallery__main-image"
+              data-image-id="{{ image.id }}"
+              data-image-index="{{ forloop.index0 | plus: 4 }}"
+              {%- if image.attached_to_variant? -%}
+                data-variant-ids="{{ image.variants | map: 'id' | join: ',' }}"
+              {%- endif -%}
+            >
+          {%- endfor -%}
+        </div>
+
+        {%- comment -%} Zoom button as sibling, positioned relative to .gallery__main {%- endcomment -%}
+        <button class="gallery__zoom-btn" id="zoom-trigger" aria-label="Zoom image">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="8" cy="8" r="6"/>
+            <line x1="13" y1="13" x2="18" y2="18"/>
+            <line x1="8" y1="5" x2="8" y2="11"/>
+            <line x1="5" y1="8" x2="11" y2="8"/>
+          </svg>
+        </button>
+      </div>
+
+    {%- else -%}
+      <div class="product__media-placeholder">
+        {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
+      </div>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} RIGHT COLUMN: Product Info + Configurator (Displate-style) {%- endcomment -%}
+  <div class="product__info">
+    
+    {%- comment -%} Product Title & Artist {%- endcomment -%}
+    <div>
+      <div class="product__vendor">{{ product.vendor }}</div>
+      <h1 class="product__title">{{ product.title }}</h1>
+    </div>
+
+    {%- comment -%} Configurator inside product info {%- endcomment -%}
+    {% render '247-art-options', product: product %}
+
+    {%- comment -%} Price Display {%- endcomment -%}
+    <div class="product__price" id="product-price">
+      {{ product.selected_or_first_available_variant.price | money }}
+      {%- if product.selected_or_first_available_variant.compare_at_price > product.selected_or_first_available_variant.price -%}
+        <span class="product__price-compare">
+          {{ product.selected_or_first_available_variant.compare_at_price | money }}
+        </span>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} Add to Cart Form {%- endcomment -%}
+    <form method="post" action="/cart/add" id="add-to-cart-form" class="add-to-cart-form" enctype="multipart/form-data">
+      <input type="hidden" name="id" id="selected-variant-id" value="{{ product.selected_or_first_available_variant.id }}">
+      
+      {% render '247-art-lineitem-properties' %}
+      
+      <button 
+        type="submit" 
+        class="button--add-to-cart"
+        {% unless product.available %}disabled{% endunless %}
+      >
+        {%- if product.available -%}
+          Add to Cart
+        {%- else -%}
+          Sold Out
+        {%- endif -%}
+      </button>
+    </form>
+  </div>
+</section>
+
+{%- comment -%} BOTTOM SECTION: Artist Info, Trust Badges, Product Details {%- endcomment -%}
+<section class="product-bottom-content">
+  <div class="product-bottom-wrapper">
+    
+    {%- comment -%} Artist Spotlight {%- endcomment -%}
+    {%- if product.metafields['247pn'].artist_id -%}
+      <div class="artist-spotlight">
+        <div class="artist-spotlight__header">
+          {%- comment -%} Artist avatar placeholder - can be enhanced with actual profile photos {%- endcomment -%}
+          <div class="artist-spotlight__avatar-placeholder">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="24" fill="#e5e5e5"/>
+              <path d="M24 24c3.3 0 6-2.7 6-6s-2.7-6-6-6-6 2.7-6 6 2.7 6 6 6zm0 3c-4 0-12 2-12 6v3h24v-3c0-4-8-6-12-6z" fill="#999"/>
+            </svg>
+          </div>
+          <h2 class="artist-spotlight__name">{{ product.vendor }}</h2>
+        </div>
+        {%- if product.description != blank -%}
+          <p class="artist-spotlight__bio">{{ product.description | strip_html | truncate: 200 }}</p>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- comment -%} Product Description {%- endcomment -%}
+    {%- if product.description != blank -%}
+      <div class="product__description">
+        {{ product.description }}
+      </div>
+    {%- endif -%}
+
+    {%- comment -%} Trust Badges {%- endcomment -%}
+    <div class="trust-badges">
+      <div class="trust-badge">
+        <div class="trust-badge__icon"></div>
+        <div class="trust-badge__title">Artist Royalties</div>
+        <div class="trust-badge__description">Support independent artists</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge__icon"></div>
+        <div class="trust-badge__title">Fast Shipping</div>
+        <div class="trust-badge__description">Ships in 3-5 business days</div>
+      </div>
+      <div class="trust-badge">
+        <div class="trust-badge__icon"></div>
+        <div class="trust-badge__title">Quality Guaranteed</div>
+        <div class="trust-badge__description">Premium materials</div>
+      </div>
+    </div>
+
+    {%- comment -%} Product Details {%- endcomment -%}
+    <div class="product-details">
+      <div class="product-details__item">
+        <div class="product-details__label">Material</div>
+        <div class="product-details__value">Museum-quality paper or canvas</div>
+      </div>
+      <div class="product-details__item">
+        <div class="product-details__label">Print Method</div>
+        <div class="product-details__value">Giclée printing for vibrant colors</div>
+      </div>
+      <div class="product-details__item">
+        <div class="product-details__label">Durability</div>
+        <div class="product-details__value">Fade-resistant inks, built to last</div>
+      </div>
+      {%- if product.metafields['247pn'].artist_id -%}
+        <div class="product-details__item">
+          <div class="product-details__label">Artist</div>
+          <div class="product-details__value">{{ product.vendor }}</div>
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} Merchandise Upsell {%- endcomment -%}
+    {% render '247-merch-upsell', product: product %}
+  </div>
+</section>
+
+{%- comment -%} Lightbox Zoom Modal - Outside grid layout {%- endcomment -%}
+<div class="lightbox" id="image-lightbox">
+  <button class="lightbox__close" id="lightbox-close" aria-label="Close lightbox">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="18" y1="6" x2="6" y2="18"/>
+      <line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+  <div class="lightbox__content">
+    <img src="{{ 'mockup-living-room.png' | asset_url }}" alt="" id="lightbox-image" width="1920" height="1920">
+  </div>
+  <div class="lightbox__nav">
+    <button class="lightbox__prev" id="lightbox-prev" aria-label="Previous image">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    <button class="lightbox__next" id="lightbox-next" aria-label="Next image">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+{%- comment -%} Serialize product data for JavaScript variant system {%- endcomment -%}
+<script>
+  window.product = {{ product | json }};
+</script>
+
+<script src="{{ '247-art.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "247 Art Product",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_artist_spotlight",
+      "label": "Show Artist Spotlight",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_trust_badges",
+      "label": "Show Trust Badges",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_product_details",
+      "label": "Show Product Details",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

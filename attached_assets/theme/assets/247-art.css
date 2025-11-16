@@ -710,6 +710,8 @@
 .gallery__main {
   flex: 1;
   position: relative;
+  margin: 0;
+  padding: 0;
 }
 
 .gallery__main-wrapper {
@@ -719,6 +721,8 @@
   background: #f9fafb;
   border-radius: 8px;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 .gallery__main-image {

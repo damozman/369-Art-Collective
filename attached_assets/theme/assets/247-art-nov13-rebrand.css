@@ -3,28 +3,19 @@
 Modern 2024/2025 Design - Clean, Contemporary, Artist-Centric
 DEFENSIVE CSS - Overrides base theme
 UPDATED: Nov 13 2025 18:20 EST - Navy/Coral/Teal Rebrand
-UPDATED: Jan 11 2025 - Mockup width 1035px + grouped layout
 */
-
-/* ===== CSS CUSTOM PROPERTIES ===== */
-:root {
-  --mockup-max-width: 1035px;
-  --config-min-width: 320px;
-  --config-max-width: 420px;
-}
 
 /* ===== CRITICAL LAYOUT RESET & GRID ===== */
 section.247pn-art-product {
   /* Reset any base theme positioning */
   position: relative !important;
   display: grid !important;
-  grid-template-columns: auto minmax(var(--config-min-width), var(--config-max-width)) !important;
+  grid-template-columns: 1fr 1fr !important;
   grid-template-rows: auto !important;
-  gap: 3rem !important;
-  max-width: 1750px !important;
+  gap: 4rem !important;
+  max-width: 1200px !important;
   margin: 0 auto !important;
   padding: 3rem 2rem !important;
-  justify-content: center !important;
   
   /* Prevent base theme interference */
   width: 100% !important;
@@ -38,7 +29,7 @@ section.247pn-art-product > * {
   z-index: 1 !important;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   section.247pn-art-product {
     grid-template-columns: 1fr !important;
     gap: 2rem !important;
@@ -71,9 +62,6 @@ section.247pn-art-product .product__media-gallery {
 .gallery__main {
   position: relative;
   width: 100%;
-  max-width: var(--mockup-max-width);
-  margin-left: auto;
-  margin-right: auto;
   border-radius: 16px;
   overflow: hidden;
   background: #f7f8f9;
@@ -327,7 +315,7 @@ section.247pn-art-product .product__info {
   z-index: 2 !important;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   section.247pn-art-product .product__info {
     grid-column: 1 !important;
     grid-row: 2 !important;

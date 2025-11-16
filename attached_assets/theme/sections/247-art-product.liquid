@@ -3,9 +3,20 @@
 Premium Displate-inspired layout with artist spotlight and enhanced product presentation
 {% endcomment %}
 
-{{ '247-art-nov13-rebrand.css' | asset_url | stylesheet_tag }}
+{{ '247-art.css' | asset_url | stylesheet_tag }}
 
 <style>
+/* ===== CSS CUSTOM PROPERTIES FOR PRECISE LAYOUT ===== */
+:root {
+  --mockup-width: 1035px;
+  --thumb-width: 120px;
+  --media-gap: 1rem;
+  --config-min: 320px;
+  --config-max: 420px;
+  --section-gap: 3rem;
+  --section-padding: 2rem;
+}
+
 /* Emergency override for white space */
 main#MainContent,
 #MainContent {
@@ -15,6 +26,75 @@ main#MainContent,
 .shopify-section {
   margin-top: 0 !important;
   padding-top: 0 !important;
+}
+
+/* Product page grid: centered with explicit dimensions */
+.pn247-art-product {
+  display: grid !important;
+  grid-template-columns: auto minmax(var(--config-min), var(--config-max)) !important;
+  gap: var(--section-gap) !important;
+  justify-content: center !important;
+  max-width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap) + var(--config-max) + var(--section-gap) + 2 * var(--section-padding)) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: var(--section-padding) !important;
+  padding-right: var(--section-padding) !important;
+  padding-top: 3rem !important;
+  padding-bottom: 3rem !important;
+}
+
+/* Media gallery: explicit width to accommodate thumbnails + mockup */
+.product__media-gallery {
+  display: flex !important;
+  gap: var(--media-gap) !important;
+  align-items: flex-start !important;
+  width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap)) !important;
+}
+
+/* Main mockup display area */
+.gallery__main {
+  width: var(--mockup-width) !important;
+  max-width: 100% !important;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+
+/* Medium screens: stack config below gallery */
+@media (max-width: 1200px) {
+  .pn247-art-product {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+    max-width: 100% !important;
+  }
+  
+  .product__media-gallery {
+    width: 100% !important;
+    max-width: calc(var(--mockup-width) + var(--thumb-width) + var(--media-gap)) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  
+  .gallery__main {
+    width: min(100%, var(--mockup-width)) !important;
+  }
+}
+
+/* Small screens: stack thumbnails above mockup, reduce sizes */
+@media (max-width: 640px) {
+  .product__media-gallery {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .gallery__main {
+    width: min(100%, var(--mockup-width)) !important;
+  }
+  
+  .pn247-art-product {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    gap: 1.5rem !important;
+  }
 }
 </style>
 

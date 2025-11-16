@@ -4,6 +4,18 @@
  * Optimized for Printify POD products with multiple mockups
  */
 
+// ===== SHARED CONSTANTS (MODULE SCOPE) =====
+// Size variant scale factors (based on diagonal proportions)
+// Reduced by 60% from original values - shared across all event handlers
+const SIZE_SCALE_FACTORS = {
+  '8x10': 0.256,  // 12.81" diagonal (smallest) - was 0.64
+  '11x14': 0.352, // 17.80" diagonal - was 0.88
+  '12x16': 0.40,  // 20" diagonal - Base reference - was 1.00
+  '16x20': 0.524, // 25.61" diagonal - was 1.31
+  '18x24': 0.60,  // 30" diagonal - was 1.50
+  '24x36': 0.864  // 43.27" diagonal (largest) - was 2.16
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   // ===== IMAGE GALLERY SYSTEM =====
   const mainImages = document.querySelectorAll('.gallery__main-image');
@@ -310,21 +322,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainGallery = document.querySelector('.gallery__main');
     if (!mainGallery) return;
 
-    // Size scale mapping (relative visual representation)
-    const sizeScales = {
-      '8x10': 0.64,
-      '11x14': 0.80,
-      '12x16': 0.85,
-      '16x20': 1.00,
-      '18x24': 1.10,
-      '24x36': 1.30,
-      // Fallback patterns
-      'M': 0.85,
-      'L': 1.00,
-      'XL': 1.15
-    };
+    // Extract size from variant name (e.g., "8x10 - Canvas" -> "8x10")
+    const sizeMatch = size?.match(/(\d+x\d+)/);
+    const extractedSize = sizeMatch ? sizeMatch[1] : size;
 
-    const scale = sizeScales[size] || 1.00;
+    // Use the same SIZE_SCALE_FACTORS as the mockup system for consistency
+    const scale = SIZE_SCALE_FACTORS[extractedSize] || SIZE_SCALE_FACTORS['8x10'] || 0.256;
     
     // Apply scale via CSS custom property for layout-aware scaling
     mainGallery.style.setProperty('--preview-scale', scale);
@@ -498,16 +501,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   ];
 
-  // Size variant scale factors (based on diagonal proportions)
-  const SIZE_SCALE_FACTORS = {
-    '8x10': 0.64,   // 12.81" diagonal (smallest)
-    '11x14': 0.88,  // 17.80" diagonal
-    '12x16': 1.00,  // 20" diagonal - Base reference
-    '16x20': 1.31,  // 25.61" diagonal
-    '18x24': 1.50,  // 30" diagonal
-    '24x36': 2.16   // 43.27" diagonal (largest)
-  };
-
   // Size aspect ratios (width/height) for mockup container
   const SIZE_ASPECT_RATIOS = {
     '8x10': 0.8,      // 8÷10 = 0.8
@@ -663,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const size = sizeMatch[1];
-    const scaleFactor = SIZE_SCALE_FACTORS[size] || 1.0;
+    const scaleFactor = SIZE_SCALE_FACTORS[size] || SIZE_SCALE_FACTORS['8x10'] || 0.256;
 
     console.log('Applying size scale:', size, '→', scaleFactor);
     currentSizeScale = scaleFactor;
@@ -751,7 +744,7 @@ document.addEventListener('DOMContentLoaded', function() {
   } else {
     // Default to 8x10 (smallest size) for initial display
     const defaultSize = '8x10';
-    currentSizeScale = SIZE_SCALE_FACTORS[defaultSize] || 0.64;
+    currentSizeScale = SIZE_SCALE_FACTORS[defaultSize] || 0.256; // Updated to match new reduced scale
     // Aspect ratio will be set from actual artwork in updateMockupOverlay
   }
 

@@ -384,12 +384,17 @@ Fully integrated with Shopify product data, variants, and cart
 
 <style>
 /* ===== CSS CUSTOM PROPERTIES FOR PRECISE LAYOUT ===== */
+/* Optimized for 1440px+ screens while maintaining 1366px baseline compatibility */
 :root {
   --thumb-width: 120px;
-  --mockup-width: 1000px;
-  --config-min: 320px;
-  --config-max: 420px;
+  --mockup-min: 750px;
+  --mockup-max: 850px;
+  --config-min: 300px;
+  --config-max: 340px;
   --grid-gap: 2rem;
+  /* Math: 120px + 850px + 340px + 64px (gaps) = 1374px */
+  /* Fits safely in 1440px viewport (1392px available after 1.5rem × 2 padding) */
+  /* 18px safety buffer accounts for sub-pixel rounding and font scaling */
 }
 
 /* Product Page Container */
@@ -402,7 +407,7 @@ Fully integrated with Shopify product data, variants, and cart
   max-width: 1600px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: var(--thumb-width) var(--mockup-width) minmax(var(--config-min), var(--config-max));
+  grid-template-columns: var(--thumb-width) minmax(var(--mockup-min), var(--mockup-max)) minmax(var(--config-min), var(--config-max));
   gap: var(--grid-gap);
 }
 

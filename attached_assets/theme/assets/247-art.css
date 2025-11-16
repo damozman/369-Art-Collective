@@ -798,6 +798,7 @@
 .gallery__thumbnail {
   width: 100%;
   aspect-ratio: 1;
+  flex: 0 0 auto;
   border: 2px solid transparent;
   border-radius: 6px;
   overflow: hidden;

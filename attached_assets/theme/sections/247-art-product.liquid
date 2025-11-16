@@ -103,6 +103,8 @@ main#MainContent,
               <img 
                 src="{{ 'mockup-living-room.png' | asset_url }}" 
                 alt="Living Room Preview"
+                width="120"
+                height="120"
                 loading="eager"
               >
               <span class="thumbnail-label">Living Room</span>
@@ -119,6 +121,8 @@ main#MainContent,
               <img 
                 src="{{ 'mockup-bedroom.png' | asset_url }}" 
                 alt="Bedroom Preview"
+                width="120"
+                height="120"
                 loading="lazy"
               >
               <span class="thumbnail-label">Bedroom</span>
@@ -135,6 +139,8 @@ main#MainContent,
               <img 
                 src="{{ 'mockup-office.png' | asset_url }}" 
                 alt="Office Preview"
+                width="120"
+                height="120"
                 loading="lazy"
               >
               <span class="thumbnail-label">Office</span>
@@ -151,6 +157,8 @@ main#MainContent,
               <img 
                 src="{{ 'mockup-gallery.png' | asset_url }}" 
                 alt="Gallery Preview"
+                width="120"
+                height="120"
                 loading="lazy"
               >
               <span class="thumbnail-label">Gallery</span>
@@ -171,6 +179,8 @@ main#MainContent,
                 <img 
                   src="{{ image | img_url: '120x120' }}" 
                   alt="{{ image.alt | default: product.title | escape }}"
+                  width="120"
+                  height="120"
                   loading="lazy"
                 >
               </button>
@@ -196,10 +206,14 @@ main#MainContent,
             <div class="mockup-slide__container">
               <img src="{{ 'mockup-living-room.png' | asset_url }}" 
                    alt="Modern Living Room Preview" 
+                   width="1920"
+                   height="1080"
                    class="mockup-slide__background">
               <div class="mockup-slide__overlay">
                 <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
                      alt="{{ product.title | escape }}" 
+                     width="1024"
+                     height="1024"
                      class="mockup-slide__artwork">
                 <div class="mockup-slide__frame" data-frame="none"></div>
               </div>
@@ -213,10 +227,14 @@ main#MainContent,
             <div class="mockup-slide__container">
               <img src="{{ 'mockup-bedroom.png' | asset_url }}" 
                    alt="Cozy Bedroom Preview" 
+                   width="1920"
+                   height="1080"
                    class="mockup-slide__background">
               <div class="mockup-slide__overlay">
                 <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
                      alt="{{ product.title | escape }}" 
+                     width="1024"
+                     height="1024"
                      class="mockup-slide__artwork">
                 <div class="mockup-slide__frame" data-frame="none"></div>
               </div>
@@ -230,10 +248,14 @@ main#MainContent,
             <div class="mockup-slide__container">
               <img src="{{ 'mockup-office.png' | asset_url }}" 
                    alt="Professional Office Preview" 
+                   width="1920"
+                   height="1080"
                    class="mockup-slide__background">
               <div class="mockup-slide__overlay">
                 <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
                      alt="{{ product.title | escape }}" 
+                     width="1024"
+                     height="1024"
                      class="mockup-slide__artwork">
                 <div class="mockup-slide__frame" data-frame="none"></div>
               </div>
@@ -247,10 +269,14 @@ main#MainContent,
             <div class="mockup-slide__container">
               <img src="{{ 'mockup-gallery.png' | asset_url }}" 
                    alt="Art Gallery Preview" 
+                   width="1920"
+                   height="1080"
                    class="mockup-slide__background">
               <div class="mockup-slide__overlay">
                 <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
                      alt="{{ product.title | escape }}" 
+                     width="1024"
+                     height="1024"
                      class="mockup-slide__artwork">
                 <div class="mockup-slide__frame" data-frame="none"></div>
               </div>

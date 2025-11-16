@@ -345,7 +345,9 @@ main#MainContent,
     <form method="post" action="/cart/add" id="add-to-cart-form" class="add-to-cart-form" enctype="multipart/form-data">
       <input type="hidden" name="id" id="selected-variant-id" value="{{ product.selected_or_first_available_variant.id }}">
       
+            {%- if product -%}
       {% render '247-art-lineitem-properties', product: product %}
+      {%- endif -%}
       
       <button 
         type="submit" 

@@ -5,64 +5,67 @@
 
 <link rel="stylesheet" href="{{ '247-art.css' | asset_url }}">
 
-<section class="product-section">
-  {%- comment -%} LEFT COLUMN: Image Gallery with Thumbnails {%- endcomment -%}
-  <div class="product__gallery">
-    
-    {%- comment -%} Thumbnail Column {%- endcomment -%}
-    <div class="gallery__thumbnails" id="gallery-thumbnails">
-      {%- assign thumbnail_index = 0 -%}
+{%- comment -%} Main Product Section - 2 Column Grid {%- endcomment -%}
+<section class="pn247-art-product">
+  
+  {%- comment -%} LEFT COLUMN: Image Gallery with Mockup Slides {%- endcomment -%}
+  {%- if product.featured_image -%}
+    <div class="product__media-gallery has-thumbnails">
       
-      {%- comment -%} Mockup Thumbnails (Always show these) {%- endcomment -%}
-      <button class="gallery__thumbnail {% if thumbnail_index == 0 %}active{% endif %}"
-              data-image-index="0" 
-              data-testid="thumbnail-mockup-living"
-              aria-label="Living Room Preview">
-        <img src="{{ 'mockup-living-thumb.png' | asset_url }}" alt="Living Room">
-      </button>
-      {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-      
-      <button class="gallery__thumbnail"
-              data-image-index="1"
-              data-testid="thumbnail-mockup-bedroom" 
-              aria-label="Bedroom Preview">
-        <img src="{{ 'mockup-bedroom-thumb.png' | asset_url }}" alt="Bedroom">
-      </button>
-      {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-      
-      <button class="gallery__thumbnail"
-              data-image-index="2"
-              data-testid="thumbnail-mockup-office"
-              aria-label="Office Preview">
-        <img src="{{ 'mockup-office-thumb.png' | asset_url }}" alt="Office">
-      </button>
-      {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-      
-      <button class="gallery__thumbnail"
-              data-image-index="3"
-              data-testid="thumbnail-mockup-gallery"
-              aria-label="Gallery Preview">
-        <img src="{{ 'mockup-gallery-thumb.png' | asset_url }}" alt="Gallery">
-      </button>
-      {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-      
-      {%- comment -%} Product Image Thumbnails {%- endcomment -%}
-      {%- for image in product.images -%}
-        <button class="gallery__thumbnail"
-                data-image-index="{{ thumbnail_index }}"
-                data-testid="thumbnail-product-{{ forloop.index }}"
-                aria-label="Product image {{ forloop.index }}">
-          <img src="{{ image | img_url: '120x120', crop: 'center' }}" 
-               alt="{{ image.alt | default: product.title | escape }}">
+      {%- comment -%} Thumbnail Navigation Column {%- endcomment -%}
+      <div class="gallery__thumbnails" id="gallery-thumbnails">
+        {%- assign thumbnail_index = 0 -%}
+        
+        {%- comment -%} Mockup Thumbnails {%- endcomment -%}
+        <button class="gallery__thumbnail {% if thumbnail_index == 0 %}active{% endif %}"
+                data-image-index="0" 
+                data-testid="thumbnail-mockup-living"
+                aria-label="Living Room Preview">
+          <img src="{{ 'mockup-living-thumb.png' | asset_url }}" alt="Living Room">
         </button>
         {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-      {%- endfor -%}
-    </div>
+        
+        <button class="gallery__thumbnail"
+                data-image-index="1"
+                data-testid="thumbnail-mockup-bedroom" 
+                aria-label="Bedroom Preview">
+          <img src="{{ 'mockup-bedroom-thumb.png' | asset_url }}" alt="Bedroom">
+        </button>
+        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        
+        <button class="gallery__thumbnail"
+                data-image-index="2"
+                data-testid="thumbnail-mockup-office"
+                aria-label="Office Preview">
+          <img src="{{ 'mockup-office-thumb.png' | asset_url }}" alt="Office">
+        </button>
+        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        
+        <button class="gallery__thumbnail"
+                data-image-index="3"
+                data-testid="thumbnail-mockup-gallery"
+                aria-label="Gallery Preview">
+          <img src="{{ 'mockup-gallery-thumb.png' | asset_url }}" alt="Gallery">
+        </button>
+        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        
+        {%- comment -%} Product Image Thumbnails {%- endcomment -%}
+        {%- for image in product.images -%}
+          <button class="gallery__thumbnail"
+                  data-image-index="{{ thumbnail_index }}"
+                  data-testid="thumbnail-product-{{ forloop.index }}"
+                  aria-label="Product image {{ forloop.index }}">
+            <img src="{{ image | img_url: '120x120', crop: 'center' }}" 
+                 alt="{{ image.alt | default: product.title | escape }}">
+          </button>
+          {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        {%- endfor -%}
+      </div>
 
-    {%- comment -%} Main Gallery Display {%- endcomment -%}
-    <div class="gallery__main" id="gallery-main">
-      {%- if product.featured_image -%}
-        {%- comment -%} Mockup Room Previews {%- endcomment -%}
+      {%- comment -%} Main Gallery Display Area {%- endcomment -%}
+      <div class="gallery__main" id="gallery-main">
+        
+        {%- comment -%} Mockup Room Preview Slides {%- endcomment -%}
         <div class="gallery__main-image gallery__mockup-slide active" 
              data-mockup="true" 
              data-mockup-room="living"
@@ -148,69 +151,57 @@
           >
         {%- endfor -%}
       </div>
-
-      {%- comment -%} Zoom button as sibling, positioned relative to .gallery__main {%- endcomment -%}
-      <button class="gallery__zoom-btn" id="zoom-trigger" aria-label="Zoom image">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="8" cy="8" r="6"/>
-          <line x1="13" y1="13" x2="18" y2="18"/>
-          <line x1="8" y1="5" x2="8" y2="11"/>
-          <line x1="5" y1="8" x2="11" y2="8"/>
-        </svg>
-      </button>
     </div>
-
   {%- else -%}
     <div class="product__media-placeholder">
       {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
     </div>
   {%- endif -%}
-</div>
 
-{%- comment -%} RIGHT COLUMN: Product Info + Configurator (Displate-style) {%- endcomment -%}
-<div class="product__info">
-  
-  {%- comment -%} Product Title & Artist {%- endcomment -%}
-  <div>
-    <div class="product__vendor">{{ product.vendor }}</div>
-    <h1 class="product__title">{{ product.title }}</h1>
-  </div>
-
-  {%- comment -%} Configurator inside product info {%- endcomment -%}
-  {% render '247-art-options', product: product %}
-
-  {%- comment -%} Price Display {%- endcomment -%}
-  <div class="product__price" id="product-price">
-    {{ product.selected_or_first_available_variant.price | money }}
-    {%- if product.selected_or_first_available_variant.compare_at_price > product.selected_or_first_available_variant.price -%}
-      <span class="product__price-compare">
-        {{ product.selected_or_first_available_variant.compare_at_price | money }}
-      </span>
-    {%- endif -%}
-  </div>
-
-  {%- comment -%} Add to Cart Form {%- endcomment -%}
-  <form method="post" action="/cart/add" id="add-to-cart-form" class="add-to-cart-form" enctype="multipart/form-data">
-    <input type="hidden" name="id" id="selected-variant-id" value="{{ product.selected_or_first_available_variant.id }}">
+  {%- comment -%} RIGHT COLUMN: Product Info + Configurator {%- endcomment -%}
+  <div class="product__info">
     
-    {% render '247-art-lineitem-properties' %}
-    
-    <button 
-      type="submit" 
-      class="button--add-to-cart"
-      {% unless product.available %}disabled{% endunless %}
-    >
-      {%- if product.available -%}
-        Add to Cart
-      {%- else -%}
-        Sold Out
+    {%- comment -%} Product Title & Artist {%- endcomment -%}
+    <div>
+      <div class="product__vendor">{{ product.vendor }}</div>
+      <h1 class="product__title">{{ product.title }}</h1>
+    </div>
+
+    {%- comment -%} Configurator (size, finish, frame selectors) {%- endcomment -%}
+    {% render '247-art-options', product: product %}
+
+    {%- comment -%} Price Display {%- endcomment -%}
+    <div class="product__price" id="product-price">
+      {{ product.selected_or_first_available_variant.price | money }}
+      {%- if product.selected_or_first_available_variant.compare_at_price > product.selected_or_first_available_variant.price -%}
+        <span class="product__price-compare">
+          {{ product.selected_or_first_available_variant.compare_at_price | money }}
+        </span>
       {%- endif -%}
-    </button>
-  </form>
-</div>
+    </div>
+
+    {%- comment -%} Add to Cart Form {%- endcomment -%}
+    <form method="post" action="/cart/add" id="add-to-cart-form" class="add-to-cart-form" enctype="multipart/form-data">
+      <input type="hidden" name="id" id="selected-variant-id" value="{{ product.selected_or_first_available_variant.id }}">
+      
+      {% render '247-art-lineitem-properties' %}
+      
+      <button 
+        type="submit" 
+        class="button--add-to-cart"
+        {% unless product.available %}disabled{% endunless %}
+      >
+        {%- if product.available -%}
+          Add to Cart
+        {%- else -%}
+          Sold Out
+        {%- endif -%}
+      </button>
+    </form>
+  </div>
 </section>
 
-{%- comment -%} BOTTOM SECTION: Artist Info, Trust Badges, Product Details {%- endcomment -%}
+{%- comment -%} Bottom Section: Artist Info, Badges, Details {%- endcomment -%}
 <section class="product-bottom-content">
   
   {%- if section.settings.show_artist_spotlight -%}

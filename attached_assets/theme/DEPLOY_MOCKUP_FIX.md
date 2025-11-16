@@ -1,26 +1,35 @@
-# 🚀 Deploy Mockup Overlay Fix - Step-by-Step Guide
+# 🚀 Deploy Complete Product Page Restoration - Step-by-Step Guide
 
-## ✅ **What's Fixed:**
+## ✅ **What's Been Restored:**
 
-The mockup overlay system now has the CSS it needs to work. Your JavaScript has always worked perfectly - it just had nothing to apply the scaling to!
+Complete working product page extracted from your cached browser version and restored to Replit!
 
 **Changes Made:**
-1. ✅ Added mockup overlay CSS to `247-art.css` (transform, positioning, frames)
-2. ✅ Updated mockup width to 850px in `247-art-product.liquid` (better 1440px viewport fit)
-3. ✅ Added thumbnail gallery with vertical scroll (7 thumbnails visible)
-4. ✅ Fixed vertical alignment - all columns now align at top with no buffer spacing
+1. ✅ **Complete CSS (1,487 lines)** - Full styling including configurator buttons, gallery, frames, layout grid
+2. ✅ **Complete JavaScript (756 lines)** - All interactions: frame selection, size scaling, variant switching
+3. ✅ **Column Alignment** - All columns (thumbnails, slider, configurator) align at top with proper grid layout
+4. ✅ **Configurator Buttons** - Interactive size, finish, and frame selector buttons fully styled and functional
+5. ✅ **Gallery Slider** - Vertical thumbnail column with scroll, mockup preview system
+6. ✅ **Frame Interactions** - Click frame buttons to show/hide frames on artwork in real-time
 
 ---
 
-## 📦 **Files to Upload (2 files)**
+## 📦 **Files to Upload (3 files)**
 
-### File 1: `247-art.css` (CRITICAL - contains the fix)
+### File 1: `247-art.css` (COMPLETE VERSION - 1,487 lines)
 **Shopify Location:** `Assets/247-art.css`  
-**Replit Location:** `attached_assets/theme/assets/247-art.css`
+**Replit Location:** `attached_assets/theme/assets/247-art.css`  
+**Contains:** Layout grid, gallery styles, configurator buttons, frame overlays, all interactions
 
-### File 2: `247-art-product.liquid` (width adjustment)
+### File 2: `247-art.js` (COMPLETE VERSION - 756 lines)
+**Shopify Location:** `Assets/247-art.js`  
+**Replit Location:** `attached_assets/theme/assets/247-art.js`  
+**Contains:** Frame interactions, size scaling, variant selection, gallery navigation
+
+### File 3: `247-art-product.liquid` (Layout template)
 **Shopify Location:** `Sections/247-art-product.liquid`  
-**Replit Location:** `attached_assets/theme/sections/247-art-product.liquid`
+**Replit Location:** `attached_assets/theme/sections/247-art-product.liquid`  
+**Contains:** HTML structure for 3-column layout
 
 ---
 
@@ -63,11 +72,35 @@ You're now in the Theme Code Editor!
    - Click the green **"Save"** button in top-right corner
    - Wait for "Saved" confirmation message
 
-✅ **File 1 of 2 uploaded!**
+✅ **File 1 of 3 uploaded!**
 
 ---
 
-### **Step 4: Upload Liquid Template File**
+### **Step 4: Upload JavaScript File (CRITICAL - Makes Interactions Work)**
+
+1. **In Shopify Theme Editor:**
+   - Look at the left sidebar folders
+   - Find and click the **"Assets"** folder (if not already open)
+   - Scroll down and click **"247-art.js"** to open it
+
+2. **In Replit (this project):**
+   - Navigate to: `attached_assets/theme/assets/247-art.js`
+   - Click to open the file
+   - Press **Ctrl+A** or **Cmd+A** to select all
+   - Press **Ctrl+C** or **Cmd+C** to copy
+
+3. **Back in Shopify:**
+   - Click inside the code editor
+   - Press **Ctrl+A** or **Cmd+A** to select all existing code
+   - Press **Ctrl+V** or **Cmd+V** to paste new code
+   - Click the green **"Save"** button
+   - Wait for "Saved" confirmation
+
+✅ **File 2 of 3 uploaded!**
+
+---
+
+### **Step 5: Upload Liquid Template File**
 
 1. **In Shopify Theme Editor:**
    - Look at the left sidebar folders
@@ -87,7 +120,7 @@ You're now in the Theme Code Editor!
    - Click the green **"Save"** button
    - Wait for "Saved" confirmation
 
-✅ **File 2 of 2 uploaded!**
+✅ **File 3 of 3 uploaded!**
 
 ---
 
@@ -112,7 +145,54 @@ You're now in the Theme Code Editor!
 
 ---
 
-### **Step 2: Test Size Buttons**
+### **Step 2: Verify Configurator Buttons Appear**
+
+**CRITICAL:** First check that the configurator buttons are visible and styled correctly!
+
+**Look for on the right side:**
+1. **"Choose Size" section** with interactive button grid:
+   - 8x10, 11x14, 12x16, 16x20, 18x24, 24x36
+   - Each button should have a title and subtitle
+   - Selected button should have blue border
+
+2. **"Choose Finish" section** with button grid:
+   - Paper, Canvas, Metal
+   - Each button should look clickable with hover effects
+
+3. **"Frame Options" section** with toggle buttons:
+   - No Frame, Black Frame, White Frame, Walnut Frame
+   - Should show pricing for framed options
+
+**If buttons look like plain text instead of interactive buttons:**
+- ❌ CSS file wasn't uploaded correctly → Re-upload `247-art.css`
+
+**If buttons don't exist at all:**
+- ❌ JavaScript file missing → Re-upload `247-art.js`
+- ❌ Snippet file missing → Check that `247-art-options.liquid` exists in Snippets folder
+
+---
+
+### **Step 3: Test Column Alignment**
+
+**Look at the overall page layout:**
+
+1. **Three-column structure should be visible:**
+   - Left: Vertical thumbnail gallery (120px wide)
+   - Center: Main mockup slider (~850px wide)
+   - Right: Configurator panel (300-340px wide)
+
+2. **All columns should align at the TOP:**
+   - Top edge of thumbnail gallery
+   - Top edge of mockup preview
+   - Top edge of "Choose Size" section
+   - All should be at the same horizontal line
+
+**If columns are misaligned (slider drops lower):**
+- ❌ Grid layout CSS missing → Re-upload `247-art.css`
+
+---
+
+### **Step 4: Test Size Buttons**
 
 1. **Look at the mockup preview** (room with artwork on wall)
 2. **Find size selector buttons** on the right (8x10, 11x14, 16x20, 18x24, 24x36)
@@ -122,12 +202,14 @@ You're now in the Theme Code Editor!
 - ✅ Click **"24x36"** → Artwork should **grow** smoothly to large size
 - ✅ Click **"16x20"** → Artwork should resize to medium size
 - ✅ Transition should be **smooth** (0.3 second animation)
+- ✅ Button should have blue border when selected
+- ✅ Price should update when size changes
 
 **Expected behavior:** The artwork on the wall should change size in real-time as you click different sizes.
 
 ---
 
-### **Step 3: Test Frame Selector**
+### **Step 5: Test Frame Selector**
 
 **IMPORTANT:** Frames only work on **Paper** finish!
 
@@ -144,7 +226,7 @@ You're now in the Theme Code Editor!
 
 ---
 
-### **Step 4: Test Room Switching**
+### **Step 6: Test Room Switching**
 
 1. **Look at thumbnail images** on left side (or dots below main image on mobile)
 2. **Click different room thumbnails:**
@@ -159,7 +241,7 @@ You're now in the Theme Code Editor!
 
 ---
 
-### **Step 5: Test Viewport Width**
+### **Step 7: Test Viewport Width & Column Alignment**
 
 1. **Open DevTools:** Press F12
 2. **Check page width:**

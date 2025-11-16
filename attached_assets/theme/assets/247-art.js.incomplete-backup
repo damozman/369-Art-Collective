@@ -312,9 +312,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Size scale mapping (relative visual representation)
     const sizeScales = {
-      '8x10': 0.64,
-      '11x14': 0.80,
-      '12x16': 0.85,
+      '8x10': 0.70,
+      '11x14': 0.85,
       '16x20': 1.00,
       '18x24': 1.10,
       '24x36': 1.30,
@@ -328,15 +327,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Apply scale via CSS custom property for layout-aware scaling
     mainGallery.style.setProperty('--preview-scale', scale);
-    
-    // CRITICAL: Also set --size-scale on all mockup overlays
-    // This is what the CSS actually uses: transform: scale(var(--size-scale))
-    const allOverlays = document.querySelectorAll('.mockup-slide__overlay');
-    allOverlays.forEach(overlay => {
-      overlay.style.setProperty('--size-scale', scale);
-    });
-    
-    console.log(`Size scaling updated: ${size} → scale(${scale})`);
   }
 
   // Update all mockup slide frames

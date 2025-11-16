@@ -1,0 +1,71 @@
+~/workspace$ shopify theme list --store=bvhpq0-hy.myshopify.com
+╭─ info ────────────────────────────────────────────────────────────────────────╮
+│                                                                               │
+│  name                               role                    id                │
+│  ───────────────────────────────    ──────────────────────  ──────────────    │
+│  247pn-art-starter-theme            [live]                  #179686146345     │
+│  Refresh                            [unpublished]           #179627557161     │
+│  Copy of 247pn-art-starter-theme    [unpublished]           #179864207657     │
+│  Development (05e2b0-0b30111b617a)  [development] [yours]   #179808633129     │
+│                                                                               │
+╰───────────────────────────────────────────────────────────────────────────────╯
+
+~/workspace$ shopify theme push --theme=179808633129 --store=bvhpq0-hy.myshopify.com
+╭─ warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                               │
+│  It doesn't seem like you're running this command in a theme directory.       │
+│                                                                               │
+╰───────────────────────────────────────────────────────────────────────────────╯
+
+?  Do you want to proceed?
+✔  Yes, confirm
+
+
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+Cleaning your remote theme [0%] ...
+╭─ error ───────────────────────────────────────────────────────────────────────╮
+│                                                                               │
+│  Failed to delete file "layout/theme.liquid" from remote theme.               │
+│                                                                               │
+│  Failed to delete layout/theme.liquid: -layout/theme.liquid could not be      │
+│  deleted                                                                      │
+│                                                                               │
+╰───────────────────────────────────────────────────────────────────────────────╯
+
+╭─ error ───────────────────────────────────────────────────────────────────────╮
+│                                                                               │
+│  Failed to delete file "config/settings_schema.json" from remote theme.       │
+│                                                                               │
+│  Failed to delete config/settings_schema.json: -config/settings_schema.json   │
+│  could not be deleted                                                         │
+│                                                                               │
+
+
+╭─ error ───────────────────────────────────────────────────────────────────────╮
+│                                                                               │
+│  layout/theme.liquid                                                          │
+│                                                                               │
+│  layout/theme.liquid could not be deleted                                     │
+│                                                                               │
+╰───────────────────────────────────────────────────────────────────────────────╯
+
+╭─ error ───────────────────────────────────────────────────────────────────────╮
+│                                                                               │
+│  config/settings_schema.json                                                  │
+│                                                                               │
+│  config/settings_schema.json could not be deleted                             │
+│                                                                               │
+╰───────────────────────────────────────────────────────────────────────────────╯
+
+╭─ warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                               │
+│  The theme 'Development (05e2b0-0b30111b617a)' (#179808633129) was pushed     │
+│  with errors                                                                  │
+│                                                                               │
+│  Next steps                                                                   │
+│    • View your theme [1]                                                      │
+│    • Customize your theme at the theme editor [2]                             │
+│                                                                               │
+╰───────────────────────────────────────────────────────────────────────────────╯
+[1] https://bvhpq0-hy.myshopify.com?preview_theme_id=179808633129
+[2] https://bvhpq0-hy.myshopify.com/admin/themes/179808633129/editor

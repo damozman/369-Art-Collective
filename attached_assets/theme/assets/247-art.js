@@ -346,11 +346,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Apply scale via CSS custom property for layout-aware scaling
     mainGallery.style.setProperty('--preview-scale', scale);
     
-    // CRITICAL: Also set --size-scale on all mockup overlays
-    // This is what the CSS actually uses: transform: scale(var(--size-scale))
+    // CRITICAL: Set --size-scale on all mockup overlays
+    // This is what the CSS uses: transform: scale(var(--size-scale))
     const allOverlays = document.querySelectorAll('.mockup-slide__overlay');
     allOverlays.forEach(overlay => {
       overlay.style.setProperty('--size-scale', scale);
+    });
+    
+    // CRITICAL: Also set --product-scale on pure product images (first thumbnail)
+    // This ensures artwork appears same size across ALL thumbnails
+    const allProductImages = document.querySelectorAll('.gallery__main-image:not([data-mockup="true"])');
+    allProductImages.forEach(img => {
+      img.style.setProperty('--product-scale', scale);
     });
     
     console.log(`Size scaling updated: ${size} → scale(${scale})`);

@@ -1,0 +1,289 @@
+{%- comment -%} 
+  247 Print Network - Product Page Template
+  Displate-inspired layout with interactive mockups
+{%- endcomment -%}
+
+<link rel="stylesheet" href="{{ '247-art.css' | asset_url }}">
+
+{%- comment -%} Main Product Section - 2 Column Grid {%- endcomment -%}
+<section class="pn247-art-product">
+  
+  {%- comment -%} LEFT COLUMN: Image Gallery with Mockup Slides {%- endcomment -%}
+  {%- if product.featured_image -%}
+    <div class="product__media-gallery has-thumbnails">
+      
+      {%- comment -%} Thumbnail Navigation Column {%- endcomment -%}
+      <div class="gallery__thumbnails" id="gallery-thumbnails">
+        {%- assign thumbnail_index = 0 -%}
+        
+        {%- comment -%} SPACE 1: Pure Product Image (No Mockup) {%- endcomment -%}
+        {%- if product.featured_image -%}
+          <button class="gallery__thumbnail active"
+                  data-image-index="0"
+                  data-testid="thumbnail-product-main"
+                  aria-label="Product Artwork">
+            <img src="{{ product.featured_image | img_url: '120x120', crop: 'center' }}" 
+                 alt="{{ product.title | escape }}">
+          </button>
+          {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        {%- endif -%}
+        
+        {%- comment -%} SPACES 2-5: Mockup Room Thumbnails {%- endcomment -%}
+        <button class="gallery__thumbnail"
+                data-image-index="1" 
+                data-testid="thumbnail-mockup-living"
+                aria-label="Living Room Preview">
+          <img src="{{ 'mockup-living-thumb.png' | asset_url }}" alt="Living Room">
+        </button>
+        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        
+        <button class="gallery__thumbnail"
+                data-image-index="2"
+                data-testid="thumbnail-mockup-bedroom" 
+                aria-label="Bedroom Preview">
+          <img src="{{ 'mockup-bedroom-thumb.png' | asset_url }}" alt="Bedroom">
+        </button>
+        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        
+        <button class="gallery__thumbnail"
+                data-image-index="3"
+                data-testid="thumbnail-mockup-office"
+                aria-label="Office Preview">
+          <img src="{{ 'mockup-office-thumb.png' | asset_url }}" alt="Office">
+        </button>
+        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        
+        <button class="gallery__thumbnail"
+                data-image-index="4"
+                data-testid="thumbnail-mockup-gallery"
+                aria-label="Gallery Preview">
+          <img src="{{ 'mockup-gallery-thumb.png' | asset_url }}" alt="Gallery">
+        </button>
+      </div>
+
+      {%- comment -%} Main Gallery Display Area {%- endcomment -%}
+      <div class="gallery__main" id="gallery-main">
+        <div class="gallery__main-wrapper">
+        
+        {%- comment -%} SLIDE 1: Pure Product Image (No Mockup) {%- endcomment -%}
+        {%- if product.featured_image -%}
+          <img 
+            src="{{ product.featured_image | img_url: '1024x1024' }}" 
+            alt="{{ product.title | escape }}"
+            width="1024"
+            height="1024"
+            loading="eager"
+            class="gallery__main-image active"
+            data-image-id="{{ product.featured_image.id }}"
+            data-image-index="0"
+            data-testid="main-image-product"
+          >
+        {%- endif -%}
+        
+        {%- comment -%} SLIDES 2-5: Mockup Room Preview Slides {%- endcomment -%}
+        <div class="gallery__main-image gallery__mockup-slide" 
+             data-mockup="true" 
+             data-mockup-room="living-room"
+             data-image-index="1">
+          <div class="mockup-slide__container">
+            <img src="{{ 'mockup-living.png' | asset_url }}" 
+                 alt="Living Room Preview" 
+                 class="mockup-slide__background">
+            <div class="mockup-slide__overlay">
+              <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
+                   alt="{{ product.title | escape }}" 
+                   class="mockup-slide__artwork">
+              <div class="mockup-slide__frame" data-frame="none"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="gallery__main-image gallery__mockup-slide" 
+             data-mockup="true" 
+             data-mockup-room="bedroom"
+             data-image-index="2">
+          <div class="mockup-slide__container">
+            <img src="{{ 'mockup-bedroom.png' | asset_url }}" 
+                 alt="Bedroom Preview" 
+                 class="mockup-slide__background">
+            <div class="mockup-slide__overlay">
+              <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
+                   alt="{{ product.title | escape }}" 
+                   class="mockup-slide__artwork">
+              <div class="mockup-slide__frame" data-frame="none"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="gallery__main-image gallery__mockup-slide" 
+             data-mockup="true" 
+             data-mockup-room="office"
+             data-image-index="3">
+          <div class="mockup-slide__container">
+            <img src="{{ 'mockup-office.png' | asset_url }}" 
+                 alt="Professional Office Preview" 
+                 class="mockup-slide__background">
+            <div class="mockup-slide__overlay">
+              <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
+                   alt="{{ product.title | escape }}" 
+                   class="mockup-slide__artwork">
+              <div class="mockup-slide__frame" data-frame="none"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="gallery__main-image gallery__mockup-slide" 
+             data-mockup="true" 
+             data-mockup-room="gallery"
+             data-image-index="4">
+          <div class="mockup-slide__container">
+            <img src="{{ 'mockup-gallery.png' | asset_url }}" 
+                 alt="Art Gallery Preview" 
+                 class="mockup-slide__background">
+            <div class="mockup-slide__overlay">
+              <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
+                   alt="{{ product.title | escape }}" 
+                   class="mockup-slide__artwork">
+              <div class="mockup-slide__frame" data-frame="none"></div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  {%- else -%}
+    <div class="product__media-placeholder">
+      {{ 'product-1' | placeholder_svg_tag: 'placeholder-svg' }}
+    </div>
+  {%- endif -%}
+
+  {%- comment -%} RIGHT COLUMN: Product Info + Configurator {%- endcomment -%}
+  <div class="product__info">
+    
+    {%- comment -%} Product Title & Artist {%- endcomment -%}
+    <div>
+      <div class="product__vendor">{{ product.vendor }}</div>
+      <h1 class="product__title">{{ product.title }}</h1>
+    </div>
+
+    {%- comment -%} Configurator (size, finish, frame selectors) {%- endcomment -%}
+    {% render '247-art-options', product: product %}
+
+    {%- comment -%} Price Display {%- endcomment -%}
+    <div class="product__price" id="product-price">
+      {{ product.selected_or_first_available_variant.price | money }}
+      {%- if product.selected_or_first_available_variant.compare_at_price > product.selected_or_first_available_variant.price -%}
+        <span class="product__price-compare">
+          {{ product.selected_or_first_available_variant.compare_at_price | money }}
+        </span>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} Add to Cart Form {%- endcomment -%}
+    <form method="post" action="/cart/add" id="add-to-cart-form" class="add-to-cart-form" enctype="multipart/form-data">
+      <input type="hidden" name="id" id="selected-variant-id" value="{{ product.selected_or_first_available_variant.id }}">
+      
+      {% render '247-art-lineitem-properties' %}
+      
+      <button 
+        type="submit" 
+        class="button--add-to-cart"
+        {% unless product.available %}disabled{% endunless %}
+      >
+        {%- if product.available -%}
+          Add to Cart
+        {%- else -%}
+          Sold Out
+        {%- endif -%}
+      </button>
+    </form>
+  </div>
+</section>
+
+{%- comment -%} Bottom Section: Artist Info, Badges, Details {%- endcomment -%}
+<section class="product-bottom-content">
+  
+  {%- if section.settings.show_artist_spotlight -%}
+    <div class="artist-spotlight">
+      <h2>About the Artist</h2>
+      <div class="artist-spotlight__content">
+        <div class="artist-spotlight__avatar">
+          {% if product.vendor %}
+            <img src="{{ product.vendor | placeholder_svg_tag: 'placeholder-svg' }}" alt="{{ product.vendor }}">
+          {% endif %}
+        </div>
+        <div class="artist-spotlight__bio">
+          <h3>{{ product.vendor }}</h3>
+          <p>{{ product.metafields.custom.artist_bio | default: "Explore more artwork from this talented creator." }}</p>
+        </div>
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- if section.settings.show_trust_badges -%}
+    <div class="trust-badges">
+      <div class="trust-badge">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7v6c0 5.5 3.8 10.7 10 12 6.2-1.3 10-6.5 10-12V7l-10-5z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        <span>Secure Checkout</span>
+      </div>
+      <div class="trust-badge">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+        <span>Fast Shipping</span>
+      </div>
+      <div class="trust-badge">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12h18M3 6h18M3 18h18"/>
+        </svg>
+        <span>Quality Guaranteed</span>
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- if section.settings.show_product_details -%}
+    <div class="product-details">
+      <h2>Product Details</h2>
+      <div class="product-description">
+        {{ product.description }}
+      </div>
+    </div>
+  {%- endif -%}
+
+</section>
+
+<script>
+  window.product = {{ product | json }};
+</script>
+
+<script src="{{ '247-art.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "247 Art Product",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_artist_spotlight",
+      "label": "Show Artist Spotlight",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_trust_badges",
+      "label": "Show Trust Badges",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_product_details",
+      "label": "Show Product Details",
+      "default": true
+    }
+  ]
+}
+{% endschema %}

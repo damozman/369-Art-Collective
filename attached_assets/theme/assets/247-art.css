@@ -298,11 +298,10 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   align-items: center;
   justify-content: center;
   max-width: calc(5 * 70px + 4 * 0.75rem); /* 5 thumbnails + gaps */
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: visible; /* Allow scaled thumbnails to be fully visible */
   scrollbar-width: none; /* Hide scrollbar for Firefox */
   scroll-behavior: smooth;
-  padding: 0 1rem;
+  padding: 0.75rem 1rem; /* Add vertical padding for scaled thumbnails */
   z-index: 50; /* Above main viewer content */
 }
 
@@ -316,9 +315,9 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   width: 70px;
   height: 70px;
   flex-shrink: 0;
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  border: 2px solid #d1d5db; /* Medium grey border - contrasts with white images */
   border-radius: 6px; /* Softer rounded corners */
-  overflow: hidden;
+  overflow: visible; /* Allow borders to show when scaled */
   cursor: pointer;
   background: #fff;
   padding: 0;
@@ -334,6 +333,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 4px; /* Match parent rounding minus border width */
 }
 
 .gallery__thumbnail:hover {
@@ -359,7 +359,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
     0 0 0 3px rgba(44, 95, 141, 0.15),
     0 8px 24px rgba(44, 95, 141, 0.25),
     0 4px 8px rgba(44, 95, 141, 0.15);
-  z-index: 10; /* Ensure active thumbnail sits above others */
+  z-index: 100; /* Ensure active thumbnail sits fully above siblings and container */
 }
 
 /* ===== LIGHTBOX ZOOM MODAL ===== */

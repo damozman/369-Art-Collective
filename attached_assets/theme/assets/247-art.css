@@ -176,11 +176,9 @@ section.pn247-art-product .product__media-gallery {
   width: 100% !important;
   height: auto !important;
   z-index: 1 !important;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.25rem;
+  display: block; /* Changed from grid - thumbnails now overlay */
   padding: 0 !important;
-  margin: 0 !important;
+  margin: 0 0 35px 0 !important; /* Add bottom margin for thumbnails hanging below */
   align-items: start !important;
 }
 
@@ -191,11 +189,9 @@ section.pn247-art-product .product__media-gallery > * {
   padding-top: 0 !important;
 }
 
-/* Only add thumbnail column when multiple images exist */
+/* Remove old two-column layout - thumbnails now overlay */
 section.pn247-art-product .product__media-gallery.has-thumbnails {
-  grid-template-columns: 70px 1fr;
-  align-items: center !important;
-  gap: 0.5rem;
+  display: block;
 }
 
 /* Remove sticky behavior - user prefers natural scroll */
@@ -205,26 +201,18 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   }
 }
 
-/* Main image viewer - spans full width by default */
+/* Main image viewer - full width, thumbnails overlay at bottom */
 .gallery__main {
-  grid-column: 1;
-  grid-row: 1;
   position: relative;
   width: 100%;
   border-radius: 0;
-  overflow: hidden;
+  overflow: visible; /* Changed to allow thumbnails to extend beyond */
   background: transparent;
   padding: 0 !important;
   margin: 0 !important;
-  align-self: start !important;
   /* Support for preview scaling via CSS custom property */
   --preview-scale: 1;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* When thumbnails exist, main image takes column 2 */
-.product__media-gallery.has-thumbnails .gallery__main {
-  grid-column: 2;
 }
 
 .gallery__main-wrapper {
@@ -298,61 +286,24 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   outline-offset: 2px;
 }
 
-/* Thumbnail navigation container with scroll buttons */
-.gallery__thumbnails-container {
-  grid-column: 1;
-  grid-row: 1;
+/* Thumbnail navigation - Horizontal filmstrip overlaid at bottom */
+.gallery__thumbnails {
+  position: absolute;
+  bottom: -35px; /* 50% inside viewer, 50% hanging below (half of 70px height) */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  align-self: center;
-  gap: 0.4rem;
-  width: 70px;
-}
-
-/* Scroll buttons */
-.gallery__scroll-btn {
-  width: 70px;
-  height: 32px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  display: flex;
+  flex-direction: row; /* Horizontal filmstrip */
+  gap: 0.75rem;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.gallery__scroll-btn:hover {
-  background: #fff;
-  color: #2c5f8d;
-  border-color: #2c5f8d;
-  box-shadow: 0 2px 8px rgba(44, 95, 141, 0.15);
-}
-
-.gallery__scroll-btn:active {
-  transform: scale(0.95);
-}
-
-.gallery__scroll-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-/* Thumbnail navigation - Vertical left column (Displate-style) */
-.gallery__thumbnails {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 70px;
-  max-height: 480px; /* 6 thumbnails (70px each) + 5 gaps (0.5rem each) */
-  overflow-y: auto;
-  overflow-x: hidden;
+  max-width: calc(5 * 70px + 4 * 0.75rem); /* 5 thumbnails + gaps */
+  overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none; /* Hide scrollbar for Firefox */
   scroll-behavior: smooth;
+  padding: 0 1rem;
+  z-index: 50; /* Above main viewer content */
 }
 
 /* Hide scrollbar for Chrome/Safari */
@@ -365,13 +316,17 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   width: 70px;
   height: 70px;
   flex-shrink: 0;
-  border: 2px solid transparent;
-  border-radius: 4px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 6px; /* Softer rounded corners */
   overflow: hidden;
   cursor: pointer;
-  background: #f7f8f9;
+  background: #fff;
   padding: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    0 2px 4px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
 }
 
 .gallery__thumbnail img {
@@ -383,8 +338,10 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 
 .gallery__thumbnail:hover {
   border-color: #2c5f8d;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(44, 95, 141, 0.15);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 
+    0 6px 16px rgba(44, 95, 141, 0.2),
+    0 3px 6px rgba(44, 95, 141, 0.15);
 }
 
 .gallery__thumbnail:focus-visible {
@@ -393,9 +350,16 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   border-color: #2c5f8d;
 }
 
+/* Active thumbnail - scaled up to 1.2x (84px) */
 .gallery__thumbnail.active {
   border-color: #2c5f8d;
-  box-shadow: 0 0 0 3px rgba(44, 95, 141, 0.15);
+  border-width: 3px;
+  transform: scale(1.2);
+  box-shadow: 
+    0 0 0 3px rgba(44, 95, 141, 0.15),
+    0 8px 24px rgba(44, 95, 141, 0.25),
+    0 4px 8px rgba(44, 95, 141, 0.15);
+  z-index: 10; /* Ensure active thumbnail sits above others */
 }
 
 /* ===== LIGHTBOX ZOOM MODAL ===== */
@@ -557,25 +521,26 @@ section.product-bottom-content {
 
 @media (max-width: 900px) {
   section.pn247-art-product .product__media-gallery {
-    grid-template-columns: 1fr !important;
+    margin-bottom: 0 !important; /* Remove margin on mobile */
   }
   
+  /* On mobile, position thumbnails below viewer instead of overlay */
   .gallery__thumbnails {
-    grid-column: 1;
-    grid-row: 2;
+    position: relative; /* No longer absolute */
+    bottom: auto;
+    left: auto;
+    transform: none;
     flex-direction: row;
     width: 100%;
+    max-width: 100%;
+    margin-top: 1rem; /* Space above thumbnails */
+    justify-content: flex-start;
     overflow-x: auto;
+    padding: 0.5rem;
   }
   
   .gallery__main {
-    grid-column: 1 !important;
-    grid-row: 1;
-  }
-  
-  /* Override desktop thumbnail positioning on mobile */
-  .product__media-gallery.has-thumbnails .gallery__main {
-    grid-column: 1 !important;
+    overflow: hidden; /* No overflow on mobile */
   }
   
   section.pn247-art-product .product__info {

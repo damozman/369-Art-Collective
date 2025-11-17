@@ -141,12 +141,12 @@ section.pn247-art-product {
   /* Reset any base theme positioning */
   position: relative !important;
   display: grid !important;
-  grid-template-columns: minmax(0, 1.6fr) minmax(240px, 280px) !important;
+  grid-template-columns: minmax(0, 1.5fr) minmax(240px, 280px) !important;
   grid-template-rows: auto !important;
-  gap: 1.25rem !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 2rem 0.5rem 0.5rem 0.5rem !important; /* Reduced left padding, balanced right */
+  gap: 1.5rem !important;
+  max-width: 1320px !important; /* Constrain width to fit within green boundary lines */
+  margin: 0 auto !important; /* Center the section */
+  padding: 2rem 1.5rem 0.5rem !important; /* Balanced padding for green line alignment */
   
   /* Prevent base theme interference */
   width: 100% !important;

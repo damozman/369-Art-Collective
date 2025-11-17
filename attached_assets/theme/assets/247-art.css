@@ -51,8 +51,11 @@ body.template-product .shopify-section:first-child {
   transform: translate(-50%, -50%) scale(var(--size-scale, 1.0));
   transform-origin: center center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  width: var(--base-width, 400px);
-  aspect-ratio: var(--artwork-ratio, 1);
+  /* Let overlay collapse to artwork's actual dimensions */
+  display: inline-flex;
+  width: fit-content;
+  height: fit-content;
+  max-width: var(--base-width, 400px);
   z-index: 10;
   /* Clip frame to artwork boundaries on all sides */
   overflow: hidden;
@@ -60,11 +63,11 @@ body.template-product .shopify-section:first-child {
 }
 
 .mockup-slide__artwork {
-  width: 100%;
-  height: 100%;
+  max-width: var(--base-width, 400px);
+  height: auto;
   object-fit: contain;
   display: block;
-  border-radius: 4px;
+  border-radius: 0;
   position: relative;
   z-index: 10;
 }

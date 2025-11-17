@@ -54,6 +54,9 @@ body.template-product .shopify-section:first-child {
   width: var(--base-width, 400px);
   aspect-ratio: var(--artwork-ratio, 1);
   z-index: 10;
+  /* Clip frame to artwork boundaries on all sides */
+  overflow: hidden;
+  border-radius: 4px;
 }
 
 .mockup-slide__artwork {

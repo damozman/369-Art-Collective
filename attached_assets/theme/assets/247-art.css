@@ -246,10 +246,9 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   border-radius: 0;
 }
 
-/* Scale down pure product image to match mockup artwork size */
+/* Thumbnail 1: Pure product image at full size - ignore all transforms */
 .gallery__main-image:not([data-mockup]) {
-  transform: scale(0.26);
-  transform-origin: center center;
+  transform: none !important;
 }
 
 .gallery__main-image.active {

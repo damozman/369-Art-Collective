@@ -16,15 +16,16 @@ const SIZE_SCALE_FACTORS = {
   '24x36': 0.864  // 43.27" diagonal (largest) - was 2.16
 };
 
-// Background zoom factors - Displate-style perspective adjustment
-// Small prints zoom IN (closer view), large prints zoom OUT (wider room view)
-const BACKGROUND_ZOOM_FACTORS = {
-  '8x10': 1.25,   // Zoom in closest - small print needs close perspective
-  '11x14': 1.15,  // Zoom in moderately
-  '12x16': 1.05,  // Slight zoom in
-  '16x20': 0.98,  // Nearly neutral
-  '18x24': 0.90,  // Zoom out moderately
-  '24x36': 0.82   // Zoom out most - large print needs room context
+// Panoramic mockup pan positions - Cinematic camera movement
+// Small prints pan LEFT (intimate zones), large prints pan RIGHT (expansive zones)
+// Format: { translateX, translateY, scale }
+const MOCKUP_PAN_POSITIONS = {
+  '8x10': { x: '-28%', y: '0%', scale: 1.15 },   // Left zone - table/desk, zoom in
+  '11x14': { x: '-20%', y: '0%', scale: 1.10 },  // Left-center, zoom in
+  '12x16': { x: '-5%', y: '0%', scale: 1.02 },   // Slight left, nearly neutral
+  '16x20': { x: '5%', y: '0%', scale: 0.98 },    // Slight right, nearly neutral
+  '18x24': { x: '22%', y: '0%', scale: 0.88 },   // Right zone - main wall, zoom out
+  '24x36': { x: '30%', y: '0%', scale: 0.82 }    // Far right - expansive view, zoom out
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -668,15 +669,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const size = sizeMatch[1];
     const scaleFactor = SIZE_SCALE_FACTORS[size] || SIZE_SCALE_FACTORS['8x10'] || 0.256;
-    const bgZoomFactor = BACKGROUND_ZOOM_FACTORS[size] || BACKGROUND_ZOOM_FACTORS['8x10'] || 1.25;
+    const panPosition = MOCKUP_PAN_POSITIONS[size] || MOCKUP_PAN_POSITIONS['8x10'];
 
-    console.log('Applying size scale:', size, '→', scaleFactor, 'with background zoom:', bgZoomFactor);
+    console.log('Applying size scale:', size, '→', scaleFactor, 'with pan position:', panPosition);
     currentSizeScale = scaleFactor;
     
-    // Apply background zoom to all mockup backgrounds (Displate-style perspective)
+    // Apply cinematic pan + zoom to all mockup backgrounds
     const allBackgrounds = document.querySelectorAll('.mockup-slide__background');
     allBackgrounds.forEach(bg => {
-      bg.style.setProperty('--bg-zoom-scale', bgZoomFactor);
+      bg.style.setProperty('--bg-pan-x', panPosition.x);
+      bg.style.setProperty('--bg-pan-y', panPosition.y);
+      bg.style.setProperty('--bg-zoom-scale', panPosition.scale);
     });
     
     // Reposition overlay with new scale (aspect ratio is set from actual artwork in updateMockupOverlay)
@@ -762,13 +765,15 @@ document.addEventListener('DOMContentLoaded', function() {
   } else {
     // Default to 8x10 (smallest size) for initial display
     const defaultSize = '8x10';
-    currentSizeScale = SIZE_SCALE_FACTORS[defaultSize] || 0.256; // Updated to match new reduced scale
+    currentSizeScale = SIZE_SCALE_FACTORS[defaultSize] || 0.256;
+    const panPosition = MOCKUP_PAN_POSITIONS[defaultSize];
     
-    // Also set initial background zoom
-    const bgZoomFactor = BACKGROUND_ZOOM_FACTORS[defaultSize] || 1.25;
+    // Set initial pan position and zoom
     const allBackgrounds = document.querySelectorAll('.mockup-slide__background');
     allBackgrounds.forEach(bg => {
-      bg.style.setProperty('--bg-zoom-scale', bgZoomFactor);
+      bg.style.setProperty('--bg-pan-x', panPosition.x);
+      bg.style.setProperty('--bg-pan-y', panPosition.y);
+      bg.style.setProperty('--bg-zoom-scale', panPosition.scale);
     });
     
     // Aspect ratio will be set from actual artwork in updateMockupOverlay

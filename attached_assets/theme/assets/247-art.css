@@ -145,9 +145,9 @@ section.pn247-art-product {
   /* Reset any base theme positioning */
   position: relative !important;
   display: grid !important;
-  grid-template-columns: minmax(0, 2fr) minmax(240px, 280px) !important;
+  grid-template-columns: 1fr 260px !important;
   grid-template-rows: auto !important;
-  gap: 0.2rem !important;
+  gap: 0.5rem !important;
   max-width: 1600px !important; /* Increased from 1320px to make gallery viewer bigger */
   margin: 0 auto !important; /* Center the section */
   padding: 2rem 1.5rem 0.5rem !important; /* Balanced padding for green line alignment */

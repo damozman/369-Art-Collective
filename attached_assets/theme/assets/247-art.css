@@ -54,9 +54,6 @@ body.template-product .shopify-section:first-child {
   width: var(--base-width, 400px);
   aspect-ratio: var(--artwork-ratio, 1);
   z-index: 10;
-  /* Clip artwork to container boundaries so frame edges stick to all sides */
-  overflow: hidden;
-  border-radius: 4px;
 }
 
 .mockup-slide__artwork {
@@ -64,7 +61,7 @@ body.template-product .shopify-section:first-child {
   height: 100%;
   object-fit: contain;
   display: block;
-  border-radius: 0;
+  border-radius: 4px;
   position: relative;
   z-index: 10;
 }

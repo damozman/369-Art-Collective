@@ -487,8 +487,8 @@ document.addEventListener('DOMContentLoaded', function() {
       overlay_y: '42%',  // Wall center
       overlay_x_mobile: '50%',
       overlay_y_mobile: '42%',
-      base_width: '28%',  // Percentage of rendered image width
-      base_width_mobile: '35%'
+      base_width: '26%',  // Match bedroom/office/gallery
+      base_width_mobile: '32%'
     },
     {
       id: 'bedroom',

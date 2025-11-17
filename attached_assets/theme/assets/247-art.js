@@ -16,16 +16,17 @@ const SIZE_SCALE_FACTORS = {
   '24x36': 0.864  // 43.27" diagonal (largest) - was 2.16
 };
 
-// Panoramic mockup pan positions - Cinematic camera movement
-// Small prints pan LEFT (intimate zones), large prints pan RIGHT (expansive zones)
+// Panoramic mockup pan positions - Strategic placement by print size
+// Small prints (8x10, 11x14) → LEFT to surfaces (tables, desks) - zoom IN for intimacy
+// Large prints (16x20, 18x24, 24x36) → CENTER/RIGHT to walls - zoom OUT for context
 // Format: { translateX, translateY, scale }
 const MOCKUP_PAN_POSITIONS = {
-  '8x10': { x: '-28%', y: '0%', scale: 1.15 },   // Left zone - table/desk, zoom in
-  '11x14': { x: '-20%', y: '0%', scale: 1.10 },  // Left-center, zoom in
-  '12x16': { x: '-5%', y: '0%', scale: 1.02 },   // Slight left, nearly neutral
-  '16x20': { x: '5%', y: '0%', scale: 0.98 },    // Slight right, nearly neutral
-  '18x24': { x: '22%', y: '0%', scale: 0.88 },   // Right zone - main wall, zoom out
-  '24x36': { x: '30%', y: '0%', scale: 0.82 }    // Far right - expansive view, zoom out
+  '8x10': { x: '-38%', y: '0%', scale: 1.35 },   // Far left - coffee table surface, close zoom
+  '11x14': { x: '-25%', y: '0%', scale: 1.2 },   // Left - table zone, moderate zoom
+  '12x16': { x: '-8%', y: '0%', scale: 1.05 },   // Slight left - transitional
+  '16x20': { x: '0%', y: '0%', scale: 0.95 },    // Centered - main wall, neutral
+  '18x24': { x: '8%', y: '0%', scale: 0.85 },    // Slight right - wall with context
+  '24x36': { x: '15%', y: '0%', scale: 0.75 }    // Right - expansive wall view
 };
 
 document.addEventListener('DOMContentLoaded', () => {

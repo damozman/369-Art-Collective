@@ -17,16 +17,17 @@ const SIZE_SCALE_FACTORS = {
 };
 
 // Panoramic mockup pan positions - Strategic placement by print size
-// Small prints (8x10, 11x14) → LEFT to surfaces (tables, desks) - zoom IN for intimacy
-// Large prints (16x20, 18x24, 24x36) → CENTER/RIGHT to walls - zoom OUT for context
+// ANCHOR: 24x36 centered on white wall (gallery height) with room context
+// Small prints → LEFT to surfaces (tables, desks) with ZOOM IN for intimate detail
+// Large prints → CENTERED on walls with ZOOM OUT for gallery context
 // Format: { translateX, translateY, scale }
 const MOCKUP_PAN_POSITIONS = {
-  '8x10': { x: '-38%', y: '0%', scale: 1.35 },   // Far left - coffee table surface, close zoom
-  '11x14': { x: '-25%', y: '0%', scale: 1.2 },   // Left - table zone, moderate zoom
-  '12x16': { x: '-8%', y: '0%', scale: 1.05 },   // Slight left - transitional
-  '16x20': { x: '0%', y: '0%', scale: 0.95 },    // Centered - main wall, neutral
-  '18x24': { x: '8%', y: '0%', scale: 0.85 },    // Slight right - wall with context
-  '24x36': { x: '15%', y: '0%', scale: 0.75 }    // Right - expansive wall view
+  '8x10': { x: '-42%', y: '0%', scale: 1.4 },    // Far left - coffee table close-up (candle, wreath)
+  '11x14': { x: '-28%', y: '0%', scale: 1.25 },  // Left - table zone with moderate detail
+  '12x16': { x: '-15%', y: '0%', scale: 1.1 },   // Left-center - transitional
+  '16x20': { x: '-8%', y: '0%', scale: 0.95 },   // Slight left - wall placement begins
+  '18x24': { x: '-5%', y: '0%', scale: 0.85 },   // Near center - wall with context
+  '24x36': { x: '-5%', y: '0%', scale: 0.75 }    // ANCHOR - white wall centered, wide gallery view
 };
 
 document.addEventListener('DOMContentLoaded', () => {

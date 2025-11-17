@@ -74,35 +74,21 @@ async function deployArtFix(): Promise<void> {
   const results: DeploymentResult[] = [];
   const themeDir = path.join(process.cwd(), 'attached_assets', 'theme');
 
-  // Step 1: Fix and upload product.art.json template
-  console.log('📝 Step 1: Fixing broken product template...\n');
+  // Step 1: Upload product.art.json template as-is (no modifications)
+  console.log('📝 Step 1: Uploading product template...\n');
   
   try {
     const templatePath = path.join(themeDir, 'templates', 'product.art.json');
     const templateContent = fs.readFileSync(templatePath, 'utf-8');
-    const template = JSON.parse(templateContent);
     
-    // Fix the bug: Change "product_page" to "main"
-    if (template.sections && template.sections.product_page) {
-      console.log('🔧 Fixing section key: "product_page" → "main"');
-      template.sections.main = template.sections.product_page;
-      delete template.sections.product_page;
-      
-      // Update order array if it exists
-      if (Array.isArray(template.order)) {
-        template.order = template.order.map((id: string) => id === 'product_page' ? 'main' : id);
-      }
-    }
-    
-    const fixedTemplate = JSON.stringify(template, null, 2);
-    const success = await uploadAsset(LIVE_THEME_ID, 'templates/product.art.json', fixedTemplate);
+    const success = await uploadAsset(LIVE_THEME_ID, 'templates/product.art.json', templateContent);
     results.push({ file: 'templates/product.art.json', success });
     
     if (success) {
-      console.log('✨ Product template fixed and deployed!\n');
+      console.log('✨ Product template deployed!\n');
     }
   } catch (error) {
-    console.error('❌ Failed to fix template:', error);
+    console.error('❌ Failed to upload template:', error);
     results.push({ file: 'templates/product.art.json', success: false, error: String(error) });
   }
 

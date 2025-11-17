@@ -16,6 +16,17 @@ const SIZE_SCALE_FACTORS = {
   '24x36': 0.864  // 43.27" diagonal (largest) - was 2.16
 };
 
+// Background zoom factors - Displate-style perspective adjustment
+// Small prints zoom IN (closer view), large prints zoom OUT (wider room view)
+const BACKGROUND_ZOOM_FACTORS = {
+  '8x10': 1.25,   // Zoom in closest - small print needs close perspective
+  '11x14': 1.15,  // Zoom in moderately
+  '12x16': 1.05,  // Slight zoom in
+  '16x20': 0.98,  // Nearly neutral
+  '18x24': 0.90,  // Zoom out moderately
+  '24x36': 0.82   // Zoom out most - large print needs room context
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   // ===== IMAGE GALLERY SYSTEM =====
   const mainImages = document.querySelectorAll('.gallery__main-image');
@@ -657,9 +668,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const size = sizeMatch[1];
     const scaleFactor = SIZE_SCALE_FACTORS[size] || SIZE_SCALE_FACTORS['8x10'] || 0.256;
+    const bgZoomFactor = BACKGROUND_ZOOM_FACTORS[size] || BACKGROUND_ZOOM_FACTORS['8x10'] || 1.25;
 
-    console.log('Applying size scale:', size, '→', scaleFactor);
+    console.log('Applying size scale:', size, '→', scaleFactor, 'with background zoom:', bgZoomFactor);
     currentSizeScale = scaleFactor;
+    
+    // Apply background zoom to all mockup backgrounds (Displate-style perspective)
+    const allBackgrounds = document.querySelectorAll('.mockup-slide__background');
+    allBackgrounds.forEach(bg => {
+      bg.style.setProperty('--bg-zoom-scale', bgZoomFactor);
+    });
     
     // Reposition overlay with new scale (aspect ratio is set from actual artwork in updateMockupOverlay)
     updateMockupOverlay();
@@ -745,6 +763,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Default to 8x10 (smallest size) for initial display
     const defaultSize = '8x10';
     currentSizeScale = SIZE_SCALE_FACTORS[defaultSize] || 0.256; // Updated to match new reduced scale
+    
+    // Also set initial background zoom
+    const bgZoomFactor = BACKGROUND_ZOOM_FACTORS[defaultSize] || 1.25;
+    const allBackgrounds = document.querySelectorAll('.mockup-slide__background');
+    allBackgrounds.forEach(bg => {
+      bg.style.setProperty('--bg-zoom-scale', bgZoomFactor);
+    });
+    
     // Aspect ratio will be set from actual artwork in updateMockupOverlay
   }
 

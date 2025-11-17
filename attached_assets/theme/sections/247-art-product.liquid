@@ -16,9 +16,21 @@
       <div class="gallery__thumbnails" id="gallery-thumbnails">
         {%- assign thumbnail_index = 0 -%}
         
-        {%- comment -%} Mockup Thumbnails {%- endcomment -%}
-        <button class="gallery__thumbnail {% if thumbnail_index == 0 %}active{% endif %}"
-                data-image-index="0" 
+        {%- comment -%} SPACE 1: Pure Product Image (No Mockup) {%- endcomment -%}
+        {%- if product.featured_image -%}
+          <button class="gallery__thumbnail active"
+                  data-image-index="0"
+                  data-testid="thumbnail-product-main"
+                  aria-label="Product Artwork">
+            <img src="{{ product.featured_image | img_url: '120x120', crop: 'center' }}" 
+                 alt="{{ product.title | escape }}">
+          </button>
+          {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        {%- endif -%}
+        
+        {%- comment -%} SPACES 2-5: Mockup Room Thumbnails {%- endcomment -%}
+        <button class="gallery__thumbnail"
+                data-image-index="1" 
                 data-testid="thumbnail-mockup-living"
                 aria-label="Living Room Preview">
           <img src="{{ 'mockup-living-thumb.png' | asset_url }}" alt="Living Room">
@@ -26,7 +38,7 @@
         {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
         
         <button class="gallery__thumbnail"
-                data-image-index="1"
+                data-image-index="2"
                 data-testid="thumbnail-mockup-bedroom" 
                 aria-label="Bedroom Preview">
           <img src="{{ 'mockup-bedroom-thumb.png' | asset_url }}" alt="Bedroom">
@@ -34,7 +46,7 @@
         {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
         
         <button class="gallery__thumbnail"
-                data-image-index="2"
+                data-image-index="3"
                 data-testid="thumbnail-mockup-office"
                 aria-label="Office Preview">
           <img src="{{ 'mockup-office-thumb.png' | asset_url }}" alt="Office">
@@ -42,23 +54,25 @@
         {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
         
         <button class="gallery__thumbnail"
-                data-image-index="3"
+                data-image-index="4"
                 data-testid="thumbnail-mockup-gallery"
                 aria-label="Gallery Preview">
           <img src="{{ 'mockup-gallery-thumb.png' | asset_url }}" alt="Gallery">
         </button>
         {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
         
-        {%- comment -%} Product Image Thumbnails {%- endcomment -%}
+        {%- comment -%} Additional Product Images (if any) {%- endcomment -%}
         {%- for image in product.images -%}
-          <button class="gallery__thumbnail"
-                  data-image-index="{{ thumbnail_index }}"
-                  data-testid="thumbnail-product-{{ forloop.index }}"
-                  aria-label="Product image {{ forloop.index }}">
-            <img src="{{ image | img_url: '120x120', crop: 'center' }}" 
-                 alt="{{ image.alt | default: product.title | escape }}">
-          </button>
-          {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+          {%- unless forloop.first -%}
+            <button class="gallery__thumbnail"
+                    data-image-index="{{ thumbnail_index }}"
+                    data-testid="thumbnail-product-{{ forloop.index }}"
+                    aria-label="Product image {{ forloop.index }}">
+              <img src="{{ image | img_url: '120x120', crop: 'center' }}" 
+                   alt="{{ image.alt | default: product.title | escape }}">
+            </button>
+            {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+          {%- endunless -%}
         {%- endfor -%}
       </div>
 
@@ -66,11 +80,26 @@
       <div class="gallery__main" id="gallery-main">
         <div class="gallery__main-wrapper">
         
-        {%- comment -%} Mockup Room Preview Slides {%- endcomment -%}
-        <div class="gallery__main-image gallery__mockup-slide active" 
+        {%- comment -%} SLIDE 1: Pure Product Image (No Mockup) {%- endcomment -%}
+        {%- if product.featured_image -%}
+          <img 
+            src="{{ product.featured_image | img_url: '1024x1024' }}" 
+            alt="{{ product.title | escape }}"
+            width="1024"
+            height="1024"
+            loading="eager"
+            class="gallery__main-image active"
+            data-image-id="{{ product.featured_image.id }}"
+            data-image-index="0"
+            data-testid="main-image-product"
+          >
+        {%- endif -%}
+        
+        {%- comment -%} SLIDES 2-5: Mockup Room Preview Slides {%- endcomment -%}
+        <div class="gallery__main-image gallery__mockup-slide" 
              data-mockup="true" 
              data-mockup-room="living"
-             data-image-index="0">
+             data-image-index="1">
           <div class="mockup-slide__container">
             <img src="{{ 'mockup-living.png' | asset_url }}" 
                  alt="Living Room Preview" 
@@ -87,7 +116,7 @@
         <div class="gallery__main-image gallery__mockup-slide" 
              data-mockup="true" 
              data-mockup-room="bedroom"
-             data-image-index="1">
+             data-image-index="2">
           <div class="mockup-slide__container">
             <img src="{{ 'mockup-bedroom.png' | asset_url }}" 
                  alt="Bedroom Preview" 
@@ -104,7 +133,7 @@
         <div class="gallery__main-image gallery__mockup-slide" 
              data-mockup="true" 
              data-mockup-room="office"
-             data-image-index="2">
+             data-image-index="3">
           <div class="mockup-slide__container">
             <img src="{{ 'mockup-office.png' | asset_url }}" 
                  alt="Professional Office Preview" 
@@ -121,7 +150,7 @@
         <div class="gallery__main-image gallery__mockup-slide" 
              data-mockup="true" 
              data-mockup-room="gallery"
-             data-image-index="3">
+             data-image-index="4">
           <div class="mockup-slide__container">
             <img src="{{ 'mockup-gallery.png' | asset_url }}" 
                  alt="Art Gallery Preview" 
@@ -135,21 +164,23 @@
           </div>
         </div>
         
-        {%- comment -%} Regular Product Images {%- endcomment -%}
+        {%- comment -%} Additional Product Images (if any) {%- endcomment -%}
         {%- for image in product.images -%}
-          <img 
-            src="{{ image | img_url: '1024x1024' }}" 
-            alt="{{ image.alt | default: product.title | escape }}"
-            width="1024"
-            height="1024"
-            loading="lazy"
-            class="gallery__main-image"
-            data-image-id="{{ image.id }}"
-            data-image-index="{{ forloop.index0 | plus: 4 }}"
-            {%- if image.attached_to_variant? -%}
-              data-variant-ids="{{ image.variants | map: 'id' | join: ',' }}"
-            {%- endif -%}
-          >
+          {%- unless forloop.first -%}
+            <img 
+              src="{{ image | img_url: '1024x1024' }}" 
+              alt="{{ image.alt | default: product.title | escape }}"
+              width="1024"
+              height="1024"
+              loading="lazy"
+              class="gallery__main-image"
+              data-image-id="{{ image.id }}"
+              data-image-index="{{ forloop.index0 | plus: 4 }}"
+              {%- if image.attached_to_variant? -%}
+                data-variant-ids="{{ image.variants | map: 'id' | join: ',' }}"
+              {%- endif -%}
+            >
+          {%- endunless -%}
         {%- endfor -%}
         </div>
       </div>

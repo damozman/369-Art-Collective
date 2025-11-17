@@ -59,21 +59,6 @@
                 aria-label="Gallery Preview">
           <img src="{{ 'mockup-gallery-thumb.png' | asset_url }}" alt="Gallery">
         </button>
-        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-        
-        {%- comment -%} Additional Product Images (if any) {%- endcomment -%}
-        {%- for image in product.images -%}
-          {%- unless forloop.first -%}
-            <button class="gallery__thumbnail"
-                    data-image-index="{{ thumbnail_index }}"
-                    data-testid="thumbnail-product-{{ forloop.index }}"
-                    aria-label="Product image {{ forloop.index }}">
-              <img src="{{ image | img_url: '120x120', crop: 'center' }}" 
-                   alt="{{ image.alt | default: product.title | escape }}">
-            </button>
-            {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-          {%- endunless -%}
-        {%- endfor -%}
       </div>
 
       {%- comment -%} Main Gallery Display Area {%- endcomment -%}
@@ -163,25 +148,6 @@
             </div>
           </div>
         </div>
-        
-        {%- comment -%} Additional Product Images (if any) {%- endcomment -%}
-        {%- for image in product.images -%}
-          {%- unless forloop.first -%}
-            <img 
-              src="{{ image | img_url: '1024x1024' }}" 
-              alt="{{ image.alt | default: product.title | escape }}"
-              width="1024"
-              height="1024"
-              loading="lazy"
-              class="gallery__main-image"
-              data-image-id="{{ image.id }}"
-              data-image-index="{{ forloop.index0 | plus: 4 }}"
-              {%- if image.attached_to_variant? -%}
-                data-variant-ids="{{ image.variants | map: 'id' | join: ',' }}"
-              {%- endif -%}
-            >
-          {%- endunless -%}
-        {%- endfor -%}
         </div>
       </div>
     </div>

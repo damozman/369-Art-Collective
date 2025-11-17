@@ -244,8 +244,11 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   border-radius: 0;
-  /* Apply size scaling to pure product images (same as mockup overlays) */
-  transform: scale(var(--product-scale, 1.0));
+}
+
+/* Scale down pure product image to match mockup artwork size */
+.gallery__main-image:not([data-mockup]) {
+  transform: scale(0.26);
   transform-origin: center center;
 }
 

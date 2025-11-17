@@ -178,7 +178,7 @@ section.pn247-art-product .product__media-gallery {
   z-index: 1 !important;
   display: block; /* Changed from grid - thumbnails now overlay */
   padding: 0 !important;
-  margin: 0 0 35px 0 !important; /* Add bottom margin for thumbnails hanging below */
+  margin: 0 0 30px 0 !important; /* Add bottom margin for thumbnails hanging below (50% of 60px) */
   align-items: start !important;
 }
 
@@ -289,7 +289,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 /* Thumbnail navigation - Horizontal filmstrip overlaid at bottom */
 .gallery__thumbnails {
   position: absolute;
-  bottom: -35px; /* 50% inside viewer, 50% hanging below (half of 70px height) */
+  bottom: -30px; /* 50% inside viewer, 50% hanging below (half of 60px height) */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -297,7 +297,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   gap: 0.75rem;
   align-items: center;
   justify-content: center;
-  max-width: calc(5 * 70px + 4 * 0.75rem); /* 5 thumbnails + gaps */
+  max-width: calc(5 * 60px + 4 * 0.75rem); /* 5 thumbnails + gaps */
   overflow: visible; /* Allow scaled thumbnails to be fully visible */
   scrollbar-width: none; /* Hide scrollbar for Firefox */
   scroll-behavior: smooth;
@@ -312,8 +312,8 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 
 .gallery__thumbnail {
   position: relative;
-  width: 70px;
-  height: 70px;
+  width: 60px;
+  height: 60px;
   flex-shrink: 0;
   border: 2px solid #d1d5db; /* Medium grey border - contrasts with white images */
   border-radius: 6px; /* Softer rounded corners */
@@ -350,7 +350,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   border-color: #2c5f8d;
 }
 
-/* Active thumbnail - scaled up to 1.2x (84px) */
+/* Active thumbnail - scaled up to 1.2x (72px) */
 .gallery__thumbnail.active {
   border-color: #2c5f8d;
   border-width: 3px;

@@ -46,15 +46,14 @@ body.template-product .shopify-section:first-child {
 
 .mockup-slide__overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(var(--size-scale, 1.0));
+  transform-origin: center center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: var(--base-width, 400px);
+  aspect-ratio: var(--artwork-ratio, 1);
   z-index: 10;
-  /* Match thumbnail 1 constraint - artwork fills viewer with object-fit: contain */
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .mockup-slide__artwork {
@@ -134,10 +133,10 @@ body.template-product .shopify-section:first-child {
   font-weight: 500;
 }
 
-/* Mobile responsive - overlay now fills container, no transform needed */
+/* Mobile responsive */
 @media (max-width: 768px) {
   .mockup-slide__overlay {
-    /* Overlay fills viewer on mobile too */
+    transform: translate(-50%, -50%) scale(calc(var(--size-scale, 1.0) * 0.7));
   }
 }
 

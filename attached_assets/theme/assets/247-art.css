@@ -54,7 +54,6 @@ body.template-product .shopify-section:first-child {
   width: var(--base-width, 400px);
   aspect-ratio: var(--artwork-ratio, 1);
   z-index: 10;
-  display: none !important; /* TESTING: Hide overlay to see only mockup backgrounds */
 }
 
 .mockup-slide__artwork {

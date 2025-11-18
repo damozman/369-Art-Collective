@@ -1059,11 +1059,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PUBLIC: List all approved artists (for creators page)
-  app.get("/api/artists", async (_req, res) => {
+  // Also supports ?email=xyz query param for registration validation
+  app.get("/api/artists", async (req, res) => {
     try {
+      const { email } = req.query;
+      
+      // If email query param provided, check if artist exists (for registration validation)
+      if (email && typeof email === 'string') {
+        const artist = await storage.getArtistByEmail(email);
+        return res.json(artist ? [artist] : []);
+      }
+      
+      // Otherwise, return all approved artists with essential public info
       const allArtists = await storage.getAllArtists();
       
-      // Only return approved artists with essential public info
       const approvedArtists = allArtists
         .filter(artist => artist.approved)
         .map(artist => ({

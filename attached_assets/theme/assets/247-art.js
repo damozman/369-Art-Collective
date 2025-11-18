@@ -642,10 +642,14 @@ document.addEventListener('DOMContentLoaded', function() {
       sizeScale: currentSizeScale
     });
 
-    // Apply positioning and size
-    overlay.style.left = `${absoluteX}px`;
-    overlay.style.top = `${absoluteY}px`;
-    overlay.style.width = `${baseOverlayWidthPx}px`;
+    // TEMP: Disable pixel-based positioning - let CSS handle centering
+    // We'll add room placement back later after getting scaling system working
+    // overlay.style.left = `${absoluteX}px`;
+    // overlay.style.top = `${absoluteY}px`;
+    // overlay.style.width = `${baseOverlayWidthPx}px`;
+    
+    // Use CSS variable for base width (will be centered by CSS)
+    overlay.style.setProperty('--base-width', `${baseOverlayWidthPx}px`);
     
     // Apply size scale via CSS variable for smooth GPU-accelerated scaling
     overlay.style.setProperty('--size-scale', currentSizeScale);

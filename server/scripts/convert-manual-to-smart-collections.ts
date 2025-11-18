@@ -193,6 +193,7 @@ async function main() {
   console.log("╚═══════════════════════════════════════════════════════════╝\n");
 
   const dryRun = process.argv.includes('--dry-run');
+  const skipConfirmation = process.argv.includes('--yes');
 
   if (dryRun) {
     console.log("🔍 DRY RUN MODE - No actual changes will occur\n");
@@ -243,7 +244,7 @@ async function main() {
     }
 
     // Execute conversion
-    if (!dryRun && toConvert.length > 0) {
+    if (!dryRun && !skipConfirmation && toConvert.length > 0) {
       console.log("⚠️  WARNING: About to convert collections!");
       console.log(`  - ${toConvert.length} Manual collections will become Smart collections`);
       console.log(`  - Original Manual collections will be deleted`);
@@ -284,8 +285,8 @@ async function main() {
         console.log(" ✅");
         conversionStats.converted++;
 
-        // Rate limiting: wait 500ms between conversions
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Rate limiting: wait 1000ms between conversions (Shopify limit: 2 calls/sec, we make 2 calls per conversion)
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       console.log();
     }

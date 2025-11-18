@@ -337,30 +337,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!mainGallery) return;
 
     // Extract size from variant name (e.g., "8x10 - Canvas" -> "8x10")
-    const sizeMatch = size?.match(/(\d+x\d+)/);
-    const extractedSize = sizeMatch ? sizeMatch[1] : size;
+    const sizeMatch = size?.match(/(\d+)x(\d+)/);
+    const extractedSize = sizeMatch ? `${sizeMatch[1]}x${sizeMatch[2]}` : size;
+    
+    // Calculate aspect ratio from dimensions (width/height)
+    const width = sizeMatch ? parseInt(sizeMatch[1]) : 8;
+    const height = sizeMatch ? parseInt(sizeMatch[2]) : 10;
+    const aspectRatio = width / height;
 
-    // Use the same SIZE_SCALE_FACTORS as the mockup system for consistency
+    // Use SIZE_SCALE_FACTORS for consistent scaling
     const scale = SIZE_SCALE_FACTORS[extractedSize] || SIZE_SCALE_FACTORS['8x10'] || 0.256;
     
-    // Apply scale via CSS custom property for layout-aware scaling
-    mainGallery.style.setProperty('--preview-scale', scale);
+    // THUMBNAIL 1: Keep pure product image at full size (no scaling)
+    // This is the reference view - always shows full artwork
     
-    // CRITICAL: Set --size-scale on all mockup overlays
-    // This is what the CSS uses: transform: scale(var(--size-scale))
+    // THUMBNAILS 2-5: Apply scale + aspect ratio to mockup overlays
     const allOverlays = document.querySelectorAll('.mockup-slide__overlay');
     allOverlays.forEach(overlay => {
       overlay.style.setProperty('--size-scale', scale);
+      overlay.style.setProperty('--artwork-ratio', aspectRatio);
     });
     
-    // CRITICAL: Also set --product-scale on pure product images (first thumbnail)
-    // This ensures artwork appears same size across ALL thumbnails
-    const allProductImages = document.querySelectorAll('.gallery__main-image:not([data-mockup="true"])');
-    allProductImages.forEach(img => {
-      img.style.setProperty('--product-scale', scale);
-    });
-    
-    console.log(`Size scaling updated: ${size} → scale(${scale})`);
+    console.log(`Mockup scaling updated: ${extractedSize} → scale(${scale}), ratio(${aspectRatio.toFixed(2)})`);
   }
 
   // Update all mockup slide frames

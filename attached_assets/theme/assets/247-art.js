@@ -685,13 +685,14 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Applying size scale:', size, '→', scaleFactor, 'with pan position:', panPosition);
     currentSizeScale = scaleFactor;
     
+    // TESTING: Disabled pan/zoom transforms to debug white space issue
     // Apply cinematic pan + zoom to all mockup backgrounds
-    const allBackgrounds = document.querySelectorAll('.mockup-slide__background');
-    allBackgrounds.forEach(bg => {
-      bg.style.setProperty('--bg-pan-x', panPosition.x);
-      bg.style.setProperty('--bg-pan-y', panPosition.y);
-      bg.style.setProperty('--bg-zoom-scale', panPosition.scale);
-    });
+    // const allBackgrounds = document.querySelectorAll('.mockup-slide__background');
+    // allBackgrounds.forEach(bg => {
+    //   bg.style.setProperty('--bg-pan-x', panPosition.x);
+    //   bg.style.setProperty('--bg-pan-y', panPosition.y);
+    //   bg.style.setProperty('--bg-zoom-scale', panPosition.scale);
+    // });
     
     // Reposition overlay with new scale (aspect ratio is set from actual artwork in updateMockupOverlay)
     updateMockupOverlay();
@@ -779,13 +780,14 @@ document.addEventListener('DOMContentLoaded', function() {
     currentSizeScale = SIZE_SCALE_FACTORS[defaultSize] || 0.256;
     const panPosition = MOCKUP_PAN_POSITIONS[defaultSize];
     
+    // TESTING: Disabled pan/zoom transforms to debug white space issue
     // Set initial pan position and zoom
-    const allBackgrounds = document.querySelectorAll('.mockup-slide__background');
-    allBackgrounds.forEach(bg => {
-      bg.style.setProperty('--bg-pan-x', panPosition.x);
-      bg.style.setProperty('--bg-pan-y', panPosition.y);
-      bg.style.setProperty('--bg-zoom-scale', panPosition.scale);
-    });
+    // const allBackgrounds = document.querySelectorAll('.mockup-slide__background');
+    // allBackgrounds.forEach(bg => {
+    //   bg.style.setProperty('--bg-pan-x', panPosition.x);
+    //   bg.style.setProperty('--bg-pan-y', panPosition.y);
+    //   bg.style.setProperty('--bg-zoom-scale', panPosition.scale);
+    // });
     
     // Aspect ratio will be set from actual artwork in updateMockupOverlay
   }

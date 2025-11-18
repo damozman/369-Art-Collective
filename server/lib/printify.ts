@@ -268,6 +268,18 @@ export async function calculateShipping(
 }
 
 /**
+ * Delete a product from Printify
+ */
+export async function deleteProduct(
+  shopId: string,
+  productId: string
+): Promise<void> {
+  await printifyRequest(`/shops/${shopId}/products/${productId}.json`, {
+    method: "DELETE",
+  });
+}
+
+/**
  * Helper: Get all wall print blueprints
  * Filters blueprints to only include posters, canvas, framed prints, metal prints, etc.
  */

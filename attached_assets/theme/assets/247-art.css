@@ -29,7 +29,7 @@ body.template-product .shopify-section:first-child {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: #0066FF !important; /* DEBUGGING: Solid blue to visualize container bounds */
 }
 
 .mockup-slide__background {
@@ -37,7 +37,7 @@ body.template-product .shopify-section:first-child {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  display: block;
+  display: none !important; /* DEBUGGING: Hidden to see blue container */
   /* Cinematic pan + zoom: Small prints pan LEFT & zoom IN, large prints pan RIGHT & zoom OUT */
   transform: translate(var(--bg-pan-x, 0%), var(--bg-pan-y, 0%)) scale(var(--bg-zoom-scale, 1.0));
   transform-origin: center center;

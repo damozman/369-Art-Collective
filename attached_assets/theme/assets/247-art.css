@@ -213,6 +213,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 .gallery__main {
   position: relative;
   width: 100%;
+  max-width: 800px; /* Prevent viewer from getting too wide - stays responsive on smaller screens */
   border-radius: 0;
   background: transparent;
   padding: 0 !important;
@@ -226,7 +227,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   position: relative;
   width: 100%;
   height: 0;
-  padding-bottom: 40%; /* Ultra-wide cinematic aspect ratio - fills horizontal space */
+  padding-bottom: 62.5%; /* 16:10 aspect ratio - versatile for various screen sizes */
   overflow: hidden;
   border-radius: 0;
   background: transparent;

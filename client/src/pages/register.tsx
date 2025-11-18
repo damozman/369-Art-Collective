@@ -37,6 +37,7 @@ export default function Register() {
   const [portfolioFiles, setPortfolioFiles] = useState<File[]>([]);
   const [portfolioPreviews, setPortfolioPreviews] = useState<string[]>([]);
   const [selectedTier, setSelectedTier] = useState<"free" | "pro" | "elite">("free");
+  const [accountData, setAccountData] = useState<RegistrationForm | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Capture UTM parameters from URL query string
@@ -55,51 +56,16 @@ export default function Register() {
   const acceptTerms = form.watch("acceptTerms");
 
   async function onSubmitAccount(data: RegistrationForm) {
-    const { confirmPassword, ...registrationData } = data;
+    // Store account data locally (no API call yet - atomic registration)
+    setAccountData(data);
     
-    // Include UTM params and referral info in registration data
-    const registrationPayload = {
-      ...registrationData,
-      utmSource,
-      utmMedium,
-      utmCampaign,
-      referralCode: refCode,
-    };
+    toast({
+      title: "Account info saved!",
+      description: "Now upload 2-3 portfolio samples to complete registration.",
+    });
 
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/artists/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(registrationPayload),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Registration failed");
-      }
-
-      const artist = await response.json();
-      
-      // Automatically log in the user
-      login({ ...artist, type: "artist" });
-
-      toast({
-        title: "Account created!",
-        description: "Now upload 2-3 portfolio samples to complete registration.",
-      });
-
-      // Move to portfolio upload step
-      setStep("portfolio");
-    } catch (error: any) {
-      toast({
-        title: "Registration failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Move to portfolio upload step
+    setStep("portfolio");
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -145,68 +111,76 @@ export default function Register() {
   }
 
   async function handleSubscriptionContinue() {
-    if (selectedTier === "free") {
-      // Continue with free tier, no Stripe checkout needed
+    if (!accountData) {
       toast({
-        title: "Welcome to 247 Print Network!",
-        description: "Your account is pending admin approval.",
+        title: "Error",
+        description: "Account data missing. Please start over.",
+        variant: "destructive",
       });
-      setTimeout(() => {
-        setLocation("/artist/pending");
-      }, 0);
+      setStep("account");
       return;
     }
 
-    // For Pro/Elite, create Stripe checkout session
     setIsLoading(true);
     try {
-      const response = await fetch("/api/artists/subscription/create", {
+      // Prepare FormData with ALL registration data
+      const formData = new FormData();
+      
+      // Add account fields
+      formData.append("email", accountData.email);
+      formData.append("password", accountData.password);
+      formData.append("name", accountData.name);
+      formData.append("artistShort", accountData.artistShort);
+      formData.append("acceptTerms", accountData.acceptTerms.toString());
+      
+      // Add UTM params
+      if (utmSource) formData.append("utmSource", utmSource);
+      if (utmMedium) formData.append("utmMedium", utmMedium);
+      if (utmCampaign) formData.append("utmCampaign", utmCampaign);
+      if (refCode) formData.append("referralCode", refCode);
+      
+      // Add portfolio files
+      portfolioFiles.forEach(file => {
+        formData.append("portfolioFiles", file);
+      });
+      
+      // Add tier selection
+      formData.append("tier", selectedTier);
+
+      // Call atomic registration endpoint
+      const response = await fetch("/api/artists/register-complete", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier: selectedTier }),
+        body: formData,
         credentials: "include",
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to create subscription");
+        throw new Error(error.message || error.error || "Registration failed");
       }
 
-      const { clientSecret } = await response.json();
+      const artist = await response.json();
+      
+      // Automatically log in the user
+      login({ ...artist, type: "artist" });
 
-      if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-        throw new Error("Stripe not configured");
-      }
+      // Clean up preview URLs
+      portfolioPreviews.forEach(url => URL.revokeObjectURL(url));
 
-      const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
-      if (!stripe) {
-        throw new Error("Failed to load Stripe");
-      }
-
-      const { error } = await stripe.confirmPayment({
-        clientSecret,
-        confirmParams: {
-          return_url: `${window.location.origin}/artist/subscription/confirm`,
-        },
+      toast({
+        title: "Welcome to 247 Print Network!",
+        description: "Your account is pending admin approval.",
       });
 
-      if (error) {
-        throw new Error(error.message || "Payment failed");
-      }
+      setTimeout(() => {
+        setLocation("/artist/pending");
+      }, 500);
     } catch (error: any) {
       toast({
-        title: "Subscription failed",
+        title: "Registration failed",
         description: error.message,
         variant: "destructive",
       });
-      // Fall back to free tier on error
-      toast({
-        title: "Continuing with Free tier",
-        description: "You can upgrade later from your dashboard.",
-      });
-      setTimeout(() => {
-        setLocation("/artist/pending");
-      }, 1000);
     } finally {
       setIsLoading(false);
     }
@@ -222,43 +196,14 @@ export default function Register() {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const formData = new FormData();
-      portfolioFiles.forEach(file => {
-        formData.append("files", file);
-      });
+    // Store portfolio files locally (no API call yet - atomic registration)
+    toast({
+      title: "Portfolio ready!",
+      description: "Choose your subscription tier to complete registration.",
+    });
 
-      const response = await fetch("/api/artists/portfolio", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Portfolio upload failed");
-      }
-
-      toast({
-        title: "Portfolio uploaded!",
-        description: "Choose your subscription tier to complete registration.",
-      });
-
-      // Clean up preview URLs
-      portfolioPreviews.forEach(url => URL.revokeObjectURL(url));
-
-      // Move to subscription step
-      setStep("subscription");
-    } catch (error: any) {
-      toast({
-        title: "Upload failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Move to subscription step
+    setStep("subscription");
   }
 
   return (

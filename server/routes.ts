@@ -715,6 +715,195 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Atomic registration endpoint - creates account + uploads portfolio + sets tier in one transaction
+  app.post("/api/artists/register-complete", upload.array("portfolioFiles", 3), async (req, res) => {
+    try {
+      // Parse form data
+      const acceptTerms = req.body.acceptTerms === "true";
+      if (!acceptTerms) {
+        return res.status(400).json({ 
+          message: "You must accept the Terms of Service to register" 
+        });
+      }
+
+      // Validate portfolio files
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length < 2) {
+        return res.status(400).json({ 
+          error: "Please upload at least 2 portfolio images" 
+        });
+      }
+      if (files.length > 3) {
+        return res.status(400).json({ 
+          error: "Maximum 3 portfolio images allowed" 
+        });
+      }
+
+      // Validate each image's quality
+      for (const file of files) {
+        const validation = validateImageQualityFromBuffer(file.buffer);
+        if (!validation.valid) {
+          return res.status(400).json({ 
+            error: `Image "${file.originalname}" ${validation.message || "does not meet quality requirements"}`,
+            minLongSide: MIN_LONG_SIDE,
+            minShortSide: MIN_SHORT_SIDE,
+            actualDimensions: validation.dimensions
+          });
+        }
+      }
+
+      // Validate account data
+      const accountData = insertArtistSchema.parse({
+        email: req.body.email,
+        password: req.body.password,
+        name: req.body.name,
+        artistShort: req.body.artistShort,
+      });
+
+      // Check if email already exists
+      const existing = await storage.getArtistByEmail(accountData.email);
+      if (existing) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+
+      // Parse tier selection
+      const selectedTier = req.body.tier as "free" | "pro" | "elite";
+      if (!["free", "pro", "elite"].includes(selectedTier)) {
+        return res.status(400).json({ message: "Invalid subscription tier" });
+      }
+
+      // Prepare referral data
+      const referrerCode = req.body.referralCode as string | undefined;
+      const utmMedium = req.body.utmMedium as string | undefined;
+      let referralSource: string | null = null;
+      let referredBy: string | null = null;
+      
+      if (utmMedium === 'testimonial') {
+        referralSource = 'testimonial';
+      } else if (referrerCode || utmMedium === 'referral') {
+        referralSource = 'general';
+      }
+      
+      if (referrerCode) {
+        const referringArtist = await storage.getArtistByReferralCode(referrerCode);
+        if (referringArtist) {
+          referredBy = referringArtist.id;
+        }
+      }
+
+      // Capture IP address
+      const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() 
+        || req.socket.remoteAddress 
+        || 'unknown';
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(accountData.password, 10);
+
+      // Execute atomic transaction: create artist + upload portfolio
+      const result = await db.transaction(async (tx) => {
+        // 1. Create artist account
+        const [artist] = await tx
+          .insert(storage.getArtistsTable())
+          .values({
+            ...accountData,
+            password: hashedPassword,
+            referredBy,
+            referralSource,
+            tosAcceptedAt: new Date(),
+            tosIpAddress: ipAddress,
+            tosVersion: "v1.0-2025-11",
+          } as any)
+          .returning();
+
+        // 2. Upload portfolio files to object storage and create records
+        const objectStorage = new ObjectStorageService();
+        const portfolioSubmissions = [];
+        
+        for (const file of files) {
+          const safeName = file.originalname.replace(/\s+/g, "-").toLowerCase();
+          const filename = `${Date.now()}-${safeName}`;
+          const imageUrl = await objectStorage.uploadFile({
+            directory: objectStorage.getArtworkUploadsDir(),
+            filename,
+            buffer: file.buffer,
+            contentType: file.mimetype,
+          });
+          
+          const [submission] = await tx
+            .insert(storage.getPortfolioSubmissionsTable())
+            .values({
+              artistId: artist.id,
+              imageUrl,
+            } as any)
+            .returning();
+          portfolioSubmissions.push(submission);
+        }
+
+        console.log(`[Atomic Registration] Artist ${artist.id} created with ${portfolioSubmissions.length} portfolio images`);
+        
+        return { artist, portfolioSubmissions };
+      });
+
+      const { artist, portfolioSubmissions } = result;
+
+      // Handle affiliate tracking (outside transaction, non-critical)
+      const affiliateCode = getAffiliateCodeFromCookie(req);
+      if (affiliateCode) {
+        try {
+          const influencer = await storage.getInfluencerByAffiliateCode(affiliateCode);
+          if (influencer && influencer.status === "active") {
+            await storage.createAffiliateConversion({
+              influencerId: influencer.id,
+              artistId: artist.id,
+              conversionType: "artist_signup",
+              payoutStatus: "pending",
+              commissionRate: null,
+              commissionEarned: null,
+              tierBonus: "0",
+              challengeBonus: "0",
+              totalPayout: null,
+            });
+            console.log(`Affiliate conversion tracked: Artist ${artist.id} via influencer ${influencer.id}`);
+            await achievementService.onConversionCreated(influencer.id);
+          }
+        } catch (err) {
+          console.error('Failed to track affiliate conversion:', err);
+        }
+      }
+
+      // Send welcome email (non-blocking)
+      emailService.sendWelcomeEmail(artist.email, artist.name, artist.id)
+        .catch(err => console.error('Failed to send welcome email:', err));
+
+      // Regenerate session and automatically log in the new artist
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error("Session regeneration error:", err);
+          return res.status(500).json({ message: "Registration completed but login failed. Please try logging in." });
+        }
+
+        // Set session
+        req.session.user = {
+          id: artist.id,
+          email: artist.email,
+          name: artist.name,
+          type: "artist",
+          approved: artist.approved,
+        };
+
+        const { password, ...artistData } = artist;
+        res.status(201).json({
+          ...artistData,
+          portfolioCount: portfolioSubmissions.length,
+          tier: selectedTier,
+        });
+      });
+    } catch (error: any) {
+      console.error("Atomic registration error:", error);
+      res.status(400).json({ message: error.message || "Registration failed" });
+    }
+  });
+
   // Artist login (with rate limiting)
   app.post("/api/artists/login", loginLimiter, async (req, res) => {
     try {

@@ -76,6 +76,10 @@ import { eq, isNull, isNotNull, and, desc, asc, gte, sql as drizzleSql, sum } fr
 import { generateReferralCode } from "./lib/referral-code-generator";
 
 export interface IStorage {
+  // Helper methods for transactions
+  getArtistsTable(): any;
+  getPortfolioSubmissionsTable(): any;
+
   // Artist methods
   getArtist(id: string): Promise<Artist | undefined>;
   getArtistByEmail(email: string): Promise<Artist | undefined>;
@@ -430,6 +434,15 @@ export interface IStorage {
 
 // PostgreSQL storage implementation using Drizzle ORM
 class PostgresStorage implements IStorage {
+  // Helper methods to expose table references for transactions
+  getArtistsTable() {
+    return artists;
+  }
+
+  getPortfolioSubmissionsTable() {
+    return portfolioSubmissions;
+  }
+
   async getArtist(id: string): Promise<Artist | undefined> {
     console.log("[Storage.getArtist] Called with ID:", id, "Type:", typeof id);
     const [artist] = await db
@@ -2556,6 +2569,15 @@ class MemStorage implements IStorage {
   private artworks: Map<string, Artwork> = new Map();
   private subscriptionTrials: Map<string, SubscriptionTrial> = new Map();
   private waitlist: Map<string, Waitlist> = new Map();
+
+  // Helper methods for transactions (not used in MemStorage but required by interface)
+  getArtistsTable() {
+    throw new Error("Transactions not supported in MemStorage");
+  }
+
+  getPortfolioSubmissionsTable() {
+    throw new Error("Transactions not supported in MemStorage");
+  }
 
   async getArtist(id: string): Promise<Artist | undefined> {
     const artist = this.artists.get(id);

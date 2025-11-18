@@ -213,7 +213,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 .gallery__main {
   position: relative;
   width: 100%;
-  max-width: 800px; /* Prevent viewer from getting too wide - stays responsive on smaller screens */
+  max-width: 880px; /* Scaled up 10% from 800px - prevents viewer from getting too wide while staying responsive */
   border-radius: 0;
   background: transparent;
   padding: 0 !important;

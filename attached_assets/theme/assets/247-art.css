@@ -193,9 +193,12 @@ section.pn247-art-product .product__media-gallery > * {
   padding-top: 0 !important;
 }
 
-/* Remove old two-column layout - thumbnails now overlay */
+/* Two-column layout - thumbnails left, viewer right */
 section.pn247-art-product .product__media-gallery.has-thumbnails {
-  display: block;
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr); /* Fixed thumbnail column, flexible viewer */
+  gap: 0.75rem;
+  align-items: start;
 }
 
 /* Remove sticky behavior - user prefers natural scroll */
@@ -205,7 +208,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   }
 }
 
-/* Main gallery container - Two-column grid (thumbnails left, viewer right) */
+/* Main viewer container */
 .gallery__main {
   position: relative;
   width: 100%;
@@ -213,11 +216,6 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   background: transparent;
   padding: 0 !important;
   margin: 0 !important;
-  /* Two-column layout: thumbnails on left, viewer on right */
-  display: grid;
-  grid-template-columns: 80px 1fr; /* Fixed thumbnail column, flexible viewer */
-  gap: 0.75rem;
-  align-items: start;
   /* Support for preview scaling via CSS custom property */
   --preview-scale: 1;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);

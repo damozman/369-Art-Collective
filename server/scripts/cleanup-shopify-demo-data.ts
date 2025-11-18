@@ -195,22 +195,26 @@ async function fetchAllCollections(): Promise<{ smart: ShopifyCollection[], manu
 
 async function getCollectionProductCount(collectionId: number, isSmart: boolean): Promise<number> {
   const collectionType = isSmart ? "smart_collections" : "custom_collections";
-  const url = `https://${SHOPIFY_SHOP_URL}/admin/api/${API_VERSION}/collections/${collectionId}/products/count.json`;
+  const url = `https://${SHOPIFY_SHOP_URL}/admin/api/${API_VERSION}/${collectionType}/${collectionId}.json`;
 
-  const response = await fetch(url, {
-    headers: {
-      "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
-      "Content-Type": "application/json"
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      return -1; // Return -1 to indicate unknown count (we'll preserve these to be safe)
     }
-  });
 
-  if (!response.ok) {
-    console.warn(`  Warning: Could not fetch product count for collection ${collectionId}`);
-    return -1; // Return -1 to indicate unknown count (we'll preserve these to be safe)
+    const data = await response.json();
+    const collection = isSmart ? data.smart_collection : data.custom_collection;
+    return collection?.products_count ?? -1;
+  } catch (error) {
+    return -1; // Return -1 on error (we'll preserve these to be safe)
   }
-
-  const data = await response.json();
-  return data.count || 0;
 }
 
 function isDemoProduct(product: ShopifyProduct): boolean {

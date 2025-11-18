@@ -146,7 +146,7 @@ section.pn247-art-product {
   /* Reset any base theme positioning */
   position: relative !important;
   display: grid !important;
-  grid-template-columns: minmax(0, 2fr) minmax(240px, 280px) !important;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 280px) !important;
   grid-template-rows: auto !important;
   gap: 0.5rem !important; /* Reduced from 0.75rem - brings info column closer */
   max-width: 1320px !important; /* Constrain width to fit within green boundary lines */

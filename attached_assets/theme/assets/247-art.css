@@ -228,7 +228,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   padding-bottom: 40%; /* Ultra-wide cinematic aspect ratio - fills horizontal space */
   overflow: hidden;
   border-radius: 0;
-  background: transparent;
+  background: #0066FF !important; /* DEBUGGING: Solid blue for ALL thumbnails */
   margin: 0;
   /* Container stays fixed - only overlay scales */
   isolation: isolate;
@@ -245,6 +245,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   border-radius: 0;
+  display: none !important; /* DEBUGGING: Hide thumbnail 1 product image to see blue */
 }
 
 /* Thumbnail 1: Pure product image at full size - ignore all transforms */

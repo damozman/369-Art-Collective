@@ -65,12 +65,23 @@
       <div class="gallery__main" id="gallery-main">
         <div class="gallery__main-wrapper">
         
-        {%- comment -%} SLIDE 1: Pure Product Image (No Mockup, No Scaling) {%- endcomment -%}
-        <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
-             alt="{{ product.title | escape }}"
-             class="gallery__main-image active"
-             data-image-index="0"
-             data-testid="main-product-image">
+        {%- comment -%} SLIDE 1: Living Room Mockup (TESTING - same as slide 2) {%- endcomment -%}
+        <div class="gallery__main-image gallery__mockup-slide active" 
+             data-mockup="true" 
+             data-mockup-room="living-room"
+             data-image-index="0">
+          <div class="mockup-slide__container">
+            <img src="{{ 'mockup-living.png' | asset_url }}" 
+                 alt="Living Room Preview" 
+                 class="mockup-slide__background">
+            <div class="mockup-slide__overlay">
+              <img src="{{ product.featured_image | img_url: '1024x1024' }}" 
+                   alt="{{ product.title | escape }}" 
+                   class="mockup-slide__artwork">
+              <div class="mockup-slide__frame" data-frame="none"></div>
+            </div>
+          </div>
+        </div>
         
         {%- comment -%} SLIDES 2-5: Mockup Room Preview Slides {%- endcomment -%}
         <div class="gallery__main-image gallery__mockup-slide" 

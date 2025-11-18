@@ -180,9 +180,9 @@ section.pn247-art-product .product__media-gallery {
   width: 100% !important;
   height: auto !important;
   z-index: 1 !important;
-  display: block;
+  display: block; /* Changed from grid - thumbnails now overlay */
   padding: 0 !important;
-  margin: 0 !important; /* No bottom margin needed - thumbnails on left now */
+  margin: 0 0 30px 0 !important; /* Add bottom margin for thumbnails hanging below (50% of 60px) */
   align-items: start !important;
 }
 
@@ -205,28 +205,21 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   }
 }
 
-/* Main gallery container - Two-column grid (thumbnails left, viewer right) */
+/* Main image viewer - full width, thumbnails overlay at bottom */
 .gallery__main {
   position: relative;
   width: 100%;
   border-radius: 0;
+  overflow: visible; /* Changed to allow thumbnails to extend beyond */
   background: transparent;
   padding: 0 !important;
   margin: 0 !important;
-  /* Two-column layout: thumbnails on left, viewer on right */
-  display: grid;
-  grid-template-columns: 80px 1fr; /* Fixed thumbnail column, flexible viewer */
-  gap: 0.75rem;
-  align-items: start;
   /* Support for preview scaling via CSS custom property */
   --preview-scale: 1;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .gallery__main-wrapper {
-  /* Position in second grid column */
-  grid-column: 2;
-  grid-row: 1;
   position: relative;
   width: 100%;
   height: 0;
@@ -301,22 +294,23 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   outline-offset: 2px;
 }
 
-/* Thumbnail navigation - Vertical column on left */
+/* Thumbnail navigation - Horizontal filmstrip overlaid at bottom */
 .gallery__thumbnails {
-  /* Position in first grid column */
-  grid-column: 1;
-  grid-row: 1;
+  position: absolute;
+  bottom: -30px; /* 50% inside viewer, 50% hanging below (half of 60px height) */
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  flex-direction: column; /* Vertical stack */
+  flex-direction: row; /* Horizontal filmstrip */
   gap: 0.75rem;
   align-items: center;
-  justify-content: flex-start;
-  overflow-y: auto; /* Allow scrolling if too many thumbnails */
-  overflow-x: visible; /* Allow scaled thumbnails to extend */
-  scrollbar-width: thin; /* Thin scrollbar for Firefox */
+  justify-content: center;
+  max-width: calc(5 * 60px + 4 * 0.75rem); /* 5 thumbnails + gaps */
+  overflow: visible; /* Allow scaled thumbnails to be fully visible */
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
   scroll-behavior: smooth;
-  padding: 0.5rem 0; /* Vertical padding */
-  max-height: 500px; /* Limit height before scrolling */
+  padding: 0.75rem 1rem; /* Add vertical padding for scaled thumbnails */
+  z-index: 50; /* Above main viewer content */
 }
 
 /* Hide scrollbar for Chrome/Safari */

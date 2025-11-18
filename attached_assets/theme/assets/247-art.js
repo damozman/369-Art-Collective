@@ -16,6 +16,36 @@ const SIZE_SCALE_FACTORS = {
   '24x36': 0.864  // 43.27" diagonal (largest) - was 2.16
 };
 
+// Size-based mockup image groups (THUMBNAIL 2: Living Room only)
+// Different mockup images show artwork at proportionally accurate sizes
+const MOCKUP_SIZE_GROUPS = {
+  'small': ['8x10', '11x14'],   // Close-up mockup
+  'medium': ['12x16', '16x20'], // Mid-range mockup
+  'large': ['18x24', '24x36']   // Wide-angle mockup
+};
+
+// Mockup image paths by size group (living room)
+const MOCKUP_IMAGES = {
+  'living-room': {
+    'small': 'mockup-living-small.png',
+    'medium': 'mockup-living-medium.png',
+    'large': 'mockup-living.png'  // Use current as large view
+  }
+};
+
+// Get size group for a given size
+function getSizeGroup(size) {
+  const sizeMatch = size?.match(/(\d+)x(\d+)/);
+  const extractedSize = sizeMatch ? `${sizeMatch[1]}x${sizeMatch[2]}` : size;
+  
+  for (const [group, sizes] of Object.entries(MOCKUP_SIZE_GROUPS)) {
+    if (sizes.includes(extractedSize)) {
+      return group;
+    }
+  }
+  return 'large'; // Default to large if no match
+}
+
 // Panoramic mockup pan positions - Strategic placement by print size
 // ANCHOR: 24x36 centered on white wall (gallery height) with room context
 // Small prints → LEFT to surfaces (tables, desks) with ZOOM IN for intimate detail
@@ -345,20 +375,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const height = sizeMatch ? parseInt(sizeMatch[2]) : 10;
     const aspectRatio = width / height;
 
-    // Use SIZE_SCALE_FACTORS for consistent scaling
+    // Get size group for mockup swapping
+    const sizeGroup = getSizeGroup(extractedSize);
+    
+    // THUMBNAIL 2 (Living Room): Swap mockup image based on size group
+    const livingRoomSlide = document.querySelector('[data-mockup-room="living-room"]');
+    if (livingRoomSlide && MOCKUP_IMAGES['living-room']) {
+      const backgroundImg = livingRoomSlide.querySelector('.mockup-slide__background');
+      const mockupFilename = MOCKUP_IMAGES['living-room'][sizeGroup];
+      
+      if (backgroundImg && mockupFilename) {
+        // Build asset URL - extract base path from current src and replace filename
+        const currentSrc = backgroundImg.src;
+        const lastSlash = currentSrc.lastIndexOf('/');
+        const basePath = currentSrc.substring(0, lastSlash + 1);
+        const newSrc = basePath + mockupFilename;
+        
+        // Update mockup background image
+        backgroundImg.src = newSrc;
+        
+        console.log(`Living room mockup swapped: ${extractedSize} (${sizeGroup}) → ${mockupFilename}`);
+      }
+    }
+    
+    // Use SIZE_SCALE_FACTORS for consistent proportional scaling
     const scale = SIZE_SCALE_FACTORS[extractedSize] || SIZE_SCALE_FACTORS['8x10'] || 0.256;
     
     // THUMBNAIL 1: Keep pure product image at full size (no scaling)
     // This is the reference view - always shows full artwork
     
     // THUMBNAILS 2-5: Apply scale + aspect ratio to mockup overlays
+    // Overlays stay proportionally sized to feel natural in mockup space
     const allOverlays = document.querySelectorAll('.mockup-slide__overlay');
     allOverlays.forEach(overlay => {
       overlay.style.setProperty('--size-scale', scale);
       overlay.style.setProperty('--artwork-ratio', aspectRatio);
     });
     
-    console.log(`Mockup scaling updated: ${extractedSize} → scale(${scale}), ratio(${aspectRatio.toFixed(2)})`);
+    console.log(`Mockup scaling updated: ${extractedSize} → scale(${scale}), ratio(${aspectRatio.toFixed(2)}), group(${sizeGroup})`);
   }
 
   // Update all mockup slide frames

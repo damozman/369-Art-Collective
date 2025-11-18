@@ -19,7 +19,7 @@ import {
   achievements, sales, referrals, artistReferrals, payouts, stripeWebhookEvents,
   emailLogs, creatorstackPurchases, affiliateClicks, affiliateConversions,
   influencers, artworkApprovalLog, activityFeedEvents, aiGenerations, aiCredits,
-  aiCreditPurchases, waitlist, featuredSubscriptions, featuredRotationLog
+  aiCreditPurchases, waitlist, featuredSubscriptions, featuredRotationLog, testimonials
 } from "../../shared/schema";
 import { ObjectStorageService } from "../objectStorage";
 import * as bcrypt from "bcryptjs";
@@ -27,6 +27,8 @@ import * as readline from "readline/promises";
 
 const SHOPIFY_SHOP_URL = process.env.SHOPIFY_SHOP_URL || "";
 const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN || "";
+const PRINTIFY_API_KEY = process.env.PRINTIFY_API_KEY || "";
+const PRINTIFY_SHOP_ID = process.env.PRINTIFY_SHOP_ID || "";
 const PRINTIFY_API_TOKEN = process.env.PRINTIFY_API_TOKEN || "";
 
 interface CleanupStats {
@@ -163,13 +165,18 @@ async function cleanup() {
   
   // Step 2: Delete from Printify
   if (printifyProducts.length > 0) {
-    console.log("🗑️  Step 2: Deleting Printify products...");
-    for (const productId of printifyProducts) {
-      process.stdout.write(`  Deleting ${productId}...`);
-      const success = await deletePrintifyProduct(productId);
-      console.log(success ? " ✅" : " ❌");
+    if (!PRINTIFY_API_KEY) {
+      console.log("⏭️  Step 2: Skipping Printify deletion (PRINTIFY_API_KEY not configured)\n");
+      stats.printifyFailed = printifyProducts.length;
+    } else {
+      console.log("🗑️  Step 2: Deleting Printify products...");
+      for (const productId of printifyProducts) {
+        process.stdout.write(`  Deleting ${productId}...`);
+        const success = await deletePrintifyProduct(productId);
+        console.log(success ? " ✅" : " ❌");
+      }
+      console.log(`  Deleted: ${stats.printifyDeleted}, Failed: ${stats.printifyFailed}\n`);
     }
-    console.log(`  Deleted: ${stats.printifyDeleted}, Failed: ${stats.printifyFailed}\n`);
   } else {
     console.log("⏭️  Step 2: No Printify products to delete\n");
   }
@@ -190,36 +197,37 @@ async function cleanup() {
   // Step 4: Delete from database (FK-aware order)
   console.log("🗑️  Step 4: Deleting database records...");
   
-  // Delete in order to respect foreign keys
+  // Delete in FK-safe topological order (from architect analysis)
   await deleteFromTable(violationReports, "violation_reports");
+  await deleteFromTable(artworkApprovalLog, "artwork_approval_log");
+  await deleteFromTable(activityFeedEvents, "activity_feed_events");
+  await deleteFromTable(testimonials, "testimonials");
+  await deleteFromTable(achievements, "achievements");
+  await deleteFromTable(sales, "sales");
+  await deleteFromTable(payouts, "payouts");
+  await deleteFromTable(artistReferrals, "artist_referrals");
+  await deleteFromTable(referrals, "referrals");
+  await deleteFromTable(creatorstackPurchases, "creatorstack_purchases");
+  await deleteFromTable(featuredRotationLog, "featured_rotation_log");
+  await deleteFromTable(featuredSubscriptions, "featured_subscriptions");
+  await deleteFromTable(aiCreditPurchases, "ai_credit_purchases");
+  await deleteFromTable(aiCredits, "ai_credits");
+  await deleteFromTable(aiGenerations, "ai_generations");
+  await deleteFromTable(subscriptionTrials, "subscription_trials");
   await deleteFromTable(portfolioSubmissions, "portfolio_submissions");
   await deleteFromTable(upscaleUsage, "upscale_usage");
   await deleteFromTable(upscaleJobs, "upscale_jobs");
-  await deleteFromTable(subscriptionTrials, "subscription_trials");
-  await deleteFromTable(adminActions, "admin_actions");
-  await deleteFromTable(passwordResetTokens, "password_reset_tokens");
-  await deleteFromTable(achievements, "achievements");
-  await deleteFromTable(sales, "sales");
-  await deleteFromTable(referrals, "referrals");
-  await deleteFromTable(artistReferrals, "artist_referrals");
-  await deleteFromTable(payouts, "payouts");
-  await deleteFromTable(stripeWebhookEvents, "stripe_webhook_events");
-  await deleteFromTable(orders, "orders");
-  await deleteFromTable(emailLogs, "email_logs");
-  await deleteFromTable(creatorstackPurchases, "creatorstack_purchases");
-  await deleteFromTable(affiliateClicks, "affiliate_clicks");
   await deleteFromTable(affiliateConversions, "affiliate_conversions");
+  await deleteFromTable(affiliateClicks, "affiliate_clicks");
   await deleteFromTable(influencers, "influencers");
-  await deleteFromTable(artworkApprovalLog, "artwork_approval_log");
-  await deleteFromTable(activityFeedEvents, "activity_feed_events");
-  await deleteFromTable(aiGenerations, "ai_generations");
-  await deleteFromTable(aiCredits, "ai_credits");
-  await deleteFromTable(aiCreditPurchases, "ai_credit_purchases");
   await deleteFromTable(waitlist, "waitlist");
-  await deleteFromTable(featuredSubscriptions, "featured_subscriptions");
-  await deleteFromTable(featuredRotationLog, "featured_rotation_log");
+  await deleteFromTable(emailLogs, "email_logs");
+  await deleteFromTable(stripeWebhookEvents, "stripe_webhook_events");
+  await deleteFromTable(passwordResetTokens, "password_reset_tokens");
+  await deleteFromTable(orders, "orders");
   await deleteFromTable(artworks, "artworks");
   await deleteFromTable(artists, "artists");
+  await deleteFromTable(adminActions, "admin_actions");
   await deleteFromTable(admins, "admins");
   
   console.log("  Database cleanup complete\n");

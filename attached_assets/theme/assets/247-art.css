@@ -17,9 +17,9 @@ body.template-product .shopify-section:first-child {
 
 /* ===== GALLERY MOCKUP SLIDES ===== */
 .gallery__mockup-slide {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  /* Don't override .gallery__main-image positioning - let it stay absolute */
+  /* position: relative; */ 
+  /* width/height already inherited from .gallery__main-image (100%) */
 }
 
 .mockup-slide__container {

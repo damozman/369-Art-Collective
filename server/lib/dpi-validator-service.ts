@@ -72,17 +72,6 @@ export class DpiValidatorService {
     const shortSide = Math.min(width, height);
     const longSide = Math.max(width, height);
     
-    const largestDimension = Math.max(width, height);
-    const largestProductDimension = Math.max(
-      this.PRODUCT_SIZES.poster.width,
-      this.PRODUCT_SIZES.poster.height
-    );
-    
-    const estimatedDpi = Math.floor(largestDimension / largestProductDimension);
-    
-    const meetsMinimum = estimatedDpi >= this.MIN_DPI;
-    const meetsTarget = estimatedDpi >= this.TARGET_DPI;
-    
     const qualified: ProductVariantQualification[] = [];
     const locked: ProductVariantQualification[] = [];
     
@@ -110,6 +99,29 @@ export class DpiValidatorService {
         locked.push(qualification);
       }
     }
+    
+    // Calculate estimated DPI based on smallest qualifying variant (most accurate)
+    // If no variants qualify, use largest product dimension for the estimate
+    let estimatedDpi: number;
+    if (qualified.length > 0) {
+      // Find the DPI for the smallest qualifying variant (most conservative estimate)
+      const smallestQualified = qualified[0]; // Variants are sorted by size
+      const dpiWidth = width / smallestQualified.widthInches;
+      const dpiHeight = height / smallestQualified.heightInches;
+      estimatedDpi = Math.floor(Math.min(dpiWidth, dpiHeight));
+    } else {
+      // No variants qualify - use largest product for estimate
+      const largestDimension = Math.max(width, height);
+      const largestProductDimension = Math.max(
+        this.PRODUCT_SIZES.poster.width,
+        this.PRODUCT_SIZES.poster.height
+      );
+      estimatedDpi = Math.floor(largestDimension / largestProductDimension);
+    }
+    
+    // Image meets minimum if at least one variant qualifies at 150+ DPI
+    const meetsMinimum = qualified.length > 0;
+    const meetsTarget = estimatedDpi >= this.TARGET_DPI;
     
     let recommendation: 'perfect' | 'good' | 'needs_upscaling' | 'unsuitable';
     let message: string;

@@ -84,8 +84,9 @@ export class ReplicateUpscaleService {
   /**
    * Calculate intelligent upscale factor based on current dimensions, orientation, and target
    * Returns the minimum scale needed to qualify for 8+ variants while preventing GPU memory errors
+   * Returns null if the image is already at maximum safe resolution and cannot be upscaled
    */
-  static calculateOptimalScale(width: number, height: number): number {
+  static calculateOptimalScale(width: number, height: number): 2 | 3 | 4 | null {
     const currentPixels = width * height;
     const MAX_OUTPUT_PIXELS = 32_000_000; // 32M pixels max to prevent GPU crashes
     
@@ -126,8 +127,15 @@ export class ReplicateUpscaleService {
     
     console.log(`[SCALE_CALC] ${width}×${height}px ${orientation}: required=${requiredScale.toFixed(2)}, max_safe=${maxSafeScale.toFixed(2)}, final=${finalScale}`);
     
-    // Ensure we return a valid scale (2 or 4, or 3 for square)
-    if (finalScale <= 2) {
+    // If finalScale is 1, the image is already at maximum safe resolution
+    // Real-ESRGAN doesn't support 1x, so return null to indicate upscaling not possible
+    if (finalScale <= 1) {
+      console.log(`[SCALE_CALC] Image ${width}×${height} cannot be safely upscaled: finalScale=${finalScale}`);
+      return null;
+    }
+    
+    // Return valid Real-ESRGAN scales: 2, 3 (square only), or 4
+    if (finalScale === 2) {
       return 2;
     } else if (finalScale === 3 && orientation === 'square') {
       return 3;
@@ -298,9 +306,23 @@ export class ReplicateUpscaleService {
     this.validateImageSize(params.width, params.height);
     
     // Use intelligent scale calculation if dimensions provided
-    const scale = params.width && params.height 
-      ? this.calculateOptimalScale(params.width, params.height)
-      : (params.scale || 4);
+    let scale: number;
+    if (params.width && params.height) {
+      const calculatedScale = this.calculateOptimalScale(params.width, params.height);
+      
+      if (calculatedScale === null) {
+        // Image is too large to upscale safely
+        throw new UpscaleError(
+          UpscaleErrorCode.IMAGE_TOO_LARGE,
+          "Your image is already at maximum resolution for AI upscaling. Wide landscape images cannot be upscaled further due to GPU memory limits. Try uploading a portrait-oriented image for better upscaling results.",
+          `Image ${params.width}×${params.height} cannot be safely upscaled`
+        );
+      }
+      
+      scale = calculatedScale;
+    } else {
+      scale = params.scale || 4;
+    }
     
     console.log(`Creating upscale job with scale ${scale} for ${params.width}×${params.height}px image`);
     

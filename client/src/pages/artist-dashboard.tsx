@@ -810,13 +810,23 @@ export default function ArtistDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {artworks.map((artwork) => (
                   <Card key={artwork.id} className="overflow-hidden hover-elevate" data-testid={`card-artwork-${artwork.id}`}>
-                    <div className="aspect-square relative bg-muted">
+                    <div className="aspect-square relative bg-muted flex items-center justify-center">
                       <img
                         src={artwork.imageUrl}
                         alt={artwork.title}
                         className="w-full h-full object-cover"
                         data-testid={`img-artwork-${artwork.id}`}
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
                       />
+                      <div className="hidden flex-col items-center justify-center gap-2 text-muted-foreground">
+                        <ImageIcon className="h-12 w-12 opacity-20" />
+                        <p className="text-xs">Image unavailable</p>
+                      </div>
                     </div>
                     <CardContent className="p-6">
                       <div className="space-y-3">
@@ -982,13 +992,23 @@ export default function ArtistDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {archivedArtworks.map((artwork) => (
                   <Card key={artwork.id} className="overflow-hidden" data-testid={`card-archived-${artwork.id}`}>
-                    <div className="aspect-square relative bg-muted">
+                    <div className="aspect-square relative bg-muted flex items-center justify-center">
                       <img
                         src={artwork.imageUrl}
                         alt={artwork.title}
                         className="w-full h-full object-cover opacity-60"
                         data-testid={`img-artwork-${artwork.id}`}
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                          const fallback = target.parentElement?.querySelector('.fallback-placeholder') as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
                       />
+                      <div className="fallback-placeholder hidden flex-col items-center justify-center gap-2 text-muted-foreground opacity-40">
+                        <ImageIcon className="h-12 w-12" />
+                        <p className="text-xs">Image unavailable</p>
+                      </div>
                       <div className="absolute top-2 right-2">
                         <Badge variant="secondary" className="bg-red-600 text-white">
                           <Archive className="w-3 h-3 mr-1" />

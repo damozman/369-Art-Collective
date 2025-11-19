@@ -8,8 +8,8 @@ const replicate = new Replicate({
 const REAL_ESRGAN_MODEL = "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa";
 
 // Maximum safe pixel count for Replicate GPU (increased to support larger images)
-// 8M pixels allows images up to ~2800x2800px (e.g., 1868x4000 = 7.4M pixels)
-const MAX_SAFE_PIXELS = 8_000_000; // 8M pixels (~2828x2828 or similar)
+// 12M pixels allows images up to ~3464x3464px (e.g., 4000x2252 = 9M pixels, 1868x4000 = 7.4M pixels)
+const MAX_SAFE_PIXELS = 12_000_000; // 12M pixels (~3464x3464 or similar)
 
 // Target DPI and dimensions for qualifying 8+ variants
 const TARGET_MIN_PIXELS_FOR_ALL_VARIANTS = 9_720_000; // ~2700x3600px minimum for 8+ variants

@@ -323,13 +323,64 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       const blob = await response.blob();
       const upscaledFile = new File([blob], selectedFile!.name, { type: selectedFile!.type });
       
+      // Load the upscaled image to get its new dimensions
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          // Re-analyze with the NEW upscaled dimensions to update variant qualification
+          const analyzeResponse = await apiRequest('POST', '/api/upscale/analyze', {
+            imageUrl: upscaledUrl,
+            width: img.width,
+            height: img.height,
+          });
+          const analyzeData = await analyzeResponse.json();
+
+          // Update analysis with the new dimensions and qualifications
+          const updatedAnalysis = {
+            width: img.width,
+            height: img.height,
+            estimatedDpi: analyzeData.current.estimatedDpi,
+            targetDpi: analyzeData.current.targetDpi,
+            meetsMinimum: analyzeData.current.meetsMinimum,
+            meetsTarget: analyzeData.current.meetsTarget,
+            needsUpscale: analyzeData.shouldRecommend,
+            recommendedScale: analyzeData.recommendedScale,
+            message: analyzeData.current.message,
+            variantQualification: analyzeData.current.variantQualification,
+          };
+          
+          setAnalysis(updatedAnalysis);
+          
+          // Show success with variant unlock info
+          const unlockedCount = analyzeData.current.variantQualification?.totalQualified || 0;
+          const totalCount = analyzeData.current.variantQualification?.totalVariants || 12;
+          
+          toast({
+            title: "Image upscaled successfully!",
+            description: `Now qualifies for ${unlockedCount} of ${totalCount} product variants.`,
+          });
+        } catch (error) {
+          console.error('Failed to re-analyze upscaled image:', error);
+          // Still proceed even if re-analysis fails
+          toast({
+            title: "Image upscaled!",
+            description: "Your image has been enhanced for professional print quality.",
+          });
+        }
+      };
+      
+      img.onerror = () => {
+        console.error('Failed to load upscaled image for dimension analysis');
+        toast({
+          title: "Image upscaled!",
+          description: "Your image has been enhanced for professional print quality.",
+        });
+      };
+      
+      img.src = upscaledUrl;
+      
       onUpscaledFile(upscaledFile, upscaledUrl);
       onUpscaledImageUrl?.(upscaledUrl);
-      
-      toast({
-        title: "Image upscaled!",
-        description: "Your image has been enhanced for professional print quality.",
-      });
 
       setTimeout(() => {
         setProgress(0);

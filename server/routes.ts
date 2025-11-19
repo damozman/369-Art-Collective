@@ -5265,9 +5265,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const cached = await UpscaleDeduplicationService.checkCache(fileHash);
       if (cached.found) {
-        console.log(`✅ Upscale cache hit for hash ${fileHash}`);
+        console.log(`✅ Upscale cache hit for hash ${fileHash} - returning cached result WITHOUT consuming quota`);
         
-        await UpscaleQuotaService.consumeQuota(artistId, quotaStatus.quotaType);
+        // DO NOT consume quota for cached results - deduplication should be free!
+        // await UpscaleQuotaService.consumeQuota(artistId, quotaStatus.quotaType);
         
         const tier = artist.subscriptionTier || 'free';
         await UpscaleDeduplicationService.saveToCache({

@@ -236,8 +236,11 @@ async function getAIPreviewImageObjectStorage(imageUrl: string, objectPath: stri
   // Download the image to a buffer
   let imageBuffer: Buffer;
   try {
+    console.log(`[AI_PREVIEW] Reading object from storage: ${objectPath}`);
     imageBuffer = await objectStorage.readObjectAsBuffer(objectPath);
+    console.log(`[AI_PREVIEW] Successfully read ${imageBuffer.length} bytes from object storage`);
   } catch (error: any) {
+    console.error(`[AI_PREVIEW] Failed to read object from storage: ${error.message}`);
     throw new AIContentError(
       AIContentErrorCode.AI_IMAGE_FETCH_FAILED,
       "Failed to download image. Please try again.",
@@ -274,9 +277,11 @@ async function getAIPreviewImageObjectStorage(imageUrl: string, objectPath: stri
   // Create downsized JPEG preview from buffer
   try {
     console.log(`[AI_PREVIEW] Creating preview for ${basename}${ext} (original: ${(fileSize / 1024 / 1024).toFixed(2)}MB)`);
+    console.log(`[AI_PREVIEW] imageBuffer type: ${typeof imageBuffer}, isBuffer: ${Buffer.isBuffer(imageBuffer)}`);
     
     const image = sharp(imageBuffer);
     const metadata = await image.metadata();
+    console.log(`[AI_PREVIEW] Image metadata: ${metadata.width}x${metadata.height}, format: ${metadata.format}`);
     
     // Resize if needed
     const maxDim = Math.max(metadata.width || 0, metadata.height || 0);
@@ -319,39 +324,26 @@ async function getAIPreviewImageObjectStorage(imageUrl: string, objectPath: stri
       throw error;
     }
     
+    console.error(`[AI_PREVIEW] Unexpected error in getAIPreviewImageObjectStorage:`, error);
     throw new AIContentError(
       AIContentErrorCode.AI_PREVIEW_GENERATION_FAILED,
       "Failed to process your image for AI analysis. Please try a different image format.",
-      `Sharp processing error: ${error.message}`
+      `Error: ${error.message || error}`
     );
   }
 }
 
-// Clean up old preview files (optional - can be called periodically)
+// Clean up old preview files in object storage (optional - can be called periodically)
 export async function cleanupOldPreviews(maxAgeHours: number = 24): Promise<number> {
   try {
-    await ensurePreviewDir();
+    const objectStorage = new ObjectStorageService();
+    const previewsDir = objectStorage.getAiPreviewsDir();
     
-    const files = await fs.readdir(AI_PREVIEW_DIR);
-    const now = Date.now();
-    const maxAgeMs = maxAgeHours * 60 * 60 * 1000;
-    let deletedCount = 0;
-    
-    for (const file of files) {
-      if (!file.endsWith('_preview.jpg')) continue;
-      
-      const filePath = path.join(AI_PREVIEW_DIR, file);
-      const stats = await fs.stat(filePath);
-      const age = now - stats.mtimeMs;
-      
-      if (age > maxAgeMs) {
-        await fs.unlink(filePath);
-        deletedCount++;
-      }
-    }
-    
-    console.log(`[AI_PREVIEW] Cleaned up ${deletedCount} old preview files`);
-    return deletedCount;
+    // Note: Cleanup for object storage would require listing objects
+    // which depends on the object storage implementation.
+    // For now, return 0 as object storage handles its own lifecycle
+    console.log(`[AI_PREVIEW] Object storage cleanup not implemented yet`);
+    return 0;
   } catch (error) {
     console.error("[AI_PREVIEW] Cleanup failed:", error);
     return 0;

@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Zap, Sparkles, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Zap, Sparkles, Loader2, CheckCircle, AlertCircle, Crop } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ImageCropDialog } from "./ImageCropDialog";
 
 interface UpscaleWidgetProps {
   selectedFile: File | null;
@@ -14,6 +15,7 @@ interface UpscaleWidgetProps {
   onValidationChange?: (status: "pending" | "invalid" | "valid") => void;
   onOriginalImageUrl?: (url: string | null) => void;
   onUpscaledImageUrl?: (url: string | null) => void;
+  onCroppedFile?: (file: File) => void;
 }
 
 interface ProductVariantQualification{
@@ -55,13 +57,14 @@ interface QuotaStatus {
   message: string;
 }
 
-export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange, onOriginalImageUrl, onUpscaledImageUrl }: UpscaleWidgetProps) {
+export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange, onOriginalImageUrl, onUpscaledImageUrl, onCroppedFile }: UpscaleWidgetProps) {
   const { toast } = useToast();
   const [analysis, setAnalysis] = useState<DpiAnalysis | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
   
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -523,17 +526,32 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
                 )}
               </div>
 
-              {showUpscaleButton && !isUpscaling && (
-                <Button
-                  onClick={() => upscaleMutation.mutate()}
-                  size="default"
-                  className="gap-2"
-                  data-testid="button-boost-quality"
-                >
-                  <Zap className="h-4 w-4" />
-                  Boost Quality
-                </Button>
-              )}
+              <div className="flex flex-col gap-2">
+                {analysis.variantQualification && analysis.variantQualification.totalQualified < 8 && !isUpscaling && (
+                  <Button
+                    onClick={() => setIsCropDialogOpen(true)}
+                    size="default"
+                    variant="outline"
+                    className="gap-2"
+                    data-testid="button-crop-image"
+                  >
+                    <Crop className="h-4 w-4" />
+                    Crop Image
+                  </Button>
+                )}
+
+                {showUpscaleButton && !isUpscaling && (
+                  <Button
+                    onClick={() => upscaleMutation.mutate()}
+                    size="default"
+                    className="gap-2"
+                    data-testid="button-boost-quality"
+                  >
+                    <Zap className="h-4 w-4" />
+                    Boost Quality
+                  </Button>
+                )}
+              </div>
             </div>
 
             {isUpscaling && (
@@ -560,6 +578,24 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
           </>
         ) : null}
       </CardContent>
+
+      {imageUrl && selectedFile && (
+        <ImageCropDialog
+          open={isCropDialogOpen}
+          onOpenChange={setIsCropDialogOpen}
+          imageUrl={imageUrl}
+          originalFileName={selectedFile.name}
+          onCropComplete={(croppedFile) => {
+            if (onCroppedFile) {
+              onCroppedFile(croppedFile);
+            }
+            toast({
+              title: "Image cropped",
+              description: "Analyzing cropped image quality...",
+            });
+          }}
+        />
+      )}
     </Card>
   );
 }

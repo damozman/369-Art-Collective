@@ -78,19 +78,23 @@ const MENU_STRUCTURE = {
 async function getMainMenu() {
   const query = `
     query GetMenus {
-      shop {
-        navigationMenu(handle: "main-menu") {
-          id
-          handle
-          title
-          items {
+      menus(first: 10) {
+        edges {
+          node {
             id
+            handle
             title
-            url
             items {
               id
               title
               url
+              type
+              items {
+                id
+                title
+                url
+                type
+              }
             }
           }
         }
@@ -99,7 +103,12 @@ async function getMainMenu() {
   `;
   
   const data = await shopifyGraphQL(query);
-  return data.shop.navigationMenu;
+  
+  // Find main-menu from the list
+  const menus = data.menus.edges.map(edge => edge.node);
+  const mainMenu = menus.find(menu => menu.handle === 'main-menu');
+  
+  return mainMenu || null;
 }
 
 async function getCollectionByHandle(handle) {
@@ -117,14 +126,26 @@ async function getCollectionByHandle(handle) {
   return data.collectionByHandle;
 }
 
-async function updateMenu(menuId, items) {
+async function updateMenu(menuId, title, handle, items) {
   const mutation = `
-    mutation UpdateMenu($menuId: ID!, $items: [MenuItemInput!]!) {
-      menuUpdate(id: $menuId, menu: { items: $items }) {
+    mutation UpdateMenu($id: ID!, $title: String!, $handle: String!, $items: [MenuItemUpdateInput!]!) {
+      menuUpdate(id: $id, title: $title, handle: $handle, items: $items) {
         menu {
           id
           handle
           title
+          items {
+            id
+            title
+            url
+            type
+            items {
+              id
+              title
+              url
+              type
+            }
+          }
         }
         userErrors {
           field
@@ -134,7 +155,7 @@ async function updateMenu(menuId, items) {
     }
   `;
   
-  const data = await shopifyGraphQL(mutation, { menuId, items });
+  const data = await shopifyGraphQL(mutation, { id: menuId, title, handle, items });
   
   if (data.menuUpdate.userErrors && data.menuUpdate.userErrors.length > 0) {
     const errors = data.menuUpdate.userErrors.map(e => `${e.field}: ${e.message}`).join(', ');
@@ -243,7 +264,7 @@ async function main() {
   
   // Update menu
   log('\nUpdating navigation menu...', colors.blue);
-  await updateMenu(mainMenu.id, menuItems);
+  await updateMenu(mainMenu.id, mainMenu.title, mainMenu.handle, menuItems);
   
   log('\n============================================================', colors.blue);
   log('  ✅ Navigation Menu Setup Complete!', colors.green);

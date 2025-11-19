@@ -284,13 +284,20 @@ function parseObjectPath(path: string): {
     path = `/${path}`;
   }
   
-  // Handle /objects/ URL prefix - strip it and use actual bucket ID
+  // Handle /objects/ URL prefix - strip it and use actual bucket ID from env vars
   if (path.startsWith("/objects/")) {
     const objectName = path.substring(9); // Remove "/objects/" prefix
-    const bucketName = process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID;
     
-    if (!bucketName) {
-      throw new Error("REPLIT_OBJECT_STORAGE_BUCKET_ID environment variable not set");
+    // Extract bucket ID from one of the directory env vars (they all use the same bucket)
+    const artworkDir = process.env.ARTWORK_UPLOADS_DIR || "";
+    if (!artworkDir) {
+      throw new Error("ARTWORK_UPLOADS_DIR not configured - cannot determine bucket ID");
+    }
+    
+    // Extract bucket ID from path like "/replit-objstore-xxx/artwork-uploads/"
+    const bucketName = artworkDir.split("/")[1];
+    if (!bucketName || !bucketName.startsWith("replit-objstore-")) {
+      throw new Error(`Invalid bucket path in ARTWORK_UPLOADS_DIR: ${artworkDir}`);
     }
     
     return {

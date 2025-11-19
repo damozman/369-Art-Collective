@@ -10,7 +10,7 @@ import sharp from 'sharp';
 
 // Processing limits
 const MAX_SAFE_PIXELS = 12_000_000; // 12M pixels (~3464×3464)
-const MIN_SHORTEST_SIDE = 1800; // Minimum 1800px on shortest dimension
+const MIN_SHORTEST_SIDE = 1200; // Minimum 1200px on shortest dimension (150 DPI for 8" prints)
 
 export enum ImageOrientation {
   PORTRAIT = 'portrait',   // Taller than wide (best for wall art)

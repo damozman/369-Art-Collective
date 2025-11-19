@@ -11,9 +11,10 @@ interface StepImageUploadProps {
   onValidationChange?: (status: "pending" | "invalid" | "valid") => void;
   onOriginalImageUrl?: (url: string | null) => void;
   onUpscaledImageUrl?: (url: string | null) => void;
+  onCroppedFile?: (file: File) => void;
 }
 
-export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onValidationChange, onOriginalImageUrl, onUpscaledImageUrl }: StepImageUploadProps) {
+export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onValidationChange, onOriginalImageUrl, onUpscaledImageUrl, onCroppedFile }: StepImageUploadProps) {
   const { toast } = useToast();
   const [currentPreviewUrl, setCurrentPreviewUrl] = useState<string | null>(previewUrl);
 
@@ -133,6 +134,7 @@ export function StepImageUpload({ selectedFile, previewUrl, onFileChange, onVali
             onValidationChange={onValidationChange}
             onOriginalImageUrl={onOriginalImageUrl}
             onUpscaledImageUrl={onUpscaledImageUrl}
+            onCroppedFile={onCroppedFile}
           />
         </div>
       )}

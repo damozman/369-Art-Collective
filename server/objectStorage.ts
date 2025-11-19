@@ -283,6 +283,23 @@ function parseObjectPath(path: string): {
   if (!path.startsWith("/")) {
     path = `/${path}`;
   }
+  
+  // Handle /objects/ URL prefix - strip it and use actual bucket ID
+  if (path.startsWith("/objects/")) {
+    const objectName = path.substring(9); // Remove "/objects/" prefix
+    const bucketName = process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID;
+    
+    if (!bucketName) {
+      throw new Error("REPLIT_OBJECT_STORAGE_BUCKET_ID environment variable not set");
+    }
+    
+    return {
+      bucketName,
+      objectName,
+    };
+  }
+  
+  // Legacy: Handle full bucket paths like /replit-objstore-xxx/directory/file
   const pathParts = path.split("/");
   if (pathParts.length < 3) {
     throw new Error("Invalid path: must contain at least a bucket name");

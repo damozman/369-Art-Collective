@@ -262,6 +262,9 @@ export class ReplicateUpscaleService {
   /**
    * Download upscaled image from Replicate URL and save to object storage
    * Returns permanent object storage URL
+   * 
+   * IMPORTANT: Compresses images to JPEG to stay under Shopify's 20MB limit
+   * while maintaining print quality (90% quality, 4096px width preserved)
    */
   static async saveUpscaledImageToStorage(
     replicateUrl: string, 
@@ -276,7 +279,21 @@ export class ReplicateUpscaleService {
       }
 
       const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      let buffer = Buffer.from(arrayBuffer);
+      
+      const originalSizeMB = buffer.length / (1024 * 1024);
+      console.log(`[IMAGE_COMPRESSION] Original upscaled image size: ${originalSizeMB.toFixed(2)}MB`);
+
+      // Compress to JPEG if over 15MB to ensure under Shopify's 20MB limit
+      if (originalSizeMB > 15) {
+        const sharp = (await import('sharp')).default;
+        buffer = await sharp(buffer)
+          .jpeg({ quality: 90 }) // High quality for print
+          .toBuffer();
+        
+        const compressedSizeMB = buffer.length / (1024 * 1024);
+        console.log(`[IMAGE_COMPRESSION] Compressed to JPEG: ${compressedSizeMB.toFixed(2)}MB (${((1 - compressedSizeMB/originalSizeMB) * 100).toFixed(1)}% reduction)`);
+      }
 
       // Import object storage service
       const { ObjectStorageService } = await import('../objectStorage');
@@ -284,14 +301,18 @@ export class ReplicateUpscaleService {
 
       // Generate unique filename with timestamp and hash
       const timestamp = Date.now();
-      const filename = `upscaled_${artistId}_${originalFileHash}_${timestamp}.png`;
+      const filename = originalSizeMB > 15 
+        ? `upscaled_${artistId}_${originalFileHash}_${timestamp}.jpg`
+        : `upscaled_${artistId}_${originalFileHash}_${timestamp}.png`;
+      
+      const contentType = originalSizeMB > 15 ? 'image/jpeg' : 'image/png';
 
       // Upload to object storage (AI generated directory for upscaled images)
       const objectStorageUrl = await objectStorage.uploadFile({
         directory: objectStorage.getAiGeneratedDir(),
         filename,
         buffer,
-        contentType: 'image/png',
+        contentType,
       });
 
       console.log(`✅ Upscaled image saved to object storage: ${objectStorageUrl}`);

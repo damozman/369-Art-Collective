@@ -1,3 +1,5 @@
+import { ReplicateUpscaleService } from './replicate-upscale-service';
+
 export interface ProductVariantQualification {
   variantKey: string;
   productName: string;
@@ -213,7 +215,6 @@ export class DpiValidatorService {
   static getUpscaleScale(width: number, height: number): 2 | 3 | 4 | null {
     // Use ReplicateUpscaleService's orientation-aware calculation
     // which considers GPU memory limits and orientation-specific constraints
-    const { ReplicateUpscaleService } = require('./replicate-upscale-service');
     return ReplicateUpscaleService.calculateOptimalScale(width, height);
   }
 

@@ -169,6 +169,7 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
         vendor: artwork.artistName,
         product_type: shopifyProductType,
         status: "draft",
+        published_scope: "web", // Publish to Online Store (web) not Point of Sale
         tags: tags.join(", "),
         options: [
           { name: "Size", values: sizes },
@@ -297,6 +298,7 @@ export async function updateProductStatus(
         product: {
           id: shopifyProductId,
           status: status,
+          published_scope: "web", // Ensure it's published to Online Store (web) not Point of Sale
         },
       }),
     });

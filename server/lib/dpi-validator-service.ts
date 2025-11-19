@@ -7,11 +7,15 @@ export interface ProductVariantQualification {
   requiredPixels: { width: number; height: number };
 }
 
+export type ImageOrientation = 'portrait' | 'landscape' | 'square';
+export type QualityLevel = 'excellent' | 'good' | 'needs-boost' | 'rejected';
+
 export interface ImageQualityAnalysis {
   width: number;
   height: number;
   megapixels: number;
   estimatedDpi: number;
+  targetDpi: number;
   meetsMinimum: boolean;
   meetsTarget: boolean;
   recommendation: 'perfect' | 'good' | 'needs_upscaling' | 'unsuitable';
@@ -28,6 +32,9 @@ export interface ImageQualityAnalysis {
     totalQualified: number;
     totalVariants: number;
   };
+  orientation?: ImageOrientation;
+  qualityLevel?: QualityLevel;
+  customerGuidance?: string;
 }
 
 export class DpiValidatorService {
@@ -129,11 +136,25 @@ export class DpiValidatorService {
       metalSign: estimatedDpi >= 180,
     };
     
+    // Add new features: orientation, quality level, customer guidance
+    const orientation = this.detectOrientation(width, height);
+    const qualityLevel = this.determineQualityLevel(estimatedDpi, qualified.length, this.PRODUCT_VARIANTS.length);
+    const customerGuidance = this.generateCustomerGuidance(
+      qualityLevel,
+      orientation,
+      width,
+      height,
+      qualified.length,
+      this.PRODUCT_VARIANTS.length,
+      estimatedDpi
+    );
+    
     return {
       width,
       height,
       megapixels: parseFloat(megapixels.toFixed(2)),
       estimatedDpi,
+      targetDpi: this.TARGET_DPI,
       meetsMinimum: qualified.length >= 8,
       meetsTarget: qualified.length === this.PRODUCT_VARIANTS.length,
       recommendation,
@@ -145,6 +166,9 @@ export class DpiValidatorService {
         totalQualified: qualified.length,
         totalVariants: this.PRODUCT_VARIANTS.length,
       },
+      orientation,
+      qualityLevel,
+      customerGuidance,
     };
   }
 
@@ -223,5 +247,89 @@ export class DpiValidatorService {
       map.set(variant.key, { width: variant.width, height: variant.height });
     }
     return map;
+  }
+
+  /**
+   * Detect image orientation based on aspect ratio
+   */
+  static detectOrientation(width: number, height: number): ImageOrientation {
+    const ratio = width / height;
+    
+    if (Math.abs(ratio - 1) < 0.1) {
+      return 'square'; // Within 10% of 1:1
+    } else if (width > height) {
+      return 'landscape';
+    } else {
+      return 'portrait';
+    }
+  }
+
+  /**
+   * Determine quality level with traffic light system
+   * excellent (green) = 300+ DPI or all variants qualified
+   * good (yellow) = 150-300 DPI or 8+ variants
+   * needs-boost (orange) = Can be improved with upscaling
+   * rejected (red) = Below minimum standards
+   */
+  static determineQualityLevel(
+    estimatedDpi: number,
+    totalQualified: number,
+    totalVariants: number
+  ): QualityLevel {
+    // Excellent: Professional quality
+    if (estimatedDpi >= this.TARGET_DPI || totalQualified === totalVariants) {
+      return 'excellent';
+    }
+    
+    // Good: Acceptable quality
+    if (estimatedDpi >= this.MIN_DPI && totalQualified >= 8) {
+      return 'good';
+    }
+    
+    // Needs boost: Can be improved
+    if (totalQualified >= 4 && totalQualified < 8) {
+      return 'needs-boost';
+    }
+    
+    // Rejected: Too low quality
+    return 'rejected';
+  }
+
+  /**
+   * Generate customer-friendly guidance based on quality level and orientation
+   */
+  static generateCustomerGuidance(
+    qualityLevel: QualityLevel,
+    orientation: ImageOrientation,
+    width: number,
+    height: number,
+    totalQualified: number,
+    totalVariants: number,
+    estimatedDpi: number
+  ): string {
+    const orientationNote = 
+      orientation === 'portrait' 
+        ? ' Portrait orientation is perfect for wall art!' 
+        : orientation === 'landscape'
+        ? ' Landscape images work best for panoramic prints.'
+        : ' Square images are ideal for balanced compositions.';
+
+    switch (qualityLevel) {
+      case 'excellent':
+        return `Excellent! Professional print quality at ${estimatedDpi} DPI. Qualifies for all ${totalVariants} product sizes.${orientationNote}`;
+      
+      case 'good':
+        return `Good quality at ${estimatedDpi} DPI. Qualifies for ${totalQualified} of ${totalVariants} sizes.${orientationNote} Click "Boost Quality" to unlock larger sizes.`;
+      
+      case 'needs-boost':
+        return `Limited quality: Only ${totalQualified} of ${totalVariants} sizes available at ${estimatedDpi} DPI. Click "Boost Quality" to improve resolution and unlock more product options.${orientationNote === ' Landscape images work best for panoramic prints.' ? ' Note: Wide landscape images may qualify for fewer variants than portrait orientation.' : ''}`;
+      
+      case 'rejected':
+        const minDimension = orientation === 'portrait' ? '1800×2400px' : orientation === 'landscape' ? '2400×1800px' : '1800×1800px';
+        return `Image resolution too low (${width}×${height}px at ${estimatedDpi} DPI). Please upload a higher-resolution image of at least ${minDimension} to ensure print quality. Current image cannot be enhanced enough for professional printing.`;
+      
+      default:
+        return orientationNote.trim();
+    }
   }
 }

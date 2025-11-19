@@ -70,7 +70,7 @@ const SMART_COLLECTIONS = [
   },
   
   // Style-Based Collections (matching navigation menu)
-  // Using CONTAINS to match tags flexibly (e.g., "abstract", "abstract art", "Style:Abstract")
+  // Using exact tag matches (e.g., products tagged "abstract", "landscape", etc.)
   {
     handle: 'abstract',
     title: 'Abstract Art',
@@ -78,7 +78,7 @@ const SMART_COLLECTIONS = [
     rules: [
       {
         column: 'TAG',
-        relation: 'CONTAINS',
+        relation: 'EQUALS',
         condition: 'abstract',
       },
     ],
@@ -91,7 +91,7 @@ const SMART_COLLECTIONS = [
     rules: [
       {
         column: 'TAG',
-        relation: 'CONTAINS',
+        relation: 'EQUALS',
         condition: 'landscape',
       },
     ],
@@ -104,7 +104,7 @@ const SMART_COLLECTIONS = [
     rules: [
       {
         column: 'TAG',
-        relation: 'CONTAINS',
+        relation: 'EQUALS',
         condition: 'nature',
       },
     ],
@@ -182,7 +182,7 @@ const SMART_COLLECTIONS = [
     rules: [
       {
         column: 'TAG',
-        relation: 'CONTAINS',
+        relation: 'EQUALS',
         condition: 'wildlife',
       },
     ],

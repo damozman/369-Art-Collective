@@ -36,7 +36,16 @@ import { getAffiliateCodeFromCookie } from "./middleware/affiliate-tracking";
 import { processShopifyOrder } from "./lib/order-processor";
 import { processCreatorStackPurchase } from "./lib/creatorstack-webhook-processor";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
-import { validateImageQuality, validateImageQualityFromBuffer, getImageDimensions, MIN_LONG_SIDE, MIN_SHORT_SIDE } from "./lib/image-validator";
+import { 
+  validateImageQuality, 
+  validateImageQualityFromBuffer, 
+  validatePortfolioImageQuality,
+  getImageDimensions, 
+  MIN_LONG_SIDE, 
+  MIN_SHORT_SIDE,
+  PORTFOLIO_MIN_LONG_SIDE,
+  PORTFOLIO_MIN_SHORT_SIDE
+} from "./lib/image-validator";
 import { stripeConnectService } from "./lib/stripe-connect";
 import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from "./lib/payout-service";
 import { emailService } from "./lib/email-service";
@@ -739,14 +748,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Validate each image's quality
+      // Validate each portfolio image's quality (more lenient than print-ready requirements)
       for (const file of files) {
-        const validation = validateImageQualityFromBuffer(file.buffer);
+        const validation = validatePortfolioImageQuality(file.buffer);
         if (!validation.valid) {
           return res.status(400).json({ 
-            error: `Image "${file.originalname}" ${validation.message || "does not meet quality requirements"}`,
-            minLongSide: MIN_LONG_SIDE,
-            minShortSide: MIN_SHORT_SIDE,
+            error: `Portfolio image "${file.originalname}" ${validation.message || "does not meet quality requirements"}`,
+            minLongSide: PORTFOLIO_MIN_LONG_SIDE,
+            minShortSide: PORTFOLIO_MIN_SHORT_SIDE,
             actualDimensions: validation.dimensions
           });
         }

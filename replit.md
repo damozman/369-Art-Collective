@@ -39,14 +39,17 @@ The system uses a scalable client-server architecture with distinct frontend and
 - **Artist Subscription Tiers:** Three tiers (Free, Pro, Elite) with recurring billing via Stripe, including a comprehensive free trial system with lifecycle management.
 - **Featured Artist System:** Hybrid performance and fair rotation logic for homepage placement.
 - **Security:** HMAC verification, rate limiting, audit logging, soft-delete, and production-hardened authentication.
-- **AI Image Upscaling System:** Integrated Real-ESRGAN via Replicate API to reduce registration friction while maintaining print quality standards. Features include:
-  - **Intelligent Scale Selection:** Automatically calculates optimal upscale factor (2x or 4x) based on image dimensions to unlock maximum variants
-  - **Increased Pixel Limit:** Supports images up to 12M pixels (~3464×3464px or 4000×2252px landscape)
-  - **Automatic Variant Unlocking:** After upscaling completes, system re-analyzes upscaled dimensions and updates variant qualification in real-time
-  - **GPU Memory Fallback:** Automatically retries with lower scale (2x) if Replicate GPU runs out of memory
-  - **Smart Quality Detection:** Identifies already high-quality images and uses minimal upscaling to preserve quality
-  - **User-Friendly Errors:** Structured error codes (IMAGE_TOO_LARGE, GPU_MEMORY_LIMIT, etc.) with actionable messages
-  - **Comprehensive Features:** DPI-driven validation, inline upscale widget, tiered quota system, deduplication cache, and 8-layer abuse protection
+- **AI Image Upscaling System (Seamless Pipeline):** Fully automated image processing system that handles oversized/undersized images seamlessly while maximizing print quality and variant availability. Features include:
+  - **Auto-Normalization:** Automatically downscales images >12M pixels to safe processing limits while preserving quality. Rejects images <1800px (too small for professional printing) with clear guidance.
+  - **Orientation-Aware Processing:** Detects portrait/landscape/square orientation and applies smart limits (landscape max 2x, square max 3x, portrait max 4x scale) to prevent GPU crashes while maximizing variants.
+  - **Intelligent Scale Selection:** Calculates optimal upscale factor based on image dimensions, orientation, and target quality (150-300 DPI) to unlock maximum product variants without exceeding GPU memory (32M pixel output limit).
+  - **Automatic Variant Unlocking:** After upscaling completes, system re-analyzes upscaled dimensions and updates variant qualification in real-time, showing artists exactly how many more sizes they unlocked.
+  - **Traffic Light Quality System:** Real-time visual feedback with 4 quality levels (🎉 Excellent/Green = 300 DPI, ✓ Good/Yellow = 150-300 DPI, ⚠️ Needs Boost/Orange = 4-7 variants, ❌ Rejected/Red = <4 variants).
+  - **Customer-Friendly Guidance:** Actionable messages tailored to quality level and orientation (e.g., "Landscape images qualify for 8/12 variants. Upload portrait-oriented artwork to unlock all 12 sizes").
+  - **GPU Memory Fallback:** Automatically retries with lower scale (2x) if Replicate GPU runs out of memory, with intelligent fallback logic.
+  - **Smart Quality Detection:** Identifies already high-quality images (≥9.7M pixels) and uses minimal upscaling (2x) to preserve quality.
+  - **JPEG Auto-Compression:** Automatically compresses upscaled images >15MB to JPEG format (90% quality) to stay under Shopify's 20MB asset limit.
+  - **Comprehensive Features:** DPI-driven validation, inline upscale widget, tiered quota system, deduplication cache, and 8-layer abuse protection.
 - **Printify Mockup Sync System:** Automated system that retrieves Printify-generated product mockup images and adds them to Shopify product galleries after artwork approval. Features intelligent retry logic with exponential backoff (5s, 10s, 15s delays), non-blocking async execution, and comprehensive error handling. System runs automatically during artwork approval workflow without delaying admin response.
 - **Admin Tools Panel:** Centralized admin interface at `/admin/tools` for artist management with comprehensive audit logging. Features include: (1) AI Upscale Credit Reset - manually reset artist's monthly upscale quota when needed, (2) Comp Subscription Tiers - grant Pro/Elite tiers without Stripe payment for VIP artists, partnerships, or bug compensation. All actions logged in adminActions table with actor, target, action metadata, and optional notes for compliance and transparency.
 - **Production Readiness:** Health check endpoint (`/api/health`) for 6 key integrations, and a detailed deployment runbook.

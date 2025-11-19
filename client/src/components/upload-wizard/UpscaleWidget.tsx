@@ -41,6 +41,9 @@ interface DpiAnalysis {
     totalQualified: number;
     totalVariants: number;
   };
+  orientation?: 'portrait' | 'landscape' | 'square';
+  qualityLevel?: 'excellent' | 'good' | 'needs-boost' | 'rejected';
+  customerGuidance?: string;
 }
 
 interface QuotaStatus {
@@ -157,6 +160,9 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
             recommendedScale: analyzeData.recommendedScale,
             message: analyzeData.current.message,
             variantQualification: analyzeData.current.variantQualification,
+            orientation: analyzeData.current.orientation,
+            qualityLevel: analyzeData.current.qualityLevel,
+            customerGuidance: analyzeData.current.customerGuidance,
           };
           setAnalysis(analysisResult);
           
@@ -347,6 +353,9 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
             recommendedScale: analyzeData.recommendedScale,
             message: analyzeData.current.message,
             variantQualification: analyzeData.current.variantQualification,
+            orientation: analyzeData.current.orientation,
+            qualityLevel: analyzeData.current.qualityLevel,
+            customerGuidance: analyzeData.current.customerGuidance,
           };
           
           setAnalysis(updatedAnalysis);
@@ -435,14 +444,21 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2">
-                  {analysis.meetsTarget ? (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  ) : analysis.meetsMinimum ? (
-                    <AlertCircle className="h-5 w-5 text-yellow-500" />
+                  {analysis.qualityLevel === 'excellent' ? (
+                    <CheckCircle className="h-5 w-5 text-green-500" data-testid="icon-quality-excellent" />
+                  ) : analysis.qualityLevel === 'good' ? (
+                    <CheckCircle className="h-5 w-5 text-yellow-500" data-testid="icon-quality-good" />
+                  ) : analysis.qualityLevel === 'needs-boost' ? (
+                    <AlertCircle className="h-5 w-5 text-orange-500" data-testid="icon-quality-needs-boost" />
                   ) : (
-                    <AlertCircle className="h-5 w-5 text-red-500" />
+                    <AlertCircle className="h-5 w-5 text-red-500" data-testid="icon-quality-rejected" />
                   )}
                   <h4 className="text-sm font-semibold">Print Quality Analysis</h4>
+                  {analysis.orientation && (
+                    <Badge variant="outline" className="h-5 text-xs capitalize">
+                      {analysis.orientation}
+                    </Badge>
+                  )}
                 </div>
                 
                 <div className="text-xs">
@@ -450,12 +466,8 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
                   <p className="font-medium">{analysis.width} × {analysis.height}px</p>
                 </div>
 
-                <p className="text-xs text-muted-foreground">
-                  {analysis.meetsMinimum 
-                    ? analysis.variantQualification && analysis.variantQualification.totalQualified < analysis.variantQualification.totalVariants
-                      ? `Image qualifies for ${analysis.variantQualification.totalQualified} variants. Upgrade to 3600×5400 pixels for all sizes.`
-                      : "Image meets quality requirements for all print sizes."
-                    : "Image resolution too low. Minimum 2700×3600 pixels required."}
+                <p className="text-xs leading-relaxed" data-testid="text-customer-guidance">
+                  {analysis.customerGuidance || analysis.message}
                 </p>
 
                 {analysis.variantQualification && (

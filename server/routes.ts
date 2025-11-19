@@ -2552,28 +2552,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload image for upscale widget (no strict quality checks)
+  // Upload image for upscale widget with automatic normalization
   app.post("/api/upload/design", requireArtist, upload.single("image"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
       
-      // Upload to object storage
+      // Auto-normalize image (downscale if too large, reject if too small)
+      const { ImageNormalizationService } = await import('./lib/image-normalization-service');
+      const normalizationResult = await ImageNormalizationService.normalizeImage(req.file.buffer);
+      
+      // If image was rejected (too small), return error
+      if (normalizationResult.reason === 'rejected') {
+        return res.status(400).json({ 
+          error: normalizationResult.customerMessage 
+        });
+      }
+      
+      // Upload normalized image to object storage
       const objectStorage = new ObjectStorageService();
       const safeName = req.file.originalname.replace(/\s+/g, "-").toLowerCase();
       const filename = `${Date.now()}-${safeName}`;
       const imageUrl = await objectStorage.uploadFile({
         directory: objectStorage.getArtworkUploadsDir(),
         filename,
-        buffer: req.file.buffer,
+        buffer: normalizationResult.buffer,
         contentType: req.file.mimetype,
       });
       
       console.log(`[Upload Design] File uploaded for upscale widget: ${filename}`);
       
-      // Return URL in format expected by UpscaleWidget (key: 'url', not 'imageUrl')
-      res.status(200).json({ url: imageUrl });
+      // Log normalization details
+      if (normalizationResult.wasModified) {
+        console.log(`[IMAGE_NORMALIZED] Auto-downscaled from ${normalizationResult.originalWidth}×${normalizationResult.originalHeight}px to ${normalizationResult.normalizedWidth}×${normalizationResult.normalizedHeight}px`);
+      }
+      
+      // Return URL with normalization metadata
+      res.status(200).json({ 
+        url: imageUrl,
+        normalized: normalizationResult.wasModified,
+        orientation: normalizationResult.orientation,
+        customerMessage: normalizationResult.customerMessage
+      });
     } catch (error: any) {
       console.error("Upload design error:", error);
       res.status(500).json({ error: error.message || "Upload failed" });

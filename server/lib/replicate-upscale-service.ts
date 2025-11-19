@@ -82,11 +82,18 @@ export class ReplicateUpscaleService {
   }
 
   /**
-   * Calculate intelligent upscale factor based on current dimensions and target
-   * Returns the minimum scale needed to qualify for 8+ variants
+   * Calculate intelligent upscale factor based on current dimensions, orientation, and target
+   * Returns the minimum scale needed to qualify for 8+ variants while preventing GPU memory errors
    */
   static calculateOptimalScale(width: number, height: number): number {
     const currentPixels = width * height;
+    const MAX_OUTPUT_PIXELS = 32_000_000; // 32M pixels max to prevent GPU crashes
+    
+    // Detect orientation
+    const ratio = width / height;
+    const orientation = Math.abs(ratio - 1) < 0.1 ? 'square' 
+      : width > height ? 'landscape' 
+      : 'portrait';
     
     // If already meets target, use scale 2 for minimal processing
     if (currentPixels >= TARGET_MIN_PIXELS_FOR_ALL_VARIANTS) {
@@ -96,9 +103,34 @@ export class ReplicateUpscaleService {
     // Calculate scale needed to reach target
     const requiredScale = Math.sqrt(TARGET_MIN_PIXELS_FOR_ALL_VARIANTS / currentPixels);
     
-    // Round up to nearest valid scale (2 or 4)
-    if (requiredScale <= 2) {
+    // Calculate maximum safe scale to prevent GPU memory errors
+    const maxSafeScale = Math.sqrt(MAX_OUTPUT_PIXELS / currentPixels);
+    
+    // Apply orientation-specific limits
+    let maxScale = 4;
+    if (orientation === 'landscape') {
+      // Landscape creates massive outputs, cap at scale 2
+      maxScale = Math.min(2, Math.floor(maxSafeScale));
+      console.log(`[SCALE_CALC] Landscape detected: capping at scale ${maxScale}`);
+    } else if (orientation === 'square') {
+      // Square can handle scale 3
+      maxScale = Math.min(3, Math.floor(maxSafeScale));
+    } else {
+      // Portrait can handle scale 4
+      maxScale = Math.min(4, Math.floor(maxSafeScale));
+    }
+    
+    // Choose minimum of required scale and max safe scale
+    const targetScale = Math.ceil(requiredScale);
+    const finalScale = Math.min(targetScale, maxScale);
+    
+    console.log(`[SCALE_CALC] ${width}×${height}px ${orientation}: required=${requiredScale.toFixed(2)}, max_safe=${maxSafeScale.toFixed(2)}, final=${finalScale}`);
+    
+    // Ensure we return a valid scale (2 or 4, or 3 for square)
+    if (finalScale <= 2) {
       return 2;
+    } else if (finalScale === 3 && orientation === 'square') {
+      return 3;
     } else {
       return 4;
     }

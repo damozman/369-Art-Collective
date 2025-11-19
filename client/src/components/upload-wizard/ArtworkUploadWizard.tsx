@@ -114,6 +114,16 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
     }
   };
 
+  const handleCroppedFile = (croppedFile: File) => {
+    // Update the selected file with the cropped version
+    setSelectedFile(croppedFile);
+    setPreviewUrl(URL.createObjectURL(croppedFile));
+    setImageValidationStatus("pending"); // Re-analyze the cropped image
+    // Clear the uploaded/original URLs so re-analysis happens
+    setOriginalImageUrl(null);
+    setUploadedImageUrl(null);
+  };
+
   const handleFormSubmit = async (data: WizardFormData) => {
     // Ensure at least one of uploadedImageUrl or selectedFile is present
     if (!uploadedImageUrl && !selectedFile) {
@@ -186,6 +196,7 @@ export function ArtworkUploadWizard({ onSubmit, isSubmitting }: ArtworkUploadWiz
               onValidationChange={setImageValidationStatus}
               onOriginalImageUrl={setOriginalImageUrl}
               onUpscaledImageUrl={setUploadedImageUrl}
+              onCroppedFile={handleCroppedFile}
             />
           )}
           {currentStep === 2 && <StepBasicDetails form={form} originalImageUrl={originalImageUrl} />}

@@ -246,10 +246,91 @@ const SMART_COLLECTIONS = [
   },
 ];
 
+async function getCollectionByHandle(handle) {
+  const query = `
+    query GetCollection($handle: String!) {
+      collectionByHandle(handle: $handle) {
+        id
+        handle
+        title
+        ruleSet {
+          rules {
+            column
+            relation
+            condition
+          }
+          appliedDisjunctively
+        }
+      }
+    }
+  `;
+  
+  const data = await shopifyGraphQL(query, { handle });
+  return data.collectionByHandle;
+}
+
+async function updateSmartCollection(collectionId, config) {
+  const mutation = `
+    mutation UpdateCollection($input: CollectionInput!) {
+      collectionUpdate(input: $input) {
+        collection {
+          id
+          handle
+          title
+          ruleSet {
+            rules {
+              column
+              relation
+              condition
+            }
+            appliedDisjunctively
+          }
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+  `;
+  
+  const variables = {
+    input: {
+      id: collectionId,
+      ruleSet: {
+        rules: config.rules,
+        appliedDisjunctively: config.disjunctive,
+      },
+    },
+  };
+  
+  const data = await shopifyGraphQL(mutation, variables);
+  
+  if (data.collectionUpdate.userErrors && data.collectionUpdate.userErrors.length > 0) {
+    const errors = data.collectionUpdate.userErrors.map(e => `${e.field}: ${e.message}`).join(', ');
+    throw new Error(errors);
+  }
+  
+  return data.collectionUpdate.collection;
+}
+
 async function createSmartCollection(config) {
   try {
-    log(`Creating smart collection: ${config.title}...`, colors.blue);
+    log(`Processing smart collection: ${config.title}...`, colors.blue);
     
+    // Check if collection already exists
+    const existingCollection = await getCollectionByHandle(config.handle);
+    
+    if (existingCollection) {
+      // Update existing collection with new rules
+      log(`  Updating existing collection...`, colors.yellow);
+      const updated = await updateSmartCollection(existingCollection.id, config);
+      log(`✓ Updated smart collection: ${updated.title} (${updated.handle})`, colors.green);
+      log(`  Now auto-populates with tag: ${config.rules[0].condition}`, colors.reset);
+      return updated;
+    }
+    
+    // Create new collection
     const mutation = `
       mutation CreateCollection($input: CollectionInput!) {
         collectionCreate(input: $input) {
@@ -290,12 +371,6 @@ async function createSmartCollection(config) {
     
     if (data.collectionCreate.userErrors && data.collectionCreate.userErrors.length > 0) {
       const errors = data.collectionCreate.userErrors.map(e => `${e.field}: ${e.message}`).join(', ');
-      
-      if (errors.includes('already') || errors.includes('taken')) {
-        log(`⚠ Collection "${config.title}" already exists, skipping`, colors.yellow);
-        return null;
-      }
-      
       throw new Error(errors);
     }
     
@@ -306,7 +381,7 @@ async function createSmartCollection(config) {
     return collection;
     
   } catch (error) {
-    log(`❌ Failed to create collection "${config.title}": ${error.message}`, colors.red);
+    log(`❌ Failed to process collection "${config.title}": ${error.message}`, colors.red);
     throw error;
   }
 }

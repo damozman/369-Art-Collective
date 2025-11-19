@@ -59,15 +59,14 @@ function convertToFullImageUrl(imageUrl: string): string {
     return imageUrl;
   }
 
-  // Get the Replit deployment URL
-  const replitUrl = process.env.REPLIT_DOMAINS || 
-                   process.env.REPL_SLUG 
-                     ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
-                     : 'http://0.0.0.0:5000';
+  // Use published app URL for public image access
+  // CRITICAL: Shopify cannot access development workspace URLs (picard.replit.dev)
+  // Must use published production URL (247portal.replit.app) for image downloads
+  const publicUrl = process.env.PUBLIC_APP_URL || 'https://247portal.replit.app';
 
   // Convert relative path to full URL
   const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-  return `${replitUrl}${cleanPath}`;
+  return `${publicUrl}${cleanPath}`;
 }
 
 export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {

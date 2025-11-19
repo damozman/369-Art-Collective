@@ -2906,7 +2906,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Image is in object storage - read from there
             try {
               const objectStorage = new ObjectStorageService();
-              const objectKey = pathComponent.startsWith('/') ? pathComponent.substring(1) : pathComponent;
+              // Ensure path starts with / for getFile() method (it expects /objects/...)
+              const objectKey = pathComponent.startsWith('/') ? pathComponent : `/${pathComponent}`;
               const imageBuffer = await objectStorage.readObjectAsBuffer(objectKey);
               dimensions = getImageDimensionsFromBuffer(imageBuffer);
               

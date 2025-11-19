@@ -141,7 +141,7 @@ async function getAIPreviewImageFilesystem(imageUrl: string, localPath: string):
   
   // For filesystem images, still use object storage for previews if available
   const objectStorage = new ObjectStorageService();
-  const previewObjectPath = `${objectStorage.getAiPreviewsDir()}/${previewFilename}`;
+  const previewObjectPath = `/objects/ai-previews/${previewFilename}`;
   
   // Check if preview already exists in object storage
   try {
@@ -261,7 +261,7 @@ async function getAIPreviewImageObjectStorage(imageUrl: string, objectPath: stri
   const ext = path.extname(objectPath);
   const basename = path.basename(objectPath, ext);
   const previewFilename = `${basename}_${fileHash}_preview.jpg`;
-  const previewObjectPath = `${objectStorage.getAiPreviewsDir()}/${previewFilename}`;
+  const previewObjectPath = `/objects/ai-previews/${previewFilename}`;
   
   // Check if preview already exists
   try {

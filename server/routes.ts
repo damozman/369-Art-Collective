@@ -808,12 +808,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash password
       const hashedPassword = await bcrypt.hash(accountData.password, 10);
 
+      // Generate unique referral code for the new artist
+      const referralCode = generateReferralCode(accountData.name);
+
       // 1. Create artist account
       const [artist] = await db
         .insert(storage.getArtistsTable())
         .values({
           ...accountData,
           password: hashedPassword,
+          referralCode,
           referredBy,
           referralSource,
           tosAcceptedAt: new Date(),

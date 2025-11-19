@@ -716,8 +716,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           approved: artist.approved,
         };
 
-        const { password, ...artistData } = artist;
-        res.status(201).json(artistData);
+        // Explicitly save session before sending response to prevent race condition
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Session save error:", saveErr);
+            return res.status(500).json({ message: "Registration failed" });
+          }
+
+          const { password, ...artistData } = artist;
+          res.status(201).json(artistData);
+        });
       });
     } catch (error: any) {
       console.error("Artist registration error:", error);
@@ -898,11 +906,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           approved: artist.approved,
         };
 
-        const { password, ...artistData } = artist;
-        res.status(201).json({
-          ...artistData,
-          portfolioCount: portfolioSubmissions.length,
-          tier: selectedTier,
+        // Explicitly save session before sending response to prevent race condition
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Session save error:", saveErr);
+            return res.status(500).json({ message: "Registration completed but login failed. Please try logging in." });
+          }
+
+          const { password, ...artistData } = artist;
+          res.status(201).json({
+            ...artistData,
+            portfolioCount: portfolioSubmissions.length,
+            tier: selectedTier,
+          });
         });
       });
     } catch (error: any) {
@@ -942,8 +958,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           approved: artist.approved,
         };
 
-        const { password: _, ...artistData } = artist;
-        res.json(artistData);
+        // Explicitly save session before sending response to prevent race condition
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Session save error:", saveErr);
+            return res.status(500).json({ message: "Login failed" });
+          }
+
+          const { password: _, ...artistData } = artist;
+          res.json(artistData);
+        });
       });
     } catch (error: any) {
       console.error("Artist login error:", error);
@@ -2093,14 +2117,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: "admin",
         };
 
-        console.log("Admin logged in - session created:", {
-          sessionID: req.sessionID,
-          userType: req.session.user.type,
-          userId: req.session.user.id,
-        });
+        // Explicitly save session before sending response to prevent race condition
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Session save error:", saveErr);
+            return res.status(500).json({ message: "Login failed" });
+          }
 
-        const { password: _, ...adminData } = admin;
-        res.json(adminData);
+          console.log("Admin logged in - session created:", {
+            sessionID: req.sessionID,
+            userType: req.session.user.type,
+            userId: req.session.user.id,
+          });
+
+          const { password: _, ...adminData } = admin;
+          res.json(adminData);
+        });
       });
     } catch (error: any) {
       console.error("Admin login error:", error);

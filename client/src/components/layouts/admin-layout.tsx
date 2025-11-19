@@ -218,6 +218,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <DropdownMenuContent
                     side="top"
                     align="end"
+                    sideOffset={8}
+                    collisionPadding={16}
                     className="w-56"
                   >
                     <DropdownMenuLabel>Admin Account</DropdownMenuLabel>

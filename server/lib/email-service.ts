@@ -62,6 +62,7 @@ export type EmailType =
   | 'trial_ending_soon'
   | 'trial_last_chance'
   | 'trial_expired_reengage'
+  | 'waitlist_notification'
   | 'custom';
 
 export interface EmailData {

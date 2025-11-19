@@ -5206,18 +5206,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const analysis = DpiValidatorService.analyzePrintQuality(width, height);
       const quotaStatus = await UpscaleQuotaService.checkQuota(artistId);
 
-      const upscaledAnalysis = DpiValidatorService.calculateUpscaledQuality(
-        width, 
-        height, 
-        DpiValidatorService.getUpscaleScale(width, height)
-      );
+      const recommendedScale = DpiValidatorService.getUpscaleScale(width, height);
+      const shouldRecommend = DpiValidatorService.shouldRecommendUpscaling(width, height);
+      
+      // Only calculate upscaled quality if upscaling is safe
+      const upscaledAnalysis = recommendedScale !== null
+        ? DpiValidatorService.calculateUpscaledQuality(width, height, recommendedScale)
+        : null;
 
       res.json({
         current: analysis,
         afterUpscaling: upscaledAnalysis,
         quota: quotaStatus,
-        shouldRecommend: DpiValidatorService.shouldRecommendUpscaling(width, height),
-        recommendedScale: DpiValidatorService.getUpscaleScale(width, height)
+        shouldRecommend,
+        recommendedScale
       });
     } catch (error: any) {
       console.error("Upscale analysis error:", error);

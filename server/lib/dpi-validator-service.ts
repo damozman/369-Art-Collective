@@ -186,6 +186,13 @@ export class DpiValidatorService {
   static shouldRecommendUpscaling(width: number, height: number): boolean {
     const analysis = this.analyzePrintQuality(width, height);
     
+    // First check if upscaling is even safe/possible
+    const scale = this.getUpscaleScale(width, height);
+    if (scale === null) {
+      // Image is too large to upscale safely
+      return false;
+    }
+    
     // Case 1: Already meets minimum but could be better
     if (analysis.recommendation === 'needs_upscaling' || analysis.recommendation === 'good') {
       return true;
@@ -194,7 +201,6 @@ export class DpiValidatorService {
     // Case 2: Below minimum BUT upscaling would help reach it
     if (analysis.variantQualification.totalQualified < 8) {
       // Check if upscaling would help
-      const scale = this.getUpscaleScale(width, height);
       const upscaledAnalysis = this.calculateUpscaledQuality(width, height, scale);
       
       // Recommend upscaling if it would bring us to 8+ variants
@@ -204,26 +210,11 @@ export class DpiValidatorService {
     return false;
   }
 
-  static getUpscaleScale(width: number, height: number): 2 | 4 {
-    // Target our maximum product requirement: 24×36" at 150 DPI = 3600×5400
-    const TARGET_MAX_WIDTH = 3600;
-    const TARGET_MAX_HEIGHT = 5400;
-    
-    const shortSide = Math.min(width, height);
-    const longSide = Math.max(width, height);
-    
-    // Calculate scale needed to reach target
-    const scaleNeededForWidth = TARGET_MAX_WIDTH / shortSide;
-    const scaleNeededForHeight = TARGET_MAX_HEIGHT / longSide;
-    const scaleNeeded = Math.max(scaleNeededForWidth, scaleNeededForHeight);
-    
-    // Real-ESRGAN only supports 2x or 4x
-    // Choose the minimum scale that meets our requirements
-    if (scaleNeeded <= 2) {
-      return 2;
-    }
-    
-    return 4;
+  static getUpscaleScale(width: number, height: number): 2 | 3 | 4 | null {
+    // Use ReplicateUpscaleService's orientation-aware calculation
+    // which considers GPU memory limits and orientation-specific constraints
+    const { ReplicateUpscaleService } = require('./replicate-upscale-service');
+    return ReplicateUpscaleService.calculateOptimalScale(width, height);
   }
 
   static isAcceptableForPrint(width: number, height: number): boolean {

@@ -37,6 +37,7 @@ import {
   ChevronDown,
   Sparkles,
   Image as ImageIcon,
+  Home,
 } from "lucide-react";
 import type { Artwork } from "@shared/schema";
 
@@ -225,6 +226,13 @@ export function ArtistLayout({ children }: ArtistLayoutProps) {
                     className="w-56 z-[9999]"
                   >
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <a href="/" data-testid="menu-back-to-website">
+                        <Home className="mr-2 h-4 w-4" />
+                        Back to Website
+                      </a>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <a href="/artist/settings" data-testid="menu-settings">

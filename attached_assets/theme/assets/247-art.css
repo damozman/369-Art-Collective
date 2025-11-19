@@ -559,8 +559,9 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   }
 }
 
-/* ===== STICKY BOTTOM SHEET (MOBILE) ===== */
+/* ===== STICKY BOTTOM SHEET (MOBILE) - COLLAPSED BY DEFAULT ===== */
 @media (max-width: 900px) {
+  /* Bottom sheet container */
   section.pn247-art-product .product__info {
     position: fixed !important;
     bottom: 0 !important;
@@ -575,33 +576,22 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
     -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
     border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
     border-radius: 24px 24px 0 0 !important;
-    padding: 1.5rem !important;
-    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important; /* iOS safe area */
+    padding: 1.25rem 1.5rem !important;
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)) !important; /* iOS safe area */
     box-shadow: 
       0 -10px 40px rgba(0, 0, 0, 0.1),
       0 -4px 16px rgba(0, 0, 0, 0.05) !important;
     
     display: flex !important;
     flex-direction: column !important;
-    gap: 1rem !important;
+    gap: 0 !important; /* No gap in collapsed state */
     
-    /* Max height for scrollable content */
-    max-height: 70vh !important;
-    overflow-y: auto !important;
+    /* COLLAPSED STATE: Just show summary */
+    max-height: auto !important;
+    overflow: hidden !important;
     
-    /* Smooth slide-in animation */
-    animation: slideUpBottomSheet 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  }
-  
-  @keyframes slideUpBottomSheet {
-    from {
-      transform: translateY(100%) !important;
-      opacity: 0 !important;
-    }
-    to {
-      transform: translateY(0) !important;
-      opacity: 1 !important;
-    }
+    /* Smooth transitions */
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   
   /* Handle/drag indicator */
@@ -612,7 +602,88 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
     height: 4px !important;
     background: rgba(0, 0, 0, 0.15) !important;
     border-radius: 2px !important;
-    margin: -0.5rem auto 1rem auto !important;
+    margin: -0.25rem auto 0.75rem auto !important;
+    flex-shrink: 0 !important;
+  }
+  
+  /* Hide all configurator elements in collapsed state */
+  section.pn247-art-product .product__info > * {
+    display: none !important;
+  }
+  
+  /* Always show: title, price, and add-to-cart button */
+  section.pn247-art-product .product__info .product__title,
+  section.pn247-art-product .product__info .product__price,
+  section.pn247-art-product .product__info .add-to-cart-form {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Compact title in collapsed state */
+  section.pn247-art-product .product__info .product__title {
+    font-size: 1.125rem !important;
+    margin-bottom: 0.5rem !important;
+    line-height: 1.3 !important;
+  }
+  
+  /* Compact price */
+  section.pn247-art-product .product__info .product__price {
+    font-size: 1.25rem !important;
+    margin: 0.25rem 0 0.75rem 0 !important;
+  }
+  
+  /* Prominent CTA button in collapsed state */
+  section.pn247-art-product .product__info .button--add-to-cart {
+    height: 52px !important; /* Larger touch target */
+    font-size: 0.9375rem !important;
+  }
+  
+  /* EXPANDED STATE: Add class to parent element via JavaScript */
+  section.pn247-art-product .product__info.expanded {
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    gap: 1rem !important;
+    padding-top: 1.5rem !important;
+  }
+  
+  /* Show all elements when expanded - restore original display types */
+  section.pn247-art-product .product__info.expanded > * {
+    display: revert !important; /* Restore original display values */
+  }
+  
+  /* Ensure specific elements show correctly when expanded */
+  section.pn247-art-product .product__info.expanded .product__vendor,
+  section.pn247-art-product .product__info.expanded .art-options,
+  section.pn247-art-product .product__info.expanded .size-guide {
+    display: block !important;
+  }
+  
+  section.pn247-art-product .product__info.expanded .product__title,
+  section.pn247-art-product .product__info.expanded .product__price,
+  section.pn247-art-product .product__info.expanded .add-to-cart-form {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Restore normal spacing when expanded */
+  section.pn247-art-product .product__info.expanded .product__title {
+    font-size: 1.5rem !important;
+    margin-bottom: 0 !important;
+  }
+  
+  section.pn247-art-product .product__info.expanded .product__price {
+    font-size: 1.375rem !important;
+    margin: 0.4rem 0 !important;
+  }
+  
+  section.pn247-art-product .product__info.expanded .button--add-to-cart {
+    height: 42px !important;
+    font-size: 0.8125rem !important;
+  }
+  
+  /* Add padding to page content so it's not hidden beneath collapsed sheet */
+  section.pn247-art-product .product__media-gallery {
+    padding-bottom: 160px !important; /* Space for collapsed bottom sheet */
   }
 }
 
@@ -631,11 +702,6 @@ section.product-bottom-content {
 
 /* Mobile: Adjust gallery and thumbnails */
 @media (max-width: 900px) {
-  section.pn247-art-product .product__media-gallery {
-    margin-bottom: 0 !important;
-    padding-bottom: 120px !important; /* Space for fixed bottom sheet */
-  }
-  
   /* Mobile thumbnail carousel adjustments */
   .gallery__thumbnails {
     flex-direction: row;

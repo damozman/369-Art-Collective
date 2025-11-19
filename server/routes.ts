@@ -3147,18 +3147,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           if (action === "approve") {
-            // Build absolute image URL
-            const replitDomain = process.env.REPLIT_DOMAINS 
-              ? process.env.REPLIT_DOMAINS.split(',').map(d => d.trim()).find(d => !d.includes('-')) || process.env.REPLIT_DOMAINS.split(',')[0].trim()
-              : null;
-            
-            const baseUrl = replitDomain
-              ? `https://${replitDomain}`
-              : `http://localhost:${process.env.PORT || 5000}`;
+            // Build absolute image URL for Shopify
+            // CRITICAL: Use published app URL (247portal.replit.app) for public image access
+            // Development workspace URLs (picard.replit.dev) are not accessible to Shopify
+            const publicUrl = process.env.PUBLIC_APP_URL || 'https://247portal.replit.app';
             
             const imageUrl = artwork.imageUrl.startsWith("http") 
               ? artwork.imageUrl 
-              : `${baseUrl}${artwork.imageUrl}`;
+              : `${publicUrl}${artwork.imageUrl}`;
 
             // Update artwork status
             await storage.updateArtwork(artworkId, {

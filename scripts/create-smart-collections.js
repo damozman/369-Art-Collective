@@ -70,7 +70,7 @@ const SMART_COLLECTIONS = [
   },
   
   // Style-Based Collections (matching navigation menu)
-  // Using exact tag matches (e.g., products tagged "abstract", "landscape", etc.)
+  // Using 'Style:' prefix format to match AI-generated tags (Style:Nature, Style:Wildlife, etc.)
   {
     handle: 'abstract',
     title: 'Abstract Art',
@@ -79,7 +79,7 @@ const SMART_COLLECTIONS = [
       {
         column: 'TAG',
         relation: 'EQUALS',
-        condition: 'abstract',
+        condition: 'Style:Abstract',
       },
     ],
     disjunctive: false,
@@ -92,7 +92,7 @@ const SMART_COLLECTIONS = [
       {
         column: 'TAG',
         relation: 'EQUALS',
-        condition: 'landscape',
+        condition: 'Style:Landscape',
       },
     ],
     disjunctive: false,
@@ -105,7 +105,7 @@ const SMART_COLLECTIONS = [
       {
         column: 'TAG',
         relation: 'EQUALS',
-        condition: 'nature',
+        condition: 'Style:Nature',
       },
     ],
     disjunctive: false,
@@ -183,7 +183,7 @@ const SMART_COLLECTIONS = [
       {
         column: 'TAG',
         relation: 'EQUALS',
-        condition: 'wildlife',
+        condition: 'Style:Wildlife',
       },
     ],
     disjunctive: false,

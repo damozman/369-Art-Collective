@@ -299,6 +299,9 @@ export class DpiValidatorService {
     totalVariants: number,
     estimatedDpi: number
   ): string {
+    // Check if upscaling is actually possible for this image
+    const canUpscale = this.getUpscaleScale(width, height) !== null;
+    
     const orientationNote = 
       orientation === 'portrait' 
         ? ' Portrait orientation is perfect for wall art!' 
@@ -311,10 +314,23 @@ export class DpiValidatorService {
         return `Excellent! Professional print quality at ${estimatedDpi} DPI. Qualifies for all ${totalVariants} product sizes.${orientationNote}`;
       
       case 'good':
-        return `Good quality at ${estimatedDpi} DPI. Qualifies for ${totalQualified} of ${totalVariants} sizes.${orientationNote} Click "Boost Quality" to unlock larger sizes.`;
+        if (canUpscale) {
+          return `Good quality at ${estimatedDpi} DPI. Qualifies for ${totalQualified} of ${totalVariants} sizes.${orientationNote} Click "Boost Quality" to unlock larger sizes.`;
+        } else {
+          return `Good quality at ${estimatedDpi} DPI. Qualifies for ${totalQualified} of ${totalVariants} sizes.${orientationNote} This image is already at maximum resolution for safe upscaling.`;
+        }
       
       case 'needs-boost':
-        return `Limited quality: Only ${totalQualified} of ${totalVariants} sizes available at ${estimatedDpi} DPI. Click "Boost Quality" to improve resolution and unlock more product options.${orientationNote === ' Landscape images work best for panoramic prints.' ? ' Note: Wide landscape images may qualify for fewer variants than portrait orientation.' : ''}`;
+        if (canUpscale) {
+          return `Limited quality: Only ${totalQualified} of ${totalVariants} sizes available at ${estimatedDpi} DPI. Click "Boost Quality" to improve resolution and unlock more product options.${orientationNote === ' Landscape images work best for panoramic prints.' ? ' Note: Wide landscape images may qualify for fewer variants than portrait orientation.' : ''}`;
+        } else {
+          // Cannot upscale - give helpful guidance
+          if (orientation === 'landscape' && totalQualified < 8) {
+            return `Limited quality: Only ${totalQualified} of ${totalVariants} sizes available at ${estimatedDpi} DPI. Wide landscape images (${width}×${height}px) cannot be upscaled further due to GPU memory limits. Try uploading a portrait-oriented image or a smaller landscape image for better variant availability.`;
+          } else {
+            return `Limited quality: Only ${totalQualified} of ${totalVariants} sizes available at ${estimatedDpi} DPI. This image is already at maximum resolution for safe upscaling. Consider uploading a higher-resolution original image.`;
+          }
+        }
       
       case 'rejected':
         const minDimension = orientation === 'portrait' ? '1800×2400px' : orientation === 'landscape' ? '2400×1800px' : '1800×1800px';

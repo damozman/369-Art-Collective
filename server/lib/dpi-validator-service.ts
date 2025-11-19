@@ -207,18 +207,16 @@ export class DpiValidatorService {
       return false;
     }
     
-    // Case 1: Already meets minimum but could be better
-    if (analysis.recommendation === 'needs_upscaling' || analysis.recommendation === 'good') {
+    // Recommend upscaling for any image with fewer than 8 qualified variants
+    // This includes 'unsuitable' (1-7 variants), 'needs_upscaling' (8+ variants but low DPI), and 'good' (200+ DPI but could be better)
+    // Only images that are 'perfect' (300+ DPI, all variants) shouldn't be upscaled
+    if (analysis.variantQualification.totalQualified < 8) {
       return true;
     }
     
-    // Case 2: Below minimum BUT upscaling would help reach it
-    if (analysis.variantQualification.totalQualified < 8) {
-      // Check if upscaling would help
-      const upscaledAnalysis = this.calculateUpscaledQuality(width, height, scale);
-      
-      // Recommend upscaling if it would bring us to 8+ variants
-      return upscaledAnalysis.variantQualification.totalQualified >= 8;
+    // Also recommend for images that meet minimum but could unlock more sizes
+    if (analysis.recommendation === 'needs_upscaling' || analysis.recommendation === 'good') {
+      return true;
     }
     
     return false;

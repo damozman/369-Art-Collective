@@ -2,7 +2,8 @@
 
 /**
  * Automated script to inject mobile bottom sheet JavaScript into Shopify theme
- * Usage: node scripts/inject-bottom-sheet-js.js
+ * Usage: node scripts/inject-bottom-sheet-js.cjs [theme-name]
+ * Example: node scripts/inject-bottom-sheet-js.cjs development
  */
 
 const { execSync } = require('child_process');
@@ -14,6 +15,7 @@ const colors = {
   blue: '\x1b[34m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
+  red: '\x1b[31m',
   reset: '\x1b[0m'
 };
 
@@ -21,22 +23,35 @@ function log(message, color = 'reset') {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
+// Get theme from command line argument
+const targetTheme = process.argv[2];
+
+if (!targetTheme) {
+  log('❌ Error: Please specify a theme name!', 'red');
+  log('', 'reset');
+  log('Usage:', 'blue');
+  log('  node scripts/inject-bottom-sheet-js.cjs development', 'green');
+  log('  node scripts/inject-bottom-sheet-js.cjs live', 'green');
+  log('', 'reset');
+  process.exit(1);
+}
+
 async function main() {
   try {
-    log('🚀 Starting automated bottom sheet JavaScript injection...', 'blue');
+    log(`🚀 Starting automated bottom sheet JavaScript injection to "${targetTheme}" theme...`, 'blue');
     
     const themePath = path.join(__dirname, '..', 'attached_assets', 'theme');
     process.chdir(themePath);
     
     // Step 1: Pull current theme
-    log('📥 Step 1: Pulling current theme from Shopify...', 'blue');
+    log(`📥 Step 1: Pulling "${targetTheme}" theme from Shopify...`, 'blue');
     try {
-      execSync('shopify theme pull --path . --only "sections/main-product.liquid"', { 
+      execSync(`shopify theme pull --path . --theme "${targetTheme}" --only "sections/main-product.liquid"`, { 
         stdio: 'inherit' 
       });
     } catch (error) {
       log('⚠️  Could not pull main-product.liquid, trying templates/product.liquid...', 'yellow');
-      execSync('shopify theme pull --path . --only "templates/product.liquid"', { 
+      execSync(`shopify theme pull --path . --theme "${targetTheme}" --only "templates/product.liquid"`, { 
         stdio: 'inherit' 
       });
     }
@@ -58,7 +73,7 @@ async function main() {
     }
     
     if (!targetFile) {
-      log('❌ Error: Could not find product template file!', 'yellow');
+      log('❌ Error: Could not find product template file!', 'red');
       log('Please manually add the JavaScript code as shown in the instructions.', 'yellow');
       process.exit(1);
     }
@@ -169,19 +184,19 @@ async function main() {
     log('✅ JavaScript injected successfully!', 'green');
     
     // Step 6: Push changes back
-    log('📤 Step 3: Pushing changes back to Shopify...', 'blue');
+    log(`📤 Step 3: Pushing changes back to "${targetTheme}" theme...`, 'blue');
     const relativeFile = path.relative(themePath, targetFile);
-    execSync(`shopify theme push --path . --only "${relativeFile}"`, { 
+    execSync(`shopify theme push --path . --theme "${targetTheme}" --only "${relativeFile}"`, { 
       stdio: 'inherit' 
     });
     
     log('', 'reset');
-    log('✅ Done! Mobile bottom sheet JavaScript is now live!', 'green');
+    log(`✅ Done! Mobile bottom sheet JavaScript is now live on "${targetTheme}" theme!`, 'green');
     log('📱 Test it: Visit any product page on mobile and tap the bottom sheet', 'blue');
     log(`💾 Backup saved: ${path.basename(backupPath)}`, 'yellow');
     
   } catch (error) {
-    log(`❌ Error: ${error.message}`, 'yellow');
+    log(`❌ Error: ${error.message}`, 'red');
     log('Please add the JavaScript manually using the step-by-step instructions.', 'yellow');
     process.exit(1);
   }

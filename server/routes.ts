@@ -808,52 +808,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Hash password
       const hashedPassword = await bcrypt.hash(accountData.password, 10);
 
-      // Execute atomic transaction: create artist + upload portfolio
-      const result = await db.transaction(async (tx) => {
-        // 1. Create artist account
-        const [artist] = await tx
-          .insert(storage.getArtistsTable())
+      // 1. Create artist account
+      const [artist] = await db
+        .insert(storage.getArtistsTable())
+        .values({
+          ...accountData,
+          password: hashedPassword,
+          referredBy,
+          referralSource,
+          tosAcceptedAt: new Date(),
+          tosIpAddress: ipAddress,
+          tosVersion: "v1.0-2025-11",
+        } as any)
+        .returning();
+
+      // 2. Upload portfolio files to object storage and create records
+      const objectStorage = new ObjectStorageService();
+      const portfolioSubmissions = [];
+      
+      for (const file of files) {
+        const safeName = file.originalname.replace(/\s+/g, "-").toLowerCase();
+        const filename = `${Date.now()}-${safeName}`;
+        const imageUrl = await objectStorage.uploadFile({
+          directory: objectStorage.getArtworkUploadsDir(),
+          filename,
+          buffer: file.buffer,
+          contentType: file.mimetype,
+        });
+        
+        const [submission] = await db
+          .insert(storage.getPortfolioSubmissionsTable())
           .values({
-            ...accountData,
-            password: hashedPassword,
-            referredBy,
-            referralSource,
-            tosAcceptedAt: new Date(),
-            tosIpAddress: ipAddress,
-            tosVersion: "v1.0-2025-11",
+            artistId: artist.id,
+            imageUrl,
           } as any)
           .returning();
+        portfolioSubmissions.push(submission);
+      }
 
-        // 2. Upload portfolio files to object storage and create records
-        const objectStorage = new ObjectStorageService();
-        const portfolioSubmissions = [];
-        
-        for (const file of files) {
-          const safeName = file.originalname.replace(/\s+/g, "-").toLowerCase();
-          const filename = `${Date.now()}-${safeName}`;
-          const imageUrl = await objectStorage.uploadFile({
-            directory: objectStorage.getArtworkUploadsDir(),
-            filename,
-            buffer: file.buffer,
-            contentType: file.mimetype,
-          });
-          
-          const [submission] = await tx
-            .insert(storage.getPortfolioSubmissionsTable())
-            .values({
-              artistId: artist.id,
-              imageUrl,
-            } as any)
-            .returning();
-          portfolioSubmissions.push(submission);
-        }
-
-        console.log(`[Atomic Registration] Artist ${artist.id} created with ${portfolioSubmissions.length} portfolio images`);
-        
-        return { artist, portfolioSubmissions };
-      });
-
-      const { artist, portfolioSubmissions } = result;
+      console.log(`[Registration Complete] Artist ${artist.id} created with ${portfolioSubmissions.length} portfolio images`);
 
       // Handle affiliate tracking (outside transaction, non-critical)
       const affiliateCode = getAffiliateCodeFromCookie(req);

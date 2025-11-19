@@ -7,8 +7,12 @@ const replicate = new Replicate({
 
 const REAL_ESRGAN_MODEL = "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa";
 
-// Maximum safe pixel count for Replicate GPU (based on observed limits)
-const MAX_SAFE_PIXELS = 2_000_000; // 2M pixels (~1414x1414 or similar)
+// Maximum safe pixel count for Replicate GPU (increased to support larger images)
+// 8M pixels allows images up to ~2800x2800px (e.g., 1868x4000 = 7.4M pixels)
+const MAX_SAFE_PIXELS = 8_000_000; // 8M pixels (~2828x2828 or similar)
+
+// Target DPI and dimensions for qualifying 8+ variants
+const TARGET_MIN_PIXELS_FOR_ALL_VARIANTS = 9_720_000; // ~2700x3600px minimum for 8+ variants
 
 // Error codes for structured error handling
 export enum UpscaleErrorCode {
@@ -77,6 +81,38 @@ export class ReplicateUpscaleService {
     }
   }
 
+  /**
+   * Calculate intelligent upscale factor based on current dimensions and target
+   * Returns the minimum scale needed to qualify for 8+ variants
+   */
+  static calculateOptimalScale(width: number, height: number): number {
+    const currentPixels = width * height;
+    
+    // If already meets target, use scale 2 for minimal processing
+    if (currentPixels >= TARGET_MIN_PIXELS_FOR_ALL_VARIANTS) {
+      return 2;
+    }
+    
+    // Calculate scale needed to reach target
+    const requiredScale = Math.sqrt(TARGET_MIN_PIXELS_FOR_ALL_VARIANTS / currentPixels);
+    
+    // Round up to nearest valid scale (2 or 4)
+    if (requiredScale <= 2) {
+      return 2;
+    } else {
+      return 4;
+    }
+  }
+
+  /**
+   * Check if image already meets print quality standards
+   * Returns true if image qualifies for 8+ variants without upscaling
+   */
+  static isAlreadyHighQuality(width: number, height: number): boolean {
+    const totalPixels = width * height;
+    return totalPixels >= TARGET_MIN_PIXELS_FOR_ALL_VARIANTS;
+  }
+
   // Transform Replicate errors into user-friendly messages
   static translateReplicateError(error: any): UpscaleError {
     const errorMessage = error?.message || String(error);
@@ -132,35 +168,82 @@ export class ReplicateUpscaleService {
       
       const scale = params.scale || 4;
       
-      const output = await replicate.run(REAL_ESRGAN_MODEL, {
-        input: {
-          image: params.imageUrl,
-          scale: scale,
-          face_enhance: params.face_enhance || false,
+      // First attempt with requested scale
+      try {
+        const output = await replicate.run(REAL_ESRGAN_MODEL, {
+          input: {
+            image: params.imageUrl,
+            scale: scale,
+            face_enhance: params.face_enhance || false,
+          }
+        }) as any;
+
+        const upscaledUrl = typeof output === 'string' ? output : output?.url || output?.[0];
+        
+        if (!upscaledUrl) {
+          const error = new UpscaleError(
+            UpscaleErrorCode.PROVIDER_ERROR,
+            "The AI service did not return an upscaled image. Please try again.",
+            "Replicate did not return an upscaled image URL"
+          );
+          return {
+            success: false,
+            error: error.developerMessage,
+            errorCode: error.code,
+            userMessage: error.userMessage
+          };
         }
-      }) as any;
 
-      const upscaledUrl = typeof output === 'string' ? output : output?.url || output?.[0];
-      
-      if (!upscaledUrl) {
-        const error = new UpscaleError(
-          UpscaleErrorCode.PROVIDER_ERROR,
-          "The AI service did not return an upscaled image. Please try again.",
-          "Replicate did not return an upscaled image URL"
-        );
         return {
-          success: false,
-          error: error.developerMessage,
-          errorCode: error.code,
-          userMessage: error.userMessage
+          success: true,
+          upscaledUrl,
+          estimatedCostCents: this.estimateCost(scale)
         };
-      }
+      } catch (firstError: any) {
+        // Check if it's a GPU memory error and we can retry with smaller scale
+        const errorMessage = firstError?.message || String(firstError);
+        const isGpuMemoryError = errorMessage.includes('GPU memory') || 
+                                 errorMessage.includes('max size that fits in GPU') ||
+                                 errorMessage.includes('CUDA out of memory');
+        
+        if (isGpuMemoryError && scale === 4) {
+          console.log(`GPU memory error with scale 4, retrying with scale 2...`);
+          
+          // Retry with scale 2
+          const output = await replicate.run(REAL_ESRGAN_MODEL, {
+            input: {
+              image: params.imageUrl,
+              scale: 2,
+              face_enhance: params.face_enhance || false,
+            }
+          }) as any;
 
-      return {
-        success: true,
-        upscaledUrl,
-        estimatedCostCents: this.estimateCost(scale)
-      };
+          const upscaledUrl = typeof output === 'string' ? output : output?.url || output?.[0];
+          
+          if (!upscaledUrl) {
+            const error = new UpscaleError(
+              UpscaleErrorCode.PROVIDER_ERROR,
+              "The AI service did not return an upscaled image after retry. Please try again.",
+              "Replicate did not return an upscaled image URL after fallback"
+            );
+            return {
+              success: false,
+              error: error.developerMessage,
+              errorCode: error.code,
+              userMessage: error.userMessage
+            };
+          }
+
+          return {
+            success: true,
+            upscaledUrl,
+            estimatedCostCents: this.estimateCost(2)
+          };
+        }
+        
+        // If not a GPU error or already at scale 2, re-throw
+        throw firstError;
+      }
     } catch (error: any) {
       console.error("Replicate upscale error:", error);
       
@@ -178,11 +261,16 @@ export class ReplicateUpscaleService {
     }
   }
 
-  static async createUpscaleJob(params: UpscaleParams): Promise<{ predictionId: string }> {
-    // Preflight validation
+  static async createUpscaleJob(params: UpscaleParams): Promise<{ predictionId: string; scale: number }> {
+    // Preflight validation - only check INPUT size, not output
     this.validateImageSize(params.width, params.height);
     
-    const scale = params.scale || 4;
+    // Use intelligent scale calculation if dimensions provided
+    const scale = params.width && params.height 
+      ? this.calculateOptimalScale(params.width, params.height)
+      : (params.scale || 4);
+    
+    console.log(`Creating upscale job with scale ${scale} for ${params.width}×${params.height}px image`);
     
     const prediction = await replicate.predictions.create({
       version: REAL_ESRGAN_MODEL.split(':')[1],
@@ -194,7 +282,8 @@ export class ReplicateUpscaleService {
     });
 
     return {
-      predictionId: prediction.id
+      predictionId: prediction.id,
+      scale
     };
   }
 

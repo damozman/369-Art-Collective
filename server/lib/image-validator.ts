@@ -1,4 +1,5 @@
 import fs from "fs";
+import { DpiValidatorService } from "./dpi-validator-service";
 
 interface ImageDimensions {
   width: number;
@@ -54,12 +55,15 @@ export function getImageDimensions(filePath: string): ImageDimensions | null {
 export const PORTFOLIO_MIN_SHORT_SIDE = 1080;
 export const PORTFOLIO_MIN_LONG_SIDE = 1920;
 
-// Printify wall art quality requirements (for print-ready artwork):
-// - 18"x24" at 150 DPI = 2700x3600 pixels (minimum for 8/12 small+medium variants)
-// - 24"x36" at 150 DPI = 3600x5400 pixels (all 12 variants)
-// Requirements: At least 2700px on shortest side, 3600px on longest side
-export const MIN_SHORT_SIDE = 2700;
-export const MIN_LONG_SIDE = 3600;
+// Print-ready artwork validation now uses DPI-based qualified variant analysis
+// instead of hardcoded dimensions. This allows flexible image sizes and orientations
+// while ensuring at least one product variant meets 150 DPI minimum quality.
+
+// Legacy constants for backward compatibility (based on smallest variant: Poster 11×8")
+// These represent the MINIMUM pixels needed to qualify for at least 1 product variant
+// Smallest variant: 11" × 8" at 150 DPI = 1650 × 1200 pixels
+export const MIN_SHORT_SIDE = 1200;  // 8 inches × 150 DPI
+export const MIN_LONG_SIDE = 1650;   // 11 inches × 150 DPI
 
 // Portfolio image validation (for registration and admin review)
 export function validatePortfolioImageQuality(buffer: Buffer): { valid: boolean; message?: string; dimensions?: ImageDimensions } {
@@ -95,7 +99,7 @@ export function validatePortfolioImageQuality(buffer: Buffer): { valid: boolean;
   };
 }
 
-// Print-ready artwork validation (strict requirements for Printify products)
+// Print-ready artwork validation using DPI-based qualified variant analysis
 export function validateImageQualityFromBuffer(buffer: Buffer): { valid: boolean; message?: string; dimensions?: ImageDimensions } {
   const dimensions = getImageDimensionsFromBuffer(buffer);
   
@@ -108,17 +112,21 @@ export function validateImageQualityFromBuffer(buffer: Buffer): { valid: boolean
   
   const { width, height } = dimensions;
   
-  // Determine short and long sides (works for any orientation)
-  const shortSide = Math.min(width, height);
-  const longSide = Math.max(width, height);
+  // Use DPI-based validation: check if image has at least 1 qualified variant (150+ DPI)
+  const qualityAnalysis = DpiValidatorService.analyzePrintQuality(width, height);
+  const qualifiedCount = qualityAnalysis.variantQualification.totalQualified;
   
-  // Check if image meets print-ready quality requirements (strict)
-  const meetsMinimum = shortSide >= MIN_SHORT_SIDE && longSide >= MIN_LONG_SIDE;
-  
-  if (!meetsMinimum) {
+  // Image must qualify for at least 1 product variant at 150+ DPI
+  if (!qualityAnalysis.meetsMinimum || qualifiedCount === 0) {
+    // Find the smallest product size that needs higher resolution
+    const firstLockedVariant = qualityAnalysis.variantQualification.locked[0];
+    const requiredPixels = firstLockedVariant?.requiredPixels;
+    
+    let message = `Image resolution too low for print quality. Minimum ${requiredPixels?.width || 3600}×${requiredPixels?.height || 2700} pixels required for quality prints. Your image is ${width}×${height} pixels.`;
+    
     return {
       valid: false,
-      message: `Image resolution too low for print quality. Minimum ${MIN_LONG_SIDE}×${MIN_SHORT_SIDE} pixels required for quality prints. Your image is ${width}×${height} pixels.`,
+      message,
       dimensions,
     };
   }
@@ -141,17 +149,21 @@ export function validateImageQuality(filePath: string): { valid: boolean; messag
   
   const { width, height } = dimensions;
   
-  // Determine short and long sides (works for any orientation)
-  const shortSide = Math.min(width, height);
-  const longSide = Math.max(width, height);
+  // Use DPI-based validation: check if image has at least 1 qualified variant (150+ DPI)
+  const qualityAnalysis = DpiValidatorService.analyzePrintQuality(width, height);
+  const qualifiedCount = qualityAnalysis.variantQualification.totalQualified;
   
-  // Check if image meets flexible quality requirements
-  const meetsMinimum = shortSide >= MIN_SHORT_SIDE && longSide >= MIN_LONG_SIDE;
-  
-  if (!meetsMinimum) {
+  // Image must qualify for at least 1 product variant at 150+ DPI
+  if (!qualityAnalysis.meetsMinimum || qualifiedCount === 0) {
+    // Find the smallest product size that needs higher resolution
+    const firstLockedVariant = qualityAnalysis.variantQualification.locked[0];
+    const requiredPixels = firstLockedVariant?.requiredPixels;
+    
+    let message = `Image resolution too low. Minimum ${requiredPixels?.width || 3600}×${requiredPixels?.height || 2700} pixels required for quality prints. Your image is ${width}×${height} pixels.`;
+    
     return {
       valid: false,
-      message: `Image resolution too low. Minimum ${MIN_LONG_SIDE}×${MIN_SHORT_SIDE} pixels required for quality prints. Your image is ${width}×${height} pixels.`,
+      message,
       dimensions,
     };
   }

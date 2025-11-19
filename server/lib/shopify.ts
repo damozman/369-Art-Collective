@@ -168,7 +168,8 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
         body_html: bodyHtml,
         vendor: artwork.artistName,
         product_type: shopifyProductType,
-        status: "draft",
+        status: "active", // Immediately publish to Online Store
+        published_at: new Date().toISOString(), // Set publication timestamp
         published_scope: "web", // Publish to Online Store (web) not Point of Sale
         tags: tags.join(", "),
         options: [

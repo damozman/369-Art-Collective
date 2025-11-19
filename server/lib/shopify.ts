@@ -66,7 +66,13 @@ function convertToFullImageUrl(imageUrl: string): string {
 
   // Convert relative path to full URL
   const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-  return `${publicUrl}${cleanPath}`;
+  const fullUrl = `${publicUrl}${cleanPath}`;
+  
+  // Debug logging to verify correct URL generation
+  console.log(`[SHOPIFY_URL_FIX] Generated URL: ${fullUrl}`);
+  console.log(`[SHOPIFY_URL_FIX] Using public URL: ${publicUrl}`);
+  
+  return fullUrl;
 }
 
 export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {

@@ -46,18 +46,26 @@ async function main() {
     // Step 1: Pull current theme
     log(`📥 Step 1: Pulling "${targetTheme}" theme from Shopify...`, 'blue');
     try {
-      execSync(`shopify theme pull --path . --theme "${targetTheme}" --only "sections/main-product.liquid"`, { 
+      execSync(`shopify theme pull --path . --theme "${targetTheme}" --only "sections/247-art-product.liquid"`, { 
         stdio: 'inherit' 
       });
     } catch (error) {
-      log('⚠️  Could not pull main-product.liquid, trying templates/product.liquid...', 'yellow');
-      execSync(`shopify theme pull --path . --theme "${targetTheme}" --only "templates/product.liquid"`, { 
-        stdio: 'inherit' 
-      });
+      log('⚠️  Could not pull 247-art-product.liquid, trying fallback files...', 'yellow');
+      try {
+        execSync(`shopify theme pull --path . --theme "${targetTheme}" --only "sections/main-product.liquid"`, { 
+          stdio: 'inherit' 
+        });
+      } catch (err) {
+        log('⚠️  Trying templates/product.liquid...', 'yellow');
+        execSync(`shopify theme pull --path . --theme "${targetTheme}" --only "templates/product.liquid"`, { 
+          stdio: 'inherit' 
+        });
+      }
     }
     
     // Step 2: Find target file
     const possibleFiles = [
+      'sections/247-art-product.liquid',
       'sections/main-product.liquid',
       'templates/product.liquid'
     ];

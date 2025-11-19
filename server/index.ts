@@ -1,11 +1,13 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./vite-utils";
 import { affiliateTrackingMiddleware } from "./middleware/affiliate-tracking";
 
 const app = express();
+const PgSession = connectPgSimple(session);
 
 declare module 'express-session' {
   interface SessionData {
@@ -29,8 +31,13 @@ declare module 'http' {
 // This allows Express to recognize HTTPS connections and set secure cookies properly
 app.set('trust proxy', 1);
 
-// Session middleware
+// Session middleware with PostgreSQL store
 app.use(session({
+  store: new PgSession({
+    conString: process.env.DATABASE_URL,
+    tableName: 'session', // Will auto-create if it doesn't exist
+    createTableIfMissing: true,
+  }),
   secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
   resave: false,
   saveUninitialized: false,

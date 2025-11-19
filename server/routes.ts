@@ -5441,6 +5441,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const replicateStatus = await ReplicateUpscaleService.getJobStatus(job.replicateId);
           
           if (replicateStatus.status === 'completed' && replicateStatus.upscaledUrl) {
+            // Validate required data exists
+            if (!job.fileHash) {
+              console.error('Missing fileHash for upscale job:', job.id);
+              await storage.updateUpscaleJob(job.id, {
+                status: 'failed',
+                errorMessage: 'Internal error: missing file hash'
+              });
+              await storage.updateUpscaleUsageByJobId(job.id, {
+                status: 'failed',
+                errorMessage: 'Internal error: missing file hash'
+              });
+              return res.json({
+                status: 'failed',
+                error: 'Internal error occurred. Please try upscaling again.',
+                userMessage: 'Something went wrong saving your upscaled image. Please try again.',
+                jobId: job.id
+              });
+            }
+
             // Download and save upscaled image to object storage
             let permanentUrl: string;
             try {
@@ -5451,8 +5470,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
             } catch (saveError: any) {
               console.error('Failed to save upscaled image to storage:', saveError);
-              // Fall back to Replicate URL if storage fails
-              permanentUrl = replicateStatus.upscaledUrl;
+              // Mark job as failed if we can't save to permanent storage
+              const errorMessage = 'Failed to save upscaled image to storage';
+              await storage.updateUpscaleJob(job.id, {
+                status: 'failed',
+                errorMessage
+              });
+              await storage.updateUpscaleUsageByJobId(job.id, {
+                status: 'failed',
+                errorMessage
+              });
+              return res.json({
+                status: 'failed',
+                error: errorMessage,
+                userMessage: 'Failed to save your upscaled image. Please try again.',
+                jobId: job.id
+              });
             }
 
             await storage.updateUpscaleJob(job.id, {

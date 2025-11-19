@@ -246,42 +246,93 @@ export class ReplicateUpscaleService {
                                  errorMessage.includes('max size that fits in GPU') ||
                                  errorMessage.includes('CUDA out of memory');
         
-        if (isGpuMemoryError && scale === 4) {
-          console.log(`GPU memory error with scale 4, retrying with scale 2...`);
-          
-          // Retry with scale 2
-          const output = await replicate.run(REAL_ESRGAN_MODEL, {
-            input: {
-              image: params.imageUrl,
-              scale: 2,
-              face_enhance: params.face_enhance || false,
+        if (isGpuMemoryError) {
+          // Try fallback strategies based on current scale
+          if (scale === 4) {
+            console.log(`GPU memory error with scale 4, retrying with scale 2...`);
+            
+            try {
+              const output = await replicate.run(REAL_ESRGAN_MODEL, {
+                input: {
+                  image: params.imageUrl,
+                  scale: 2,
+                  face_enhance: params.face_enhance || false,
+                }
+              }) as any;
+
+              const upscaledUrl = typeof output === 'string' ? output : output?.url || output?.[0];
+              
+              if (!upscaledUrl) {
+                throw new Error("No upscaled URL returned after fallback");
+              }
+
+              console.log(`✅ Fallback successful: 4x→2x upscale completed`);
+              return {
+                success: true,
+                upscaledUrl,
+                estimatedCostCents: this.estimateCost(2)
+              };
+            } catch (fallbackError) {
+              console.error(`Fallback from 4x to 2x also failed:`, fallbackError);
+              // Continue to error handling below
             }
-          }) as any;
+          } else if (scale === 3) {
+            console.log(`GPU memory error with scale 3, retrying with scale 2...`);
+            
+            try {
+              const output = await replicate.run(REAL_ESRGAN_MODEL, {
+                input: {
+                  image: params.imageUrl,
+                  scale: 2,
+                  face_enhance: params.face_enhance || false,
+                }
+              }) as any;
 
-          const upscaledUrl = typeof output === 'string' ? output : output?.url || output?.[0];
-          
-          if (!upscaledUrl) {
-            const error = new UpscaleError(
-              UpscaleErrorCode.PROVIDER_ERROR,
-              "The AI service did not return an upscaled image after retry. Please try again.",
-              "Replicate did not return an upscaled image URL after fallback"
-            );
-            return {
-              success: false,
-              error: error.developerMessage,
-              errorCode: error.code,
-              userMessage: error.userMessage
-            };
+              const upscaledUrl = typeof output === 'string' ? output : output?.url || output?.[0];
+              
+              if (!upscaledUrl) {
+                throw new Error("No upscaled URL returned after fallback");
+              }
+
+              console.log(`✅ Fallback successful: 3x→2x upscale completed`);
+              return {
+                success: true,
+                upscaledUrl,
+                estimatedCostCents: this.estimateCost(2)
+              };
+            } catch (fallbackError) {
+              console.error(`Fallback from 3x to 2x also failed:`, fallbackError);
+              // Continue to error handling below
+            }
           }
-
-          return {
-            success: true,
-            upscaledUrl,
-            estimatedCostCents: this.estimateCost(2)
-          };
+          
+          // If scale was already 2, or all fallbacks failed, provide helpful error
+          console.log(`GPU memory limit reached for ${params.width}×${params.height} at scale ${scale}`);
+          
+          // Calculate current quality info for better error message (if dimensions available)
+          let userMessage = "Your image is too large to upscale with AI due to GPU memory constraints.";
+          
+          if (params.width && params.height) {
+            const { DpiValidatorService } = await import('./dpi-validator-service');
+            const currentAnalysis = DpiValidatorService.analyzePrintQuality(params.width, params.height);
+            
+            if (currentAnalysis.variantQualification.totalQualified >= 4) {
+              userMessage += ` Good news: Your current image already qualifies for ${currentAnalysis.variantQualification.totalQualified} of 12 product sizes! You can proceed with uploading, or try uploading a higher-resolution original image for even more options.`;
+            } else if (currentAnalysis.meetsMinimum) {
+              userMessage += ` Your current image qualifies for ${currentAnalysis.variantQualification.totalQualified} product sizes. To unlock more sizes, try uploading a higher-resolution original image instead.`;
+            } else {
+              userMessage += " Try uploading a smaller image or a higher-resolution original.";
+            }
+          }
+          
+          throw new UpscaleError(
+            UpscaleErrorCode.GPU_MEMORY_LIMIT,
+            userMessage,
+            `GPU memory limit for ${params.width}×${params.height} at scale ${scale}`
+          );
         }
         
-        // If not a GPU error or already at scale 2, re-throw
+        // If not a GPU error, re-throw
         throw firstError;
       }
     } catch (error: any) {

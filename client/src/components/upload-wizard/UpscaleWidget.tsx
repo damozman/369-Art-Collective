@@ -311,7 +311,14 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       
       const response = await fetch(upscaledUrl);
       if (!response.ok) {
-        throw new Error('Failed to fetch upscaled image');
+        // Check if it's a network/URL issue
+        if (response.status === 404) {
+          throw new Error('Image URL expired - please try upscaling again');
+        } else if (response.status >= 500) {
+          throw new Error('Storage server error - please try again');
+        } else {
+          throw new Error(`Failed to load image (HTTP ${response.status})`);
+        }
       }
       const blob = await response.blob();
       const upscaledFile = new File([blob], selectedFile!.name, { type: selectedFile!.type });
@@ -328,11 +335,19 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
         setProgress(0);
         setJobId(null);
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to process upscaled image:', error);
+      
+      // More specific error message based on the issue
+      const errorMessage = error.message?.includes('expired') 
+        ? "The upscaled image URL expired. Please try upscaling again."
+        : error.message?.includes('Storage server')
+        ? "Temporary storage issue. Please try again in a moment."
+        : "Could not load the upscaled image. Please try again.";
+      
       toast({
-        title: "Processing failed",
-        description: "Could not load the upscaled image. Please try again.",
+        title: "Image loading failed",
+        description: errorMessage,
         variant: "destructive",
       });
       setProgress(0);

@@ -214,17 +214,17 @@ export class ObjectStorageService {
       throw new Error('Invalid object path: must start with /objects/');
     }
     
-    // Validate path is within allowed directories
-    const allowedPrefixes = [
-      this.getArtworkUploadsDir(),
-      this.getAiGeneratedDir(),
-      this.getAiPreviewsDir(),
+    // Validate path is within allowed URL directories
+    const allowedUrlPrefixes = [
+      '/objects/artwork-uploads/',
+      '/objects/ai-generated/',
+      '/objects/ai-previews/',
     ];
     
-    const isAllowed = allowedPrefixes.some(prefix => objectPath.startsWith(prefix));
+    const isAllowed = allowedUrlPrefixes.some(prefix => objectPath.startsWith(prefix));
     
     if (!isAllowed) {
-      throw new Error(`Security: Upload path must be within configured directories`);
+      throw new Error(`Security: Upload path must be within allowed directories (artwork-uploads, ai-generated, or ai-previews)`);
     }
     
     // Parse and upload

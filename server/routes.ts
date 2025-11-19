@@ -40,7 +40,8 @@ import {
   validateImageQuality, 
   validateImageQualityFromBuffer, 
   validatePortfolioImageQuality,
-  getImageDimensions, 
+  getImageDimensions,
+  getImageDimensionsFromBuffer,
   MIN_LONG_SIDE, 
   MIN_SHORT_SIDE,
   PORTFOLIO_MIN_LONG_SIDE,
@@ -2874,20 +2875,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get image dimensions for variant qualification
           let dimensions = null;
           
-          // Try to get dimensions from local file if it's a relative path
-          if (!artwork.imageUrl.startsWith("http")) {
-            const imagePath = path.join(uploadDir, path.basename(artwork.imageUrl));
-            if (fs.existsSync(imagePath)) {
-              dimensions = getImageDimensions(imagePath);
+          // Strip query params and hash first to get clean URL/path
+          const cleanUrl = artwork.imageUrl.split('?')[0].split('#')[0];
+          
+          // Normalize protocol-relative URLs and extract path component safely
+          let normalizedUrl = cleanUrl;
+          if (normalizedUrl.startsWith("//")) {
+            normalizedUrl = "https:" + normalizedUrl; // Convert //cdn.example.com to https://cdn.example.com
+          }
+          
+          // Extract path component using URL API with synthetic base for robustness
+          let pathComponent: string;
+          try {
+            const url = new URL(normalizedUrl, 'https://dummy');
+            pathComponent = url.pathname;
+          } catch {
+            // If URL parsing fails, treat as bare path
+            pathComponent = normalizedUrl;
+          }
+          
+          // Determine storage location and read dimensions accordingly
+          const isSameOriginOrBare = !normalizedUrl.startsWith("http") || 
+                                      normalizedUrl.includes("247portal.replit.app") ||
+                                      normalizedUrl.includes("localhost");
+          const isObjectStorage = isSameOriginOrBare && 
+                                  (pathComponent.startsWith("/objects/") || pathComponent.startsWith("objects/"));
+          const isLegacyUpload = !normalizedUrl.startsWith("http") && pathComponent.startsWith("/uploads/");
+          
+          if (isObjectStorage) {
+            // Image is in object storage - read from there
+            try {
+              const objectStorage = new ObjectStorageService();
+              const objectKey = pathComponent.startsWith('/') ? pathComponent.substring(1) : pathComponent;
+              const imageBuffer = await objectStorage.readObjectAsBuffer(objectKey);
+              dimensions = getImageDimensionsFromBuffer(imageBuffer);
+              
+              if (!dimensions) {
+                console.warn("Could not parse image dimensions from object storage buffer");
+                throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
+              }
+              
+              console.log(`Image dimensions from object storage: ${dimensions.width}×${dimensions.height}px`);
+            } catch (dimensionError: any) {
+              console.error("Failed to read image dimensions from object storage:", dimensionError);
+              throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
+            }
+          } else if (isLegacyUpload) {
+            // Legacy filesystem path - read from local uploads directory
+            try {
+              const imagePath = path.join(uploadDir, path.basename(pathComponent));
+              if (fs.existsSync(imagePath)) {
+                dimensions = getImageDimensions(imagePath);
+                console.log(`Image dimensions from legacy filesystem: ${dimensions.width}×${dimensions.height}px`);
+              } else {
+                throw new Error("Legacy image file not found on filesystem");
+              }
+            } catch (dimensionError: any) {
+              console.error("Failed to read image dimensions from legacy filesystem:", dimensionError);
+              throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
+            }
+          } else {
+            // External HTTP URL - download it to get dimensions
+            try {
+              const response = await fetch(normalizedUrl); // Use normalizedUrl for proper scheme
+              if (!response.ok) {
+                throw new Error(`Failed to fetch image: ${response.statusText}`);
+              }
+              const arrayBuffer = await response.arrayBuffer();
+              const imageBuffer = Buffer.from(arrayBuffer);
+              dimensions = getImageDimensionsFromBuffer(imageBuffer);
+              
+              if (!dimensions) {
+                console.warn("Could not parse image dimensions from HTTP URL buffer");
+                throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
+              }
+              
+              console.log(`Image dimensions from HTTP URL: ${dimensions.width}×${dimensions.height}px`);
+            } catch (dimensionError: any) {
+              console.error("Failed to read image dimensions from HTTP URL:", dimensionError);
+              throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
             }
           }
-          
-          if (!dimensions) {
-            console.warn("Could not read image dimensions from local file, skipping variant qualification");
-            throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
-          }
-          
-          console.log(`Image dimensions: ${dimensions.width}×${dimensions.height}px`);
           
           const printifyResult = await createWallArtProducts(
             imageUrl,

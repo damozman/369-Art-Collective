@@ -39,6 +39,7 @@ import {
   Archive,
   Calculator,
   Wrench,
+  Home,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -220,6 +221,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     className="w-56"
                   >
                     <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <a href="/" data-testid="menu-back-to-website">
+                        <Home className="mr-2 h-4 w-4" />
+                        Back to Website
+                      </a>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <a href="/admin/settings" data-testid="menu-settings">

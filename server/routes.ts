@@ -5441,21 +5441,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const replicateStatus = await ReplicateUpscaleService.getJobStatus(job.replicateId);
           
           if (replicateStatus.status === 'completed' && replicateStatus.upscaledUrl) {
+            // Download and save upscaled image to object storage
+            let permanentUrl: string;
+            try {
+              permanentUrl = await ReplicateUpscaleService.saveUpscaledImageToStorage(
+                replicateStatus.upscaledUrl,
+                artistId,
+                job.fileHash
+              );
+            } catch (saveError: any) {
+              console.error('Failed to save upscaled image to storage:', saveError);
+              // Fall back to Replicate URL if storage fails
+              permanentUrl = replicateStatus.upscaledUrl;
+            }
+
             await storage.updateUpscaleJob(job.id, {
               status: 'completed',
-              upscaledUrl: replicateStatus.upscaledUrl,
+              upscaledUrl: permanentUrl,
               completedAt: new Date()
             });
 
             await storage.updateUpscaleUsageByJobId(job.id, {
               status: 'completed',
-              upscaledUrl: replicateStatus.upscaledUrl,
+              upscaledUrl: permanentUrl,
               completedAt: new Date()
             });
 
             return res.json({
               status: 'completed',
-              upscaledUrl: replicateStatus.upscaledUrl,
+              upscaledUrl: permanentUrl,
               jobId: job.id
             });
           } else if (replicateStatus.status === 'failed') {

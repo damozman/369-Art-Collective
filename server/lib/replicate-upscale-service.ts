@@ -259,6 +259,53 @@ export class ReplicateUpscaleService {
     return 5;
   }
 
+  /**
+   * Download upscaled image from Replicate URL and save to object storage
+   * Returns permanent object storage URL
+   */
+  static async saveUpscaledImageToStorage(
+    replicateUrl: string, 
+    artistId: string, 
+    originalFileHash: string
+  ): Promise<string> {
+    try {
+      // Download image from Replicate
+      const response = await fetch(replicateUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to download upscaled image: ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // Import object storage service
+      const { ObjectStorageService } = await import('../objectStorage');
+      const objectStorage = new ObjectStorageService();
+
+      // Generate unique filename with timestamp and hash
+      const timestamp = Date.now();
+      const filename = `upscaled_${artistId}_${originalFileHash}_${timestamp}.png`;
+
+      // Upload to object storage (AI generated directory for upscaled images)
+      const objectStorageUrl = await objectStorage.uploadFile({
+        directory: objectStorage.getAiGeneratedDir(),
+        filename,
+        buffer,
+        contentType: 'image/png',
+      });
+
+      console.log(`✅ Upscaled image saved to object storage: ${objectStorageUrl}`);
+      return objectStorageUrl;
+    } catch (error: any) {
+      console.error('Error saving upscaled image to object storage:', error);
+      throw new UpscaleError(
+        UpscaleErrorCode.NETWORK_ERROR,
+        'Failed to save upscaled image. Please try again.',
+        error.message
+      );
+    }
+  }
+
   static async getImageDimensions(url: string): Promise<{ width: number; height: number } | null> {
     try {
       const https = await import('https');

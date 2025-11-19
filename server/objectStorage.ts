@@ -284,20 +284,33 @@ function parseObjectPath(path: string): {
     path = `/${path}`;
   }
   
-  // Handle /objects/ URL prefix - strip it and use actual bucket ID from env vars
+  // Handle /objects/ URL prefix - map to correct bucket based on directory
   if (path.startsWith("/objects/")) {
     const objectName = path.substring(9); // Remove "/objects/" prefix
     
-    // Extract bucket ID from one of the directory env vars (they all use the same bucket)
-    const artworkDir = process.env.ARTWORK_UPLOADS_DIR || "";
-    if (!artworkDir) {
-      throw new Error("ARTWORK_UPLOADS_DIR not configured - cannot determine bucket ID");
+    // Map directory prefix to corresponding env var
+    let dirEnvVar: string | undefined;
+    if (objectName.startsWith("artwork-uploads/")) {
+      dirEnvVar = process.env.ARTWORK_UPLOADS_DIR;
+    } else if (objectName.startsWith("ai-previews/")) {
+      dirEnvVar = process.env.AI_PREVIEWS_DIR;
+    } else if (objectName.startsWith("ai-generated/")) {
+      dirEnvVar = process.env.AI_GENERATED_DIR;
     }
     
-    // Extract bucket ID from path like "/replit-objstore-xxx/artwork-uploads/"
-    const bucketName = artworkDir.split("/")[1];
+    // Extract bucket ID from the matched directory env var
+    if (!dirEnvVar) {
+      // Fallback: try to get bucket from any configured directory
+      dirEnvVar = process.env.ARTWORK_UPLOADS_DIR || process.env.AI_PREVIEWS_DIR || process.env.AI_GENERATED_DIR;
+      if (!dirEnvVar) {
+        throw new Error("No object storage directories configured");
+      }
+    }
+    
+    // Extract bucket ID from path like "/replit-objstore-xxx/directory/"
+    const bucketName = dirEnvVar.split("/")[1];
     if (!bucketName || !bucketName.startsWith("replit-objstore-")) {
-      throw new Error(`Invalid bucket path in ARTWORK_UPLOADS_DIR: ${artworkDir}`);
+      throw new Error(`Invalid bucket path in environment variable: ${dirEnvVar}`);
     }
     
     return {

@@ -33,6 +33,16 @@ export class UpscaleDeduplicationService {
       return { found: false };
     }
 
+    // Validate URL - only accept permanent object storage URLs
+    // Temporary Replicate URLs (replicate.delivery) expire after 24 hours
+    const isObjectStorageUrl = cached.upscaledUrl.includes('/objects/ai-generated/');
+    const isReplicateUrl = cached.upscaledUrl.includes('replicate.delivery');
+    
+    if (isReplicateUrl && !isObjectStorageUrl) {
+      console.log(`⚠️ Cache invalidated for hash ${fileHash} - expired temporary Replicate URL detected`);
+      return { found: false };
+    }
+
     return {
       found: true,
       upscaledUrl: cached.upscaledUrl,

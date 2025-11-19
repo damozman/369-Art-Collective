@@ -5295,9 +5295,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const scale = DpiValidatorService.getUpscaleScale(width, height);
-      const estimatedCost = ReplicateUpscaleService.estimateCost(scale);
-
       // Convert local path to publicly accessible URL for Replicate
       const protocol = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
       const host = req.headers.host;
@@ -5306,12 +5303,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : `${protocol}://${host}${imageUrl}`;
 
       try {
-        const { predictionId } = await ReplicateUpscaleService.createUpscaleJob({
+        // createUpscaleJob now automatically calculates optimal scale
+        const { predictionId, scale } = await ReplicateUpscaleService.createUpscaleJob({
           imageUrl: publicImageUrl,
-          scale,
           width,
           height
         });
+        
+        const estimatedCost = ReplicateUpscaleService.estimateCost(scale);
+        console.log(`Upscale job created with intelligent scale: ${scale}`);
 
         const tier = artist.subscriptionTier || 'free';
         const priority = tier === 'elite' ? 1 : tier === 'pro' ? 2 : 3;

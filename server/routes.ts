@@ -958,6 +958,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           approved: artist.approved,
         };
 
+        console.log("[DEBUG][LOGIN] Session user set:", {
+          sessionID: req.sessionID,
+          user: req.session.user,
+          cookie: req.session.cookie
+        });
+
         // Explicitly save session before sending response to prevent race condition
         req.session.save((saveErr) => {
           if (saveErr) {
@@ -965,9 +971,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(500).json({ message: "Login failed" });
           }
 
-          const { password: _, ...artistData } = artist;
+          console.log("[DEBUG][LOGIN] Session saved successfully:", {
+            sessionID: req.sessionID,
+            userInSession: req.session.user,
+            cookieSecure: req.session.cookie.secure,
+            cookieSameSite: req.session.cookie.sameSite
+          });
+
+          const { password: _, ...artistData} = artist;
           res.json(artistData);
         });
+
       });
     } catch (error: any) {
       console.error("Artist login error:", error);

@@ -26,6 +26,15 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 export async function requireArtist(req: Request, res: Response, next: NextFunction) {
+  console.log("[DEBUG][AUTH] requireArtist middleware:", {
+    path: req.path,
+    sessionID: req.sessionID,
+    hasSession: !!req.session,
+    sessionUser: req.session?.user,
+    sessionKeys: req.session ? Object.keys(req.session) : [],
+    cookie: req.headers.cookie
+  });
+
   const safeContext = {
     path: req.path,
     hasSession: !!req.session,

@@ -204,6 +204,7 @@ export function ArtistLayout({ children }: ArtistLayoutProps) {
                     <SidebarMenuButton
                       size="lg"
                       className="w-full"
+                      type="button"
                       data-testid="button-user-menu"
                     >
                       <Avatar className="h-8 w-8">

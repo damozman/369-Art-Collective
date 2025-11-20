@@ -50,10 +50,11 @@ export function getImageDimensions(filePath: string): ImageDimensions | null {
 }
 
 // Portfolio image requirements (for registration/admin review):
-// - 1080p HD minimum (1920x1080 landscape, 1080x1920 portrait)
+// - 1024×1024 minimum (standard AI art output, works with DALL-E, Midjourney, etc.)
 // - Sufficient to evaluate artistic merit without requiring print-ready resolution
-export const PORTFOLIO_MIN_SHORT_SIDE = 1080;
-export const PORTFOLIO_MIN_LONG_SIDE = 1920;
+// - Portfolio images are used only for account approval and not displayed publicly
+export const PORTFOLIO_MIN_SHORT_SIDE = 1024;
+export const PORTFOLIO_MIN_LONG_SIDE = 1024;
 
 // Print-ready artwork validation now uses DPI-based qualified variant analysis
 // instead of hardcoded dimensions. This allows flexible image sizes and orientations
@@ -88,7 +89,7 @@ export function validatePortfolioImageQuality(buffer: Buffer): { valid: boolean;
   if (!meetsMinimum) {
     return {
       valid: false,
-      message: `Portfolio image resolution too low. Minimum ${PORTFOLIO_MIN_LONG_SIDE}×${PORTFOLIO_MIN_SHORT_SIDE} pixels required (1080p HD quality). Your image is ${width}×${height} pixels.`,
+      message: `Portfolio image resolution too low. Minimum 1024×1024 pixels required (standard AI art output). Your image is ${width}×${height} pixels.`,
       dimensions,
     };
   }

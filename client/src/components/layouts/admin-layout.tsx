@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
   Users,
@@ -194,11 +195,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <SidebarFooter className="border-t">
             <SidebarMenu>
               <SidebarMenuItem>
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="w-full justify-start min-h-[44px] text-base gap-2"
+                  data-testid="button-logout-quick"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Log Out</span>
+                </Button>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <SidebarMenuButton
                       size="lg"
-                      className="w-full"
+                      className="w-full min-h-[44px]"
                       type="button"
                       data-testid="button-user-menu"
                     >
@@ -221,30 +233,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     align="end"
                     sideOffset={8}
                     collisionPadding={16}
-                    className="w-56"
+                    className="w-56 z-[9999]"
                   >
                     <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <a href="/" data-testid="menu-back-to-website">
+                      <a href="/" className="min-h-[44px] flex items-center" data-testid="menu-back-to-website">
                         <Home className="mr-2 h-4 w-4" />
                         Back to Website
                       </a>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <a href="/admin/settings" data-testid="menu-settings">
+                      <a href="/admin/settings" className="min-h-[44px] flex items-center" data-testid="menu-settings">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
                       </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={handleLogout}
-                      data-testid="menu-logout"
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Log Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

@@ -978,6 +978,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             cookieSameSite: req.session.cookie.sameSite
           });
 
+          // Log response headers to debug cookie delivery
+          res.once('finish', () => {
+            console.log("[DEBUG][LOGIN] Response headers sent:", {
+              sessionID: req.sessionID,
+              setCookie: res.getHeader('set-cookie'),
+              allHeaders: res.getHeaders()
+            });
+          });
+
           const { password: _, ...artistData} = artist;
           res.json(artistData);
         });

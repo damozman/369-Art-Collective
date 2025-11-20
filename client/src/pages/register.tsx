@@ -36,6 +36,7 @@ export default function Register() {
   const [step, setStep] = useState<"account" | "portfolio" | "subscription">("account");
   const [portfolioFiles, setPortfolioFiles] = useState<File[]>([]);
   const [portfolioPreviews, setPortfolioPreviews] = useState<string[]>([]);
+  const [portfolioDimensions, setPortfolioDimensions] = useState<{ width: number; height: number; valid: boolean }[]>([]);
   const [selectedTier, setSelectedTier] = useState<"free" | "pro" | "elite">("free");
   const [accountData, setAccountData] = useState<RegistrationForm | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,10 +86,36 @@ export default function Register() {
       return;
     }
 
-    // Create preview URLs
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    setPortfolioFiles(prev => [...prev, ...files]);
-    setPortfolioPreviews(prev => [...prev, ...newPreviews]);
+    // Create preview URLs and validate dimensions
+    files.forEach(file => {
+      const previewUrl = URL.createObjectURL(file);
+      const img = new Image();
+      
+      img.onload = () => {
+        const shortSide = Math.min(img.width, img.height);
+        const longSide = Math.max(img.width, img.height);
+        const isValid = shortSide >= 1080 && longSide >= 1920;
+        
+        setPortfolioDimensions(prev => [...prev, {
+          width: img.width,
+          height: img.height,
+          valid: isValid
+        }]);
+        
+        if (!isValid) {
+          toast({
+            title: "Image resolution too low",
+            description: `Portfolio images must be at least 1920×1080 pixels. Your image is ${img.width}×${img.height} pixels.`,
+            variant: "destructive",
+          });
+        }
+      };
+      
+      img.src = previewUrl;
+      
+      setPortfolioFiles(prev => [...prev, file]);
+      setPortfolioPreviews(prev => [...prev, previewUrl]);
+    });
     
     // Reset file input to allow selecting same files again
     if (fileInputRef.current) {
@@ -103,6 +130,7 @@ export default function Register() {
     // Update state
     setPortfolioFiles(prev => prev.filter((_, i) => i !== index));
     setPortfolioPreviews(prev => prev.filter((_, i) => i !== index));
+    setPortfolioDimensions(prev => prev.filter((_, i) => i !== index));
     
     // Reset file input
     if (fileInputRef.current) {
@@ -602,11 +630,14 @@ export default function Register() {
               <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Portfolio Quality Standards</h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                  <li>• Minimum quality: <strong>150 DPI</strong> for 8×10 inch prints</li>
-                  <li>• Target quality: <strong>300 DPI</strong> for professional results</li>
+                  <li>• <strong>Minimum resolution: 1920×1080 pixels</strong> (1080p HD quality)</li>
+                  <li>• Portrait: 1080×1920 or larger | Landscape: 1920×1080 or larger</li>
                   <li>• Supported formats: <strong>PNG, JPG</strong> only</li>
-                  <li>• Maximum file size: 10MB per image</li>
+                  <li>• Maximum file size: <strong>10MB</strong> per image</li>
                   <li>• Required: <strong>2-3 portfolio images</strong></li>
+                  <li className="mt-2 pt-2 border-t border-blue-300 dark:border-blue-700">
+                    ✓ Images validated automatically as you upload
+                  </li>
                 </ul>
               </div>
 
@@ -642,29 +673,70 @@ export default function Register() {
               {/* Preview grid */}
               {portfolioFiles.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {portfolioPreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={preview}
-                        alt={`Portfolio ${index + 1}`}
-                        className="w-full h-48 object-cover rounded-lg border"
-                        data-testid={`img-portfolio-preview-${index}`}
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2"
-                        onClick={() => removeFile(index)}
-                        data-testid={`button-remove-portfolio-${index}`}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                      <div className="absolute bottom-2 left-2 text-xs bg-background/80 px-2 py-1 rounded">
-                        Image {index + 1}
+                  {portfolioPreviews.map((preview, index) => {
+                    const dimensions = portfolioDimensions[index];
+                    const isValid = dimensions?.valid ?? false;
+                    const isLoading = !dimensions;
+                    
+                    return (
+                      <div key={index} className="relative group">
+                        <img
+                          src={preview}
+                          alt={`Portfolio ${index + 1}`}
+                          className={`w-full h-48 object-cover rounded-lg border-2 ${
+                            isLoading ? 'border-muted' : 
+                            isValid ? 'border-green-500 dark:border-green-600' : 
+                            'border-red-500 dark:border-red-600'
+                          }`}
+                          data-testid={`img-portfolio-preview-${index}`}
+                        />
+                        
+                        {/* Validation badge */}
+                        {!isLoading && (
+                          <div className={`absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${
+                            isValid 
+                              ? 'bg-green-600 dark:bg-green-700 text-white' 
+                              : 'bg-red-600 dark:bg-red-700 text-white'
+                          }`}>
+                            {isValid ? (
+                              <><Check className="h-3 w-3" /> Valid</>
+                            ) : (
+                              <><X className="h-3 w-3" /> Too Small</>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Remove button */}
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => removeFile(index)}
+                          data-testid={`button-remove-portfolio-${index}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                        
+                        {/* Dimensions display */}
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <div className="bg-background/90 backdrop-blur-sm px-2 py-1.5 rounded text-xs">
+                            <div className="font-medium">Image {index + 1}</div>
+                            {dimensions && (
+                              <div className="text-muted-foreground mt-0.5">
+                                {dimensions.width}×{dimensions.height}px
+                                {!isValid && (
+                                  <div className="text-red-600 dark:text-red-400 font-medium mt-0.5">
+                                    Need 1920×1080 min
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -682,7 +754,12 @@ export default function Register() {
                 <Button
                   type="button"
                   onClick={submitPortfolio}
-                  disabled={isLoading || portfolioFiles.length < 2}
+                  disabled={
+                    isLoading || 
+                    portfolioFiles.length < 2 ||
+                    portfolioDimensions.length < 2 ||
+                    !portfolioDimensions.every(d => d.valid)
+                  }
                   className="flex-1"
                   data-testid="button-submit-portfolio"
                 >
@@ -692,15 +769,32 @@ export default function Register() {
                       Uploading...
                     </>
                   ) : (
-                    "Complete Registration"
+                    "Continue to Plan Selection"
                   )}
                 </Button>
               </div>
 
-              {portfolioFiles.length < 2 && (
+              {/* Validation feedback */}
+              {portfolioFiles.length < 2 ? (
                 <p className="text-sm text-muted-foreground text-center">
                   Please upload at least 2 portfolio images to continue
                 </p>
+              ) : portfolioDimensions.length < portfolioFiles.length ? (
+                <p className="text-sm text-muted-foreground text-center">
+                  Validating image dimensions...
+                </p>
+              ) : !portfolioDimensions.every(d => d.valid) ? (
+                <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-800 dark:text-red-200 text-center font-medium">
+                    Some images don't meet the minimum requirements. Please upload images at least 1920×1080 pixels.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-sm text-green-800 dark:text-green-200 text-center font-medium flex items-center justify-center gap-2">
+                    <Check className="h-4 w-4" /> All images meet quality requirements!
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>

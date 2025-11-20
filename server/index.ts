@@ -20,6 +20,7 @@ declare module 'http' {
 app.set('trust proxy', 1);
 
 // Session middleware with PostgreSQL store
+// Replit serves all apps over HTTPS, so we always use secure cookies
 app.use(session({
   store: new PgSession({
     conString: process.env.DATABASE_URL,
@@ -30,9 +31,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: 'auto', // Auto-detect HTTPS via trust proxy (Replit dev uses HTTPS)
+    secure: true, // Replit uses HTTPS for all environments
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "lax", // Lax allows same-site POST requests (like login forms)
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
   },
   proxy: true, // Trust proxy headers (needed for Replit deployments)

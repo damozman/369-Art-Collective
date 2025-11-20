@@ -353,27 +353,47 @@ export class ReplicateUpscaleService {
   }
 
   static async createUpscaleJob(params: UpscaleParams): Promise<{ predictionId: string; scale: number }> {
+    // CRITICAL: Width and height are REQUIRED for safe upscaling
+    // Without dimensions, we cannot calculate safe scale and must reject the request
+    if (!params.width || !params.height) {
+      throw new UpscaleError(
+        UpscaleErrorCode.INVALID_IMAGE,
+        "Cannot upscale image: dimensions are required. Please try uploading your image again.",
+        `Missing required dimensions: width=${params.width}, height=${params.height}`
+      );
+    }
+    
     // Preflight validation - only check INPUT size, not output
     this.validateImageSize(params.width, params.height);
     
-    // Use intelligent scale calculation if dimensions provided
-    let scale: number;
-    if (params.width && params.height) {
-      const calculatedScale = this.calculateOptimalScale(params.width, params.height);
+    // Calculate optimal scale based on dimensions and orientation
+    console.log(`[UPSCALE_JOB] Calculating optimal scale for ${params.width}×${params.height}px image`);
+    const calculatedScale = this.calculateOptimalScale(params.width, params.height);
+    console.log(`[UPSCALE_JOB] Calculated scale result: ${calculatedScale}`);
+    
+    if (calculatedScale === null) {
+      // Image cannot be safely upscaled - this should be rare
+      const currentPixels = params.width * params.height;
+      const orientation = params.width > params.height ? 'landscape' : (params.width < params.height ? 'portrait' : 'square');
       
-      if (calculatedScale === null) {
-        // Image is too large to upscale safely
-        throw new UpscaleError(
-          UpscaleErrorCode.IMAGE_TOO_LARGE,
-          "Your image is already at maximum resolution for AI upscaling. Wide landscape images cannot be upscaled further due to GPU memory limits. Try uploading a portrait-oriented image for better upscaling results.",
-          `Image ${params.width}×${params.height} cannot be safely upscaled`
-        );
+      console.error(`[UPSCALE_ERROR] calculateOptimalScale returned null for ${params.width}×${params.height} (${currentPixels.toLocaleString()} pixels, ${orientation})`);
+      
+      // Provide more helpful error message based on orientation
+      let userMessage = "Your image cannot be upscaled due to GPU memory constraints.";
+      if (orientation === 'landscape' && currentPixels > 10_000_000) {
+        userMessage = "Your wide landscape image is too large to upscale safely. Try cropping to portrait orientation or uploading a smaller image.";
+      } else if (currentPixels > 18_000_000) {
+        userMessage = "Your image is already at maximum resolution for AI upscaling. No upscaling needed!";
       }
       
-      scale = calculatedScale;
-    } else {
-      scale = params.scale || 4;
+      throw new UpscaleError(
+        UpscaleErrorCode.IMAGE_TOO_LARGE,
+        userMessage,
+        `Image ${params.width}×${params.height} (${currentPixels.toLocaleString()} pixels, ${orientation}) cannot be safely upscaled - calculateOptimalScale returned null`
+      );
     }
+    
+    const scale = calculatedScale;
     
     console.log(`Creating upscale job with scale ${scale} for ${params.width}×${params.height}px image`);
     

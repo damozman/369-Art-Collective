@@ -9,18 +9,6 @@ import { affiliateTrackingMiddleware } from "./middleware/affiliate-tracking";
 const app = express();
 const PgSession = connectPgSimple(session);
 
-declare module 'express-session' {
-  interface SessionData {
-    user?: {
-      id: string;
-      email: string;
-      name: string;
-      type: "artist" | "admin";
-      approved?: boolean;
-    };
-  }
-}
-
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown

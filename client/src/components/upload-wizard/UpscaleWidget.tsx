@@ -64,6 +64,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
   const [progress, setProgress] = useState(0);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
   
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -85,6 +86,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       
       onValidationChange?.("pending");
       setAnalysis(null); // Clear stale analysis from previous file
+      setUploadError(null); // Clear previous errors
       uploadAndAnalyzeImage(fileToken);
     } else {
       cleanup();
@@ -92,6 +94,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       setJobId(null);
       setProgress(0);
       setImageUrl(null);
+      setUploadError(null);
       onOriginalImageUrl?.(null);
       onUpscaledImageUrl?.(null);
       currentFileTokenRef.current = null;
@@ -125,10 +128,14 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       const uploadResponse = await fetch('/api/upload/design', {
         method: 'POST',
         body: formData,
+        credentials: 'include',
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image');
+        // Extract actual error message from backend response
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        const errorMessage = errorData.error || errorData.message || 'Failed to upload image';
+        throw new Error(errorMessage);
       }
 
       const uploadData = await uploadResponse.json();
@@ -198,9 +205,11 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       console.error('Failed to upload and analyze image:', error);
       // Only show error and update validation if this is still the current file
       if (currentFileTokenRef.current === fileToken) {
+        const errorMessage = error instanceof Error ? error.message : "Could not upload image for analysis";
+        setUploadError(errorMessage);
         toast({
           title: "Upload failed",
-          description: "Could not upload image for analysis",
+          description: errorMessage,
           variant: "destructive",
         });
         setIsUploading(false);
@@ -429,7 +438,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
 
   const showUpscaleButton = analysis?.needsUpscale && quota?.hasQuota;
   const isUpscaling = upscaleMutation.isPending || jobId !== null;
-  const isAnalyzing = isUploading || (!analysis && selectedFile);
+  const isAnalyzing = isUploading || (!analysis && !uploadError && selectedFile);
 
   return (
     <Card className="mt-4" data-testid="card-upscale-widget">

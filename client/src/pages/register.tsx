@@ -747,6 +747,63 @@ export default function Register() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Example Prompts Section */}
+                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-2 border-green-400 dark:border-green-600 rounded-lg">
+                        <h4 className="font-bold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
+                          📋 Ready-to-Use Example Prompts
+                        </h4>
+                        <p className="text-xs text-green-800 dark:text-green-200 mb-3">
+                          Copy these prompts to create <strong>portrait-oriented images</strong> that unlock all 12 product sizes!
+                        </p>
+                        
+                        <div className="space-y-3">
+                          {/* DALL-E 3 */}
+                          <div className="bg-white/50 dark:bg-black/20 p-3 rounded border border-green-300 dark:border-green-700">
+                            <p className="font-semibold text-green-900 dark:text-green-100 text-xs mb-1">
+                              DALL-E 3 (ChatGPT):
+                            </p>
+                            <code className="block bg-green-100 dark:bg-green-900/40 p-2 rounded text-xs text-green-900 dark:text-green-100 font-mono break-words">
+                              "Create a mystical forest landscape in portrait format, high detail, vertical composition"
+                            </code>
+                            <p className="text-xs text-green-700 dark:text-green-300 mt-1 italic">
+                              Replace "mystical forest landscape" with your subject
+                            </p>
+                          </div>
+
+                          {/* Midjourney */}
+                          <div className="bg-white/50 dark:bg-black/20 p-3 rounded border border-green-300 dark:border-green-700">
+                            <p className="font-semibold text-green-900 dark:text-green-100 text-xs mb-1">
+                              Midjourney:
+                            </p>
+                            <code className="block bg-green-100 dark:bg-green-900/40 p-2 rounded text-xs text-green-900 dark:text-green-100 font-mono break-words">
+                              ethereal mountain sunset, vibrant colors, detailed --ar 3:4
+                            </code>
+                            <p className="text-xs text-green-700 dark:text-green-300 mt-1 italic">
+                              The <strong>--ar 3:4</strong> creates portrait orientation
+                            </p>
+                          </div>
+
+                          {/* Stable Diffusion / Leonardo */}
+                          <div className="bg-white/50 dark:bg-black/20 p-3 rounded border border-green-300 dark:border-green-700">
+                            <p className="font-semibold text-green-900 dark:text-green-100 text-xs mb-1">
+                              Stable Diffusion / Leonardo.ai:
+                            </p>
+                            <div className="space-y-1">
+                              <p className="text-xs text-green-800 dark:text-green-200">
+                                <strong>1. Set dimensions:</strong> Width <strong>1080</strong>, Height <strong>1920</strong>
+                              </p>
+                              <code className="block bg-green-100 dark:bg-green-900/40 p-2 rounded text-xs text-green-900 dark:text-green-100 font-mono break-words">
+                                "abstract cosmic nebula, vibrant purples and blues, highly detailed, 8k quality"
+                              </code>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 p-2 bg-green-600 dark:bg-green-700 rounded text-white text-xs font-medium text-center">
+                          💡 These portrait prompts qualify for ALL 12 product sizes on our platform!
+                        </div>
+                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>

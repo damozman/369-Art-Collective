@@ -390,27 +390,30 @@ export class ReplicateUpscaleService {
       );
     }
     
-    // Preflight validation - only check INPUT size, not output
-    this.validateImageSize(params.width, params.height);
-    
     // Calculate optimal scale based on dimensions and orientation
+    // This handles all validation - no need for separate validateImageSize check
     console.log(`[UPSCALE_JOB] Calculating optimal scale for ${params.width}×${params.height}px image`);
     const calculatedScale = this.calculateOptimalScale(params.width, params.height);
     console.log(`[UPSCALE_JOB] Calculated scale result: ${calculatedScale}`);
     
     if (calculatedScale === null) {
-      // Image cannot be safely upscaled - this should be rare
+      // Image cannot be safely upscaled
       const currentPixels = params.width * params.height;
       const orientation = params.width > params.height ? 'landscape' : (params.width < params.height ? 'portrait' : 'square');
       
       console.error(`[UPSCALE_ERROR] calculateOptimalScale returned null for ${params.width}×${params.height} (${currentPixels.toLocaleString()} pixels, ${orientation})`);
       
-      // Provide more helpful error message based on orientation
-      let userMessage = "Your image cannot be upscaled due to GPU memory constraints.";
-      if (orientation === 'landscape' && currentPixels > 10_000_000) {
-        userMessage = "Your wide landscape image is too large to upscale safely. Try cropping to portrait orientation or uploading a smaller image.";
+      // Provide helpful context-specific error messages
+      let userMessage = "Your image is already high quality and doesn't need upscaling.";
+      
+      if (orientation === 'landscape') {
+        if (currentPixels > 10_000_000) {
+          userMessage = "Your landscape image is too large to upscale safely. Try cropping to portrait orientation to unlock more product sizes.";
+        } else {
+          userMessage = "Your landscape image is already at optimal quality. Try cropping to portrait orientation to unlock all 12 product sizes.";
+        }
       } else if (currentPixels > 18_000_000) {
-        userMessage = "Your image is already at maximum resolution for AI upscaling. No upscaling needed!";
+        userMessage = "Great news! Your image is already at maximum resolution. Click 'Next Step' to continue with product creation.";
       }
       
       throw new UpscaleError(

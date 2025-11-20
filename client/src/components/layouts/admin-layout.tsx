@@ -229,26 +229,33 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     </SidebarMenuButton>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
-                    side="top"
+                    side="right"
                     align="end"
                     sideOffset={8}
-                    collisionPadding={16}
-                    className="w-56 z-[9999]"
+                    className="w-56 z-[9999] mb-2"
                   >
-                    <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
+                    <DropdownMenuLabel className="min-h-[44px] flex items-center">Admin Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <a href="/" className="min-h-[44px] flex items-center" data-testid="menu-back-to-website">
+                      <a href="/" className="min-h-[44px] flex items-center cursor-pointer" data-testid="menu-back-to-website">
                         <Home className="mr-2 h-4 w-4" />
                         Back to Website
                       </a>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <a href="/admin/settings" className="min-h-[44px] flex items-center" data-testid="menu-settings">
+                      <a href="/admin/settings" className="min-h-[44px] flex items-center cursor-pointer" data-testid="menu-settings">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
                       </a>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="min-h-[44px] flex items-center cursor-pointer"
+                      data-testid="menu-logout"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -258,9 +265,52 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </Sidebar>
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between px-4 h-14 border-b">
+          <header className="flex items-center justify-between px-4 h-14 border-b gap-2">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="md:hidden"
+                    data-testid="button-mobile-user-menu"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="min-h-[44px] flex items-center">Admin Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <a href="/" className="min-h-[44px] flex items-center cursor-pointer" data-testid="menu-mobile-back-to-website">
+                      <Home className="mr-2 h-4 w-4" />
+                      Back to Website
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="/admin/settings" className="min-h-[44px] flex items-center cursor-pointer" data-testid="menu-mobile-settings">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="min-h-[44px] flex items-center cursor-pointer"
+                    data-testid="menu-mobile-logout"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <ThemeToggle />
+            </div>
           </header>
           <main className="flex-1 overflow-auto">
             {children}

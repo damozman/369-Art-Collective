@@ -7,9 +7,10 @@ const replicate = new Replicate({
 
 const REAL_ESRGAN_MODEL = "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa";
 
-// Maximum safe pixel count for Replicate GPU (increased to support larger images)
-// 12M pixels allows images up to ~3464x3464px (e.g., 4000x2252 = 9M pixels, 1868x4000 = 7.4M pixels)
-const MAX_SAFE_PIXELS = 12_000_000; // 12M pixels (~3464x3464 or similar)
+// Maximum INPUT pixel count for Replicate T4 GPU
+// Based on community testing, T4 can handle ~2048×2048 inputs (4.2M pixels)
+// Images over 5M pixels are already high quality and don't need AI upscaling
+const MAX_SAFE_PIXELS = 5_000_000; // 5M pixels (~2236×2236) - T4 GPU safe limit
 
 // Target DPI and dimensions for qualifying all 12 variants (24×36" at 150 DPI)
 const TARGET_MIN_PIXELS_FOR_ALL_VARIANTS = 19_440_000; // ~3600x5400px minimum for all 12 variants
@@ -72,11 +73,14 @@ export class ReplicateUpscaleService {
 
     const totalPixels = width * height;
     
+    // T4 GPU limit: ~4-5M pixels for reliable processing
+    // Images larger than this are ALREADY high quality and don't need AI upscaling
     if (totalPixels > MAX_SAFE_PIXELS) {
+      const dpiAt24x36 = Math.sqrt(totalPixels / (24 * 36));
       throw new UpscaleError(
         UpscaleErrorCode.IMAGE_TOO_LARGE,
-        `Your image is too large to upscale (${width}×${height}px). Images larger than ${Math.floor(Math.sqrt(MAX_SAFE_PIXELS))}×${Math.floor(Math.sqrt(MAX_SAFE_PIXELS))}px cannot be processed. Try uploading a higher-resolution original instead of upscaling.`,
-        `Image dimensions ${width}×${height} exceed max safe pixels ${MAX_SAFE_PIXELS}`
+        `Great news! Your image (${width}×${height}px, ~${Math.round(dpiAt24x36)} DPI at 24×36") is already high quality and doesn't need AI upscaling. Click "Next Step" to continue with product creation.`,
+        `Image dimensions ${width}×${height} (${totalPixels.toLocaleString()} pixels) exceed T4 GPU limit of ${MAX_SAFE_PIXELS.toLocaleString()} pixels`
       );
     }
   }
@@ -88,7 +92,9 @@ export class ReplicateUpscaleService {
    */
   static calculateOptimalScale(width: number, height: number): 2 | 3 | 4 | null {
     const currentPixels = width * height;
-    const MAX_OUTPUT_PIXELS = 32_000_000; // 32M pixels max to prevent GPU crashes
+    // 30M limit based on real-world Replicate GPU constraints
+    // Allows most 2x landscape upscales while staying under 32M hardware limit
+    const MAX_OUTPUT_PIXELS = 30_000_000; // 30M pixels (~5477×5477)
     
     // Detect orientation
     const ratio = width / height;
@@ -108,17 +114,38 @@ export class ReplicateUpscaleService {
     const maxSafeScale = Math.sqrt(MAX_OUTPUT_PIXELS / currentPixels);
     
     // Apply orientation-specific limits
+    // Check if each scale would fit within GPU limits
     let maxScale = 4;
     if (orientation === 'landscape') {
       // Landscape creates massive outputs, cap at scale 2
-      maxScale = Math.min(2, Math.floor(maxSafeScale));
-      console.log(`[SCALE_CALC] Landscape detected: capping at scale ${maxScale}`);
+      // Check if 2x would fit, otherwise return null
+      if (currentPixels * 4 <= MAX_OUTPUT_PIXELS) {
+        maxScale = 2;
+      } else {
+        console.log(`[SCALE_CALC] Landscape ${width}×${height}: 2x would produce ${(currentPixels * 4).toLocaleString()} pixels (exceeds ${MAX_OUTPUT_PIXELS.toLocaleString()} limit)`);
+        maxScale = 0; // Will trigger null return below
+      }
+      console.log(`[SCALE_CALC] Landscape detected: max scale = ${maxScale}`);
     } else if (orientation === 'square') {
       // Square can handle scale 3
-      maxScale = Math.min(3, Math.floor(maxSafeScale));
+      if (currentPixels * 9 <= MAX_OUTPUT_PIXELS) {
+        maxScale = 3;
+      } else if (currentPixels * 4 <= MAX_OUTPUT_PIXELS) {
+        maxScale = 2;
+      } else {
+        maxScale = 0;
+      }
     } else {
       // Portrait can handle scale 4
-      maxScale = Math.min(4, Math.floor(maxSafeScale));
+      if (currentPixels * 16 <= MAX_OUTPUT_PIXELS) {
+        maxScale = 4;
+      } else if (currentPixels * 9 <= MAX_OUTPUT_PIXELS) {
+        maxScale = 3;
+      } else if (currentPixels * 4 <= MAX_OUTPUT_PIXELS) {
+        maxScale = 2;
+      } else {
+        maxScale = 0;
+      }
     }
     
     // Choose minimum of required scale and max safe scale

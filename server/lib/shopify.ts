@@ -76,6 +76,80 @@ function convertToFullImageUrl(imageUrl: string): string {
 }
 
 /**
+ * Cached Online Store publication ID (fetched on first use)
+ * Publication IDs are store-specific and don't change, so we cache to avoid repeated API calls
+ */
+let cachedOnlineStorePublicationId: string | null = null;
+
+/**
+ * Get the Online Store publication ID dynamically via GraphQL
+ * This is store-specific and cached after first fetch
+ */
+async function getOnlineStorePublicationId(): Promise<string | null> {
+  // Return cached value if available
+  if (cachedOnlineStorePublicationId) {
+    return cachedOnlineStorePublicationId;
+  }
+
+  try {
+    const apiVersion = "2024-10";
+    const graphqlUrl = `https://${shopifyShopUrl}/admin/api/${apiVersion}/graphql.json`;
+
+    const query = `
+      query {
+        publications(first: 10) {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    `;
+
+    const response = await fetch(graphqlUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": shopifyAccessToken,
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    if (!response.ok) {
+      console.warn('[Shopify] Failed to fetch publications:', response.status);
+      return null;
+    }
+
+    const result = await response.json();
+
+    if (result.errors) {
+      console.warn('[Shopify] GraphQL errors fetching publications:', JSON.stringify(result.errors));
+      return null;
+    }
+
+    // Find "Online Store" publication
+    const publications = result.data?.publications?.edges || [];
+    const onlineStore = publications.find((edge: any) => 
+      edge.node.name === "Online Store"
+    );
+
+    if (onlineStore) {
+      cachedOnlineStorePublicationId = onlineStore.node.id;
+      console.log(`[Shopify] Found Online Store publication ID: ${cachedOnlineStorePublicationId}`);
+      return cachedOnlineStorePublicationId;
+    }
+
+    console.warn('[Shopify] Online Store publication not found in available publications');
+    return null;
+  } catch (error) {
+    console.warn('[Shopify] Error fetching Online Store publication ID:', error);
+    return null;
+  }
+}
+
+/**
  * Assign a draft product to the Online Store sales channel
  * This does NOT activate the product - it stays as a draft
  * When admin later approves and activates, it will go live on Online Store
@@ -86,6 +160,15 @@ function convertToFullImageUrl(imageUrl: string): string {
  */
 async function assignToOnlineStore(productId: string): Promise<boolean> {
   try {
+    // Get the actual Online Store publication ID for this store
+    const publicationId = await getOnlineStorePublicationId();
+    
+    if (!publicationId) {
+      console.warn('[Shopify] Could not determine Online Store publication ID');
+      console.warn('[Shopify] Product created as draft - please manually assign to Online Store in Shopify admin');
+      return false;
+    }
+
     const apiVersion = "2024-10";
     const graphqlUrl = `https://${shopifyShopUrl}/admin/api/${apiVersion}/graphql.json`;
     
@@ -95,10 +178,10 @@ async function assignToOnlineStore(productId: string): Promise<boolean> {
     // Use publishablePublish mutation to assign to Online Store
     // The product will stay as draft until admin activates it
     const mutation = `
-      mutation publishProduct($id: ID!, $input: [PublicationInput!]!) {
+      mutation publishProduct($id: ID!, $input: [PublicationInput!]!, $publicationId: ID!) {
         publishablePublish(id: $id, input: $input) {
           publishable {
-            publishedOnPublication(publicationId: "gid://shopify/Publication/1")
+            publishedOnPublication(publicationId: $publicationId)
           }
           userErrors {
             field
@@ -112,12 +195,13 @@ async function assignToOnlineStore(productId: string): Promise<boolean> {
       id: globalProductId,
       input: [
         {
-          publicationId: "gid://shopify/Publication/1" // Online Store is typically publication ID 1
+          publicationId: publicationId // Use dynamically fetched publication ID
         }
-      ]
+      ],
+      publicationId: publicationId // For the publishedOnPublication check
     };
     
-    console.log(`[Shopify] Assigning draft product ${productId} to Online Store sales channel`);
+    console.log(`[Shopify] Assigning draft product ${productId} to Online Store sales channel (${publicationId})`);
     
     const response = await fetch(graphqlUrl, {
       method: "POST",

@@ -207,10 +207,26 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       console.error('Failed to upload and analyze image:', error);
       // Only show error and update validation if this is still the current file
       if (currentFileTokenRef.current === fileToken) {
-        const errorMessage = error instanceof Error ? error.message : "Could not upload image for analysis";
+        // Parse error to provide specific, actionable guidance
+        let errorTitle = "Upload failed";
+        let errorMessage = "Could not upload image for analysis";
+        
+        if (error instanceof Error) {
+          errorMessage = error.message;
+          
+          // Customize title based on error type for better clarity
+          if (errorMessage.includes('PNG and JPG') || errorMessage.includes('WEBP') || errorMessage.includes('GIF') || errorMessage.includes('HEIC')) {
+            errorTitle = "Unsupported file format";
+          } else if (errorMessage.includes('too large') || errorMessage.includes('50MB')) {
+            errorTitle = "File too large";
+          } else if (errorMessage.includes('too small') || errorMessage.includes('1200px')) {
+            errorTitle = "Image resolution too low";
+          }
+        }
+        
         setUploadError(errorMessage);
         toast({
-          title: "Upload failed",
+          title: errorTitle,
           description: errorMessage,
           variant: "destructive",
         });

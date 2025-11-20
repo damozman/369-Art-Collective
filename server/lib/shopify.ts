@@ -76,28 +76,50 @@ function convertToFullImageUrl(imageUrl: string): string {
 }
 
 /**
- * Get the Online Store sales channel publication ID
- * This is needed to publish products to the storefront
+ * Publish a product to the Online Store sales channel using GraphQL
+ * This uses the publishablePublish mutation which works with standard API scopes
+ * 
+ * NOTE: This requires the Shopify API token to have write_publications scope.
+ * If unavailable, products will still be created as drafts and can be manually
+ * published in Shopify admin by selecting "Online Store" under Publishing.
  */
-async function getOnlineStoreSalesChannelId(): Promise<string | null> {
+async function publishToOnlineStore(productId: string): Promise<boolean> {
   try {
     const apiVersion = "2024-10";
-    
-    // Try GraphQL API for more reliable sales channel fetching
     const graphqlUrl = `https://${shopifyShopUrl}/admin/api/${apiVersion}/graphql.json`;
     
-    const query = `
-      query {
-        publications(first: 10) {
-          edges {
-            node {
-              id
-              name
-            }
+    // Convert numeric product ID to GraphQL global ID format
+    const globalProductId = `gid://shopify/Product/${productId}`;
+    
+    // Use publishablePublish mutation which should work with standard API scopes
+    const mutation = `
+      mutation publishProduct($id: ID!, $input: [PublicationInput!]!) {
+        publishablePublish(id: $id, input: $input) {
+          publishable {
+            availablePublicationCount
+            publicationCount
+          }
+          shop {
+            name
+          }
+          userErrors {
+            field
+            message
           }
         }
       }
     `;
+    
+    const variables = {
+      id: globalProductId,
+      input: [
+        {
+          publicationId: "gid://shopify/Publication/1" // Online Store is typically publication ID 1
+        }
+      ]
+    };
+    
+    console.log(`[Shopify] Attempting to publish product ${productId} to Online Store using GraphQL mutation`);
     
     const response = await fetch(graphqlUrl, {
       method: "POST",
@@ -105,88 +127,37 @@ async function getOnlineStoreSalesChannelId(): Promise<string | null> {
         "Content-Type": "application/json",
         "X-Shopify-Access-Token": shopifyAccessToken,
       },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query: mutation, variables }),
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('[Shopify] Failed to fetch publications via GraphQL:', response.status, errorText);
-      return null;
+      console.warn('[Shopify] Failed to publish product via GraphQL:', response.status, errorText);
+      console.warn('[Shopify] Product created as draft - please manually assign to Online Store sales channel in Shopify admin');
+      return false;
     }
     
     const result = await response.json();
     
     if (result.errors) {
-      console.error('[Shopify] GraphQL errors:', JSON.stringify(result.errors));
-      return null;
-    }
-    
-    // Find the Online Store publication
-    const publications = result.data?.publications?.edges || [];
-    const onlineStore = publications.find(
-      (edge: any) => edge.node.name === "Online Store"
-    );
-    
-    if (onlineStore) {
-      // Extract numeric ID from GraphQL global ID (gid://shopify/Publication/123456)
-      const globalId = onlineStore.node.id;
-      const numericId = globalId.split('/').pop();
-      console.log(`[Shopify] Found Online Store publication ID: ${numericId}`);
-      return numericId;
-    }
-    
-    console.error('[Shopify] Could not find Online Store in publications:', publications.map((p: any) => p.node.name).join(', '));
-    return null;
-  } catch (error) {
-    console.error('[Shopify] Error fetching sales channel:', error);
-    return null;
-  }
-}
-
-/**
- * Publish a product to the Online Store sales channel
- * This makes the product visible on the storefront
- */
-async function publishToOnlineStore(productId: string): Promise<boolean> {
-  try {
-    const publicationId = await getOnlineStoreSalesChannelId();
-    
-    if (!publicationId) {
-      console.error('[Shopify] Could not find Online Store sales channel');
+      console.warn('[Shopify] GraphQL errors during publish:', JSON.stringify(result.errors));
+      console.warn('[Shopify] This may indicate missing write_publications scope');
+      console.warn('[Shopify] Product created as draft - please manually assign to Online Store sales channel in Shopify admin');
       return false;
     }
     
-    const apiVersion = "2024-10";
-    const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/publications/${publicationId}/resource_publications.json`;
-    
-    console.log(`[Shopify] Publishing product ${productId} to Online Store (publication ${publicationId})`);
-    
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": shopifyAccessToken,
-      },
-      body: JSON.stringify({
-        resource_publication: {
-          publication_id: publicationId,
-          resource_id: productId,
-          resource_type: "Product",
-          published: true,
-        },
-      }),
-    });
-    
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('[Shopify] Failed to publish product to Online Store:', error);
+    if (result.data?.publishablePublish?.userErrors?.length > 0) {
+      console.warn('[Shopify] User errors during publish:', JSON.stringify(result.data.publishablePublish.userErrors));
+      console.warn('[Shopify] Product created as draft - please manually assign to Online Store sales channel in Shopify admin');
       return false;
     }
     
-    console.log(`[Shopify] Successfully published product ${productId} to Online Store`);
+    console.log(`[Shopify] ✅ Successfully published product ${productId} to Online Store`);
+    console.log(`[Shopify] Publication count: ${result.data?.publishablePublish?.publishable?.publicationCount}`);
     return true;
   } catch (error) {
-    console.error('[Shopify] Error publishing to Online Store:', error);
+    console.warn('[Shopify] Error publishing to Online Store:', error);
+    console.warn('[Shopify] Product created as draft - please manually assign to Online Store sales channel in Shopify admin');
     return false;
   }
 }

@@ -91,17 +91,10 @@ async function publishToOnlineStore(productId: string): Promise<boolean> {
     // Convert numeric product ID to GraphQL global ID format
     const globalProductId = `gid://shopify/Product/${productId}`;
     
-    // Use publishablePublish mutation which should work with standard API scopes
+    // Use publishablePublish mutation with minimal fields to avoid schema errors
     const mutation = `
       mutation publishProduct($id: ID!, $input: [PublicationInput!]!) {
         publishablePublish(id: $id, input: $input) {
-          publishable {
-            availablePublicationCount
-            publicationCount
-          }
-          shop {
-            name
-          }
           userErrors {
             field
             message
@@ -152,8 +145,7 @@ async function publishToOnlineStore(productId: string): Promise<boolean> {
       return false;
     }
     
-    console.log(`[Shopify] ✅ Successfully published product ${productId} to Online Store`);
-    console.log(`[Shopify] Publication count: ${result.data?.publishablePublish?.publishable?.publicationCount}`);
+    console.log(`[Shopify] ✅ Successfully published product ${productId} to Online Store sales channel`);
     return true;
   } catch (error) {
     console.warn('[Shopify] Error publishing to Online Store:', error);

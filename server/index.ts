@@ -30,7 +30,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === "production",
+    secure: 'auto', // Auto-detect HTTPS via trust proxy (Replit dev uses HTTPS)
     httpOnly: true,
     sameSite: "lax",
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days

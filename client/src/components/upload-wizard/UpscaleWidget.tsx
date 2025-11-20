@@ -177,7 +177,9 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
           setAnalysis(analysisResult);
           
           // Report validation status only for current file
-          if (analysisResult.meetsMinimum) {
+          // Images that need upscaling are still "valid" - they can be improved
+          // Only truly reject images that can't be fixed
+          if (analysisResult.meetsMinimum || analysisResult.needsUpscale) {
             onValidationChange?.("valid");
           } else {
             onValidationChange?.("invalid");
@@ -371,6 +373,13 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
           };
           
           setAnalysis(updatedAnalysis);
+          
+          // Update validation status based on new analysis
+          if (updatedAnalysis.meetsMinimum || updatedAnalysis.needsUpscale) {
+            onValidationChange?.("valid");
+          } else {
+            onValidationChange?.("invalid");
+          }
           
           // Show success with variant unlock info
           const unlockedCount = analyzeData.current.variantQualification?.totalQualified || 0;

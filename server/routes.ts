@@ -2615,16 +2615,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No file uploaded" });
       }
       
-      // Auto-normalize image (downscale if too large, reject if too small)
+      // Auto-normalize image (downscale if too large, accept undersized images)
       const { ImageNormalizationService } = await import('./lib/image-normalization-service');
       const normalizationResult = await ImageNormalizationService.normalizeImage(req.file.buffer);
       
-      // If image was rejected (too small), return error
-      if (normalizationResult.reason === 'rejected') {
-        return res.status(400).json({ 
-          error: normalizationResult.customerMessage 
-        });
-      }
+      // Note: No longer rejecting undersized images - they can be upscaled
+      // The DPI validator will analyze and show upscale option if needed
       
       // Upload normalized image to object storage
       const objectStorage = new ObjectStorageService();
@@ -2644,11 +2640,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[IMAGE_NORMALIZED] Auto-downscaled from ${normalizationResult.originalWidth}×${normalizationResult.originalHeight}px to ${normalizationResult.normalizedWidth}×${normalizationResult.normalizedHeight}px`);
       }
       
-      // Return URL with normalization metadata
+      // Return URL with normalization metadata (including needsUpscale guidance)
       res.status(200).json({ 
         url: imageUrl,
         normalized: normalizationResult.wasModified,
         orientation: normalizationResult.orientation,
+        needsUpscale: normalizationResult.needsUpscale || false,
+        reason: normalizationResult.reason,
         customerMessage: normalizationResult.customerMessage
       });
     } catch (error: any) {

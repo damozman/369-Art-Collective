@@ -43,7 +43,7 @@ app.use(session({
   cookie: {
     secure: true, // Replit uses HTTPS for all environments
     httpOnly: true,
-    sameSite: "lax", // Lax allows same-site POST requests (like login forms)
+    sameSite: "none", // CRITICAL: 'none' required for cross-origin cookie transmission with credentials
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
   },
   proxy: true, // Trust proxy headers (needed for Replit deployments)

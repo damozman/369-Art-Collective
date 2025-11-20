@@ -66,12 +66,15 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
+  const [rateLimitSeconds, setRateLimitSeconds] = useState<number | null>(null);
+  const [rateLimitMessage, setRateLimitMessage] = useState<string | null>(null);
   
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isCompletedRef = useRef(false);
   const uploadStartTimeRef = useRef<number>(0);
   const currentFileTokenRef = useRef<string | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: quota } = useQuery<QuotaStatus>({
     queryKey: ['/api/upscale/quota'],
@@ -113,7 +116,37 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
   };
+
+  // Countdown timer for rate limiting
+  useEffect(() => {
+    if (rateLimitSeconds !== null && rateLimitSeconds > 0) {
+      countdownIntervalRef.current = setInterval(() => {
+        setRateLimitSeconds((prev) => {
+          if (prev === null || prev <= 1) {
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+              countdownIntervalRef.current = null;
+            }
+            setRateLimitMessage(null);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+    };
+  }, [rateLimitSeconds]);
 
   const uploadAndAnalyzeImage = async (fileToken: string) => {
     if (!selectedFile) return;
@@ -271,7 +304,39 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
       }
       queryClient.invalidateQueries({ queryKey: ['/api/upscale/quota'] });
     },
-    onError: (error: any) => {
+    onError: async (error: any, variables, context) => {
+      // Check if this is a 429 rate limit error by inspecting the response
+      // The mutationFn throws an error after getting a response, so we need to check the original response
+      try {
+        // Try to get the waitSeconds from the error or make another request to check
+        const fileHash = await hashFile(selectedFile!);
+        const response = await fetch('/api/upscale/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageUrl,
+            fileHash,
+            width: analysis?.width,
+            height: analysis?.height,
+            fileSize: selectedFile?.size,
+          }),
+          credentials: 'include'
+        });
+        
+        if (response.status === 429) {
+          const data = await response.json();
+          const waitSeconds = data.waitSeconds || 0;
+          const message = data.message || "Please wait before trying again";
+          
+          setRateLimitSeconds(waitSeconds);
+          setRateLimitMessage(message);
+          setProgress(0);
+          return; // Don't show error toast, we'll show the countdown instead
+        }
+      } catch (checkError) {
+        console.error('Error checking rate limit:', checkError);
+      }
+      
       // Use user-friendly message from backend if available
       const errorMessage = error.userMessage || error.message || "The AI upscaling service encountered an error. Please try again.";
       
@@ -464,6 +529,14 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
   const showUpscaleButton = analysis?.needsUpscale && quota?.hasQuota;
   const isUpscaling = upscaleMutation.isPending || jobId !== null;
   const isAnalyzing = isUploading || (!analysis && !uploadError && selectedFile);
+  
+  // Determine what action to recommend
+  const isLandscape = analysis?.orientation === 'landscape';
+  const qualifiedCount = analysis?.variantQualification?.totalQualified || 0;
+  const totalVariants = analysis?.variantQualification?.totalVariants || 12;
+  const isPerfect = qualifiedCount === totalVariants;
+  const needsCrop = isLandscape && qualifiedCount < 8;
+  const needsBoost = analysis?.needsUpscale && !isPerfect;
 
   return (
     <Card className="mt-4" data-testid="card-upscale-widget">
@@ -478,137 +551,181 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
           </div>
         ) : analysis ? (
           <>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  {analysis.qualityLevel === 'excellent' ? (
-                    <CheckCircle className="h-5 w-5 text-green-500" data-testid="icon-quality-excellent" />
-                  ) : analysis.qualityLevel === 'good' ? (
-                    <CheckCircle className="h-5 w-5 text-yellow-500" data-testid="icon-quality-good" />
-                  ) : analysis.qualityLevel === 'needs-boost' ? (
-                    <AlertCircle className="h-5 w-5 text-orange-500" data-testid="icon-quality-needs-boost" />
+            {/* CRYSTAL CLEAR SUCCESS STATE */}
+            {isPerfect && !isUpscaling && (
+              <div className="p-4 bg-green-50 dark:bg-green-950/30 border-2 border-green-500 rounded-lg" data-testid="alert-perfect-quality">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold text-green-900 dark:text-green-100 mb-1">
+                      ✅ Perfect! Ready for All Products
+                    </h4>
+                    <p className="text-sm text-green-800 dark:text-green-200 mb-2">
+                      This image qualifies for all {totalVariants} product sizes at professional print quality.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-green-700 dark:text-green-300">
+                      <span className="font-medium">{analysis.width} × {analysis.height}px</span>
+                      <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-300">
+                        {analysis.orientation}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* ACTION REQUIRED: LANDSCAPE IMAGE - NEEDS CROP */}
+            {needsCrop && !isUpscaling && !isPerfect && (
+              <div className="p-4 bg-orange-50 dark:bg-orange-950/30 border-2 border-orange-500 rounded-lg" data-testid="alert-needs-crop">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-6 w-6 text-orange-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-orange-900 dark:text-orange-100 mb-1">
+                        📐 Landscape images qualify for fewer products
+                      </h4>
+                      <p className="text-sm text-orange-800 dark:text-orange-200">
+                        Current: <strong>{qualifiedCount} of {totalVariants} variants</strong>
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => setIsCropDialogOpen(true)}
+                      size="lg"
+                      className="w-full gap-2 bg-orange-600 hover:bg-orange-700"
+                      data-testid="button-crop-to-portrait"
+                    >
+                      <Crop className="h-5 w-5" />
+                      Crop to Portrait → Unlock All {totalVariants} Variants
+                    </Button>
+                    <p className="text-xs text-orange-700 dark:text-orange-300">
+                      Most wall art products are portrait-oriented. Crop your image to vertical orientation to unlock all sizes.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* RATE LIMIT COUNTDOWN */}
+            {rateLimitSeconds !== null && rateLimitSeconds > 0 && !isUpscaling && (
+              <div className="p-4 bg-yellow-50 dark:bg-yellow-950/30 border-2 border-yellow-500 rounded-lg" data-testid="alert-rate-limited">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-6 w-6 text-yellow-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 space-y-2">
+                    <h4 className="text-sm font-bold text-yellow-900 dark:text-yellow-100">
+                      ⏱️ Please Wait Before Upscaling
+                    </h4>
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      {rateLimitMessage || "New accounts must wait before using AI upscaling"}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-yellow-200 dark:bg-yellow-900 rounded-full h-2">
+                        <div 
+                          className="bg-yellow-500 h-2 rounded-full transition-all duration-1000"
+                          style={{ width: `${Math.max(0, 100 - (rateLimitSeconds / 5) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-lg font-bold text-yellow-900 dark:text-yellow-100 tabular-nums min-w-[4rem] text-right">
+                        {Math.floor(rateLimitSeconds / 60)}:{String(rateLimitSeconds % 60).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                      This cooldown helps prevent abuse. The button will be available once the timer reaches zero.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* ACTION REQUIRED: NEEDS UPSCALING */}
+            {needsBoost && !needsCrop && !isUpscaling && !isPerfect && !rateLimitSeconds && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-500 rounded-lg" data-testid="alert-needs-boost">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-1">
+                        🔍 Resolution needs boost for more products
+                      </h4>
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        Current: <strong>{qualifiedCount} of {totalVariants} variants</strong>
+                      </p>
+                    </div>
+                    {showUpscaleButton ? (
+                      <Button
+                        onClick={() => upscaleMutation.mutate()}
+                        size="lg"
+                        className="w-full gap-2"
+                        data-testid="button-boost-quality"
+                        disabled={rateLimitSeconds !== null && rateLimitSeconds > 0}
+                      >
+                        <Zap className="h-5 w-5" />
+                        Boost Quality → Unlock All {totalVariants} Variants
+                      </Button>
+                    ) : !quota?.hasQuota ? (
+                      <div className="p-3 bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-300 rounded-md">
+                        <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                          You've used all your AI upscales. Upgrade to <strong>Pro</strong> (25/month) or <strong>Elite</strong> (unlimited) for more.
+                        </p>
+                      </div>
+                    ) : null}
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                      AI upscaling enhances your image to professional print quality in ~30 seconds.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* UPSCALING IN PROGRESS */}
+            {isUpscaling && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-500 rounded-lg">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                    <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100">
+                      Enhancing with AI... {progress}%
+                    </h4>
+                  </div>
+                  <Progress value={progress} className="h-2" data-testid="progress-upscale" />
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    This usually takes 30-60 seconds. Please don't close this page.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* DETAILS SECTION (always show) */}
+            <div className="pt-3 border-t space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">Resolution</span>
+                <span className="text-xs text-muted-foreground">{analysis.width} × {analysis.height}px</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">Product Variants</span>
+                <Badge 
+                  variant={isPerfect ? "default" : "outline"}
+                  className="h-6"
+                  data-testid="badge-variant-count"
+                >
+                  {qualifiedCount} of {totalVariants} qualified
+                </Badge>
+              </div>
+              {quota && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-primary" />
+                    AI Upscales
+                  </span>
+                  {quota.quotaType === 'elite_unlimited' ? (
+                    <Badge variant="default" className="h-6">Unlimited</Badge>
                   ) : (
-                    <AlertCircle className="h-5 w-5 text-red-500" data-testid="icon-quality-rejected" />
-                  )}
-                  <h4 className="text-sm font-semibold">Print Quality Analysis</h4>
-                  {analysis.orientation && (
-                    <Badge variant="outline" className="h-5 text-xs capitalize">
-                      {analysis.orientation}
+                    <Badge variant="outline" className="h-6">
+                      {quota.remaining} / {quota.total} left
                     </Badge>
                   )}
                 </div>
-                
-                <div className="text-xs">
-                  <span className="text-muted-foreground">Resolution:</span>
-                  <p className="font-medium">{analysis.width} × {analysis.height}px</p>
-                </div>
-
-                <p className="text-xs leading-relaxed" data-testid="text-customer-guidance">
-                  {analysis.customerGuidance || analysis.message}
-                </p>
-
-                {analysis.variantQualification && (
-                  <div className="pt-2 border-t space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">Product Variants</span>
-                      <Badge 
-                        variant={analysis.variantQualification.totalQualified === analysis.variantQualification.totalVariants ? "default" : "outline"}
-                        className="h-6"
-                        data-testid="badge-variant-count"
-                      >
-                        {analysis.variantQualification.totalQualified} of {analysis.variantQualification.totalVariants} qualified
-                      </Badge>
-                    </div>
-                    
-                    {analysis.variantQualification.locked.length > 0 && (
-                      <div className="p-2 bg-muted/50 rounded-md">
-                        <p className="text-xs text-muted-foreground mb-1">
-                          <strong>{analysis.variantQualification.locked.length} locked variants</strong> need higher resolution:
-                        </p>
-                        <div className="flex flex-wrap gap-1">
-                          {analysis.variantQualification.locked.slice(0, 3).map((variant) => (
-                            <Badge key={variant.variantKey} variant="outline" className="h-5 text-xs opacity-50">
-                              {variant.productName}
-                            </Badge>
-                          ))}
-                          {analysis.variantQualification.locked.length > 3 && (
-                            <Badge variant="outline" className="h-5 text-xs opacity-50">
-                              +{analysis.variantQualification.locked.length - 3} more
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Need {Math.max(...analysis.variantQualification.locked.map(v => v.requiredPixels.width))} × {Math.max(...analysis.variantQualification.locked.map(v => v.requiredPixels.height))} pixels minimum
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {quota && (
-                  <div className="flex items-center gap-2 text-xs">
-                    <Sparkles className="h-3 w-3 text-primary" />
-                    <span className="text-muted-foreground">AI Upscales:</span>
-                    {quota.quotaType === 'elite_unlimited' ? (
-                      <Badge variant="default" className="h-6">Unlimited</Badge>
-                    ) : (
-                      <Badge variant="outline" className="h-6">
-                        {quota.remaining} / {quota.total} remaining
-                      </Badge>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {analysis.variantQualification && analysis.variantQualification.totalQualified < 8 && !isUpscaling && (
-                  <Button
-                    onClick={() => setIsCropDialogOpen(true)}
-                    size="default"
-                    variant="outline"
-                    className="gap-2"
-                    data-testid="button-crop-image"
-                  >
-                    <Crop className="h-4 w-4" />
-                    Crop Image
-                  </Button>
-                )}
-
-                {showUpscaleButton && !isUpscaling && (
-                  <Button
-                    onClick={() => upscaleMutation.mutate()}
-                    size="default"
-                    className="gap-2"
-                    data-testid="button-boost-quality"
-                  >
-                    <Zap className="h-4 w-4" />
-                    Boost Quality
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
-
-            {isUpscaling && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Enhancing image with AI...</span>
-                  <span className="font-medium">{progress}%</span>
-                </div>
-                <Progress value={progress} className="h-2" data-testid="progress-upscale" />
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>This usually takes 30-60 seconds</span>
-                </div>
-              </div>
-            )}
-
-            {!quota?.hasQuota && analysis.needsUpscale && (
-              <div className="p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                  You've used all your AI upscales. Upgrade to <strong>Pro</strong> (25/month) or <strong>Elite</strong> (unlimited) for more.
-                </p>
-              </div>
-            )}
           </>
         ) : null}
       </CardContent>

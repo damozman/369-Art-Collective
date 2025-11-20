@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Upload,
   Users,
@@ -199,11 +200,22 @@ export function ArtistLayout({ children }: ArtistLayoutProps) {
           <SidebarFooter className="border-t">
             <SidebarMenu>
               <SidebarMenuItem>
+                <Button
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="w-full justify-start min-h-[44px] text-base gap-2"
+                  data-testid="button-logout-quick"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Log Out</span>
+                </Button>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <SidebarMenuButton
                       size="lg"
-                      className="w-full"
+                      className="w-full min-h-[44px]"
                       type="button"
                       data-testid="button-user-menu"
                     >
@@ -231,25 +243,17 @@ export function ArtistLayout({ children }: ArtistLayoutProps) {
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <a href="/" data-testid="menu-back-to-website">
+                      <a href="/" className="min-h-[44px] flex items-center" data-testid="menu-back-to-website">
                         <Home className="mr-2 h-4 w-4" />
                         Back to Website
                       </a>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <a href="/artist/settings" data-testid="menu-settings">
+                      <a href="/artist/settings" className="min-h-[44px] flex items-center" data-testid="menu-settings">
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
                       </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={handleLogout}
-                      data-testid="menu-logout"
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Log Out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

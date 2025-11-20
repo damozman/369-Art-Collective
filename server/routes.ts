@@ -918,6 +918,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate unique referral code for the new artist
       const referralCode = generateReferralCode(accountData.name);
 
+      // Parse optional portfolio links
+      const instagramUrl = req.body.instagramUrl as string | undefined;
+      const websiteUrl = req.body.websiteUrl as string | undefined;
+      
+      // Build socialLinks JSONB object if any links provided
+      let socialLinks = null;
+      if (instagramUrl || websiteUrl) {
+        socialLinks = {
+          instagram: instagramUrl || null,
+          website: websiteUrl || null,
+        };
+      }
+
       // 1. Create artist account
       const [artist] = await db
         .insert(storage.getArtistsTable())
@@ -927,6 +940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           referralCode,
           referredBy,
           referralSource,
+          socialLinks,
           tosAcceptedAt: new Date(),
           tosIpAddress: ipAddress,
           tosVersion: "v1.0-2025-11",

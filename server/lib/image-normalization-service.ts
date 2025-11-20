@@ -27,7 +27,8 @@ export interface NormalizationResult {
   buffer: Buffer;
   orientation: ImageOrientation;
   customerMessage?: string;
-  reason?: 'downscaled' | 'accepted' | 'rejected';
+  reason?: 'downscaled' | 'accepted' | 'undersized';
+  needsUpscale?: boolean;
 }
 
 export class ImageNormalizationService {
@@ -86,21 +87,21 @@ export class ImageNormalizationService {
    */
   static generateCustomerMessage(
     wasModified: boolean,
-    reason: 'downscaled' | 'accepted' | 'rejected',
+    reason: 'downscaled' | 'accepted' | 'undersized',
     orientation: ImageOrientation,
     originalWidth: number,
     originalHeight: number,
     normalizedWidth?: number,
     normalizedHeight?: number
   ): string {
-    if (reason === 'rejected') {
+    if (reason === 'undersized') {
       const minSize = orientation === ImageOrientation.PORTRAIT 
         ? `${MIN_SHORTEST_SIDE}×${Math.floor(MIN_SHORTEST_SIDE * 1.33)}`
         : orientation === ImageOrientation.LANDSCAPE
         ? `${Math.floor(MIN_SHORTEST_SIDE * 1.33)}×${MIN_SHORTEST_SIDE}`
         : `${MIN_SHORTEST_SIDE}×${MIN_SHORTEST_SIDE}`;
       
-      return `Image too small (${originalWidth}×${originalHeight}px). Please upload a higher-resolution image of at least ${minSize}px to ensure print quality.`;
+      return `Image resolution (${originalWidth}×${originalHeight}px) is below recommended print quality. Use the AI upscaler to enhance quality for more product options.`;
     }
 
     if (reason === 'downscaled') {
@@ -121,7 +122,7 @@ export class ImageNormalizationService {
   /**
    * Normalize an image buffer
    * - Downscales if too large
-   * - Rejects if too small
+   * - Accepts undersized images (marks for upscaling, never rejects)
    * - Returns normalized buffer with metadata
    */
   static async normalizeImage(buffer: Buffer): Promise<NormalizationResult> {
@@ -131,7 +132,7 @@ export class ImageNormalizationService {
     const originalHeight = metadata.height!;
     const orientation = this.detectOrientation(originalWidth, originalHeight);
 
-    // Check if too small (reject)
+    // Check if too small (accept but flag as needing upscale)
     if (this.isTooSmall(originalWidth, originalHeight)) {
       return {
         wasModified: false,
@@ -141,10 +142,11 @@ export class ImageNormalizationService {
         normalizedHeight: originalHeight,
         buffer,
         orientation,
-        reason: 'rejected',
+        reason: 'undersized',
+        needsUpscale: true,
         customerMessage: this.generateCustomerMessage(
           false,
-          'rejected',
+          'undersized',
           orientation,
           originalWidth,
           originalHeight

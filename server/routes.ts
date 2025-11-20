@@ -82,11 +82,12 @@ const upload = multer({
   },
 });
 
-// Separate multer config for portfolio uploads with stricter size limits (10MB per file)
+// Separate multer config for portfolio uploads - same 50MB limit as artwork uploads
+// Artists need high-res portfolios to demonstrate their work quality
 const portfolioUpload = multer({
   storage: multer.memoryStorage(),
   limits: { 
-    fileSize: 10 * 1024 * 1024, // 10MB per file (portfolio images should be smaller)
+    fileSize: 50 * 1024 * 1024, // 50MB per file (same as artwork uploads)
     files: 3 // Maximum 3 files
   },
   fileFilter: (_req, file, cb) => {

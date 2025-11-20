@@ -127,21 +127,21 @@ export class ReplicateUpscaleService {
     
     console.log(`[SCALE_CALC] ${width}×${height}px ${orientation}: required=${requiredScale.toFixed(2)}, max_safe=${maxSafeScale.toFixed(2)}, final=${finalScale}`);
     
-    // If finalScale is 1, the image is already at maximum safe resolution
-    // Real-ESRGAN doesn't support 1x, so return null to indicate upscaling not possible
+    // If finalScale is 1 or less, the image cannot be safely upscaled
+    // Real-ESRGAN doesn't support 1x, so return null
     if (finalScale <= 1) {
       console.log(`[SCALE_CALC] Image ${width}×${height} cannot be safely upscaled: finalScale=${finalScale}`);
       return null;
     }
     
-    // Return valid Real-ESRGAN scales: 2, 3 (square only), or 4
-    if (finalScale === 2) {
-      return 2;
-    } else if (finalScale === 3 && orientation === 'square') {
-      return 3;
-    } else {
-      return 4;
+    // Return the computed finalScale (already constrained by GPU limits and orientation)
+    // Valid Real-ESRGAN scales: 2, 3, or 4
+    if (finalScale >= 2 && finalScale <= 4) {
+      return finalScale as 2 | 3 | 4;
     }
+    
+    // Should never reach here due to checks above
+    return null;
   }
 
   /**

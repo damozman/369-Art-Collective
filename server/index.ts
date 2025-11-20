@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { serveStatic, log } from "./vite-utils";
 import { affiliateTrackingMiddleware } from "./middleware/affiliate-tracking";
@@ -18,6 +19,15 @@ declare module 'http' {
 // Trust proxy - REQUIRED for Replit deployments behind reverse proxy
 // This allows Express to recognize HTTPS connections and set secure cookies properly
 app.set('trust proxy', 1);
+
+// CORS middleware - CRITICAL for cookie transmission in Replit environment
+// Allow credentials (cookies) to be sent with cross-origin requests
+app.use(cors({
+  origin: true, // Allow requests from any origin (Replit uses dynamic proxy domains)
+  credentials: true, // REQUIRED for cookies to work with fetch credentials: 'include'
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // Session middleware with PostgreSQL store
 // Replit serves all apps over HTTPS, so we always use secure cookies

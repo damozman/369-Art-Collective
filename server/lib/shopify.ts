@@ -76,80 +76,50 @@ function convertToFullImageUrl(imageUrl: string): string {
 }
 
 /**
- * Publish a product to the Online Store sales channel using GraphQL
- * This uses the publishablePublish mutation which works with standard API scopes
- * 
- * NOTE: This requires the Shopify API token to have write_publications scope.
- * If unavailable, products will still be created as drafts and can be manually
- * published in Shopify admin by selecting "Online Store" under Publishing.
+ * Activate a product (change from draft to active)
+ * Active products are automatically published to the Online Store sales channel
+ * This is simpler than using GraphQL mutations and doesn't require special API scopes
  */
-async function publishToOnlineStore(productId: string): Promise<boolean> {
+async function activateProduct(productId: string): Promise<boolean> {
   try {
     const apiVersion = "2024-10";
-    const graphqlUrl = `https://${shopifyShopUrl}/admin/api/${apiVersion}/graphql.json`;
+    const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/products/${productId}.json`;
     
-    // Convert numeric product ID to GraphQL global ID format
-    const globalProductId = `gid://shopify/Product/${productId}`;
+    console.log(`[Shopify] Activating product ${productId} (changing from draft to active)`);
     
-    // Use publishablePublish mutation with minimal fields to avoid schema errors
-    const mutation = `
-      mutation publishProduct($id: ID!, $input: [PublicationInput!]!) {
-        publishablePublish(id: $id, input: $input) {
-          userErrors {
-            field
-            message
-          }
-        }
-      }
-    `;
-    
-    const variables = {
-      id: globalProductId,
-      input: [
-        {
-          publicationId: "gid://shopify/Publication/1" // Online Store is typically publication ID 1
-        }
-      ]
-    };
-    
-    console.log(`[Shopify] Attempting to publish product ${productId} to Online Store using GraphQL mutation`);
-    
-    const response = await fetch(graphqlUrl, {
-      method: "POST",
+    const response = await fetch(url, {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         "X-Shopify-Access-Token": shopifyAccessToken,
       },
-      body: JSON.stringify({ query: mutation, variables }),
+      body: JSON.stringify({
+        product: {
+          id: productId,
+          status: "active" // Change from draft to active
+        }
+      }),
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.warn('[Shopify] Failed to publish product via GraphQL:', response.status, errorText);
-      console.warn('[Shopify] Product created as draft - please manually assign to Online Store sales channel in Shopify admin');
+      console.warn('[Shopify] Failed to activate product:', response.status, errorText);
+      console.warn('[Shopify] Product created as draft - please manually set to Active in Shopify admin');
       return false;
     }
     
     const result = await response.json();
     
-    if (result.errors) {
-      console.warn('[Shopify] GraphQL errors during publish:', JSON.stringify(result.errors));
-      console.warn('[Shopify] This may indicate missing write_publications scope');
-      console.warn('[Shopify] Product created as draft - please manually assign to Online Store sales channel in Shopify admin');
+    if (result?.product?.status === "active") {
+      console.log(`[Shopify] ✅ Successfully activated product ${productId} - now published to Online Store`);
+      return true;
+    } else {
+      console.warn(`[Shopify] Unexpected status after activation: ${result?.product?.status}`);
       return false;
     }
-    
-    if (result.data?.publishablePublish?.userErrors?.length > 0) {
-      console.warn('[Shopify] User errors during publish:', JSON.stringify(result.data.publishablePublish.userErrors));
-      console.warn('[Shopify] Product created as draft - please manually assign to Online Store sales channel in Shopify admin');
-      return false;
-    }
-    
-    console.log(`[Shopify] ✅ Successfully published product ${productId} to Online Store sales channel`);
-    return true;
   } catch (error) {
-    console.warn('[Shopify] Error publishing to Online Store:', error);
-    console.warn('[Shopify] Product created as draft - please manually assign to Online Store sales channel in Shopify admin');
+    console.warn('[Shopify] Error activating product:', error);
+    console.warn('[Shopify] Product created as draft - please manually set to Active in Shopify admin');
     return false;
   }
 }
@@ -344,9 +314,9 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
         }),
       ]);
       
-      // Publish product to Online Store sales channel
-      // This makes the product visible on the storefront
-      await publishToOnlineStore(String(productId));
+      // Activate product to make it live on the Online Store
+      // Active products are automatically published to the Online Store sales channel
+      await activateProduct(String(productId));
     }
 
     return result;

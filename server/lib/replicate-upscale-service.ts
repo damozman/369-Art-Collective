@@ -11,8 +11,8 @@ const REAL_ESRGAN_MODEL = "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c
 // 12M pixels allows images up to ~3464x3464px (e.g., 4000x2252 = 9M pixels, 1868x4000 = 7.4M pixels)
 const MAX_SAFE_PIXELS = 12_000_000; // 12M pixels (~3464x3464 or similar)
 
-// Target DPI and dimensions for qualifying 8+ variants
-const TARGET_MIN_PIXELS_FOR_ALL_VARIANTS = 9_720_000; // ~2700x3600px minimum for 8+ variants
+// Target DPI and dimensions for qualifying all 12 variants (24×36" at 150 DPI)
+const TARGET_MIN_PIXELS_FOR_ALL_VARIANTS = 19_440_000; // ~3600x5400px minimum for all 12 variants
 
 // Error codes for structured error handling
 export enum UpscaleErrorCode {
@@ -83,7 +83,7 @@ export class ReplicateUpscaleService {
 
   /**
    * Calculate intelligent upscale factor based on current dimensions, orientation, and target
-   * Returns the minimum scale needed to qualify for 8+ variants while preventing GPU memory errors
+   * Returns the minimum scale needed to qualify for all 12 variants while preventing GPU memory errors
    * Returns null if the image is already at maximum safe resolution and cannot be upscaled
    */
   static calculateOptimalScale(width: number, height: number): 2 | 3 | 4 | null {
@@ -146,7 +146,7 @@ export class ReplicateUpscaleService {
 
   /**
    * Check if image already meets print quality standards
-   * Returns true if image qualifies for 8+ variants without upscaling
+   * Returns true if image qualifies for all 12 variants without upscaling
    */
   static isAlreadyHighQuality(width: number, height: number): boolean {
     const totalPixels = width * height;

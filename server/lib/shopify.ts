@@ -75,6 +75,90 @@ function convertToFullImageUrl(imageUrl: string): string {
   return fullUrl;
 }
 
+/**
+ * Get the Online Store sales channel publication ID
+ * This is needed to publish products to the storefront
+ */
+async function getOnlineStoreSalesChannelId(): Promise<string | null> {
+  try {
+    const apiVersion = "2024-10";
+    const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/publications.json`;
+    
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": shopifyAccessToken,
+      },
+    });
+    
+    if (!response.ok) {
+      console.error('[Shopify] Failed to fetch publications');
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    // Find the Online Store publication
+    const onlineStore = data.publications?.find(
+      (pub: any) => pub.name === "Online Store"
+    );
+    
+    return onlineStore?.id || null;
+  } catch (error) {
+    console.error('[Shopify] Error fetching sales channel:', error);
+    return null;
+  }
+}
+
+/**
+ * Publish a product to the Online Store sales channel
+ * This makes the product visible on the storefront
+ */
+async function publishToOnlineStore(productId: string): Promise<boolean> {
+  try {
+    const publicationId = await getOnlineStoreSalesChannelId();
+    
+    if (!publicationId) {
+      console.error('[Shopify] Could not find Online Store sales channel');
+      return false;
+    }
+    
+    const apiVersion = "2024-10";
+    const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/publications/${publicationId}/resource_publications.json`;
+    
+    console.log(`[Shopify] Publishing product ${productId} to Online Store (publication ${publicationId})`);
+    
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": shopifyAccessToken,
+      },
+      body: JSON.stringify({
+        resource_publication: {
+          publication_id: publicationId,
+          resource_id: productId,
+          resource_type: "Product",
+          published: true,
+        },
+      }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('[Shopify] Failed to publish product to Online Store:', error);
+      return false;
+    }
+    
+    console.log(`[Shopify] Successfully published product ${productId} to Online Store`);
+    return true;
+  } catch (error) {
+    console.error('[Shopify] Error publishing to Online Store:', error);
+    return false;
+  }
+}
+
 export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
   if (!isShopifyConfigured()) {
     throw new Error("Shopify is not configured");
@@ -264,6 +348,10 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
           }),
         }),
       ]);
+      
+      // Publish product to Online Store sales channel
+      // This makes the product visible on the storefront
+      await publishToOnlineStore(String(productId));
     }
 
     return result;

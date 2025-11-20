@@ -655,186 +655,38 @@ export default function Register() {
                     </h4>
                     <p className="text-xs text-blue-800 dark:text-blue-200">
                       These images are <strong>only for account approval</strong> and won't appear on your public profile. 
-                      After approval, you'll upload artwork for sale with full quality requirements. 
+                      After approval, you'll upload artwork for sale with full quality requirements and detailed guidance. 
                       Portfolio samples just help us verify you're a real artist!
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Orientation Note (for products later, not portfolio) */}
-              <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 border-2 border-purple-300 dark:border-purple-700 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <Lightbulb className="w-6 h-6 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-1">
-                      💡 Quick Tip: Any Orientation Works for Portfolio!
-                    </h4>
-                    <p className="text-xs text-purple-800 dark:text-purple-200">
-                      Square (1024×1024), landscape, or portrait - <strong>all orientations work perfectly</strong> for portfolio registration! 
-                      <em className="block mt-1 text-purple-700 dark:text-purple-300">
-                        Note: When you upload artwork for sale later, portrait images unlock more product sizes.
-                      </em>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* What Works Examples */}
+              {/* Simple Requirements */}
               <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
-                <h4 className="text-sm font-semibold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
-                  <Check className="w-4 h-4" /> What Works Best
+                <h4 className="text-sm font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center gap-2">
+                  <Check className="w-4 h-4" /> Simple Requirements
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-green-800 dark:text-green-200">
-                  <div>
-                    <div className="font-medium mb-1 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> AI-Generated Art
-                    </div>
-                    <ul className="space-y-0.5 ml-4">
-                      <li>• DALL-E, Midjourney, Stable Diffusion</li>
-                      <li>• Leonardo.ai, Ideogram</li>
-                      <li>• Most AI platforms export high-res</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1 flex items-center gap-1">
-                      <Smartphone className="w-3 h-3" /> Modern Photos
-                    </div>
-                    <ul className="space-y-0.5 ml-4">
-                      <li>• Smartphone photos (2015 or newer)</li>
-                      <li>• DSLR/mirrorless camera photos</li>
-                      <li>• Original digital artwork files</li>
-                    </ul>
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-green-300 dark:border-green-700">
-                  <div className="font-medium mb-1 text-red-700 dark:text-red-300 flex items-center gap-1">
-                    <X className="w-3 h-3" /> Won't Work
-                  </div>
-                  <p className="text-xs text-red-700 dark:text-red-300">
-                    Social media screenshots • Google Image downloads • Old phone photos (pre-2015) • Heavily compressed files
-                  </p>
-                </div>
+                <ul className="text-xs text-green-800 dark:text-green-200 space-y-1">
+                  <li>• <strong>Minimum size:</strong> 1024×1024 pixels (any orientation)</li>
+                  <li>• <strong>File types:</strong> PNG or JPG</li>
+                  <li>• <strong>Quantity:</strong> Upload 2-3 examples of your work</li>
+                </ul>
+                <p className="text-xs text-green-700 dark:text-green-300 mt-3 italic">
+                  ✅ Most AI platforms (DALL-E, Midjourney, Stable Diffusion) output 1024×1024 by default - perfect for portfolio!
+                </p>
               </div>
 
-              {/* AI Art Creation Tips (Collapsible) */}
-              <Accordion type="single" collapsible className="border rounded-lg">
-                <AccordionItem value="ai-tips" className="border-0">
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover-elevate">
-                    <div className="flex items-center gap-2 text-sm font-semibold">
-                      <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      <span>Creating AI Art for This Platform? Click for Tips!</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4">
-                    <div className="space-y-4 text-xs">
-                      <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
-                        <p className="font-medium text-purple-900 dark:text-purple-100 mb-2">
-                          ✅ Great News: <strong>Default AI outputs work perfectly</strong> for portfolio registration!
-                        </p>
-                        <p className="text-xs text-purple-800 dark:text-purple-200 mb-3">
-                          Most AI platforms output 1024×1024 or higher by default - which easily meets our 1024×1024 minimum for portfolio samples. 
-                          <em className="block mt-1 text-purple-700 dark:text-purple-300">💡 Note: Portrait orientation unlocks more product sizes when you upload artwork for sale later!</em>
-                        </p>
-                        <div className="space-y-3 text-purple-800 dark:text-purple-200">
-                          <div>
-                            <p className="font-semibold mb-1">DALL-E 3 (ChatGPT, Bing):</p>
-                            <ul className="ml-4 space-y-0.5">
-                              <li>• Default: 1024×1024 ✅ Works for portfolio!</li>
-                              <li>• Portrait format: 1024×1792 ✅ Even better!</li>
-                              <li>• Landscape format: 1792×1024 ✅ Also works!</li>
-                            </ul>
-                          </div>
-                          <div>
-                            <p className="font-semibold mb-1">Midjourney:</p>
-                            <ul className="ml-4 space-y-0.5">
-                              <li>• Default: 1024×1024 ✅ Works for portfolio!</li>
-                              <li>• Add <code className="bg-purple-200 dark:bg-purple-900 px-1 rounded">--ar 3:4</code> for portrait (great for products later!)</li>
-                              <li>• Any aspect ratio works for portfolio registration</li>
-                            </ul>
-                          </div>
-                          <div>
-                            <p className="font-semibold mb-1">Stable Diffusion / Leonardo.ai:</p>
-                            <ul className="ml-4 space-y-0.5">
-                              <li>• Default presets usually meet 1024×1024 ✅</li>
-                              <li>• Any orientation works for portfolio!</li>
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Example Prompts Section */}
-                      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-2 border-green-400 dark:border-green-600 rounded-lg">
-                        <h4 className="font-bold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
-                          📋 Ready-to-Use Example Prompts (Work Instantly!)
-                        </h4>
-                        <p className="text-xs text-green-800 dark:text-green-200 mb-3">
-                          These simple prompts create portfolio-ready images right away - <strong>no special settings needed!</strong>
-                        </p>
-                        
-                        <div className="space-y-3">
-                          {/* DALL-E 3 */}
-                          <div className="bg-white/50 dark:bg-black/20 p-3 rounded border border-green-300 dark:border-green-700">
-                            <p className="font-semibold text-green-900 dark:text-green-100 text-xs mb-1">
-                              DALL-E 3 (ChatGPT):
-                            </p>
-                            <code className="block bg-green-100 dark:bg-green-900/40 p-2 rounded text-xs text-green-900 dark:text-green-100 font-mono break-words">
-                              "A mystical forest landscape with glowing mushrooms, cinematic lighting, detailed"
-                            </code>
-                            <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                              ✅ Default output (1024×1024) works perfectly for portfolio!
-                            </p>
-                          </div>
-
-                          {/* Midjourney */}
-                          <div className="bg-white/50 dark:bg-black/20 p-3 rounded border border-green-300 dark:border-green-700">
-                            <p className="font-semibold text-green-900 dark:text-green-100 text-xs mb-1">
-                              Midjourney:
-                            </p>
-                            <code className="block bg-green-100 dark:bg-green-900/40 p-2 rounded text-xs text-green-900 dark:text-green-100 font-mono break-words">
-                              ethereal mountain sunset, vibrant colors, detailed
-                            </code>
-                            <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                              ✅ Default output (1024×1024) works perfectly for portfolio!
-                            </p>
-                          </div>
-
-                          {/* Stable Diffusion / Leonardo */}
-                          <div className="bg-white/50 dark:bg-black/20 p-3 rounded border border-green-300 dark:border-green-700">
-                            <p className="font-semibold text-green-900 dark:text-green-100 text-xs mb-1">
-                              Stable Diffusion / Leonardo.ai:
-                            </p>
-                            <code className="block bg-green-100 dark:bg-green-900/40 p-2 rounded text-xs text-green-900 dark:text-green-100 font-mono break-words">
-                              "abstract cosmic nebula, vibrant purples and blues, highly detailed, 8k quality"
-                            </code>
-                            <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                              ✅ Most default presets meet 1024×1024 minimum!
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 p-2 bg-green-600 dark:bg-green-700 rounded text-white text-xs font-medium text-center">
-                          🎉 Any AI platform's default settings work for portfolio registration!
-                        </div>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
-              {/* Technical Requirements */}
-              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Minimum Requirements</h4>
-                <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                  <li>• <strong>Minimum resolution:</strong> 1024×1024 pixels (any orientation)</li>
-                  <li>• <strong>Works with:</strong> DALL-E, Midjourney, and most AI platforms ✅</li>
-                  <li>• Supported formats: <strong>PNG, JPG</strong> only</li>
-                  <li>• Maximum file size: <strong>10MB</strong> per image</li>
-                  <li>• Required: <strong>2-3 portfolio images</strong></li>
-                  <li className="mt-2 pt-2 border-t border-blue-300 dark:border-blue-700">
-                    ✓ Images validated automatically as you upload
-                  </li>
-                </ul>
+              {/* What Happens Next */}
+              <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+                <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4" /> What Happens Next
+                </h4>
+                <div className="text-xs text-purple-800 dark:text-purple-200 space-y-1.5">
+                  <p>1. <strong>We review your portfolio</strong> (usually within 24 hours)</p>
+                  <p>2. <strong>You get approved</strong> and access the Artist Portal</p>
+                  <p>3. <strong>Upload artwork for sale</strong> with AI upscaling tools, quality tips, and detailed guidance</p>
+                </div>
               </div>
 
               {/* File upload area */}

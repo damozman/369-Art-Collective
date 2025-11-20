@@ -82,29 +82,61 @@ function convertToFullImageUrl(imageUrl: string): string {
 async function getOnlineStoreSalesChannelId(): Promise<string | null> {
   try {
     const apiVersion = "2024-10";
-    const url = `https://${shopifyShopUrl}/admin/api/${apiVersion}/publications.json`;
     
-    const response = await fetch(url, {
-      method: "GET",
+    // Try GraphQL API for more reliable sales channel fetching
+    const graphqlUrl = `https://${shopifyShopUrl}/admin/api/${apiVersion}/graphql.json`;
+    
+    const query = `
+      query {
+        publications(first: 10) {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    `;
+    
+    const response = await fetch(graphqlUrl, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Shopify-Access-Token": shopifyAccessToken,
       },
+      body: JSON.stringify({ query }),
     });
     
     if (!response.ok) {
-      console.error('[Shopify] Failed to fetch publications');
+      const errorText = await response.text();
+      console.error('[Shopify] Failed to fetch publications via GraphQL:', response.status, errorText);
       return null;
     }
     
-    const data = await response.json();
+    const result = await response.json();
+    
+    if (result.errors) {
+      console.error('[Shopify] GraphQL errors:', JSON.stringify(result.errors));
+      return null;
+    }
     
     // Find the Online Store publication
-    const onlineStore = data.publications?.find(
-      (pub: any) => pub.name === "Online Store"
+    const publications = result.data?.publications?.edges || [];
+    const onlineStore = publications.find(
+      (edge: any) => edge.node.name === "Online Store"
     );
     
-    return onlineStore?.id || null;
+    if (onlineStore) {
+      // Extract numeric ID from GraphQL global ID (gid://shopify/Publication/123456)
+      const globalId = onlineStore.node.id;
+      const numericId = globalId.split('/').pop();
+      console.log(`[Shopify] Found Online Store publication ID: ${numericId}`);
+      return numericId;
+    }
+    
+    console.error('[Shopify] Could not find Online Store in publications:', publications.map((p: any) => p.node.name).join(', '));
+    return null;
   } catch (error) {
     console.error('[Shopify] Error fetching sales channel:', error);
     return null;

@@ -1,15 +1,15 @@
 /**
  * Image Normalization Service
  * Handles automatic image resizing to ensure images fit within safe processing bounds
- * - Auto-downscales oversized images (>12M pixels)
- * - Validates minimum size requirements (1800px shortest side)
+ * - Auto-downscales oversized images (>32M pixels)
+ * - Validates minimum size requirements (1200px shortest side)
  * - Provides helpful customer-facing messages
  */
 
 import sharp from 'sharp';
 
 // Processing limits
-const MAX_SAFE_PIXELS = 12_000_000; // 12M pixels (~3464×3464)
+const MAX_SAFE_PIXELS = 32_000_000; // 32M pixels (~5657×5657, matches GPU output limit for upscaled images)
 const MIN_SHORTEST_SIDE = 1200; // Minimum 1200px on shortest dimension (150 DPI for 8" prints)
 
 export enum ImageOrientation {

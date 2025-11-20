@@ -47,6 +47,19 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+// Debug: Log incoming cookies to diagnose session cookie transmission
+app.use((req, _res, next) => {
+  if (req.path.startsWith('/api/')) {
+    console.log('[DEBUG][COOKIES] Request to', req.path, {
+      cookieHeader: req.headers.cookie,
+      parsedCookies: req.cookies,
+      sessionID: req.sessionID,
+      hasSessionUser: !!req.session?.user
+    });
+  }
+  next();
+});
+
 // Affiliate tracking middleware - captures ?ref= parameter and sets cookies
 app.use(affiliateTrackingMiddleware);
 

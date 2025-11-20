@@ -177,12 +177,12 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
           setAnalysis(analysisResult);
           
           // Report validation status only for current file
-          // Images that need upscaling are still "valid" - they can be improved
-          // Only truly reject images that can't be fixed
-          if (analysisResult.meetsMinimum || analysisResult.needsUpscale) {
-            onValidationChange?.("valid");
+          // Images must qualify for at least 1 variant to proceed (meetsMinimum = true)
+          // If 0 variants qualify, user must upscale first before proceeding to next step
+          if (analysisResult.meetsMinimum) {
+            onValidationChange?.("valid"); // At least 1 variant qualified - can proceed
           } else {
-            onValidationChange?.("invalid");
+            onValidationChange?.("invalid"); // 0 variants - must upscale or crop first
           }
         } catch (error) {
           console.error('Failed to analyze image:', error);

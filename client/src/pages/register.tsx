@@ -40,6 +40,8 @@ export default function Register() {
   const [portfolioDimensions, setPortfolioDimensions] = useState<{ width: number; height: number; valid: boolean }[]>([]);
   const [selectedTier, setSelectedTier] = useState<"free" | "pro" | "elite">("free");
   const [accountData, setAccountData] = useState<RegistrationForm | null>(null);
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Capture UTM parameters from URL query string
@@ -190,6 +192,10 @@ export default function Register() {
       portfolioFiles.forEach(file => {
         formData.append("portfolioFiles", file);
       });
+      
+      // Add optional portfolio links
+      if (instagramUrl.trim()) formData.append("instagramUrl", instagramUrl.trim());
+      if (websiteUrl.trim()) formData.append("websiteUrl", websiteUrl.trim());
       
       // Add tier selection
       formData.append("tier", selectedTier);
@@ -686,6 +692,38 @@ export default function Register() {
                   <p>1. <strong>We review your portfolio</strong> (usually within 24 hours)</p>
                   <p>2. <strong>You get approved</strong> and access the Artist Portal</p>
                   <p>3. <strong>Upload artwork for sale</strong> with AI upscaling tools, quality tips, and detailed guidance</p>
+                </div>
+              </div>
+
+              {/* Optional Portfolio Links */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold">Portfolio Links (Optional)</h3>
+                  <Badge variant="secondary" className="text-xs">Helps us review faster</Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Instagram Profile</label>
+                    <Input
+                      type="url"
+                      placeholder="https://instagram.com/yourprofile"
+                      value={instagramUrl}
+                      onChange={(e) => setInstagramUrl(e.target.value)}
+                      data-testid="input-instagram-url"
+                    />
+                    <p className="text-xs text-muted-foreground">Your Instagram art portfolio</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Website or Portfolio</label>
+                    <Input
+                      type="url"
+                      placeholder="https://yourwebsite.com"
+                      value={websiteUrl}
+                      onChange={(e) => setWebsiteUrl(e.target.value)}
+                      data-testid="input-website-url"
+                    />
+                    <p className="text-xs text-muted-foreground">Your personal website or online gallery</p>
+                  </div>
                 </div>
               </div>
 

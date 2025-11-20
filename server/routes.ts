@@ -74,10 +74,51 @@ const upload = multer({
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Only PNG and JPG files are allowed"));
+      // Provide specific error message based on file type
+      const fileExt = file.originalname.split('.').pop()?.toUpperCase() || 'unknown';
+      cb(new Error(`UNSUPPORTED_FORMAT:${fileExt}`));
     }
   },
 });
+
+// Multer error handler middleware - converts technical errors into user-friendly messages
+const handleMulterError = (err: any, req: any, res: any, next: any) => {
+  if (err) {
+    // File type validation error
+    if (err.message && err.message.startsWith('UNSUPPORTED_FORMAT:')) {
+      const fileType = err.message.split(':')[1];
+      return res.status(400).json({ 
+        error: `Only PNG and JPG images are supported. Your ${fileType} file cannot be uploaded. Please convert your image to PNG or JPG format and try again.`,
+        errorType: 'UNSUPPORTED_FORMAT',
+        fileType
+      });
+    }
+    
+    // File size limit error
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ 
+        error: 'Image file is too large (maximum 50MB allowed). Please compress your image or reduce its resolution and try again.',
+        errorType: 'FILE_TOO_LARGE',
+        maxSize: '50MB'
+      });
+    }
+    
+    // Other multer errors
+    if (err.code && err.code.startsWith('LIMIT_')) {
+      return res.status(400).json({ 
+        error: 'File upload error: ' + err.message,
+        errorType: 'UPLOAD_ERROR'
+      });
+    }
+    
+    // Generic multer error
+    return res.status(400).json({ 
+      error: err.message || 'Failed to upload image',
+      errorType: 'UPLOAD_ERROR'
+    });
+  }
+  next();
+};
 
 // Rate limiters for security-critical endpoints
 const passwordResetLimiter = rateLimit({
@@ -2609,7 +2650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload image for upscale widget with automatic normalization
-  app.post("/api/upload/design", requireArtist, upload.single("image"), async (req, res) => {
+  app.post("/api/upload/design", requireArtist, upload.single("image"), handleMulterError, async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -2651,7 +2692,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Upload design error:", error);
-      res.status(500).json({ error: error.message || "Upload failed" });
+      
+      // Provide specific error messages based on error type
+      if (error.message && error.message.includes('too small')) {
+        return res.status(400).json({ 
+          error: 'Image resolution is too small for print quality. Minimum requirement: 1200px on shortest side. Please use a higher resolution image or use our AI upscaler.',
+          errorType: 'IMAGE_TOO_SMALL'
+        });
+      }
+      
+      if (error.message && error.message.includes('dimensions')) {
+        return res.status(400).json({ 
+          error: error.message,
+          errorType: 'IMAGE_VALIDATION_ERROR'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: error.message || 'Failed to process image upload. Please try again.',
+        errorType: 'UPLOAD_ERROR'
+      });
     }
   });
 

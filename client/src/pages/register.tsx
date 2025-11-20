@@ -9,9 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
-import { Palette, Loader2, Upload, X, Check, Crown, Sparkles, Zap } from "lucide-react";
+import { Palette, Loader2, Upload, X, Check, Crown, Sparkles, Zap, ChevronDown, Lightbulb, Camera, Smartphone } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { z } from "zod";
 import { loadStripe } from "@stripe/stripe-js";
@@ -95,6 +96,8 @@ export default function Register() {
         const shortSide = Math.min(img.width, img.height);
         const longSide = Math.max(img.width, img.height);
         const isValid = shortSide >= 1080 && longSide >= 1920;
+        const totalPixels = img.width * img.height;
+        const requiredPixels = 1920 * 1080; // 2.07 megapixels
         
         setPortfolioDimensions(prev => [...prev, {
           width: img.width,
@@ -103,9 +106,25 @@ export default function Register() {
         }]);
         
         if (!isValid) {
+          // Context-aware error messages
+          let title = "Image resolution too low";
+          let description = "";
+          
+          if (totalPixels >= requiredPixels * 0.8) {
+            // Close to minimum (80%+)
+            description = `Almost there! Your image is ${img.width}×${img.height}px. Try using photos from a newer smartphone camera or AI-generated images. Need ${shortSide >= 1080 ? '1920×1080' : '1080×1920'} minimum.`;
+          } else if (totalPixels >= requiredPixels * 0.5) {
+            // Moderately low (50-80%)
+            description = `Your image is ${img.width}×${img.height}px. Use modern smartphone photos (2015+), AI-generated art (DALL-E, Midjourney), or high-res downloads from stock sites. Need ${shortSide >= 1080 ? '1920×1080' : '1080×1920'} minimum.`;
+          } else {
+            // Very low (<50%)
+            title = "Image quality too low for printing";
+            description = `This image is only ${img.width}×${img.height}px - too small for quality prints. Use photos from your smartphone camera (12MP+), AI art platforms, or download high-resolution images from Unsplash/Pexels.`;
+          }
+          
           toast({
-            title: "Image resolution too low",
-            description: `Portfolio images must be at least 1920×1080 pixels. Your image is ${img.width}×${img.height} pixels.`,
+            title,
+            description,
             variant: "destructive",
           });
         }
@@ -626,12 +645,119 @@ export default function Register() {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {/* Image quality requirements */}
+              {/* Portrait vs Landscape Callout */}
+              <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 border-2 border-purple-300 dark:border-purple-700 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Lightbulb className="w-6 h-6 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-1">
+                      💡 Pro Tip: Portrait Orientation Unlocks All Products!
+                    </h4>
+                    <p className="text-xs text-purple-800 dark:text-purple-200">
+                      <strong>Portrait images (taller than wide)</strong> qualify for ALL 12 product sizes. 
+                      <strong> Landscape images</strong> only work with ~4 sizes. 
+                      For maximum sales potential, use portrait orientation whenever possible!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* What Works Examples */}
+              <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+                <h4 className="text-sm font-semibold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
+                  <Check className="w-4 h-4" /> What Works Best
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-green-800 dark:text-green-200">
+                  <div>
+                    <div className="font-medium mb-1 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" /> AI-Generated Art
+                    </div>
+                    <ul className="space-y-0.5 ml-4">
+                      <li>• DALL-E, Midjourney, Stable Diffusion</li>
+                      <li>• Leonardo.ai, Ideogram</li>
+                      <li>• Most AI platforms export high-res</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <div className="font-medium mb-1 flex items-center gap-1">
+                      <Smartphone className="w-3 h-3" /> Modern Photos
+                    </div>
+                    <ul className="space-y-0.5 ml-4">
+                      <li>• Smartphone photos (2015 or newer)</li>
+                      <li>• DSLR/mirrorless camera photos</li>
+                      <li>• Original digital artwork files</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-green-300 dark:border-green-700">
+                  <div className="font-medium mb-1 text-red-700 dark:text-red-300 flex items-center gap-1">
+                    <X className="w-3 h-3" /> Won't Work
+                  </div>
+                  <p className="text-xs text-red-700 dark:text-red-300">
+                    Social media screenshots • Google Image downloads • Old phone photos (pre-2015) • Heavily compressed files
+                  </p>
+                </div>
+              </div>
+
+              {/* AI Art Creation Tips (Collapsible) */}
+              <Accordion type="single" collapsible className="border rounded-lg">
+                <AccordionItem value="ai-tips" className="border-0">
+                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover-elevate">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <span>Creating AI Art for This Platform? Click for Tips!</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="space-y-4 text-xs">
+                      <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
+                        <p className="font-medium text-purple-900 dark:text-purple-100 mb-2">
+                          🎯 Quick Rule: <strong>Portrait orientation</strong> (taller than wide) unlocks MORE product sizes!
+                        </p>
+                        <div className="space-y-3 text-purple-800 dark:text-purple-200">
+                          <div>
+                            <p className="font-semibold mb-1">DALL-E 3 (ChatGPT, Bing):</p>
+                            <ul className="ml-4 space-y-0.5">
+                              <li>• Default: 1024×1024 (works, but limited sizes)</li>
+                              <li>• Ask: "Create in <strong>portrait format</strong>" → 1024×1792 ✅</li>
+                              <li>• Ask: "Create in <strong>landscape format</strong>" → 1792×1024 ⚠️ (fewer sizes)</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <p className="font-semibold mb-1">Midjourney:</p>
+                            <ul className="ml-4 space-y-0.5">
+                              <li>• Add <code className="bg-purple-200 dark:bg-purple-900 px-1 rounded">--ar 3:4</code> for portrait ✅</li>
+                              <li>• Add <code className="bg-purple-200 dark:bg-purple-900 px-1 rounded">--ar 16:9</code> for landscape ⚠️</li>
+                              <li>• Example: <code className="bg-purple-200 dark:bg-purple-900 px-1 rounded">"sunset painting --ar 3:4"</code></li>
+                            </ul>
+                          </div>
+                          <div>
+                            <p className="font-semibold mb-1">Stable Diffusion:</p>
+                            <ul className="ml-4 space-y-0.5">
+                              <li>• Portrait: Width 1080, Height 1920 ✅</li>
+                              <li>• Landscape: Width 1920, Height 1080 ⚠️</li>
+                            </ul>
+                          </div>
+                          <div>
+                            <p className="font-semibold mb-1">Leonardo.ai / Ideogram:</p>
+                            <ul className="ml-4 space-y-0.5">
+                              <li>• Choose <strong>"Portrait"</strong> preset → usually 1080×1920 ✅</li>
+                              <li>• Choose "Landscape" preset → usually 1920×1080 ⚠️</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Technical Requirements */}
               <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Portfolio Quality Standards</h4>
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Minimum Requirements</h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                  <li>• <strong>Minimum resolution: 1920×1080 pixels</strong> (1080p HD quality)</li>
-                  <li>• Portrait: 1080×1920 or larger | Landscape: 1920×1080 or larger</li>
+                  <li>• <strong>Portrait images (taller):</strong> 1080×1920 pixels minimum</li>
+                  <li>• <strong>Landscape images (wider):</strong> 1920×1080 pixels minimum</li>
                   <li>• Supported formats: <strong>PNG, JPG</strong> only</li>
                   <li>• Maximum file size: <strong>10MB</strong> per image</li>
                   <li>• Required: <strong>2-3 portfolio images</strong></li>

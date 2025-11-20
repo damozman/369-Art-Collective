@@ -462,6 +462,10 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
             onValidationChange?.("invalid");
           }
           
+          // Notify parent component AFTER analysis is complete
+          onUpscaledFile(upscaledFile, upscaledUrl);
+          onUpscaledImageUrl?.(upscaledUrl);
+          
           // Show success with variant unlock info
           const unlockedCount = analyzeData.current.variantQualification?.totalQualified || 0;
           const totalCount = analyzeData.current.variantQualification?.totalVariants || 12;
@@ -470,33 +474,49 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
             title: "Image upscaled successfully!",
             description: `Now qualifies for ${unlockedCount} of ${totalCount} product variants.`,
           });
+          
+          // Reset progress after successful completion
+          setTimeout(() => {
+            setProgress(0);
+            setJobId(null);
+          }, 2000);
         } catch (error) {
           console.error('Failed to re-analyze upscaled image:', error);
           // Still proceed even if re-analysis fails
+          onUpscaledFile(upscaledFile, upscaledUrl);
+          onUpscaledImageUrl?.(upscaledUrl);
+          
           toast({
             title: "Image upscaled!",
             description: "Your image has been enhanced for professional print quality.",
           });
+          
+          setTimeout(() => {
+            setProgress(0);
+            setJobId(null);
+          }, 2000);
         }
       };
       
       img.onerror = () => {
         console.error('Failed to load upscaled image for dimension analysis');
+        
+        // Still notify parent even on error
+        onUpscaledFile(upscaledFile, upscaledUrl);
+        onUpscaledImageUrl?.(upscaledUrl);
+        
         toast({
           title: "Image upscaled!",
           description: "Your image has been enhanced for professional print quality.",
         });
+        
+        setTimeout(() => {
+          setProgress(0);
+          setJobId(null);
+        }, 2000);
       };
       
       img.src = upscaledUrl;
-      
-      onUpscaledFile(upscaledFile, upscaledUrl);
-      onUpscaledImageUrl?.(upscaledUrl);
-
-      setTimeout(() => {
-        setProgress(0);
-        setJobId(null);
-      }, 2000);
     } catch (error: any) {
       console.error('Failed to process upscaled image:', error);
       

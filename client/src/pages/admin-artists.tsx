@@ -418,6 +418,7 @@ export default function AdminArtists() {
                       </TableHead>
                       <TableHead>Artist</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Portfolio Links</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -442,6 +443,39 @@ export default function AdminArtists() {
                           </div>
                         </TableCell>
                         <TableCell data-testid={`text-email-${artist.id}`}>{artist.email}</TableCell>
+                        <TableCell>
+                          {(() => {
+                            const links = artist.socialLinks as { instagram?: string; website?: string } | null;
+                            return links && (links.instagram || links.website) ? (
+                              <div className="flex gap-2 flex-wrap">
+                                {links.instagram && (
+                                  <a
+                                    href={links.instagram}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                                    data-testid={`link-instagram-${artist.id}`}
+                                  >
+                                    Instagram
+                                  </a>
+                                )}
+                                {links.website && (
+                                  <a
+                                    href={links.website}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                                    data-testid={`link-website-${artist.id}`}
+                                  >
+                                    Website
+                                  </a>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            );
+                          })()}
+                        </TableCell>
                         <TableCell>
                           {artist.approved ? (
                             <Badge variant="default" className="bg-green-600 hover:bg-green-700" data-testid={`badge-approved-${artist.id}`}>

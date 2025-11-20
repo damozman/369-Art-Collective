@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
+import sharp from "sharp";
 import { storage } from "./storage";
 import { ObjectStorageService } from "./objectStorage";
 import {
@@ -75,6 +76,24 @@ const upload = multer({
       cb(null, true);
     } else {
       // Provide specific error message based on file type
+      const fileExt = file.originalname.split('.').pop()?.toUpperCase() || 'unknown';
+      cb(new Error(`UNSUPPORTED_FORMAT:${fileExt}`));
+    }
+  },
+});
+
+// Separate multer config for portfolio uploads with stricter size limits (10MB per file)
+const portfolioUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { 
+    fileSize: 10 * 1024 * 1024, // 10MB per file (portfolio images should be smaller)
+    files: 3 // Maximum 3 files
+  },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
       const fileExt = file.originalname.split('.').pop()?.toUpperCase() || 'unknown';
       cb(new Error(`UNSUPPORTED_FORMAT:${fileExt}`));
     }
@@ -774,8 +793,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Middleware to extend timeout for file upload routes (5 minutes instead of default 2 minutes)
+  const extendTimeout = (req: any, res: any, next: any) => {
+    req.setTimeout(5 * 60 * 1000); // 5 minutes
+    res.setTimeout(5 * 60 * 1000); // 5 minutes  
+    next();
+  };
+
+  // Portfolio-specific error handler with correct file size limits
+  const handlePortfolioUploadError = (err: any, req: any, res: any, next: any) => {
+    if (err) {
+      if (err.message && err.message.startsWith('UNSUPPORTED_FORMAT:')) {
+        const fileType = err.message.split(':')[1];
+        return res.status(400).json({ 
+          error: `Only PNG and JPG images are supported. Your ${fileType} file cannot be uploaded.`,
+          errorType: 'UNSUPPORTED_FORMAT',
+          fileType
+        });
+      }
+      
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ 
+          error: 'Portfolio image is too large (maximum 10MB per image). Please compress your image and try again.',
+          errorType: 'FILE_TOO_LARGE',
+          maxSize: '10MB'
+        });
+      }
+      
+      if (err.code && err.code.startsWith('LIMIT_')) {
+        return res.status(400).json({ 
+          error: 'File upload error: ' + err.message,
+          errorType: 'UPLOAD_ERROR'
+        });
+      }
+    }
+    next(err);
+  };
+
   // Atomic registration endpoint - creates account + uploads portfolio + sets tier in one transaction
-  app.post("/api/artists/register-complete", upload.array("portfolioFiles", 3), async (req, res) => {
+  app.post("/api/artists/register-complete", extendTimeout, portfolioUpload.array("portfolioFiles", 3), handlePortfolioUploadError, async (req, res) => {
     try {
       // Parse form data
       const acceptTerms = req.body.acceptTerms === "true";
@@ -881,13 +937,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const portfolioSubmissions = [];
       
       for (const file of files) {
+        // Compress images before upload to reduce upload time and storage costs
+        // Portfolio images don't need ultra-high quality, 1920px width is plenty
+        let processedBuffer = file.buffer;
+        let contentType = file.mimetype; // Preserve original MIME type by default
+        let shouldCompress = false;
+        
+        const metadata = await sharp(file.buffer).metadata();
+        const width = metadata.width || 2000;
+        
+        // Compress if image is larger than 1920px or file size > 2MB
+        if (width > 1920 || file.size > 2 * 1024 * 1024) {
+          processedBuffer = await sharp(file.buffer)
+            .resize(1920, null, { withoutEnlargement: true, fit: 'inside' })
+            .jpeg({ quality: 85, progressive: true })
+            .toBuffer();
+          
+          contentType = 'image/jpeg'; // Only set to JPEG when actually converting
+          shouldCompress = true;
+          
+          console.log(`[Portfolio Upload] Compressed ${file.originalname}: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(processedBuffer.length / 1024 / 1024).toFixed(2)}MB`);
+        }
+        
+        // Preserve original filename unless we compressed to JPEG
         const safeName = file.originalname.replace(/\s+/g, "-").toLowerCase();
-        const filename = `${Date.now()}-${safeName}`;
+        const baseFilename = safeName.replace(/\.(png|jpg|jpeg)$/i, '');
+        const extension = shouldCompress ? 'jpg' : safeName.split('.').pop() || 'jpg';
+        const filename = `${Date.now()}-${baseFilename}.${extension}`;
+        
         const imageUrl = await objectStorage.uploadFile({
           directory: objectStorage.getArtworkUploadsDir(),
           filename,
-          buffer: file.buffer,
-          contentType: file.mimetype,
+          buffer: processedBuffer,
+          contentType,
         });
         
         const [submission] = await db
@@ -964,7 +1046,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Atomic registration error:", error);
-      res.status(400).json({ message: error.message || "Registration failed" });
+      
+      // Handle specific error types with user-friendly messages
+      if (error.code === 'ETIMEDOUT' || error.message?.includes('timeout')) {
+        return res.status(408).json({ 
+          message: "Registration is taking longer than expected. Please try again with smaller images (under 5MB each).",
+          errorType: 'TIMEOUT'
+        });
+      }
+      
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ 
+          message: "One or more portfolio images exceed the 10MB size limit. Please compress your images and try again.",
+          errorType: 'FILE_TOO_LARGE'
+        });
+      }
+      
+      // Always return JSON, never HTML
+      res.status(400).json({ 
+        message: error.message || "Registration failed. Please try again.",
+        errorType: error.code || 'UNKNOWN_ERROR'
+      });
     }
   });
 

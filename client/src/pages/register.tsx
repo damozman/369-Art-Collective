@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth-context";
-import { Palette, Loader2, Upload, X, Check, Crown, Sparkles, Zap, ChevronDown, Lightbulb, Camera, Smartphone } from "lucide-react";
+import { Palette, Loader2, Upload, X, Check, Crown, Sparkles, Zap, ChevronDown, Lightbulb, Camera, Smartphone, Info } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { z } from "zod";
 import { loadStripe } from "@stripe/stripe-js";
@@ -95,9 +95,9 @@ export default function Register() {
       img.onload = () => {
         const shortSide = Math.min(img.width, img.height);
         const longSide = Math.max(img.width, img.height);
-        const isValid = shortSide >= 1080 && longSide >= 1920;
+        const isValid = shortSide >= 1024 && longSide >= 1024;
         const totalPixels = img.width * img.height;
-        const requiredPixels = 1920 * 1080; // 2.07 megapixels
+        const requiredPixels = 1024 * 1024; // 1.05 megapixels
         
         setPortfolioDimensions(prev => [...prev, {
           width: img.width,
@@ -112,14 +112,14 @@ export default function Register() {
           
           if (totalPixels >= requiredPixels * 0.8) {
             // Close to minimum (80%+)
-            description = `Almost there! Your image is ${img.width}×${img.height}px. Try using photos from a newer smartphone camera or AI-generated images. Need ${shortSide >= 1080 ? '1920×1080' : '1080×1920'} minimum.`;
+            description = `Almost there! Your image is ${img.width}×${img.height}px. Most AI platforms (DALL-E, Midjourney) output 1024×1024 or larger by default. Need 1024×1024 minimum for portfolio.`;
           } else if (totalPixels >= requiredPixels * 0.5) {
             // Moderately low (50-80%)
-            description = `Your image is ${img.width}×${img.height}px. Use modern smartphone photos (2015+), AI-generated art (DALL-E, Midjourney), or high-res downloads from stock sites. Need ${shortSide >= 1080 ? '1920×1080' : '1080×1920'} minimum.`;
+            description = `Your image is ${img.width}×${img.height}px. Use AI-generated art (DALL-E, Midjourney), modern smartphone photos, or high-res downloads. Need 1024×1024 minimum.`;
           } else {
             // Very low (<50%)
-            title = "Image quality too low for printing";
-            description = `This image is only ${img.width}×${img.height}px - too small for quality prints. Use photos from your smartphone camera (12MP+), AI art platforms, or download high-resolution images from Unsplash/Pexels.`;
+            title = "Image too small";
+            description = `This image is only ${img.width}×${img.height}px. Please use AI-generated art, modern smartphone photos (2015+), or high-resolution stock images. Minimum 1024×1024 pixels required.`;
           }
           
           toast({
@@ -645,18 +645,36 @@ export default function Register() {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {/* Portrait vs Landscape Callout */}
+              {/* Important Notice: Portfolio Images Purpose */}
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-400 dark:border-blue-600 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-1">
+                      📋 About Portfolio Images
+                    </h4>
+                    <p className="text-xs text-blue-800 dark:text-blue-200">
+                      These images are <strong>only for account approval</strong> and won't appear on your public profile. 
+                      After approval, you'll upload artwork for sale with full quality requirements. 
+                      Portfolio samples just help us verify you're a real artist!
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Orientation Note (for products later, not portfolio) */}
               <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/30 dark:to-blue-950/30 border-2 border-purple-300 dark:border-purple-700 rounded-lg">
                 <div className="flex items-start gap-3">
                   <Lightbulb className="w-6 h-6 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-1">
-                      💡 Pro Tip: Portrait Orientation Unlocks All Products!
+                      💡 Quick Tip: Any Orientation Works for Portfolio!
                     </h4>
                     <p className="text-xs text-purple-800 dark:text-purple-200">
-                      <strong>Portrait images (taller than wide)</strong> qualify for ALL 12 product sizes. 
-                      <strong> Landscape images</strong> only work with ~4 sizes. 
-                      For maximum sales potential, use portrait orientation whenever possible!
+                      Square (1024×1024), landscape, or portrait - <strong>all orientations work perfectly</strong> for portfolio registration! 
+                      <em className="block mt-1 text-purple-700 dark:text-purple-300">
+                        Note: When you upload artwork for sale later, portrait images unlock more product sizes.
+                      </em>
                     </p>
                   </div>
                 </div>
@@ -712,37 +730,34 @@ export default function Register() {
                     <div className="space-y-4 text-xs">
                       <div className="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
                         <p className="font-medium text-purple-900 dark:text-purple-100 mb-2">
-                          🎯 Quick Rule: <strong>Portrait orientation</strong> (taller than wide) unlocks MORE product sizes!
+                          ✅ Great News: <strong>Default AI outputs work perfectly</strong> for portfolio registration!
+                        </p>
+                        <p className="text-xs text-purple-800 dark:text-purple-200 mb-3">
+                          Most AI platforms output 1024×1024 or higher by default - which easily meets our 1024×1024 minimum for portfolio samples. 
+                          <em className="block mt-1 text-purple-700 dark:text-purple-300">💡 Note: Portrait orientation unlocks more product sizes when you upload artwork for sale later!</em>
                         </p>
                         <div className="space-y-3 text-purple-800 dark:text-purple-200">
                           <div>
                             <p className="font-semibold mb-1">DALL-E 3 (ChatGPT, Bing):</p>
                             <ul className="ml-4 space-y-0.5">
-                              <li>• Default: 1024×1024 (works, but limited sizes)</li>
-                              <li>• Ask: "Create in <strong>portrait format</strong>" → 1024×1792 ✅</li>
-                              <li>• Ask: "Create in <strong>landscape format</strong>" → 1792×1024 ⚠️ (fewer sizes)</li>
+                              <li>• Default: 1024×1024 ✅ Works for portfolio!</li>
+                              <li>• Portrait format: 1024×1792 ✅ Even better!</li>
+                              <li>• Landscape format: 1792×1024 ✅ Also works!</li>
                             </ul>
                           </div>
                           <div>
                             <p className="font-semibold mb-1">Midjourney:</p>
                             <ul className="ml-4 space-y-0.5">
-                              <li>• Add <code className="bg-purple-200 dark:bg-purple-900 px-1 rounded">--ar 3:4</code> for portrait ✅</li>
-                              <li>• Add <code className="bg-purple-200 dark:bg-purple-900 px-1 rounded">--ar 16:9</code> for landscape ⚠️</li>
-                              <li>• Example: <code className="bg-purple-200 dark:bg-purple-900 px-1 rounded">"sunset painting --ar 3:4"</code></li>
+                              <li>• Default: 1024×1024 ✅ Works for portfolio!</li>
+                              <li>• Add <code className="bg-purple-200 dark:bg-purple-900 px-1 rounded">--ar 3:4</code> for portrait (great for products later!)</li>
+                              <li>• Any aspect ratio works for portfolio registration</li>
                             </ul>
                           </div>
                           <div>
-                            <p className="font-semibold mb-1">Stable Diffusion:</p>
+                            <p className="font-semibold mb-1">Stable Diffusion / Leonardo.ai:</p>
                             <ul className="ml-4 space-y-0.5">
-                              <li>• Portrait: Width 1080, Height 1920 ✅</li>
-                              <li>• Landscape: Width 1920, Height 1080 ⚠️</li>
-                            </ul>
-                          </div>
-                          <div>
-                            <p className="font-semibold mb-1">Leonardo.ai / Ideogram:</p>
-                            <ul className="ml-4 space-y-0.5">
-                              <li>• Choose <strong>"Portrait"</strong> preset → usually 1080×1920 ✅</li>
-                              <li>• Choose "Landscape" preset → usually 1920×1080 ⚠️</li>
+                              <li>• Default presets usually meet 1024×1024 ✅</li>
+                              <li>• Any orientation works for portfolio!</li>
                             </ul>
                           </div>
                         </div>
@@ -751,10 +766,10 @@ export default function Register() {
                       {/* Example Prompts Section */}
                       <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-2 border-green-400 dark:border-green-600 rounded-lg">
                         <h4 className="font-bold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2">
-                          📋 Ready-to-Use Example Prompts
+                          📋 Ready-to-Use Example Prompts (Work Instantly!)
                         </h4>
                         <p className="text-xs text-green-800 dark:text-green-200 mb-3">
-                          Copy these prompts to create <strong>portrait-oriented images</strong> that unlock all 12 product sizes!
+                          These simple prompts create portfolio-ready images right away - <strong>no special settings needed!</strong>
                         </p>
                         
                         <div className="space-y-3">
@@ -764,10 +779,10 @@ export default function Register() {
                               DALL-E 3 (ChatGPT):
                             </p>
                             <code className="block bg-green-100 dark:bg-green-900/40 p-2 rounded text-xs text-green-900 dark:text-green-100 font-mono break-words">
-                              "Create a mystical forest landscape in portrait format, high detail, vertical composition"
+                              "A mystical forest landscape with glowing mushrooms, cinematic lighting, detailed"
                             </code>
-                            <p className="text-xs text-green-700 dark:text-green-300 mt-1 italic">
-                              Replace "mystical forest landscape" with your subject
+                            <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                              ✅ Default output (1024×1024) works perfectly for portfolio!
                             </p>
                           </div>
 
@@ -777,10 +792,10 @@ export default function Register() {
                               Midjourney:
                             </p>
                             <code className="block bg-green-100 dark:bg-green-900/40 p-2 rounded text-xs text-green-900 dark:text-green-100 font-mono break-words">
-                              ethereal mountain sunset, vibrant colors, detailed --ar 3:4
+                              ethereal mountain sunset, vibrant colors, detailed
                             </code>
-                            <p className="text-xs text-green-700 dark:text-green-300 mt-1 italic">
-                              The <strong>--ar 3:4</strong> creates portrait orientation
+                            <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                              ✅ Default output (1024×1024) works perfectly for portfolio!
                             </p>
                           </div>
 
@@ -789,19 +804,17 @@ export default function Register() {
                             <p className="font-semibold text-green-900 dark:text-green-100 text-xs mb-1">
                               Stable Diffusion / Leonardo.ai:
                             </p>
-                            <div className="space-y-1">
-                              <p className="text-xs text-green-800 dark:text-green-200">
-                                <strong>1. Set dimensions:</strong> Width <strong>1080</strong>, Height <strong>1920</strong>
-                              </p>
-                              <code className="block bg-green-100 dark:bg-green-900/40 p-2 rounded text-xs text-green-900 dark:text-green-100 font-mono break-words">
-                                "abstract cosmic nebula, vibrant purples and blues, highly detailed, 8k quality"
-                              </code>
-                            </div>
+                            <code className="block bg-green-100 dark:bg-green-900/40 p-2 rounded text-xs text-green-900 dark:text-green-100 font-mono break-words">
+                              "abstract cosmic nebula, vibrant purples and blues, highly detailed, 8k quality"
+                            </code>
+                            <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                              ✅ Most default presets meet 1024×1024 minimum!
+                            </p>
                           </div>
                         </div>
 
                         <div className="mt-3 p-2 bg-green-600 dark:bg-green-700 rounded text-white text-xs font-medium text-center">
-                          💡 These portrait prompts qualify for ALL 12 product sizes on our platform!
+                          🎉 Any AI platform's default settings work for portfolio registration!
                         </div>
                       </div>
                     </div>
@@ -813,8 +826,8 @@ export default function Register() {
               <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Minimum Requirements</h4>
                 <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                  <li>• <strong>Portrait images (taller):</strong> 1080×1920 pixels minimum</li>
-                  <li>• <strong>Landscape images (wider):</strong> 1920×1080 pixels minimum</li>
+                  <li>• <strong>Minimum resolution:</strong> 1024×1024 pixels (any orientation)</li>
+                  <li>• <strong>Works with:</strong> DALL-E, Midjourney, and most AI platforms ✅</li>
                   <li>• Supported formats: <strong>PNG, JPG</strong> only</li>
                   <li>• Maximum file size: <strong>10MB</strong> per image</li>
                   <li>• Required: <strong>2-3 portfolio images</strong></li>
@@ -910,7 +923,7 @@ export default function Register() {
                                 {dimensions.width}×{dimensions.height}px
                                 {!isValid && (
                                   <div className="text-red-600 dark:text-red-400 font-medium mt-0.5">
-                                    Need 1920×1080 min
+                                    Need 1024×1024 min
                                   </div>
                                 )}
                               </div>
@@ -969,7 +982,7 @@ export default function Register() {
               ) : !portfolioDimensions.every(d => d.valid) ? (
                 <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
                   <p className="text-sm text-red-800 dark:text-red-200 text-center font-medium">
-                    Some images don't meet the minimum requirements. Please upload images at least 1920×1080 pixels.
+                    Some images don't meet the minimum requirements. Please upload images at least 1024×1024 pixels.
                   </p>
                 </div>
               ) : (

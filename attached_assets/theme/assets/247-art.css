@@ -1273,7 +1273,7 @@ section.product-bottom-content {
 }
 
 /* ===== MOBILE INLINE TABBED CONFIGURATOR (Unique 247 Design) ===== */
-@media (max-width: 1023px) {
+@media (max-width: 767px) {
   .art-options {
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.95) 100%);
     backdrop-filter: blur(20px) saturate(180%);
@@ -1463,6 +1463,25 @@ section.product-bottom-content {
   .size-guide__table td {
     color: rgba(255, 255, 255, 0.9);
     border-bottom-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* ===== DESKTOP CONFIGURATOR (>=768px) ===== */
+@media (min-width: 768px) {
+  /* Hide tabs on desktop */
+  .art-options__tabs {
+    display: none;
+  }
+
+  /* Show all panels on desktop (override mobile tab behavior) */
+  .art-options__panel {
+    display: block;
+    animation: none; /* Remove slide animation on desktop */
+  }
+
+  /* Desktop configurator stacking */
+  .art-options__section {
+    margin-bottom: 1.5rem;
   }
 }
 

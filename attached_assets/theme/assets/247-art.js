@@ -498,6 +498,44 @@ document.addEventListener('DOMContentLoaded', () => {
   firstSizeOption?.classList.add('selected');
   firstFinishOption?.classList.add('selected');
   firstFrameOption?.classList.add('selected');
+
+  // ===== CONNECT TO SNIPPET OPTION SYSTEM =====
+  // Listen for variantChange events from 247-art-options.liquid snippet
+  // This ensures size/finish/frame selections properly update variant and price
+  document.addEventListener('variantChange', function(event) {
+    const { size, finish } = event.detail;
+    
+    console.log('Received variantChange event:', { size, finish });
+    
+    // Update internal state from snippet
+    if (size) {
+      selectedSize = size;
+    }
+    if (finish) {
+      selectedFinish = finish;
+    }
+    
+    // Sync frame selection from snippet's radio buttons
+    const frameRadio = document.querySelector('input[name="frame"]:checked');
+    if (frameRadio) {
+      selectedFrame = frameRadio.value;
+      console.log('Synced frame selection:', selectedFrame);
+    }
+    
+    // Update variant, price, and preview together
+    updateVariant();
+    
+    // Handle frame preview when switching between Paper and Canvas/Metal
+    // Canvas/Metal should never show frames
+    if (finish === 'Canvas' || finish === 'Metal') {
+      updateFrameOverlay('none');
+      console.log(`Frame removed for ${finish} finish`);
+    } else if (finish === 'Paper') {
+      // Restore the currently selected frame (or 'none' if no frame selected)
+      updateFrameOverlay(selectedFrame);
+      console.log(`Frame restored for Paper: ${selectedFrame}`);
+    }
+  });
 });
 
 // Thumbnail scroll button functionality

@@ -239,7 +239,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   }
   
   section.pn247-art-product .product__media-gallery.has-thumbnails {
-    gap: 1rem; /* Reduce gap on desktop */
+    gap: 0.5rem; /* Bring thumbnails closer to viewer */
   }
   
   .gallery__thumbnails {

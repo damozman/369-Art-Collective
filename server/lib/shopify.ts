@@ -489,8 +489,8 @@ export async function updateProductStatus(
   }
 }
 
-// Delete all products from Shopify store
-export async function deleteAllProducts(): Promise<{ deleted: number; errors: string[] }> {
+// Get all products from Shopify store
+export async function getAllProducts(): Promise<any[]> {
   if (!isShopifyConfigured()) {
     throw new Error("Shopify is not configured");
   }
@@ -530,6 +530,23 @@ export async function deleteAllProducts(): Promise<{ deleted: number; errors: st
         }
       }
     } while (pageInfo);
+
+    return allProducts;
+  } catch (error: any) {
+    console.error("Shopify fetch products error:", error);
+    throw new Error(`Failed to fetch Shopify products: ${error.message}`);
+  }
+}
+
+// Delete all products from Shopify store
+export async function deleteAllProducts(): Promise<{ deleted: number; errors: string[] }> {
+  if (!isShopifyConfigured()) {
+    throw new Error("Shopify is not configured");
+  }
+
+  try {
+    const apiVersion = "2024-10";
+    const allProducts = await getAllProducts();
 
     console.log(`[Shopify] Found ${allProducts.length} products to delete`);
 

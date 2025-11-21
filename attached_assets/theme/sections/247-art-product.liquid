@@ -12,55 +12,6 @@
   {%- if product.featured_image -%}
     <div class="product__media-gallery has-thumbnails">
       
-      {%- comment -%} Thumbnail Navigation Column {%- endcomment -%}
-      <div class="gallery__thumbnails" id="gallery-thumbnails">
-        {%- assign thumbnail_index = 0 -%}
-        
-        {%- comment -%} SPACE 1: Pure Product Image (No Mockup) {%- endcomment -%}
-        {%- if product.featured_image -%}
-          <button class="gallery__thumbnail active"
-                  data-image-index="0"
-                  data-testid="thumbnail-product-main"
-                  aria-label="Product Artwork">
-            <img src="{{ product.featured_image | img_url: '120x120', crop: 'center' }}" 
-                 alt="{{ product.title | escape }}">
-          </button>
-          {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-        {%- endif -%}
-        
-        {%- comment -%} SPACES 2-5: Mockup Room Thumbnails {%- endcomment -%}
-        <button class="gallery__thumbnail"
-                data-image-index="1" 
-                data-testid="thumbnail-mockup-living"
-                aria-label="Living Room Preview">
-          <img src="{{ 'mockup-living-thumb.png' | asset_url }}" alt="Living Room">
-        </button>
-        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-        
-        <button class="gallery__thumbnail"
-                data-image-index="2"
-                data-testid="thumbnail-mockup-bedroom" 
-                aria-label="Bedroom Preview">
-          <img src="{{ 'mockup-bedroom-thumb.png' | asset_url }}" alt="Bedroom">
-        </button>
-        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-        
-        <button class="gallery__thumbnail"
-                data-image-index="3"
-                data-testid="thumbnail-mockup-office"
-                aria-label="Office Preview">
-          <img src="{{ 'mockup-office-thumb.png' | asset_url }}" alt="Office">
-        </button>
-        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
-        
-        <button class="gallery__thumbnail"
-                data-image-index="4"
-                data-testid="thumbnail-mockup-gallery"
-                aria-label="Gallery Preview">
-          <img src="{{ 'mockup-gallery-thumb.png' | asset_url }}" alt="Gallery">
-        </button>
-      </div>
-
       {%- comment -%} Main Gallery Display Area {%- endcomment -%}
       <div class="gallery__main" id="gallery-main">
         <div class="gallery__main-wrapper">
@@ -141,6 +92,55 @@
           </div>
         </div>
         </div>
+      </div>
+      
+      {%- comment -%} Thumbnail Navigation Below Viewer {%- endcomment -%}
+      <div class="gallery__thumbnails" id="gallery-thumbnails">
+        {%- assign thumbnail_index = 0 -%}
+        
+        {%- comment -%} SPACE 1: Pure Product Image (No Mockup) {%- endcomment -%}
+        {%- if product.featured_image -%}
+          <button class="gallery__thumbnail active"
+                  data-image-index="0"
+                  data-testid="thumbnail-product-main"
+                  aria-label="Product Artwork">
+            <img src="{{ product.featured_image | img_url: '120x120', crop: 'center' }}" 
+                 alt="{{ product.title | escape }}">
+          </button>
+          {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        {%- endif -%}
+        
+        {%- comment -%} SPACES 2-5: Mockup Room Thumbnails {%- endcomment -%}
+        <button class="gallery__thumbnail"
+                data-image-index="1" 
+                data-testid="thumbnail-mockup-living"
+                aria-label="Living Room Preview">
+          <img src="{{ 'mockup-living-thumb.png' | asset_url }}" alt="Living Room">
+        </button>
+        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        
+        <button class="gallery__thumbnail"
+                data-image-index="2"
+                data-testid="thumbnail-mockup-bedroom" 
+                aria-label="Bedroom Preview">
+          <img src="{{ 'mockup-bedroom-thumb.png' | asset_url }}" alt="Bedroom">
+        </button>
+        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        
+        <button class="gallery__thumbnail"
+                data-image-index="3"
+                data-testid="thumbnail-mockup-office"
+                aria-label="Office Preview">
+          <img src="{{ 'mockup-office-thumb.png' | asset_url }}" alt="Office">
+        </button>
+        {%- assign thumbnail_index = thumbnail_index | plus: 1 -%}
+        
+        <button class="gallery__thumbnail"
+                data-image-index="4"
+                data-testid="thumbnail-mockup-gallery"
+                aria-label="Gallery Preview">
+          <img src="{{ 'mockup-gallery-thumb.png' | asset_url }}" alt="Gallery">
+        </button>
       </div>
     </div>
   {%- else -%}

@@ -1365,6 +1365,8 @@ section.product-bottom-content {
   /* Mobile option cards - unique design */
   .art-options__grid {
     gap: 10px;
+    justify-items: center;
+    padding: 0 1rem;
   }
 
   .art-option {
@@ -1373,6 +1375,8 @@ section.product-bottom-content {
     padding: 1rem 0.75rem;
     border-radius: 12px;
     text-align: center;
+    width: 100%;
+    max-width: 160px;
   }
 
   .art-option:hover {

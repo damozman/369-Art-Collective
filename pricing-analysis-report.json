@@ -1,0 +1,489 @@
+[
+  {
+    "product": "Poster",
+    "size": "8x10",
+    "finish": "Paper",
+    "printifyCost": 4.04,
+    "shippingCost": 6.29,
+    "totalCOGS": 10.33,
+    "shopifyPrice": 19,
+    "priceStatus": "found",
+    "currentMargins": {
+      "free": {
+        "platform": 2.3999999999999986,
+        "platformPercent": 12.631578947368412,
+        "artist": 5.7,
+        "stripeFee": 0.57
+      },
+      "pro": {
+        "platform": 1.4499999999999993,
+        "platformPercent": 7.631578947368417,
+        "artist": 6.6499999999999995,
+        "stripeFee": 0.57
+      },
+      "elite": {
+        "platform": -0.45000000000000284,
+        "platformPercent": -2.368421052631594,
+        "artist": 8.55,
+        "stripeFee": 0.57
+      }
+    },
+    "recommendedFreeShipPrice": 21,
+    "freeShipMargins": {
+      "free": {
+        "platform": 3.740000000000002,
+        "platformPercent": 17.80952380952382,
+        "artist": 6.3,
+        "stripeFee": 0.63
+      },
+      "pro": {
+        "platform": 2.6900000000000013,
+        "platformPercent": 12.809523809523816,
+        "artist": 7.35,
+        "stripeFee": 0.63
+      },
+      "elite": {
+        "platform": 0.5899999999999999,
+        "platformPercent": 2.809523809523809,
+        "artist": 9.450000000000001,
+        "stripeFee": 0.63
+      }
+    },
+    "isUnprofitable": true,
+    "profitWarnings": [
+      "UNPROFITABLE for Elite artists",
+      "LOW MARGIN (<$5) for Free artists"
+    ]
+  },
+  {
+    "product": "Poster",
+    "size": "18x24",
+    "finish": "Paper",
+    "printifyCost": 5.5,
+    "shippingCost": 6.29,
+    "totalCOGS": 11.79,
+    "shopifyPrice": 49,
+    "priceStatus": "found",
+    "currentMargins": {
+      "free": {
+        "platform": 21.040000000000003,
+        "platformPercent": 42.93877551020409,
+        "artist": 14.7,
+        "stripeFee": 1.47
+      },
+      "pro": {
+        "platform": 18.590000000000003,
+        "platformPercent": 37.93877551020409,
+        "artist": 17.15,
+        "stripeFee": 1.47
+      },
+      "elite": {
+        "platform": 13.689999999999998,
+        "platformPercent": 27.938775510204078,
+        "artist": 22.05,
+        "stripeFee": 1.47
+      }
+    },
+    "recommendedFreeShipPrice": 22,
+    "freeShipMargins": {
+      "free": {
+        "platform": 2.9499999999999993,
+        "platformPercent": 13.409090909090907,
+        "artist": 6.6,
+        "stripeFee": 0.6599999999999999
+      },
+      "pro": {
+        "platform": 1.8500000000000014,
+        "platformPercent": 8.409090909090915,
+        "artist": 7.699999999999999,
+        "stripeFee": 0.6599999999999999
+      },
+      "elite": {
+        "platform": -0.34999999999999787,
+        "platformPercent": -1.5909090909090813,
+        "artist": 9.9,
+        "stripeFee": 0.6599999999999999
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  },
+  {
+    "product": "Poster",
+    "size": "24x36",
+    "finish": "Paper",
+    "printifyCost": 6.29,
+    "shippingCost": 7,
+    "totalCOGS": 13.29,
+    "shopifyPrice": 79,
+    "priceStatus": "found",
+    "currentMargins": {
+      "free": {
+        "platform": 39.64000000000001,
+        "platformPercent": 50.17721518987342,
+        "artist": 23.7,
+        "stripeFee": 2.37
+      },
+      "pro": {
+        "platform": 35.690000000000005,
+        "platformPercent": 45.17721518987343,
+        "artist": 27.65,
+        "stripeFee": 2.37
+      },
+      "elite": {
+        "platform": 27.79,
+        "platformPercent": 35.177215189873415,
+        "artist": 35.550000000000004,
+        "stripeFee": 2.37
+      }
+    },
+    "recommendedFreeShipPrice": 24,
+    "freeShipMargins": {
+      "free": {
+        "platform": 2.7900000000000027,
+        "platformPercent": 11.625000000000012,
+        "artist": 7.199999999999999,
+        "stripeFee": 0.72
+      },
+      "pro": {
+        "platform": 1.5900000000000034,
+        "platformPercent": 6.625000000000014,
+        "artist": 8.399999999999999,
+        "stripeFee": 0.72
+      },
+      "elite": {
+        "platform": -0.8099999999999987,
+        "platformPercent": -3.3749999999999947,
+        "artist": 10.8,
+        "stripeFee": 0.72
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  },
+  {
+    "product": "Canvas",
+    "size": "12x16",
+    "finish": "Canvas",
+    "printifyCost": 8.09,
+    "shippingCost": 7,
+    "totalCOGS": 15.09,
+    "shopifyPrice": 59,
+    "priceStatus": "found",
+    "currentMargins": {
+      "free": {
+        "platform": 24.439999999999998,
+        "platformPercent": 41.42372881355932,
+        "artist": 17.7,
+        "stripeFee": 1.77
+      },
+      "pro": {
+        "platform": 21.490000000000002,
+        "platformPercent": 36.42372881355932,
+        "artist": 20.65,
+        "stripeFee": 1.77
+      },
+      "elite": {
+        "platform": 15.589999999999996,
+        "platformPercent": 26.423728813559315,
+        "artist": 26.55,
+        "stripeFee": 1.77
+      }
+    },
+    "recommendedFreeShipPrice": 26,
+    "freeShipMargins": {
+      "free": {
+        "platform": 2.3299999999999983,
+        "platformPercent": 8.961538461538456,
+        "artist": 7.8,
+        "stripeFee": 0.78
+      },
+      "pro": {
+        "platform": 1.0300000000000011,
+        "platformPercent": 3.9615384615384657,
+        "artist": 9.1,
+        "stripeFee": 0.78
+      },
+      "elite": {
+        "platform": -1.5700000000000003,
+        "platformPercent": -6.03846153846154,
+        "artist": 11.700000000000001,
+        "stripeFee": 0.78
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  },
+  {
+    "product": "Canvas",
+    "size": "16x20",
+    "finish": "Canvas",
+    "printifyCost": 12,
+    "shippingCost": 7.5,
+    "totalCOGS": 19.5,
+    "shopifyPrice": null,
+    "priceStatus": "not_in_shopify",
+    "currentMargins": null,
+    "recommendedFreeShipPrice": 30,
+    "freeShipMargins": {
+      "free": {
+        "platform": 0.6000000000000014,
+        "platformPercent": 2.000000000000005,
+        "artist": 9,
+        "stripeFee": 0.8999999999999999
+      },
+      "pro": {
+        "platform": -0.8999999999999986,
+        "platformPercent": -2.9999999999999956,
+        "artist": 10.5,
+        "stripeFee": 0.8999999999999999
+      },
+      "elite": {
+        "platform": -3.8999999999999986,
+        "platformPercent": -12.999999999999995,
+        "artist": 13.5,
+        "stripeFee": 0.8999999999999999
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  },
+  {
+    "product": "Canvas",
+    "size": "24x32",
+    "finish": "Canvas",
+    "printifyCost": 18,
+    "shippingCost": 8.5,
+    "totalCOGS": 26.5,
+    "shopifyPrice": null,
+    "priceStatus": "not_in_shopify",
+    "currentMargins": null,
+    "recommendedFreeShipPrice": 37,
+    "freeShipMargins": {
+      "free": {
+        "platform": -1.7100000000000009,
+        "platformPercent": -4.621621621621624,
+        "artist": 11.1,
+        "stripeFee": 1.1099999999999999
+      },
+      "pro": {
+        "platform": -3.5600000000000023,
+        "platformPercent": -9.621621621621628,
+        "artist": 12.95,
+        "stripeFee": 1.1099999999999999
+      },
+      "elite": {
+        "platform": -7.260000000000005,
+        "platformPercent": -19.621621621621635,
+        "artist": 16.650000000000002,
+        "stripeFee": 1.1099999999999999
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  },
+  {
+    "product": "Framed",
+    "size": "12x16",
+    "finish": "Framed",
+    "printifyCost": 15,
+    "shippingCost": 8,
+    "totalCOGS": 23,
+    "shopifyPrice": null,
+    "priceStatus": "not_in_shopify",
+    "currentMargins": null,
+    "recommendedFreeShipPrice": 33,
+    "freeShipMargins": {
+      "free": {
+        "platform": -0.8900000000000006,
+        "platformPercent": -2.6969696969696986,
+        "artist": 9.9,
+        "stripeFee": 0.99
+      },
+      "pro": {
+        "platform": -2.539999999999999,
+        "platformPercent": -7.696969696969694,
+        "artist": 11.549999999999999,
+        "stripeFee": 0.99
+      },
+      "elite": {
+        "platform": -5.840000000000003,
+        "platformPercent": -17.69696969696971,
+        "artist": 14.85,
+        "stripeFee": 0.99
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  },
+  {
+    "product": "Framed",
+    "size": "18x24",
+    "finish": "Framed",
+    "printifyCost": 22,
+    "shippingCost": 9,
+    "totalCOGS": 31,
+    "shopifyPrice": null,
+    "priceStatus": "not_in_shopify",
+    "currentMargins": null,
+    "recommendedFreeShipPrice": 41,
+    "freeShipMargins": {
+      "free": {
+        "platform": -3.529999999999994,
+        "platformPercent": -8.609756097560961,
+        "artist": 12.299999999999999,
+        "stripeFee": 1.23
+      },
+      "pro": {
+        "platform": -5.579999999999998,
+        "platformPercent": -13.609756097560972,
+        "artist": 14.35,
+        "stripeFee": 1.23
+      },
+      "elite": {
+        "platform": -9.68,
+        "platformPercent": -23.609756097560975,
+        "artist": 18.45,
+        "stripeFee": 1.23
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  },
+  {
+    "product": "Framed",
+    "size": "24x36",
+    "finish": "Framed",
+    "printifyCost": 28,
+    "shippingCost": 10,
+    "totalCOGS": 38,
+    "shopifyPrice": null,
+    "priceStatus": "not_in_shopify",
+    "currentMargins": null,
+    "recommendedFreeShipPrice": 48,
+    "freeShipMargins": {
+      "free": {
+        "platform": -5.839999999999996,
+        "platformPercent": -12.166666666666659,
+        "artist": 14.399999999999999,
+        "stripeFee": 1.44
+      },
+      "pro": {
+        "platform": -8.239999999999995,
+        "platformPercent": -17.166666666666654,
+        "artist": 16.799999999999997,
+        "stripeFee": 1.44
+      },
+      "elite": {
+        "platform": -13.04,
+        "platformPercent": -27.166666666666668,
+        "artist": 21.6,
+        "stripeFee": 1.44
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  },
+  {
+    "product": "Metal",
+    "size": "12x16",
+    "finish": "Metal",
+    "printifyCost": 25,
+    "shippingCost": 8.5,
+    "totalCOGS": 33.5,
+    "shopifyPrice": null,
+    "priceStatus": "not_in_shopify",
+    "currentMargins": null,
+    "recommendedFreeShipPrice": 44,
+    "freeShipMargins": {
+      "free": {
+        "platform": -4.020000000000003,
+        "platformPercent": -9.136363636363644,
+        "artist": 13.2,
+        "stripeFee": 1.3199999999999998
+      },
+      "pro": {
+        "platform": -6.219999999999999,
+        "platformPercent": -14.136363636363633,
+        "artist": 15.399999999999999,
+        "stripeFee": 1.3199999999999998
+      },
+      "elite": {
+        "platform": -10.619999999999997,
+        "platformPercent": -24.13636363636363,
+        "artist": 19.8,
+        "stripeFee": 1.3199999999999998
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  },
+  {
+    "product": "Metal",
+    "size": "18x24",
+    "finish": "Metal",
+    "printifyCost": 35,
+    "shippingCost": 9,
+    "totalCOGS": 44,
+    "shopifyPrice": null,
+    "priceStatus": "not_in_shopify",
+    "currentMargins": null,
+    "recommendedFreeShipPrice": 54,
+    "freeShipMargins": {
+      "free": {
+        "platform": -7.82,
+        "platformPercent": -14.481481481481481,
+        "artist": 16.2,
+        "stripeFee": 1.6199999999999999
+      },
+      "pro": {
+        "platform": -10.519999999999996,
+        "platformPercent": -19.481481481481474,
+        "artist": 18.9,
+        "stripeFee": 1.6199999999999999
+      },
+      "elite": {
+        "platform": -15.920000000000002,
+        "platformPercent": -29.481481481481488,
+        "artist": 24.3,
+        "stripeFee": 1.6199999999999999
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  },
+  {
+    "product": "Metal",
+    "size": "24x36",
+    "finish": "Metal",
+    "printifyCost": 45,
+    "shippingCost": 10,
+    "totalCOGS": 55,
+    "shopifyPrice": null,
+    "priceStatus": "not_in_shopify",
+    "currentMargins": null,
+    "recommendedFreeShipPrice": 65,
+    "freeShipMargins": {
+      "free": {
+        "platform": -11.450000000000003,
+        "platformPercent": -17.61538461538462,
+        "artist": 19.5,
+        "stripeFee": 1.95
+      },
+      "pro": {
+        "platform": -14.700000000000003,
+        "platformPercent": -22.61538461538462,
+        "artist": 22.75,
+        "stripeFee": 1.95
+      },
+      "elite": {
+        "platform": -21.200000000000003,
+        "platformPercent": -32.61538461538462,
+        "artist": 29.25,
+        "stripeFee": 1.95
+      }
+    },
+    "isUnprofitable": false,
+    "profitWarnings": []
+  }
+]

@@ -1278,8 +1278,8 @@ section.product-bottom-content {
     background: linear-gradient(135deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.95) 100%);
     backdrop-filter: blur(20px) saturate(180%);
     border-radius: 20px;
-    padding: 1.25rem;
-    margin-top: 1.5rem;
+    padding: 1.5rem 1.25rem;
+    margin: 1.5rem 0.75rem 0;
     box-shadow: 
       0 20px 60px rgba(0, 0, 0, 0.4),
       0 10px 30px rgba(0, 0, 0, 0.3),
@@ -1364,19 +1364,15 @@ section.product-bottom-content {
 
   /* Mobile option cards - unique design */
   .art-options__grid {
-    gap: 10px;
-    justify-items: center;
-    padding: 0 1rem;
+    gap: 12px;
   }
 
   .art-option {
     border-color: rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.05);
-    padding: 1rem 0.75rem;
+    padding: 1.25rem 1rem;
     border-radius: 12px;
     text-align: center;
-    width: 100%;
-    max-width: 160px;
   }
 
   .art-option:hover {

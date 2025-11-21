@@ -320,14 +320,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log(`Mapped Paper + ${selectedFrame} frame → ${actualFinish} variant`);
     }
 
-    // Find matching variant
+    // Find matching variant using Shopify's option1 (Size) and option2 (Finish)
     const matchingVariant = variants.find(variant => {
-      const options = variant.options || [];
-      const title = variant.title || '';
-      
-      // Check if variant matches selected size and actual finish (mapped)
-      const matchesSize = options.includes(selectedSize) || title.includes(selectedSize);
-      const matchesFinish = options.includes(actualFinish) || title.includes(actualFinish);
+      // Shopify variants use option1 for Size and option2 for Finish
+      const matchesSize = variant.option1 === selectedSize;
+      const matchesFinish = variant.option2 === actualFinish;
       
       return matchesSize && matchesFinish;
     });

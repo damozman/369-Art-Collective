@@ -157,8 +157,8 @@ section.pn247-art-product {
 @media (min-width: 1024px) {
   section.pn247-art-product {
     display: grid !important;
-    grid-template-columns: minmax(640px, 1fr) minmax(320px, 420px);
-    gap: 2rem;
+    grid-template-columns: minmax(640px, 1fr) minmax(280px, 340px);
+    gap: 2.5rem;
     max-width: 1600px;
     margin: 0 auto !important;
     padding: 2rem !important;
@@ -170,7 +170,7 @@ section.pn247-art-product {
 @media (min-width: 901px) and (max-width: 1023px) {
   section.pn247-art-product {
     display: grid !important;
-    grid-template-columns: 1fr 360px;
+    grid-template-columns: 1fr 300px;
     gap: 1.5rem;
     padding: 1.5rem !important;
     align-items: start;

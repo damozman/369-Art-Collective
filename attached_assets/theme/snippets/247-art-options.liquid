@@ -5,9 +5,62 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
 
 <div class="art-options">
   
-  {%- comment -%} SIZE SELECTION {%- endcomment -%}
-  <div class="art-options__section">
-    <label class="art-options__label">Choose Size</label>
+  {%- comment -%} Mobile Tabbed Navigation {%- endcomment -%}
+  <div class="art-options__tabs">
+    <button type="button" class="art-options__tab active" data-tab="finish" data-testid="tab-finish">
+      Finish
+    </button>
+    <button type="button" class="art-options__tab" data-tab="size" data-testid="tab-size">
+      Size
+    </button>
+    <button type="button" class="art-options__tab" data-tab="frames" data-testid="tab-frames">
+      Frames
+    </button>
+  </div>
+  
+  {%- comment -%} FINISH SELECTION PANEL {%- endcomment -%}
+  <div class="art-options__panel active" data-panel="finish">
+    <div class="art-options__section">
+      <label class="art-options__label">Choose Finish</label>
+      <div class="art-options__grid" id="finish-selector">
+        {%- assign unique_finishes = product.options_with_values | where: 'name', 'Finish' | first -%}
+        {%- for finish_value in unique_finishes.values -%}
+          {%- comment -%} Hide all Framed-* variants since they're handled via Frame Options section {%- endcomment -%}
+          {%- assign is_framed = false -%}
+          {%- if finish_value contains 'Framed' -%}
+            {%- assign is_framed = true -%}
+          {%- endif -%}
+          {%- unless is_framed -%}
+            <div class="art-option" data-option-value="{{ finish_value }}" data-option-type="finish">
+              <input 
+                type="radio" 
+                name="finish" 
+                value="{{ finish_value }}" 
+                id="finish-{{ finish_value | handle }}"
+                form="add-to-cart-form"
+                class="visually-hidden"
+                {% if finish_value == 'Paper' %}checked{% endif %}
+              >
+              <div class="art-option__title">{{ finish_value }}</div>
+              <div class="art-option__subtitle">
+                {%- case finish_value -%}
+                  {%- when 'Paper' -%}Smooth matte
+                  {%- when 'Canvas' -%}Textured finish
+                  {%- when 'Metal' -%}Ultra premium
+                  {%- else -%}Premium quality
+                {%- endcase -%}
+              </div>
+            </div>
+          {%- endunless -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+  
+  {%- comment -%} SIZE SELECTION PANEL {%- endcomment -%}
+  <div class="art-options__panel" data-panel="size">
+    <div class="art-options__section">
+      <label class="art-options__label">Choose Size</label>
     <div class="art-options__grid" id="size-selector">
       {%- assign unique_sizes = product.options_with_values | where: 'name', 'Size' | first -%}
       {%- for size_value in unique_sizes.values -%}
@@ -35,47 +88,60 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
         </div>
       {%- endfor -%}
     </div>
-  </div>
-
-  {%- comment -%} FINISH SELECTION {%- endcomment -%}
-  <div class="art-options__section">
-    <label class="art-options__label">Choose Finish</label>
-    <div class="art-options__grid" id="finish-selector">
-      {%- assign unique_finishes = product.options_with_values | where: 'name', 'Finish' | first -%}
-      {%- for finish_value in unique_finishes.values -%}
-        {%- comment -%} Hide all Framed-* variants since they're handled via Frame Options section {%- endcomment -%}
-        {%- assign is_framed = false -%}
-        {%- if finish_value contains 'Framed' -%}
-          {%- assign is_framed = true -%}
-        {%- endif -%}
-        {%- unless is_framed -%}
-          <div class="art-option" data-option-value="{{ finish_value }}" data-option-type="finish">
-            <input 
-              type="radio" 
-              name="finish" 
-              value="{{ finish_value }}" 
-              id="finish-{{ finish_value | handle }}"
-              form="add-to-cart-form"
-              class="visually-hidden"
-              {% if finish_value == 'Paper' %}checked{% endif %}
-            >
-            <div class="art-option__title">{{ finish_value }}</div>
-            <div class="art-option__subtitle">
-              {%- case finish_value -%}
-                {%- when 'Paper' -%}Smooth matte
-                {%- when 'Canvas' -%}Textured finish
-                {%- when 'Metal' -%}Ultra premium
-                {%- else -%}Premium quality
-              {%- endcase -%}
-            </div>
-          </div>
-        {%- endunless -%}
-      {%- endfor -%}
+    
+    {%- comment -%} SIZE GUIDE {%- endcomment -%}
+    <div class="size-guide">
+      <button class="size-guide__toggle" id="size-guide-toggle" type="button">
+        <span>Size Guide</span>
+        <svg class="size-guide__icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3,5 7,9 11,5"/>
+        </svg>
+      </button>
+      <div class="size-guide__content" id="size-guide-content">
+        <table class="size-guide__table">
+          <thead>
+            <tr>
+              <th>Size</th>
+              <th>Dimensions</th>
+              <th>Best For</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>8x10"</td>
+              <td>8" × 10"</td>
+              <td>Desks, shelves</td>
+            </tr>
+            <tr>
+              <td>11x14"</td>
+              <td>11" × 14"</td>
+              <td>Small walls</td>
+            </tr>
+            <tr>
+              <td>16x20"</td>
+              <td>16" × 20"</td>
+              <td>Medium walls</td>
+            </tr>
+            <tr>
+              <td>18x24"</td>
+              <td>18" × 24"</td>
+              <td>Gallery walls</td>
+            </tr>
+            <tr>
+              <td>24x36"</td>
+              <td>24" × 36"</td>
+              <td>Statement pieces</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
+  </div>
 
-  {%- comment -%} FRAME OPTIONS (Only for Paper/Poster prints) {%- endcomment -%}
-  <div class="frame-options" id="frame-options-section">
+  {%- comment -%} FRAME OPTIONS PANEL (Only for Paper/Poster prints) {%- endcomment -%}
+  <div class="art-options__panel" data-panel="frames">
+    <div class="frame-options" id="frame-options-section">
     <label class="art-options__label mb-small">Frame Options <span class="frame-availability-note">(Available for Paper prints)</span></label>
     
     <div class="frame-toggle" id="no-frame-option" data-frame-type="none">
@@ -143,53 +209,6 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
       <div class="frame-price">+$29</div>
     </div>
   </div>
-
-  {%- comment -%} SIZE GUIDE {%- endcomment -%}
-  <div class="size-guide">
-    <button class="size-guide__toggle" id="size-guide-toggle" type="button">
-      <span>Size Guide</span>
-      <svg class="size-guide__icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="3,5 7,9 11,5"/>
-      </svg>
-    </button>
-    <div class="size-guide__content" id="size-guide-content">
-      <table class="size-guide__table">
-        <thead>
-          <tr>
-            <th>Size</th>
-            <th>Dimensions</th>
-            <th>Best For</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>8x10"</td>
-            <td>8" × 10"</td>
-            <td>Desks, shelves</td>
-          </tr>
-          <tr>
-            <td>11x14"</td>
-            <td>11" × 14"</td>
-            <td>Small walls</td>
-          </tr>
-          <tr>
-            <td>16x20"</td>
-            <td>16" × 20"</td>
-            <td>Medium walls</td>
-          </tr>
-          <tr>
-            <td>18x24"</td>
-            <td>18" × 24"</td>
-            <td>Gallery walls</td>
-          </tr>
-          <tr>
-            <td>24x36"</td>
-            <td>24" × 36"</td>
-            <td>Statement pieces</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </div>
 
 </div>
@@ -197,6 +216,25 @@ Premium size/finish/format/frame selectors with Displate-inspired UI
 <script>
 // Premium option selector interactions
 document.addEventListener('DOMContentLoaded', function() {
+  // ===== TAB NAVIGATION (Mobile) =====
+  const tabs = document.querySelectorAll('.art-options__tab');
+  const panels = document.querySelectorAll('.art-options__panel');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+      const targetPanel = this.dataset.tab;
+      
+      // Update tabs
+      tabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      
+      // Update panels
+      panels.forEach(p => p.classList.remove('active'));
+      const panel = document.querySelector(`[data-panel="${targetPanel}"]`);
+      if (panel) panel.classList.add('active');
+    });
+  });
+
   // Size selection
   const sizeOptions = document.querySelectorAll('[data-option-type="size"]');
   sizeOptions.forEach(option => {

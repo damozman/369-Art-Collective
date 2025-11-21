@@ -104,3 +104,9 @@ integrations = ["javascript_stripe:1.0.0", "resend:1.0.0", "javascript_openai_ai
 
 [objectStorage]
 defaultBucketID = "replit-objstore-3aab60d1-70d7-4327-acc7-78c8189861e1"
+
+[userenv]
+
+[userenv.shared]
+TESTING_VITE_STRIPE_PUBLIC_KEY = "pk_test_51SQKJO3ZAbFKOARubvDDLezwB3lvKe0PNgjQExCu59M2D8x9Ec9y0RPIUPpbZT86mMj36siY70cLA44PdwVUMVYX00KQcL4brf"
+TESTING_STRIPE_SECRET_KEY = "sk_test_51SQKJO3ZAbFKOARux1jfBF80f6oCUsHqJZkCM8FpruMN11IwLS3sB0LB07C3BAfAW7CSQjSxWEwAM6d3blt0Pa4Z00q55i2iWX"

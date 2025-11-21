@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ===== IMAGE GALLERY SYSTEM =====
   const mainImages = document.querySelectorAll('.gallery__main-image');
   const thumbnails = document.querySelectorAll('.gallery__thumbnail');
-  const zoomTrigger = document.getElementById('zoom-trigger');
   const lightbox = document.getElementById('image-lightbox');
   const lightboxImage = document.getElementById('lightbox-image');
   const lightboxClose = document.getElementById('lightbox-close');

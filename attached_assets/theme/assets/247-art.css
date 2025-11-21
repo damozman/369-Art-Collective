@@ -1272,6 +1272,200 @@ section.product-bottom-content {
   font-weight: 400;
 }
 
+/* ===== MOBILE INLINE TABBED CONFIGURATOR (Unique 247 Design) ===== */
+@media (max-width: 1023px) {
+  .art-options {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.95) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-radius: 20px;
+    padding: 1.25rem;
+    margin-top: 1.5rem;
+    box-shadow: 
+      0 20px 60px rgba(0, 0, 0, 0.4),
+      0 10px 30px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Segmented Tab Navigation */
+  .art-options__tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.25rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .art-options__tab {
+    flex: 1;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.02em;
+    text-transform: capitalize;
+  }
+
+  .art-options__tab:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .art-options__tab.active {
+    background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+    color: #ffffff;
+    box-shadow: 
+      0 4px 16px rgba(249, 115, 22, 0.4),
+      0 2px 8px rgba(249, 115, 22, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  /* Tab Panel Content */
+  .art-options__panel {
+    display: none;
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .art-options__panel.active {
+    display: block;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Mobile-specific section styling */
+  .art-options__section {
+    margin-bottom: 0;
+  }
+
+  .art-options__label {
+    font-size: 0.6875rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 0.75rem;
+  }
+
+  /* Mobile option cards - unique design */
+  .art-options__grid {
+    gap: 10px;
+  }
+
+  .art-option {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem 0.5rem;
+    border-radius: 12px;
+  }
+
+  .art-option:hover {
+    border-color: rgba(249, 115, 22, 0.4);
+    background: rgba(249, 115, 22, 0.1);
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.2);
+  }
+
+  .art-option.selected {
+    border-color: #f97316;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(251, 146, 60, 0.15) 100%);
+    box-shadow: 
+      0 0 0 1px rgba(249, 115, 22, 0.3),
+      0 6px 20px rgba(249, 115, 22, 0.3);
+  }
+
+  .art-option__title {
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  .art-option__subtitle {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  /* Frame options mobile styling */
+  .frame-options {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 1rem;
+    margin-top: 1rem;
+  }
+
+  .frame-toggle {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 0.75rem;
+    margin-bottom: 10px;
+  }
+
+  .frame-toggle:hover {
+    border-color: rgba(249, 115, 22, 0.4);
+    background: rgba(249, 115, 22, 0.1);
+  }
+
+  .frame-toggle.selected {
+    border-color: #f97316;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(251, 146, 60, 0.15) 100%);
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.2);
+  }
+
+  .frame-info__title {
+    color: #ffffff;
+  }
+
+  .frame-info__description {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .frame-price {
+    color: #fb923c;
+  }
+
+  .frame-checkbox {
+    accent-color: #f97316;
+  }
+
+  /* Size guide mobile styling */
+  .size-guide {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .size-guide__toggle {
+    color: #fb923c;
+  }
+
+  .size-guide__toggle:hover {
+    color: #f97316;
+  }
+
+  .size-guide__table {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .size-guide__table th {
+    background: rgba(249, 115, 22, 0.15);
+    color: #ffffff;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .size-guide__table td {
+    color: rgba(255, 255, 255, 0.9);
+    border-bottom-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
 /* ===== PRODUCT DETAILS ===== */
 .product-details {
   border-top: 1px solid #e5e7eb;

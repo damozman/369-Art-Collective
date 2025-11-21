@@ -1357,6 +1357,9 @@ section.product-bottom-content {
     font-size: 0.6875rem;
     color: rgba(255, 255, 255, 0.5);
     margin-bottom: 0.75rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
   /* Mobile option cards - unique design */
@@ -1367,8 +1370,9 @@ section.product-bottom-content {
   .art-option {
     border-color: rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.05);
-    padding: 0.75rem 0.5rem;
+    padding: 1rem 0.75rem;
     border-radius: 12px;
+    text-align: center;
   }
 
   .art-option:hover {
@@ -1388,10 +1392,12 @@ section.product-bottom-content {
   .art-option__title {
     color: #ffffff;
     font-weight: 700;
+    text-align: center;
   }
 
   .art-option__subtitle {
     color: rgba(255, 255, 255, 0.6);
+    text-align: center;
   }
 
   /* Frame options mobile styling */
@@ -1401,12 +1407,19 @@ section.product-bottom-content {
     margin-top: 1rem;
   }
 
+  .frame-options__label {
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
   .frame-toggle {
     border-color: rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
-    padding: 0.75rem;
+    padding: 1rem;
     margin-bottom: 10px;
+    justify-content: space-between;
   }
 
   .frame-toggle:hover {
@@ -1422,14 +1435,18 @@ section.product-bottom-content {
 
   .frame-info__title {
     color: #ffffff;
+    font-weight: 600;
   }
 
   .frame-info__description {
     color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
   }
 
   .frame-price {
     color: #fb923c;
+    font-weight: 700;
+    font-size: 1rem;
   }
 
   .frame-checkbox {

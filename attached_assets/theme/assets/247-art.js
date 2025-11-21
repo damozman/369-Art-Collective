@@ -187,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Lightbox event handlers
-  zoomTrigger?.addEventListener('click', () => openLightbox(currentImageIndex));
   lightboxClose?.addEventListener('click', closeLightbox);
   lightboxPrev?.addEventListener('click', showPrevImage);
   lightboxNext?.addEventListener('click', showNextImage);

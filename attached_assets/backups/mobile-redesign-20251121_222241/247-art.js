@@ -207,34 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'ArrowRight') showNextImage();
   });
 
-  // ===== FLOATING ACTION BUTTONS =====
-  const wishlistBtn = document.getElementById('wishlist-btn');
-  const zoomBtn = document.getElementById('zoom-btn');
-
-  // Wishlist button handler
-  wishlistBtn?.addEventListener('click', () => {
-    wishlistBtn.classList.toggle('active');
-    
-    // Here you can add integration with Shopify's wishlist API or localStorage
-    const isActive = wishlistBtn.classList.contains('active');
-    const productId = productData?.id;
-    
-    if (isActive) {
-      // Add to wishlist
-      console.log('Added to wishlist:', productId);
-      // TODO: Integrate with Shopify wishlist or localStorage
-    } else {
-      // Remove from wishlist
-      console.log('Removed from wishlist:', productId);
-      // TODO: Integrate with Shopify wishlist or localStorage
-    }
-  });
-
-  // Zoom button handler - opens lightbox
-  zoomBtn?.addEventListener('click', () => {
-    openLightbox(currentImageIndex);
-  });
-
   // ===== VARIANT TO IMAGE MAPPING =====
   // Build variant-to-image map from Printify's attached_to_variant data
   // Each image may be attached to multiple variants (e.g., different sizes of same finish)

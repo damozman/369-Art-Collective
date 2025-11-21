@@ -182,6 +182,7 @@ section.pn247-art-product {
   section.pn247-art-product {
     display: flex !important;
     flex-direction: column !important;
+    padding: 0 0.75rem !important;
   }
 }
 
@@ -1279,7 +1280,7 @@ section.product-bottom-content {
     backdrop-filter: blur(20px) saturate(180%);
     border-radius: 20px;
     padding: 1.5rem 1.25rem;
-    margin: 1.5rem 0.75rem 0;
+    margin: 1.5rem auto 0;
     box-shadow: 
       0 20px 60px rgba(0, 0, 0, 0.4),
       0 10px 30px rgba(0, 0, 0, 0.3),

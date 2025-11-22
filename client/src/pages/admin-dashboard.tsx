@@ -710,7 +710,7 @@ export default function AdminDashboard() {
       </div>
 
       <Dialog open={!!selectedArtwork} onOpenChange={(open) => !open && setSelectedArtwork(null)}>
-        <DialogContent className="max-w-3xl sm:max-w-4xl w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] overflow-hidden p-0">
+        <DialogContent className="max-w-3xl sm:max-w-4xl w-[calc(100vw-2rem)] h-[calc(100vh-2rem)] overflow-hidden p-0">
           {selectedArtwork && (
             <div className="flex h-full flex-col">
               <DialogHeader className="px-6 pt-6 pb-4 border-b">

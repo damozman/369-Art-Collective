@@ -29,6 +29,9 @@ import {
 import { db } from "./lib/db";
 import crypto from "crypto";
 import { createDraftProduct, createArtworkProduct, isShopifyConfigured, updateProductStatus } from "./lib/shopify";
+import { DpiValidatorService } from "./lib/dpi-validator-service";
+import { upscaleUsage } from "@shared/schema";
+import { eq, or, desc } from "drizzle-orm";
 import { createWallArtProducts } from "./lib/printify-service";
 import { isPrintifyConfigured } from "./lib/printify";
 import { syncPrintifyMockupsWithRetry } from "./lib/printify-mockup-sync";
@@ -3362,6 +3365,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Get violations error:", error);
       res.status(500).json({ message: "Failed to fetch violation reports" });
+    }
+  });
+
+  // Get detailed artwork metadata including upscaling data and variant qualification (admin only)
+  app.get("/api/artworks/:id/details", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Get artwork
+      const artwork = await storage.getArtwork(id);
+      if (!artwork) {
+        return res.status(404).json({ message: "Artwork not found" });
+      }
+
+      // Check if upscaling was used by looking for upscaleUsage records
+      // Match either upscaledUrl (if upscaling was used) or originalUrl (if not)
+      const upscaleRecords = await db
+        .select()
+        .from(upscaleUsage)
+        .where(
+          or(
+            eq(upscaleUsage.upscaledUrl, artwork.imageUrl),
+            eq(upscaleUsage.originalUrl, artwork.imageUrl)
+          )
+        )
+        .orderBy(desc(upscaleUsage.createdAt))
+        .limit(1);
+
+      const upscaleRecord = upscaleRecords[0];
+      
+      // Determine image dimensions
+      let width: number;
+      let height: number;
+      let upscalingUsed = false;
+      let upscaleData: any = null;
+
+      if (upscaleRecord) {
+        // Check if upscaling was actually used
+        upscalingUsed = upscaleRecord.upscaledUrl === artwork.imageUrl;
+        
+        if (upscalingUsed && upscaleRecord.upscaledWidth && upscaleRecord.upscaledHeight) {
+          // Use upscaled dimensions
+          width = upscaleRecord.upscaledWidth;
+          height = upscaleRecord.upscaledHeight;
+          upscaleData = {
+            usedUpscaling: true,
+            originalDimensions: {
+              width: upscaleRecord.originalWidth,
+              height: upscaleRecord.originalHeight,
+            },
+            upscaledDimensions: {
+              width: upscaleRecord.upscaledWidth,
+              height: upscaleRecord.upscaledHeight,
+            },
+            scaleFactor: upscaleRecord.upscaledWidth && upscaleRecord.originalWidth 
+              ? Math.round(upscaleRecord.upscaledWidth / upscaleRecord.originalWidth)
+              : null,
+            status: upscaleRecord.status,
+            costCents: upscaleRecord.costCents,
+            quotaType: upscaleRecord.quotaType,
+            tier: upscaleRecord.tier,
+            createdAt: upscaleRecord.createdAt,
+            completedAt: upscaleRecord.completedAt,
+            errorMessage: upscaleRecord.errorMessage,
+          };
+        } else if (upscaleRecord.originalWidth && upscaleRecord.originalHeight) {
+          // No upscaling used, use original dimensions
+          width = upscaleRecord.originalWidth;
+          height = upscaleRecord.originalHeight;
+          upscaleData = {
+            usedUpscaling: false,
+            originalDimensions: {
+              width: upscaleRecord.originalWidth,
+              height: upscaleRecord.originalHeight,
+            },
+          };
+        } else {
+          // Dimensions not in upscale record, try to get from image
+          try {
+            const dimensions = await getImageDimensions(artwork.imageUrl);
+            width = dimensions.width;
+            height = dimensions.height;
+          } catch (error) {
+            console.error("Failed to get image dimensions:", error);
+            return res.status(500).json({ 
+              message: "Failed to get image dimensions",
+              imageUrl: artwork.imageUrl 
+            });
+          }
+        }
+      } else {
+        // No upscale record found, try to get dimensions from image
+        try {
+          const dimensions = await getImageDimensions(artwork.imageUrl);
+          width = dimensions.width;
+          height = dimensions.height;
+        } catch (error) {
+          console.error("Failed to get image dimensions:", error);
+          return res.status(500).json({ 
+            message: "Failed to get image dimensions",
+            imageUrl: artwork.imageUrl 
+          });
+        }
+      }
+
+      // Calculate variant qualification using DpiValidatorService
+      const qualityAnalysis = DpiValidatorService.analyzePrintQuality(width, height);
+
+      // Get qualified variant details grouped by finish type
+      const variantsByFinish = {
+        paper: qualityAnalysis.variantQualification.qualified.filter(v => 
+          v.variantKey.startsWith('poster_')
+        ),
+        canvas: qualityAnalysis.variantQualification.qualified.filter(v => 
+          v.variantKey.startsWith('canvas_')
+        ),
+        framed: qualityAnalysis.variantQualification.qualified.filter(v => 
+          v.variantKey.startsWith('framed_')
+        ),
+        metal: qualityAnalysis.variantQualification.qualified.filter(v => 
+          v.variantKey.startsWith('metal_')
+        ),
+      };
+
+      res.json({
+        artwork: {
+          id: artwork.id,
+          title: artwork.title,
+          imageUrl: artwork.imageUrl,
+          shopifyProductId: artwork.shopifyProductId,
+          status: artwork.status,
+          createdAt: artwork.createdAt,
+        },
+        dimensions: {
+          width,
+          height,
+          megapixels: parseFloat(((width * height) / 1_000_000).toFixed(2)),
+        },
+        upscaling: upscaleData,
+        quality: {
+          estimatedDpi: qualityAnalysis.estimatedDpi,
+          targetDpi: qualityAnalysis.targetDpi,
+          meetsMinimum: qualityAnalysis.meetsMinimum,
+          meetsTarget: qualityAnalysis.meetsTarget,
+          qualityLevel: qualityAnalysis.qualityLevel,
+          recommendation: qualityAnalysis.recommendation,
+          message: qualityAnalysis.message,
+          orientation: qualityAnalysis.orientation,
+        },
+        variants: {
+          totalQualified: qualityAnalysis.variantQualification.totalQualified,
+          totalVariants: qualityAnalysis.variantQualification.totalVariants,
+          byFinish: {
+            paper: variantsByFinish.paper.length,
+            canvas: variantsByFinish.canvas.length,
+            framed: variantsByFinish.framed.length,
+            metal: variantsByFinish.metal.length,
+          },
+          qualified: qualityAnalysis.variantQualification.qualified.map(v => ({
+            key: v.variantKey,
+            name: v.productName,
+            widthInches: v.widthInches,
+            heightInches: v.heightInches,
+          })),
+        },
+      });
+    } catch (error: any) {
+      console.error("Get artwork details error:", error);
+      res.status(500).json({ message: "Failed to fetch artwork details" });
     }
   });
 

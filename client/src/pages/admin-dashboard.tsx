@@ -590,7 +590,7 @@ export default function AdminDashboard() {
                     data-testid={`checkbox-artwork-${artwork.id}`}
                   />
                 </div>
-                <div className="aspect-square relative bg-muted">
+                <div className="h-48 relative bg-muted">
                   <img
                     src={artwork.imageUrl}
                     alt={artwork.title}
@@ -710,21 +710,21 @@ export default function AdminDashboard() {
       </div>
 
       <Dialog open={!!selectedArtwork} onOpenChange={(open) => !open && setSelectedArtwork(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl sm:max-w-4xl w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)] overflow-hidden p-0">
           {selectedArtwork && (
-            <>
-              <DialogHeader>
+            <div className="flex h-full flex-col">
+              <DialogHeader className="px-6 pt-6 pb-4 border-b">
                 <DialogTitle data-testid="dialog-title">{selectedArtwork.title}</DialogTitle>
                 <DialogDescription data-testid="dialog-artist">
                   by {selectedArtwork.artist.name} ({selectedArtwork.artist.email})
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-4">
+              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
                 <img
                   src={selectedArtwork.imageUrl}
                   alt={selectedArtwork.title}
-                  className="w-full h-auto max-h-96 object-contain rounded-lg bg-muted"
+                  className="w-full h-auto max-h-64 sm:max-h-72 object-contain rounded-lg bg-muted"
                   data-testid="dialog-img"
                 />
 
@@ -978,7 +978,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              <DialogFooter className="flex gap-2">
+              <DialogFooter className="px-6 py-4 border-t bg-background/95">
                 <div className="flex justify-between w-full">
                   <Button
                     variant="outline"
@@ -1012,7 +1012,7 @@ export default function AdminDashboard() {
                   )}
                 </div>
               </DialogFooter>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>

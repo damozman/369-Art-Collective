@@ -239,6 +239,11 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 
 /* Desktop: Constrain gallery height to fit above fold */
 @media (min-width: 1024px) {
+  .gallery__main {
+    max-width: 750px; /* Prevent panoramic stretching */
+    margin: 0 auto; /* Center within column */
+  }
+  
   .gallery__main-wrapper {
     height: clamp(520px, 58vh, 680px);
     padding-bottom: 0; /* Remove padding-based height */

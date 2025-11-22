@@ -159,7 +159,7 @@ section.pn247-art-product {
     display: grid !important;
     grid-template-columns: minmax(540px, 1fr) minmax(260px, 280px);
     gap: 1.5rem;
-    max-width: 1024px;
+    max-width: 1400px;
     margin: 0 auto !important;
     padding: 2rem !important;
     align-items: start;
@@ -241,7 +241,6 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
 @media (min-width: 1024px) {
   .gallery__main {
     max-width: 750px; /* Prevent panoramic stretching */
-    margin: 0 auto; /* Center within column */
   }
   
   .gallery__main-wrapper {

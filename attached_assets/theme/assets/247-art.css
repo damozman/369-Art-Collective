@@ -712,8 +712,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   /* Static product info card - no bottom sheet behavior */
   section.pn247-art-product .product__info {
     position: static !important;
-    width: 100% !important;
-    max-width: var(--mobile-content-width) !important;
+    width: min(100%, var(--mobile-content-width)) !important;
     margin: 0 auto !important;
     
     /* Clean card styling */
@@ -766,7 +765,7 @@ section.product-bottom-content {
 /* Mobile: Center bottom content */
 @media (max-width: 900px) {
   section.product-bottom-content {
-    max-width: var(--mobile-content-width) !important;
+    width: min(100%, var(--mobile-content-width)) !important;
     padding: 2rem 1rem !important;
   }
 }
@@ -781,7 +780,7 @@ section.product-bottom-content {
 @media (max-width: 900px) {
   /* Center gallery on mobile */
   section.pn247-art-product .product__media-gallery {
-    max-width: var(--mobile-content-width) !important;
+    width: min(100%, var(--mobile-content-width)) !important;
     margin: 0 auto !important;
   }
   

@@ -720,7 +720,7 @@ export default function AdminDashboard() {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4">
+              <div className="overflow-y-auto flex-1 px-6 py-4 space-y-4 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
                 <img
                   src={selectedArtwork.imageUrl}
                   alt={selectedArtwork.title}

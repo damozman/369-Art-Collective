@@ -246,7 +246,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   }
   
   .gallery__main-wrapper {
-    height: clamp(520px, 58vh, 680px);
+    height: clamp(520px, 65vh, 820px);
     padding-bottom: 0; /* Remove padding-based height */
   }
   

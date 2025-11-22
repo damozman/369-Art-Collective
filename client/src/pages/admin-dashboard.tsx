@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useLocation } from "wouter";
-import { CheckCircle, XCircle, Eye, Flag, Search, ArrowUpDown, Zap, TrendingUp, DollarSign } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Flag, Search, ArrowUpDown, Zap, TrendingUp, DollarSign, Image, Ruler, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { ArtworkWithArtist, Artist, ViolationReport } from "@shared/schema";
@@ -47,6 +47,65 @@ export default function AdminDashboard() {
   // Query for violation reports of selected artwork
   const { data: violationReports } = useQuery<ViolationReport[]>({
     queryKey: ["/api/artworks", selectedArtwork?.id, "violations"],
+    enabled: !!selectedArtwork,
+  });
+
+  // Query for detailed artwork metadata
+  const { data: artworkDetails, isLoading: detailsLoading } = useQuery<{
+    artwork: {
+      id: string;
+      title: string;
+      imageUrl: string;
+      shopifyProductId: string | null;
+      status: string;
+      createdAt: string;
+    };
+    dimensions: {
+      width: number;
+      height: number;
+      megapixels: number;
+    };
+    upscaling: {
+      usedUpscaling: boolean;
+      originalDimensions?: { width: number; height: number };
+      upscaledDimensions?: { width: number; height: number };
+      scaleFactor?: number | null;
+      status?: string;
+      costCents?: number;
+      quotaType?: string;
+      tier?: string;
+      createdAt?: string;
+      completedAt?: string;
+      errorMessage?: string;
+    } | null;
+    quality: {
+      estimatedDpi: number;
+      targetDpi: number;
+      meetsMinimum: boolean;
+      meetsTarget: boolean;
+      qualityLevel?: string;
+      recommendation: string;
+      message: string;
+      orientation?: string;
+    };
+    variants: {
+      totalQualified: number;
+      totalVariants: number;
+      byFinish: {
+        paper: number;
+        canvas: number;
+        framed: number;
+        metal: number;
+      };
+      qualified: Array<{
+        key: string;
+        name: string;
+        widthInches: number;
+        heightInches: number;
+      }>;
+    };
+  }>({
+    queryKey: ["/api/artworks", selectedArtwork?.id, "details"],
     enabled: !!selectedArtwork,
   });
 
@@ -717,6 +776,148 @@ export default function AdminDashboard() {
                     </p>
                   </div>
                 )}
+
+                {/* Image Quality & Variant Qualification Details */}
+                {detailsLoading ? (
+                  <Card className="border-2" data-testid="card-details-loading">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Image className="w-5 h-5" />
+                        Image Quality & Variants
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </CardContent>
+                  </Card>
+                ) : artworkDetails ? (
+                  <Card className="border-2 border-primary/20 bg-primary/5" data-testid="card-artwork-details">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Image className="w-5 h-5" />
+                        Image Quality & Variants
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Dimensions */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h5 className="text-sm font-medium mb-1 flex items-center gap-1">
+                            <Ruler className="w-4 h-4" />
+                            Dimensions
+                          </h5>
+                          <p className="text-sm text-muted-foreground" data-testid="text-dimensions">
+                            {artworkDetails.dimensions.width} × {artworkDetails.dimensions.height} px
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {artworkDetails.dimensions.megapixels} MP
+                          </p>
+                        </div>
+                        <div>
+                          <h5 className="text-sm font-medium mb-1">Quality</h5>
+                          <p className="text-sm text-muted-foreground" data-testid="text-dpi">
+                            ~{artworkDetails.quality.estimatedDpi} DPI
+                          </p>
+                          <Badge 
+                            variant={
+                              artworkDetails.quality.qualityLevel === 'excellent' ? 'default' :
+                              artworkDetails.quality.qualityLevel === 'good' ? 'secondary' : 
+                              'outline'
+                            }
+                            className="mt-1"
+                            data-testid="badge-quality-level"
+                          >
+                            {artworkDetails.quality.qualityLevel || artworkDetails.quality.recommendation}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Upscaling Info */}
+                      {artworkDetails.upscaling && (
+                        <div className={`p-3 rounded-md border ${
+                          artworkDetails.upscaling.usedUpscaling 
+                            ? 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800' 
+                            : 'bg-muted/50 border-border'
+                        }`}>
+                          <h5 className="text-sm font-medium mb-1 flex items-center gap-1">
+                            <Zap className="w-4 h-4" />
+                            AI Upscaling
+                          </h5>
+                          {artworkDetails.upscaling.usedUpscaling ? (
+                            <div className="space-y-1">
+                              <p className="text-sm text-blue-900 dark:text-blue-100 font-medium" data-testid="text-upscaling-used">
+                                ✓ AI upscaling was used
+                              </p>
+                              <p className="text-xs text-blue-800 dark:text-blue-200">
+                                Original: {artworkDetails.upscaling.originalDimensions?.width} × {artworkDetails.upscaling.originalDimensions?.height} px
+                              </p>
+                              <p className="text-xs text-blue-800 dark:text-blue-200">
+                                Upscaled: {artworkDetails.upscaling.upscaledDimensions?.width} × {artworkDetails.upscaling.upscaledDimensions?.height} px
+                              </p>
+                              {artworkDetails.upscaling.scaleFactor && (
+                                <Badge variant="outline" className="mt-1 border-blue-500 text-blue-700 dark:text-blue-300">
+                                  {artworkDetails.upscaling.scaleFactor}x scale
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground" data-testid="text-no-upscaling">
+                              No AI upscaling used
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Variant Qualification */}
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium flex items-center gap-1">
+                          <Layers className="w-4 h-4" />
+                          Product Variants ({artworkDetails.variants.totalQualified}/{artworkDetails.variants.totalVariants})
+                        </h5>
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="text-center p-2 bg-muted/30 rounded">
+                            <p className="text-xs text-muted-foreground mb-1">Paper</p>
+                            <p className="text-lg font-semibold" data-testid="text-paper-count">
+                              {artworkDetails.variants.byFinish.paper}
+                            </p>
+                          </div>
+                          <div className="text-center p-2 bg-muted/30 rounded">
+                            <p className="text-xs text-muted-foreground mb-1">Canvas</p>
+                            <p className="text-lg font-semibold" data-testid="text-canvas-count">
+                              {artworkDetails.variants.byFinish.canvas}
+                            </p>
+                          </div>
+                          <div className="text-center p-2 bg-muted/30 rounded">
+                            <p className="text-xs text-muted-foreground mb-1">Framed</p>
+                            <p className="text-lg font-semibold" data-testid="text-framed-count">
+                              {artworkDetails.variants.byFinish.framed}
+                            </p>
+                          </div>
+                          <div className="text-center p-2 bg-muted/30 rounded">
+                            <p className="text-xs text-muted-foreground mb-1">Metal</p>
+                            <p className="text-lg font-semibold" data-testid="text-metal-count">
+                              {artworkDetails.variants.byFinish.metal}
+                            </p>
+                          </div>
+                        </div>
+                        {artworkDetails.variants.byFinish.metal === 0 && (
+                          <p className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20 p-2 rounded" data-testid="text-metal-explanation">
+                            ⚠️ Metal prints require 180+ DPI. This image qualifies for {artworkDetails.variants.byFinish.paper + artworkDetails.variants.byFinish.canvas + artworkDetails.variants.byFinish.framed} Paper/Canvas/Framed variants only.
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Quality Message */}
+                      <div className="bg-muted/50 p-3 rounded-md border border-border">
+                        <p className="text-xs text-muted-foreground" data-testid="text-quality-message">
+                          {artworkDetails.quality.message}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null}
 
                 {selectedArtwork.seoSlug && (
                   <div className="bg-muted/30 p-3 rounded-md border border-border">

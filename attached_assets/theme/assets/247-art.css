@@ -157,9 +157,9 @@ section.pn247-art-product {
 @media (min-width: 1024px) {
   section.pn247-art-product {
     display: grid !important;
-    grid-template-columns: minmax(640px, 1fr) minmax(280px, 300px);
-    gap: 2rem;
-    max-width: 1280px;
+    grid-template-columns: minmax(540px, 1fr) minmax(260px, 280px);
+    gap: 1.5rem;
+    max-width: 1024px;
     margin: 0 auto !important;
     padding: 2rem !important;
     align-items: start;
@@ -655,6 +655,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
     max-height: calc(100vh - 4rem) !important;
     overflow-y: auto !important;
     z-index: 10 !important;
+    box-sizing: border-box !important;
     
     /* Clean card styling */
     background: rgba(255, 255, 255, 0.95) !important;
@@ -690,6 +691,7 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
     max-height: calc(100vh - 3rem) !important;
     overflow-y: auto !important;
     z-index: 10 !important;
+    box-sizing: border-box !important;
     
     background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(16px) saturate(180%) !important;

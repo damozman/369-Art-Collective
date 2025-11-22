@@ -177,11 +177,16 @@ section.pn247-art-product {
   }
 }
 
-/* Mobile: Stacked layout */
+/* Mobile: Stacked layout with centered content */
 @media (max-width: 900px) {
+  :root {
+    --mobile-content-width: clamp(320px, 92vw, 640px);
+  }
+  
   section.pn247-art-product {
     display: flex !important;
     flex-direction: column !important;
+    align-items: center !important;
     padding: 0 0.75rem !important;
   }
 }
@@ -708,6 +713,8 @@ section.pn247-art-product .product__media-gallery.has-thumbnails {
   section.pn247-art-product .product__info {
     position: static !important;
     width: 100% !important;
+    max-width: var(--mobile-content-width) !important;
+    margin: 0 auto !important;
     
     /* Clean card styling */
     background: white !important;
@@ -756,6 +763,14 @@ section.product-bottom-content {
   padding: 3rem 2rem;
 }
 
+/* Mobile: Center bottom content */
+@media (max-width: 900px) {
+  section.product-bottom-content {
+    max-width: var(--mobile-content-width) !important;
+    padding: 2rem 1rem !important;
+  }
+}
+
 .product-bottom-wrapper {
   display: flex;
   flex-direction: column;
@@ -764,6 +779,12 @@ section.product-bottom-content {
 
 /* Mobile: Adjust gallery and thumbnails */
 @media (max-width: 900px) {
+  /* Center gallery on mobile */
+  section.pn247-art-product .product__media-gallery {
+    max-width: var(--mobile-content-width) !important;
+    margin: 0 auto !important;
+  }
+  
   /* Mobile thumbnail carousel adjustments */
   .gallery__thumbnails {
     flex-direction: row;

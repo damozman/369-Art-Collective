@@ -798,6 +798,8 @@ section.product-bottom-content {
     justify-content: center;
     padding: 1rem;
     margin: 0 auto;
+    width: min(100%, var(--mobile-content-width)) !important;
+    max-width: 100% !important;
     background: rgba(255, 255, 255, 0.7);
   }
   

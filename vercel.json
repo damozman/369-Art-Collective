@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/artist/register", "destination": "/" },
+    { "source": "/artist/login", "destination": "/" },
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}

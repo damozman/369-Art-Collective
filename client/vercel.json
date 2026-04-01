@@ -1,7 +1,7 @@
 {
-  "rewrites": [
-    { "source": "/artist/register", "destination": "/" },
-    { "source": "/artist/login", "destination": "/" },
-    { "source": "/(.*)", "destination": "/" }
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/artist/.*", "dest": "/index.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

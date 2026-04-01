@@ -1,7 +1,6 @@
 {
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/artist/.*", "dest": "/index.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/artist/(.*)", "destination": "/client/index.html" },
+    { "source": "/(.*)", "destination": "/client/index.html" }
   ]
 }

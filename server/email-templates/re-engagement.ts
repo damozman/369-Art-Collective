@@ -40,7 +40,7 @@ export function reEngagementEmail({ artistName, previousTier, domain }: ReEngage
     <p>If you downgraded due to a specific issue, please let us know! Reply to this email and we'll do everything we can to help.</p>
 
     <p>Your success is our success. We'd love to have you back!</p>
-    <p>Best regards,<br><strong>The 247 Print Network Team</strong></p>
+    <p>Best regards,<br><strong>The 369 Art Collective Team</strong></p>
   `;
 
   return emailLayout({

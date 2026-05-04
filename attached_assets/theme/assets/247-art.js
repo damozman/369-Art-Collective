@@ -1,5 +1,5 @@
 /**
- * 247 Print Network - Product Gallery & Variant System
+ * 369 Art Collective - Product Gallery & Variant System
  * Handles multi-image gallery, variant switching, and zoom functionality
  * Optimized for Printify POD products with multiple mockups
  */

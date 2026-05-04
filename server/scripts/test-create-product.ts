@@ -14,7 +14,7 @@ console.log(`  Image: ${testImageUrl}`);
 console.log(`  Title: ${testTitle}`);
 console.log();
 
-createWallArtProducts(testImageUrl, testTitle, "Test product").then(result => {
+createWallArtProducts(testImageUrl, testTitle, 0, 0, "Test product").then(result => {
   console.log("✓ Product created successfully!");
   console.log(`  Product ID: ${result.printifyProductId}`);
   console.log(`  Image ID: ${result.printifyImageId}`);

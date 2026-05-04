@@ -1,4 +1,4 @@
-import type { Express, Request } from "express";
+﻿import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
@@ -25,6 +25,7 @@ import {
   insertInfluencerSchema,
   influencerApplicationSchema,
   adminActions,
+  artists,
 } from "@shared/schema";
 import { db } from "./lib/db";
 import crypto from "crypto";
@@ -37,8 +38,9 @@ import { isPrintifyConfigured } from "./lib/printify";
 import { syncPrintifyMockupsWithRetry } from "./lib/printify-mockup-sync";
 import { requireAuth, requireArtist, requireAdmin, requireInfluencer } from "./middleware/auth";
 import { getAffiliateCodeFromCookie } from "./middleware/affiliate-tracking";
-import { processShopifyOrder } from "./lib/order-processor";
+
 import { processCreatorStackPurchase } from "./lib/creatorstack-webhook-processor";
+import { processShopifyOrder } from "./lib/financials";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
 import { 
   validateImageQuality, 
@@ -63,11 +65,7 @@ import Stripe from "stripe";
 // Initialize achievement service
 const achievementService = new AchievementService(storage);
 
-// Ensure uploads directory exists
-const uploadDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+ // No local uploads dir needed (Supabase Storage)
 
 // Configure multer for file uploads (using memory storage for object storage)
 const upload = multer({
@@ -206,16 +204,9 @@ function toAbsoluteUrl(imageUrl: string, req?: Request): string {
     return imageUrl;
   }
 
-  // Get base URL from REPLIT_DOMAINS or request host
-  const replitDomain = process.env.REPLIT_DOMAINS 
-    ? process.env.REPLIT_DOMAINS.split(',').map(d => d.trim()).find(d => !d.includes('-')) || process.env.REPLIT_DOMAINS.split(',')[0].trim()
-    : null;
-  
-  const baseUrl = replitDomain
-    ? `https://${replitDomain}`
-    : req 
-      ? `${req.protocol}://${req.get('host')}`
-      : `http://localhost:${process.env.PORT || 5000}`;
+  // Get base URL from PUBLIC_APP_URL or request host
+  const baseUrl = process.env.PUBLIC_APP_URL
+    || (req ? `${req.protocol}://${req.get('host')}` : `http://localhost:${process.env.PORT || 5000}`);
   
   // Ensure imageUrl starts with /
   const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
@@ -233,25 +224,28 @@ function normalizeArtwork(artwork: any, req?: Request): any {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Shopify webhook endpoint - SECURED with HMAC verification
   // Raw body is captured by global express.json verify function in index.ts
+  
   app.post("/api/webhooks/shopify/orders", async (req: any, res) => {
     try {
       const hmac = req.headers['x-shopify-hmac-sha256'] as string;
       const shop = req.headers['x-shopify-shop-domain'];
       
-      console.log(`Received Shopify webhook from ${shop}`);
-
       // CRITICAL: Verify HMAC signature using raw body captured in middleware
       if (!req.rawBody) {
-        console.error("❌ Raw body not available for HMAC verification");
+        console.error("âŒ Raw body not available for HMAC verification");
         return res.status(500).send('Server configuration error');
       }
 
       if (!verifyShopifyWebhook(req.rawBody, hmac)) {
-        console.warn("⚠️ HMAC verification failed - rejecting webhook");
+        console.warn("âš ï¸ HMAC verification failed - rejecting webhook");
         return res.status(401).send('Unauthorized');
       }
 
-      console.log("✅ Webhook HMAC verified");
+      processShopifyOrder(req.body).catch(error => {
+        console.error("Error processing Shopify order:", error);
+      });
+
+      console.log("âœ… Webhook HMAC verified");
 
       // Body is already parsed by express.json middleware
       const shopifyOrder = req.body;
@@ -324,20 +318,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       health.services.printify = { status: "error", message: error.message };
     }
 
-    // Check OpenAI
+    // Check Gemini
     try {
-      if (!process.env.AI_INTEGRATIONS_OPENAI_API_KEY) {
-        health.services.openai = { status: "not_configured" };
+      if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY && !process.env.GEMINI_API_KEY) {
+        health.services.gemini = { status: "not_configured" };
       } else {
-        health.services.openai = { status: "configured" };
+        health.services.gemini = { status: "configured" };
       }
     } catch (error: any) {
-      health.services.openai = { status: "error", message: error.message };
+      health.services.gemini = { status: "error", message: error.message };
     }
 
     // Check Email Service (Resend)
     try {
-      if (!process.env.REPLIT_CONNECTORS_HOSTNAME) {
+      if (!process.env.RESEND_API_KEY) {
         health.services.email = { status: "not_configured" };
       } else {
         health.services.email = { status: "configured" };
@@ -362,13 +356,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verify webhook signature using raw body
       if (!req.rawBody) {
-        console.error("❌ Raw body not available for Stripe signature verification");
+        console.error("âŒ Raw body not available for Stripe signature verification");
         return res.status(500).send('Server configuration error');
       }
 
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
       if (!webhookSecret) {
-        console.error("❌ STRIPE_WEBHOOK_SECRET not configured");
+        console.error("âŒ STRIPE_WEBHOOK_SECRET not configured");
         return res.status(500).send('Webhook secret not configured');
       }
 
@@ -379,9 +373,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           signature as string,
           webhookSecret
         );
-        console.log(`✅ Stripe webhook verified: ${event.type}`);
+        console.log(`âœ… Stripe webhook verified: ${event.type}`);
       } catch (err: any) {
-        console.warn(`⚠️ Stripe webhook signature verification failed: ${err.message}`);
+        console.warn(`âš ï¸ Stripe webhook signature verification failed: ${err.message}`);
         return res.status(400).send(`Webhook Error: ${err.message}`);
       }
 
@@ -406,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               (account.details_submitted && account.charges_enabled && account.payouts_enabled) || false,
           });
           
-          console.log(`✅ Updated Stripe status for artist ${artistId}`);
+          console.log(`âœ… Updated Stripe status for artist ${artistId}`);
         }
       } else if (eventType === 'transfer.created') {
         const transfer = event.data.object as any;
@@ -429,7 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Mark as paid when transfer is complete
           if (transfer.status === 'paid') {
             await storage.updatePayout(payoutId, { status: 'paid' });
-            console.log(`✅ Marked payout ${payoutId} as paid`);
+            console.log(`âœ… Marked payout ${payoutId} as paid`);
           }
         }
       } else if (eventType === 'transfer.failed') {
@@ -441,7 +435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           console.log(`Transfer failed for payout ${payoutId}`);
           await storage.updatePayout(payoutId, { status: 'failed' });
-          console.log(`✅ Marked payout ${payoutId} as failed`);
+          console.log(`âœ… Marked payout ${payoutId} as failed`);
         }
       } else if (eventType === 'payout.paid') {
         // Handle Stripe payout completion (different from transfer - this is for platform balance payouts)
@@ -453,7 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           console.log(`Payout paid event for payout ${payoutId}`);
           await storage.updatePayout(payoutId, { status: 'paid' });
-          console.log(`✅ Marked payout ${payoutId} as paid (via payout.paid event)`);
+          console.log(`âœ… Marked payout ${payoutId} as paid (via payout.paid event)`);
         }
       } else if (eventType === 'payout.failed') {
         // Handle Stripe payout failure
@@ -465,7 +459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           console.log(`Payout failed event for payout ${payoutId}`);
           await storage.updatePayout(payoutId, { status: 'failed' });
-          console.log(`✅ Marked payout ${payoutId} as failed (via payout.failed event)`);
+          console.log(`âœ… Marked payout ${payoutId} as failed (via payout.failed event)`);
         }
       } else if (eventType === 'checkout.session.completed') {
         // Handle successful Stripe Checkout session for featured subscriptions
@@ -486,7 +480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             );
             
             if (existingSubscription) {
-              console.log(`⚠️ Subscription ${stripeSubscriptionId} already exists (webhook retry), skipping creation`);
+              console.log(`âš ï¸ Subscription ${stripeSubscriptionId} already exists (webhook retry), skipping creation`);
             } else {
               console.log(`Creating premium featured subscription for artist ${artistId}, testimonial ${testimonialId}`);
               
@@ -511,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Update testimonial to mark as featured
               await storage.updateTestimonial(testimonialId, { featured: true });
               
-              console.log(`✅ Created premium featured subscription for testimonial ${testimonialId}`);
+              console.log(`âœ… Created premium featured subscription for testimonial ${testimonialId}`);
             }
           }
         }
@@ -543,7 +537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Re-feature testimonial (in case it was unfeatured due to payment failure)
             await storage.updateTestimonial(subscription.testimonialId, { featured: true });
             
-            console.log(`✅ Renewed subscription ${subscription.id} until ${newExpiresAt.toISOString()} and re-featured testimonial`);
+            console.log(`âœ… Renewed subscription ${subscription.id} until ${newExpiresAt.toISOString()} and re-featured testimonial`);
           }
         }
       } else if (eventType === 'customer.subscription.updated') {
@@ -569,14 +563,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (newStatus === 'active') {
             // Re-feature testimonial when subscription returns to active
             await storage.updateTestimonial(ourSubscription.testimonialId, { featured: true });
-            console.log(`✅ Re-featured testimonial ${ourSubscription.testimonialId} - subscription now active`);
+            console.log(`âœ… Re-featured testimonial ${ourSubscription.testimonialId} - subscription now active`);
           } else if (newStatus === 'canceled' || newStatus === 'unpaid') {
             // Unfeature testimonial for canceled or unpaid subscriptions
             await storage.updateTestimonial(ourSubscription.testimonialId, { featured: false });
-            console.log(`⚠️ Unfeatured testimonial ${ourSubscription.testimonialId} due to subscription status: ${newStatus}`);
+            console.log(`âš ï¸ Unfeatured testimonial ${ourSubscription.testimonialId} due to subscription status: ${newStatus}`);
           }
           
-          console.log(`✅ Updated subscription ${ourSubscription.id} status to ${newStatus}`);
+          console.log(`âœ… Updated subscription ${ourSubscription.id} status to ${newStatus}`);
         }
       } else if (eventType === 'customer.subscription.deleted') {
         // Handle subscription cancellation/deletion
@@ -613,7 +607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             reason: 'Subscription canceled by customer',
           });
           
-          console.log(`✅ Ended subscription ${ourSubscription.id} and unfeatured testimonial ${ourSubscription.testimonialId}`);
+          console.log(`âœ… Ended subscription ${ourSubscription.id} and unfeatured testimonial ${ourSubscription.testimonialId}`);
         }
       } else {
         console.log(`Unhandled Stripe webhook event type: ${eventType}`);
@@ -835,7 +829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Atomic registration endpoint - creates account + uploads portfolio + sets tier in one transaction
-  app.post("/api/artists/register-complete", extendTimeout, portfolioUpload.array("portfolioFiles", 3), handlePortfolioUploadError, async (req, res) => {
+  app.post("/api/artists/register-complete", extendTimeout, portfolioUpload.array("portfolioFiles", 3), handlePortfolioUploadError, async (req: any, res: any) => {
     try {
       // Parse form data
       const acceptTerms = req.body.acceptTerms === "true";
@@ -879,10 +873,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         artistShort: req.body.artistShort,
       });
 
-      // Check if email already exists
-      const existing = await storage.getArtistByEmail(accountData.email);
-      if (existing) {
-        return res.status(400).json({ message: "Email already registered" });
+      // Check if email already exists (including soft-deleted accounts — email remains taken in DB)
+      const [existingByEmail] = await db
+        .select({ id: artists.id })
+        .from(artists)
+        .where(eq(artists.email, accountData.email))
+        .limit(1);
+      if (existingByEmail) {
+        return res.status(400).json({
+          message: "This email is already associated with an account. If you previously deleted your account, please contact support to reactivate it.",
+          errorCode: "EMAIL_EXISTS",
+        });
       }
 
       // Parse tier selection
@@ -935,7 +936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 1. Create artist account
-      const [artist] = await db
+      const [artist] = (await db
         .insert(storage.getArtistsTable())
         .values({
           ...accountData,
@@ -948,12 +949,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tosIpAddress: ipAddress,
           tosVersion: "v1.0-2025-11",
         } as any)
-        .returning();
+        .returning()) as any[];
 
       // 2. Upload portfolio files to object storage and create records
       const objectStorage = new ObjectStorageService();
       const portfolioSubmissions = [];
-      
+      console.log(`[Portfolio] Processing ${files.length} file(s) for artist ${artist.id}`);
+
       for (const file of files) {
         // Compress images before upload to reduce upload time and storage costs
         // Portfolio images don't need ultra-high quality, 1920px width is plenty
@@ -974,7 +976,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           contentType = 'image/jpeg'; // Only set to JPEG when actually converting
           shouldCompress = true;
           
-          console.log(`[Portfolio Upload] Compressed ${file.originalname}: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(processedBuffer.length / 1024 / 1024).toFixed(2)}MB`);
+          console.log(`[Portfolio Upload] Compressed ${file.originalname}: ${(file.size / 1024 / 1024).toFixed(2)}MB â†’ ${(processedBuffer.length / 1024 / 1024).toFixed(2)}MB`);
         }
         
         // Preserve original filename unless we compressed to JPEG
@@ -983,20 +985,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const extension = shouldCompress ? 'jpg' : safeName.split('.').pop() || 'jpg';
         const filename = `${Date.now()}-${baseFilename}.${extension}`;
         
-        const imageUrl = await objectStorage.uploadFile({
-          directory: objectStorage.getArtworkUploadsDir(),
-          filename,
-          buffer: processedBuffer,
-          contentType,
-        });
-        
-        const [submission] = await db
-          .insert(storage.getPortfolioSubmissionsTable())
-          .values({
-            artistId: artist.id,
-            imageUrl,
-          } as any)
-          .returning();
+        let imageUrl: string;
+        try {
+          imageUrl = await objectStorage.uploadFile({
+            directory: 'artworks',
+            filename,
+            buffer: processedBuffer,
+            contentType,
+          });
+          console.log(`[Portfolio] Uploaded ${file.originalname} → ${imageUrl}`);
+        } catch (uploadErr: any) {
+          console.error(`[Portfolio] Upload FAILED for ${file.originalname}:`, uploadErr.message);
+          throw uploadErr;
+        }
+
+        let submission: any;
+        try {
+          const [row] = (await db
+            .insert(storage.getPortfolioSubmissionsTable())
+            .values({ artistId: artist.id, imageUrl } as any)
+            .returning()) as any[];
+          submission = row;
+          console.log(`[Portfolio] DB insert OK, submission id=${submission?.id}`);
+        } catch (dbErr: any) {
+          console.error(`[Portfolio] DB insert FAILED:`, dbErr.message);
+          throw dbErr;
+        }
         portfolioSubmissions.push(submission);
       }
 
@@ -1032,7 +1046,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .catch(err => console.error('Failed to send welcome email:', err));
 
       // Regenerate session and automatically log in the new artist
-      req.session.regenerate((err) => {
+      req.session.regenerate((err: Error | null) => {
         if (err) {
           console.error("Session regeneration error:", err);
           return res.status(500).json({ message: "Registration completed but login failed. Please try logging in." });
@@ -1048,7 +1062,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
 
         // Explicitly save session before sending response to prevent race condition
-        req.session.save((saveErr) => {
+        req.session.save((saveErr: Error | null) => {
           if (saveErr) {
             console.error("Session save error:", saveErr);
             return res.status(500).json({ message: "Registration completed but login failed. Please try logging in." });
@@ -1098,7 +1112,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      const validPassword = await bcrypt.compare(password, artist.password);
+      console.log("Artist Login - Entered Password:", password);
+            console.log("Artist Login - Stored Hash:", artist.password);
+            const validPassword = await bcrypt.compare(password, artist.password);
       if (!validPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -1309,7 +1325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PUBLIC: Get artist profile (for customer-facing artist pages)
   app.get("/api/artists/:id", async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const artist = await storage.getArtist(id);
 
       if (!artist) {
@@ -1340,7 +1356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PUBLIC: Get artist artworks (for customer-facing artist pages)
   app.get("/api/artists/:id/artworks", async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const artist = await storage.getArtist(id);
 
       if (!artist || !artist.approved) {
@@ -1382,7 +1398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get single artist details (admin only)
   app.get("/api/admin/artists/:id", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const artist = await storage.getArtist(id);
       
       if (!artist) {
@@ -1401,7 +1417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Approve artist (admin only)
   app.post("/api/artists/:id/approve", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const artist = await storage.updateArtist(id, { approved: true });
       
       // Send portfolio approval email (non-blocking)
@@ -1529,11 +1545,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </div>
                 <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
                 <p style="color: #666; font-size: 12px;">
-                  This is an official message from 247 Print Network administration.
+                  This is an official message from 369 Art Collective administration.
                 </p>
               </div>
             `,
-            textBody: `Hello ${artist.name},\n\n${message.trim()}\n\n---\nThis is an official message from 247 Print Network administration.`,
+            textBody: `Hello ${artist.name},\n\n${message.trim()}\n\n---\nThis is an official message from 369 Art Collective administration.`,
             metadata: { adminSent: true, batchEmail: true },
           });
 
@@ -1566,7 +1582,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete artist (admin only)
   app.post("/api/admin/artists/:id/delete", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const artist = await storage.getArtist(id);
       
       if (!artist) {
@@ -1586,7 +1602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update admin notes for artist (admin only)
   app.patch("/api/admin/artists/:id/notes", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { adminNotes } = req.body;
 
       if (typeof adminNotes !== 'string') {
@@ -1613,7 +1629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get artist's portfolio submissions (admin only)
   app.get("/api/admin/artists/:id/portfolio", requireAdmin, async (req, res) => {
     try {
-      const artistId = req.params.id;
+      const artistId = req.params.id as string;
       const portfolioSubmissions = await storage.getPortfolioSubmissionsByArtist(artistId);
       
       // Convert relative URLs to absolute URLs
@@ -1814,7 +1830,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin reset artist password (generates temporary password)
   app.post("/api/artists/:id/reset-password", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const artist = await storage.getArtist(id);
       
       if (!artist) {
@@ -2103,7 +2119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get artist payout history
   app.get("/api/artists/:id/payouts", requireArtist, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const artist = req.user!;
 
       // Artists can only view their own payouts
@@ -2216,7 +2232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Email template preview endpoints (for QA testing)
   app.get("/api/admin/email-preview/:templateName", requireAdmin, async (req, res) => {
     try {
-      const { templateName } = req.params;
+      const templateName = req.params.templateName as string;
       const { trialDay3Email, trialEndingSoonEmail, trialLastChanceEmail, reEngagementEmail, templateMetadata, replaceEmailPlaceholders } = await import('./email-templates');
       
       const metadata = templateMetadata[templateName];
@@ -2229,21 +2245,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const params = req.query as Record<string, string>;
       const data = { ...metadata.sampleData, ...params };
-      const domain = req.get('host') || 'example.replit.app';
+      const domain = req.get('host') || new URL(process.env.PUBLIC_APP_URL || 'http://localhost:5000').host;
       
       let html: string;
       switch (templateName) {
         case 'trial-day-3':
-          html = trialDay3Email({ ...data, domain });
+          html = trialDay3Email({ ...data, domain } as any);
           break;
         case 'trial-ending-soon':
-          html = trialEndingSoonEmail({ ...data, domain });
+          html = trialEndingSoonEmail({ ...data, domain } as any);
           break;
         case 'trial-last-chance':
-          html = trialLastChanceEmail({ ...data, domain });
+          html = trialLastChanceEmail({ ...data, domain } as any);
           break;
         case 're-engagement':
-          html = reEngagementEmail({ ...data, domain });
+          html = reEngagementEmail({ ...data, domain } as any);
           break;
         default:
           return res.status(404).json({ message: "Unknown template" });
@@ -2281,7 +2297,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      const validPassword = await bcrypt.compare(password, admin.password);
+      console.log("Admin Login - Entered Password:", password);
+            console.log("Admin Login - Stored Hash:", admin.password);
+            const validPassword = await bcrypt.compare(password, admin.password);
       if (!validPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -2310,8 +2328,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           console.log("Admin logged in - session created:", {
             sessionID: req.sessionID,
-            userType: req.session.user.type,
-            userId: req.session.user.id,
+            userType: req.session.user?.type,
+            userId: req.session.user?.id,
           });
 
           const { password: _, ...adminData } = admin;
@@ -2520,7 +2538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Update challenge status
   app.patch("/api/admin/challenges/:id/status", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { status } = req.body;
 
       await storage.updateChallengeStatus(id, status);
@@ -2595,7 +2613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Protected: Join a challenge
   app.post("/api/challenges/:id/join", requireInfluencer, async (req, res) => {
     try {
-      const participation = await storage.joinChallenge(req.params.id, req.user!.id);
+      const participation = await storage.joinChallenge((req.params.id as string), req.user!.id);
       res.json(participation);
     } catch (error: any) {
       console.error("Join challenge error:", error);
@@ -2606,7 +2624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Protected: Get challenge leaderboard
   app.get("/api/challenges/:id/leaderboard", requireInfluencer, async (req, res) => {
     try {
-      const leaderboard = await storage.getChallengeLeaderboard(req.params.id);
+      const leaderboard = await storage.getChallengeLeaderboard(req.params.id as string);
       res.json(leaderboard);
     } catch (error: any) {
       console.error("Get challenge leaderboard error:", error);
@@ -2644,13 +2662,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Get specific influencer with performance stats
   app.get("/api/admin/influencers/:id", requireAdmin, async (req, res) => {
     try {
-      const influencer = await storage.getInfluencer(req.params.id);
+      const influencer = await storage.getInfluencer(req.params.id as string);
       if (!influencer) {
         return res.status(404).json({ message: "Influencer not found" });
       }
 
       // Get performance stats
-      const stats = await storage.getInfluencerPerformanceSummary(req.params.id);
+      const stats = await storage.getInfluencerPerformanceSummary(req.params.id as string);
 
       const { password: _, ...influencerData } = influencer;
       res.json({ ...influencerData, stats });
@@ -2663,14 +2681,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Approve influencer
   app.patch("/api/admin/influencers/:id/approve", requireAdmin, async (req, res) => {
     try {
-      const influencer = await storage.approveInfluencer(req.params.id);
+      const influencer = await storage.approveInfluencer(req.params.id as string);
       
       // Send approval email (non-blocking)
       emailService.sendInfluencerApprovalEmail(
         influencer.email,
         influencer.name,
         influencer.id,
-        influencer.affiliateCode
+        influencer.affiliateCode ?? ''
       ).catch(err => {
         console.error('Failed to send influencer approval email:', err);
         // Non-blocking: continue even if email fails
@@ -2697,7 +2715,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const influencer = await storage.updateInfluencer(req.params.id, updates);
+      const influencer = await storage.updateInfluencer((req.params.id as string), updates);
       const { password: _, ...influencerData } = influencer;
       res.json(influencerData);
     } catch (error: any) {
@@ -2749,7 +2767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log(`[Upload] Image validated: ${validation.dimensions?.width}×${validation.dimensions?.height} pixels`);
+      console.log(`[Upload] Image validated: ${validation.dimensions?.width}Ã—${validation.dimensions?.height} pixels`);
       
       // Upload to object storage
       const objectStorage = new ObjectStorageService();
@@ -2770,7 +2788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload image for upscale widget with automatic normalization
-  app.post("/api/upload/design", requireArtist, upload.single("image"), handleMulterError, async (req, res) => {
+  app.post("/api/upload/design", requireArtist, upload.single("image"), handleMulterError, async (req: any, res: any) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -2798,7 +2816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Log normalization details
       if (normalizationResult.wasModified) {
-        console.log(`[IMAGE_NORMALIZED] Auto-downscaled from ${normalizationResult.originalWidth}×${normalizationResult.originalHeight}px to ${normalizationResult.normalizedWidth}×${normalizationResult.normalizedHeight}px`);
+        console.log(`[IMAGE_NORMALIZED] Auto-downscaled from ${normalizationResult.originalWidth}Ã—${normalizationResult.originalHeight}px to ${normalizationResult.normalizedWidth}Ã—${normalizationResult.normalizedHeight}px`);
       }
       
       // Return URL with normalization metadata (including needsUpscale guidance)
@@ -3006,7 +3024,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update artwork (artist can only update their own)
   app.patch("/api/artworks/:id", requireArtist, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       // Verify artwork belongs to authenticated artist
       const artwork = await storage.getArtwork(id);
@@ -3042,7 +3060,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reactivate own archived artwork (artist)
   app.post("/api/artworks/:id/my-reactivate", requireArtist, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       const artwork = await storage.getArtwork(id);
       if (!artwork) {
@@ -3073,7 +3091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Approve artwork and create Printify + Shopify products (admin only)
   app.post("/api/artworks/:id/approve", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const artwork = await storage.getArtwork(id);
       if (!artwork) {
         return res.status(404).json({ message: "Artwork not found" });
@@ -3086,9 +3104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Build absolute image URL for Shopify/Printify
-      // CRITICAL: Use published app URL (247portal.replit.app) for public image access
-      // Development workspace URLs (picard.replit.dev) are not accessible to Shopify
-      const publicUrl = process.env.PUBLIC_APP_URL || 'https://247portal.replit.app';
+      const publicUrl = process.env.PUBLIC_APP_URL || 'http://localhost:5000';
       
       const imageUrl = artwork.imageUrl.startsWith("http") 
         ? artwork.imageUrl 
@@ -3128,8 +3144,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Determine storage location and read dimensions accordingly
-          const isSameOriginOrBare = !normalizedUrl.startsWith("http") || 
-                                      normalizedUrl.includes("247portal.replit.app") ||
+          const appHost = process.env.PUBLIC_APP_URL ? new URL(process.env.PUBLIC_APP_URL).host : '';
+          const isSameOriginOrBare = !normalizedUrl.startsWith("http") ||
+                                      (appHost && normalizedUrl.includes(appHost)) ||
                                       normalizedUrl.includes("localhost");
           const isObjectStorage = isSameOriginOrBare && 
                                   (pathComponent.startsWith("/objects/") || pathComponent.startsWith("objects/"));
@@ -3149,7 +3166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
               }
               
-              console.log(`Image dimensions from object storage: ${dimensions.width}×${dimensions.height}px`);
+              console.log(`Image dimensions from object storage: ${dimensions.width}Ã—${dimensions.height}px`);
             } catch (dimensionError: any) {
               console.error("Failed to read image dimensions from object storage:", dimensionError);
               throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
@@ -3160,7 +3177,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const imagePath = path.join(uploadDir, path.basename(pathComponent));
               if (fs.existsSync(imagePath)) {
                 dimensions = getImageDimensions(imagePath);
-                console.log(`Image dimensions from legacy filesystem: ${dimensions.width}×${dimensions.height}px`);
+                if (!dimensions) throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
+                console.log(`Image dimensions from legacy filesystem: ${dimensions.width}Ã—${dimensions.height}px`);
               } else {
                 throw new Error("Legacy image file not found on filesystem");
               }
@@ -3184,7 +3202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
               }
               
-              console.log(`Image dimensions from HTTP URL: ${dimensions.width}×${dimensions.height}px`);
+              console.log(`Image dimensions from HTTP URL: ${dimensions.width}Ã—${dimensions.height}px`);
             } catch (dimensionError: any) {
               console.error("Failed to read image dimensions from HTTP URL:", dimensionError);
               throw new Error("Image dimensions unavailable - cannot qualify variants. Please re-upload artwork.");
@@ -3194,8 +3212,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const printifyResult = await createWallArtProducts(
             imageUrl,
             artwork.title,
-            dimensions.width,
-            dimensions.height,
+            dimensions!.width,
+            dimensions!.height,
             artwork.description || undefined
           );
 
@@ -3273,9 +3291,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               );
               
               if (result.success) {
-                console.log(`[Mockup Sync] ✅ Successfully added ${result.mockupsAdded} mockup images to Shopify product ${shopifyProductId}`);
+                console.log(`[Mockup Sync] âœ… Successfully added ${result.mockupsAdded} mockup images to Shopify product ${shopifyProductId}`);
               } else {
-                console.warn(`[Mockup Sync] ⚠️ Mockup sync failed or incomplete:`, result.errors);
+                console.warn(`[Mockup Sync] âš ï¸ Mockup sync failed or incomplete:`, result.errors);
               }
             }
           } catch (error: any) {
@@ -3298,7 +3316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reject artwork (admin only)
   app.post("/api/artworks/:id/reject", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { reason } = req.body;
 
       const artwork = await storage.getArtwork(id);
@@ -3336,7 +3354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Flag artwork for IP violation (admin only)
   app.post("/api/artworks/:id/flag", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const data = insertViolationReportSchema.parse({
         ...req.body,
         artworkId: id,
@@ -3359,7 +3377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get violation reports for artwork (admin only)
   app.get("/api/artworks/:id/violations", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const reports = await storage.getViolationReportsByArtwork(id);
       res.json(reports);
     } catch (error: any) {
@@ -3371,7 +3389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get detailed artwork metadata including upscaling data and variant qualification (admin only)
   app.get("/api/artworks/:id/details", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       // Get artwork
       const artwork = await storage.getArtwork(id);
@@ -3445,13 +3463,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Dimensions not in upscale record, try to get from image
           try {
             const dimensions = await getImageDimensions(artwork.imageUrl);
+            if (!dimensions) throw new Error("Could not parse image dimensions");
             width = dimensions.width;
             height = dimensions.height;
           } catch (error) {
             console.error("Failed to get image dimensions:", error);
-            return res.status(500).json({ 
+            return res.status(500).json({
               message: "Failed to get image dimensions",
-              imageUrl: artwork.imageUrl 
+              imageUrl: artwork.imageUrl
             });
           }
         }
@@ -3459,6 +3478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // No upscale record found, try to get dimensions from image
         try {
           const dimensions = await getImageDimensions(artwork.imageUrl);
+          if (!dimensions) throw new Error("Could not parse image dimensions");
           width = dimensions.width;
           height = dimensions.height;
         } catch (error) {
@@ -3552,7 +3572,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reactivate archived artwork (admin only)
   app.post("/api/artworks/:id/reactivate", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       const artwork = await storage.getArtwork(id);
       if (!artwork) {
@@ -3639,10 +3659,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           if (action === "approve") {
-            // Build absolute image URL for Shopify
-            // CRITICAL: Use published app URL (247portal.replit.app) for public image access
-            // Development workspace URLs (picard.replit.dev) are not accessible to Shopify
-            const publicUrl = process.env.PUBLIC_APP_URL || 'https://247portal.replit.app';
+            // Build absolute image URL for Shopify/Printify
+            const publicUrl = process.env.PUBLIC_APP_URL || 'http://localhost:5000';
             
             const imageUrl = artwork.imageUrl.startsWith("http") 
               ? artwork.imageUrl 
@@ -3658,11 +3676,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
               createArtworkProduct({
                 title: artwork.title,
                 description: artwork.description || "",
-                artworkStory: artwork.artworkStory,
-                suggestedUse: artwork.suggestedUse,
+                artworkStory: artwork.artworkStory ?? undefined,
+                suggestedUse: artwork.suggestedUse ?? undefined,
                 styleTags: artwork.styleTags || [],
                 imageUrl,
                 artistName: artist.name,
+                artistShort: artist.artistShort,
+                artworkId: artwork.id,
                 seoSlug: artwork.seoSlug || artwork.title.toLowerCase().replace(/\s+/g, '-'),
               })
                 .then(shopifyProduct => {
@@ -3727,7 +3747,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Deactivate product (artist can deactivate their own products)
   app.post("/api/artworks/:id/deactivate", requireArtist, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const artwork = await storage.getArtwork(id);
       
       if (!artwork) {
@@ -3769,7 +3789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Activate product (artist can activate their own products)
   app.post("/api/artworks/:id/activate", requireArtist, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const artwork = await storage.getArtwork(id);
       
       if (!artwork) {
@@ -3811,7 +3831,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get artist earnings stats
   app.get("/api/artists/:id/earnings", requireArtist, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       // Verify artist can only access their own earnings
       if (req.session.user?.id !== id) {
@@ -3884,7 +3904,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get artist referral stats
   app.get("/api/artists/:id/referrals", requireArtist, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       // Verify artist can only access their own referrals
       if (req.session.user?.id !== id) {
@@ -3948,7 +3968,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allTestimonials = await storage.getAllTestimonials();
       const artistTestimonial = allTestimonials.find(t => t.artistId === id && t.isActive);
       const testimonialShareUrl = artistTestimonial 
-        ? `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/success-stories/${artistTestimonial.shareSlug}?utm_source=artist-referral&utm_medium=testimonial&utm_campaign=${artist.referralCode}&ref=${artist.referralCode}`
+        ? `${process.env.PUBLIC_APP_URL || 'http://localhost:5000'}/success-stories/${artistTestimonial.shareSlug}?utm_source=artist-referral&utm_medium=testimonial&utm_campaign=${artist.referralCode}&ref=${artist.referralCode}`
         : null;
 
       res.json({
@@ -3974,7 +3994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get artist artwork performance analytics
   app.get("/api/artists/:id/artwork-performance", requireArtist, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       // Verify artist can only access their own data
       if (req.session.user?.id !== id) {
@@ -4220,7 +4240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Execute payout for specific artist
   app.post("/api/admin/payouts/execute/:artistId", requireAdmin, async (req, res) => {
     try {
-      const { artistId } = req.params;
+      const artistId = req.params.artistId as string;
       const { periodStart, periodEnd } = req.body;
       
       const start = periodStart ? new Date(periodStart) : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -4456,8 +4476,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // AI generation rate limiter (5 per minute per IP)
+  const aiGenLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => {
+      res.status(429).json({ message: "Too many AI generation requests. Please wait 1 minute." });
+    },
+  });
+
   // Artist: Generate AI image
-  app.post("/api/ai/generate", requireArtist, async (req, res) => {
+  app.post("/api/ai/generate", requireArtist, aiGenLimiter, async (req, res) => {
     try {
       const artist = req.user!;
       const { prompt, size = "1024x1024" } = req.body;
@@ -4506,7 +4537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         artistId: artist.id,
         prompt,
         size,
-        model: "gpt-image-1",
+        model: "gemini-2.0-flash",
         generationType: "artist_studio",
       });
       
@@ -4578,7 +4609,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/ai/generations/:id", requireArtist, async (req, res) => {
     try {
       const artist = req.user!;
-      const generation = await storage.getAiGeneration(req.params.id);
+      const generation = await storage.getAiGeneration(req.params.id as string);
       
       if (!generation) {
         return res.status(404).json({ message: "Generation not found" });
@@ -4624,7 +4655,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public: Get testimonial by slug with artist referral code for affiliate links
   app.get("/api/testimonials/:slug", async (req, res) => {
     try {
-      const testimonial = await storage.getTestimonialBySlugWithArtist(req.params.slug);
+      const testimonial = await storage.getTestimonialBySlugWithArtist(req.params.slug as string);
       if (!testimonial) {
         return res.status(404).json({ message: "Testimonial not found" });
       }
@@ -4706,7 +4737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Update testimonial
   app.patch("/api/admin/testimonials/:id", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const updates = req.body;
       
       const testimonial = await storage.updateTestimonial(id, updates);
@@ -4723,7 +4754,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Delete testimonial
   app.delete("/api/admin/testimonials/:id", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       await storage.deleteTestimonial(id);
       res.json({ message: "Testimonial deleted successfully" });
     } catch (error: any) {
@@ -4788,7 +4819,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Remove admin override
   app.delete("/api/admin/featured-overrides/:id", requireAdmin, async (req, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { reason } = req.body;
       
       const adminId = req.session.adminId!;
@@ -4808,7 +4839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { performMonthlyRotation } = await import("./lib/featured-rotation-service");
       
-      console.log('🔄 Admin triggered merit-based rotation');
+      console.log('ðŸ”„ Admin triggered merit-based rotation');
       const result = await performMonthlyRotation();
       
       res.json({
@@ -4877,19 +4908,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate Stripe configuration
       const priceId = process.env.STRIPE_FEATURED_PRICE_ID;
       if (!priceId) {
-        console.error("❌ STRIPE_FEATURED_PRICE_ID not configured");
+        console.error("âŒ STRIPE_FEATURED_PRICE_ID not configured");
         return res.status(500).json({ 
           message: "Featured subscriptions are not configured. Please contact support." 
         });
       }
 
       // Import stripe client
-      const { stripe } = await import("./lib/stripe-connect");
+      const { getStripeClient } = await import("./lib/stripe-connect");
+      const stripe = getStripeClient();
 
       // Get base URL for success/cancel redirect
-      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-        : `http://localhost:${process.env.PORT || 5000}`;
+      const baseUrl = process.env.PUBLIC_APP_URL || `http://localhost:${process.env.PORT || 5000}`;
 
       // Create Stripe Checkout session
       const session = await stripe.checkout.sessions.create({
@@ -4917,7 +4947,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
 
-      console.log(`✅ Created Stripe Checkout session for artist ${artistId}, testimonial ${testimonialId}`);
+      console.log(`âœ… Created Stripe Checkout session for artist ${artistId}, testimonial ${testimonialId}`);
       
       res.json({ 
         checkoutUrl: session.url,
@@ -4968,7 +4998,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(500).json({ message: "Failed to create session" });
         }
         
-        console.log(`✅ CreatorStack buyer registered: ${email}`);
+        console.log(`âœ… CreatorStack buyer registered: ${email}`);
         res.json({ 
           message: "Account created successfully",
           buyer: {
@@ -5021,7 +5051,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(500).json({ message: "Failed to create session" });
           }
 
-          console.log(`✅ CreatorStack buyer logged in: ${email}`);
+          console.log(`âœ… CreatorStack buyer logged in: ${email}`);
           res.json({
             message: "Login successful",
             buyer: {
@@ -5050,7 +5080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(500).json({ message: "Failed to logout" });
         }
 
-        console.log(`✅ CreatorStack buyer logged out: ${buyerId}`);
+        console.log(`âœ… CreatorStack buyer logged out: ${buyerId}`);
         res.json({ message: "Logged out successfully" });
       });
     } catch (error: any) {
@@ -5103,7 +5133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/creatorstack/purchases/:purchaseId/track-access", async (req, res) => {
     try {
       const buyerId = req.session.creatorstackBuyerId;
-      const { purchaseId } = req.params;
+      const purchaseId = req.params.purchaseId as string;
 
       if (!buyerId) {
         return res.status(401).json({ message: "Not authenticated" });
@@ -5443,9 +5473,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             `}
           </ul>
           <p>Log in to your dashboard to start using your new benefits!</p>
-          <p>Best regards,<br>247 Print Network Team</p>
+          <p>Best regards,<br>369 Art Collective Team</p>
         `,
-        textBody: `Hi ${artist.name},\n\nYour account has been upgraded to ${tierName} tier!\n\nBest regards,\n247 Print Network Team`,
+        textBody: `Hi ${artist.name},\n\nYour account has been upgraded to ${tierName} tier!\n\nBest regards,\n369 Art Collective Team`,
       }).catch(err => {
         console.error('Failed to send tier upgrade email:', err);
       });
@@ -5551,7 +5581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ success: false, error: result.error, details: result });
       }
 
-      console.log(`[CreatorStack TEST] ✅ Purchase processed: ${result.processedItems.length} items`);
+      console.log(`[CreatorStack TEST] âœ… Purchase processed: ${result.processedItems?.length ?? 0} items`);
       res.status(200).json({ success: true, result });
     } catch (error: any) {
       console.error("[CreatorStack TEST] Webhook error:", error);
@@ -5570,16 +5600,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // CRITICAL: Verify HMAC signature using raw body
       if (!req.rawBody) {
-        console.error("[CreatorStack] ❌ Raw body not available for HMAC verification");
+        console.error("[CreatorStack] âŒ Raw body not available for HMAC verification");
         return res.status(500).send('Server configuration error');
       }
 
       if (!verifyShopifyWebhook(req.rawBody, hmac)) {
-        console.warn("[CreatorStack] ⚠️ HMAC verification failed - rejecting webhook");
+        console.warn("[CreatorStack] âš ï¸ HMAC verification failed - rejecting webhook");
         return res.status(401).send('Unauthorized');
       }
 
-      console.log("[CreatorStack] ✅ Webhook HMAC verified");
+      console.log("[CreatorStack] âœ… Webhook HMAC verified");
 
       // Body is already parsed by express.json middleware
       const shopifyOrder = req.body;
@@ -5593,7 +5623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).send('Processing failed');
       }
 
-      console.log(`[CreatorStack] ✅ Purchase processed: ${result.processedItems.length} items`);
+      console.log(`[CreatorStack] âœ… Purchase processed: ${result.processedItems?.length ?? 0} items`);
       // Respond 200 only on success (Shopify won't retry)
       res.status(200).send('OK');
     } catch (error: any) {
@@ -5638,10 +5668,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userInput: template,
         aiResponse: result.generatedContent,
         tokensUsed: result.tokensUsed,
-        model: 'gpt-4o',
+        model: 'gemini-2.0-flash',
       });
 
-      console.log(`✅ CreatorStack AI: Generated ${result.tokensUsed} tokens for buyer ${buyerId}`);
+      console.log(`âœ… CreatorStack AI: Generated ${result.tokensUsed} tokens for buyer ${buyerId}`);
 
       res.json({
         success: true,
@@ -5756,7 +5786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const cached = await UpscaleDeduplicationService.checkCache(fileHash);
       if (cached.found) {
-        console.log(`✅ Upscale cache hit for hash ${fileHash} - returning cached result WITHOUT consuming quota`);
+        console.log(`âœ… Upscale cache hit for hash ${fileHash} - returning cached result WITHOUT consuming quota`);
         
         // DO NOT consume quota for cached results - deduplication should be free!
         // await UpscaleQuotaService.consumeQuota(artistId, quotaStatus.quotaType);
@@ -5838,7 +5868,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           costCents: estimatedCost
         });
 
-        console.log(`✅ Upscale job created: ${job.id} (Replicate: ${predictionId})`);
+        console.log(`âœ… Upscale job created: ${job.id} (Replicate: ${predictionId})`);
 
         res.json({
           status: 'queued',
@@ -5898,7 +5928,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const { jobId } = req.params;
+      const jobId = req.params.jobId as string;
 
       const job = await storage.getUpscaleJobById(jobId);
       if (!job) {
@@ -6156,3 +6186,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   return httpServer;
 }
+

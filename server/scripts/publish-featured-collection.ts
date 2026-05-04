@@ -77,7 +77,7 @@ async function main() {
 
   console.log("\n" + "=".repeat(60));
   console.log("✅ Done!\n");
-  console.log("🌐 View at: https://247printnetwork.com/collections/featured");
+  console.log("🌐 View at: https://369artcollective.com/collections/featured");
   console.log("🏠 Hero slider should now activate on homepage\n");
   console.log("💡 Hard refresh homepage (Ctrl+Shift+R or Cmd+Shift+R) to see changes\n");
 }

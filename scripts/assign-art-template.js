@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 247 Print Network - Auto-Assign Art Template to Products
+ * 369 Art Collective - Auto-Assign Art Template to Products
  * 
  * This script automatically assigns the "art" product template to all
  * art products in your Shopify store using the Shopify Admin API.
@@ -125,7 +125,7 @@ async function assignTemplates() {
     // Filter for art products (you can customize this filter)
     // For now, we'll look for products with specific tags or vendors
     const artProducts = products.filter(p => 
-      p.vendor === '247 Print Network' ||
+      p.vendor === '369 Art Collective' ||
       (p.tags && p.tags.includes('artwork')) ||
       (p.tags && p.tags.includes('art-print'))
     );
@@ -135,7 +135,7 @@ async function assignTemplates() {
     if (artProducts.length === 0) {
       log('\n⚠ No art products found to update', colors.yellow);
       log('Make sure your products have:', colors.reset);
-      log('  • Vendor set to "247 Print Network", OR', colors.reset);
+      log('  • Vendor set to "369 Art Collective", OR', colors.reset);
       log('  • Tags including "artwork" or "art-print"', colors.reset);
       return;
     }

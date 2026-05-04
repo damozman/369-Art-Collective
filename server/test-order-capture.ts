@@ -21,7 +21,7 @@ async function testOrderCapture() {
       name: 'Order Test Artist',
       artistShort: 'OTA99',
       approved: true,
-    }).returning();
+    } as any).returning();
     console.log(`✅ Artist created: ${testArtist.id} (${testArtist.artistShort})`);
 
     console.log('\n2️⃣ Creating test artwork...');

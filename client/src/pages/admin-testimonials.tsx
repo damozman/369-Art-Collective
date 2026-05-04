@@ -17,9 +17,12 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, ExternalLink, Share2, Copy, Check, Crown, AlertTriangle, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SiFacebook, SiX, SiLinkedin } from "react-icons/si";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import type { Testimonial, TestimonialWithArtist } from "@shared/schema";
+
+// Corrected icon imports
+import { SiFacebook, SiX } from "react-icons/si";
+import { FaLinkedin } from "react-icons/fa";
 
 const testimonialFormSchema = z.object({
   artistId: z.string().nullable().optional(),
@@ -254,7 +257,7 @@ export default function AdminTestimonials() {
 
   const handleSocialShare = (platform: "facebook" | "twitter" | "linkedin", testimonial: TestimonialWithArtist) => {
     const url = generateShareUrl(testimonial.shareSlug, testimonial.artistReferralCode);
-    const text = `${testimonial.title} - ${testimonial.artistName} | 247 Print Network`;
+    const text = `${testimonial.title} - ${testimonial.artistName} | 369 Art Collective`;
     
     let shareUrl = "";
     switch (platform) {
@@ -505,7 +508,7 @@ export default function AdminTestimonials() {
                         <div className="flex-1">
                           <FormLabel className="text-base font-semibold">Artist Consent Required</FormLabel>
                           <FormDescription className="mt-1">
-                            ⚠️ <strong>Legal Protection:</strong> Confirm that the artist has explicitly consented to having their testimonial, name, and story publicly shared on the platform and in marketing materials. This protects 247 Print Network from any liability regarding unauthorized use of the artist's likeness, story, or intellectual property.
+                            ⚠️ <strong>Legal Protection:</strong> Confirm that the artist has explicitly consented to having their testimonial, name, and story publicly shared on the platform and in marketing materials. This protects 369 Art Collective from any liability regarding unauthorized use of the artist's likeness, story, or intellectual property.
                           </FormDescription>
                           <FormMessage />
                         </div>
@@ -623,7 +626,7 @@ export default function AdminTestimonials() {
                             </SelectTrigger>
                             <SelectContent>
                               {testimonials
-                                .filter(t => t.isActive && !t.featuredTier && t.artistId)
+                                .filter(t => t.isActive && !t.featured && t.artistId)
                                 .map(t => (
                                   <SelectItem key={t.id} value={t.id}>
                                     {t.artistName} - {t.title}
@@ -654,14 +657,14 @@ export default function AdminTestimonials() {
                   </Dialog>
                 </div>
                 
-                {featuredData.placements.filter((p: any) => p.featuredTier === "admin_override").length === 0 ? (
+                {featuredData.placements.filter((p: any) => p.featured === "admin_override").length === 0 ? (
                   <p className="text-sm text-muted-foreground p-4 text-center border rounded">
                     No admin overrides. Click "Add Override" to manually feature a testimonial.
                   </p>
                 ) : (
                   <div className="space-y-2">
                     {featuredData.placements
-                      .filter((p: any) => p.featuredTier === "admin_override")
+                      .filter((p: any) => p.featured === "admin_override")
                       .map((placement: any) => (
                         <div key={placement.id} className="flex items-center justify-between p-3 border rounded" data-testid={`placement-${placement.id}`}>
                           <div className="flex-1">
@@ -704,11 +707,11 @@ export default function AdminTestimonials() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <h3 className="font-semibold text-sm">Premium Subscriptions</h3>
-                  {featuredData.placements.filter((p: any) => p.featuredTier === "premium").length === 0 ? (
+                  {featuredData.placements.filter((p: any) => p.featured === "premium").length === 0 ? (
                     <p className="text-xs text-muted-foreground p-2 border rounded">No premium subscriptions</p>
                   ) : (
                     featuredData.placements
-                      .filter((p: any) => p.featuredTier === "premium")
+                      .filter((p: any) => p.featured === "premium")
                       .map((p: any) => (
                         <div key={p.id} className="p-2 border rounded text-sm">
                           <p className="font-medium">{p.artistName}</p>
@@ -719,11 +722,11 @@ export default function AdminTestimonials() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="font-semibold text-sm">Merit-Based (Auto-Rotation)</h3>
-                  {featuredData.placements.filter((p: any) => p.featuredTier === "merit").length === 0 ? (
+                  {featuredData.placements.filter((p: any) => p.featured === "merit").length === 0 ? (
                     <p className="text-xs text-muted-foreground p-2 border rounded">No merit placements</p>
                   ) : (
                     featuredData.placements
-                      .filter((p: any) => p.featuredTier === "merit")
+                      .filter((p: any) => p.featured === "merit")
                       .map((p: any) => (
                         <div key={p.id} className="p-2 border rounded text-sm">
                           <p className="font-medium">{p.artistName}</p>
@@ -923,7 +926,7 @@ export default function AdminTestimonials() {
                     className="flex-1"
                     data-testid="button-share-linkedin"
                   >
-                    <SiLinkedin className="w-4 h-4 mr-2" />
+                    <FaLinkedin className="w-4 h-4 mr-2" />
                     LinkedIn
                   </Button>
                 </div>
@@ -941,3 +944,4 @@ export default function AdminTestimonials() {
     </div>
   );
 }
+

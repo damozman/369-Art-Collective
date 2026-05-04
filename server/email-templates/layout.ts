@@ -14,7 +14,7 @@ export function emailLayout({ preheader, children }: EmailLayoutProps): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>247 Print Network</title>
+  <title>369 Art Collective</title>
   <style>
     body {
       margin: 0;
@@ -121,19 +121,19 @@ export function emailLayout({ preheader, children }: EmailLayoutProps): string {
   ${preheader ? `<div class="preheader">${preheader}</div>` : ''}
   <div class="email-container">
     <div class="header">
-      <h1>247 Print Network</h1>
+      <h1>369 Art Collective</h1>
     </div>
     <div class="content">
       ${children}
     </div>
     <div class="footer">
-      <p><strong>247 Print Network</strong> - Artist-Powered Print-on-Demand Marketplace</p>
+      <p><strong>369 Art Collective</strong> - Artist-Powered Print-on-Demand Marketplace</p>
       <p>
         <a href="{{unsubscribeUrl}}">Unsubscribe</a> | 
         <a href="https://{{domain}}/artist/settings">Manage Subscription</a> | 
         <a href="https://{{domain}}/contact">Contact Support</a>
       </p>
-      <p>&copy; ${new Date().getFullYear()} 3six9 Media Masters LLC. All rights reserved.</p>
+      <p>&copy; ${new Date().getFullYear()} 369 Media Masters LLC. All rights reserved.</p>
     </div>
   </div>
 </body>

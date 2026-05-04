@@ -24,7 +24,7 @@ async function verifyProductPages() {
       console.log(`   Online Store URL: ${product.online_store_url || "NONE"}`);
       
       // Test the actual URL
-      const testUrl = `https://247printnetwork.com/products/${handle}`;
+      const testUrl = `https://369artcollective.com/products/${handle}`;
       const testResponse = await fetch(testUrl);
       console.log(`   HTTP Test: ${testResponse.status}`);
     } else {

@@ -65,7 +65,7 @@ export default function PublicLeaderboard() {
                 Influencer Leaderboard
               </h1>
               <p className="text-muted-foreground mt-2">
-                See our top-performing influencers driving the 247 Print Network
+                See our top-performing influencers driving the 369 Art Collective
               </p>
             </div>
             <div className="flex gap-3">
@@ -299,7 +299,7 @@ export default function PublicLeaderboard() {
               </div>
               <h2 className="text-3xl font-bold">Ready to Compete?</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Join the 247 Print Network influencer program and start earning commissions
+                Join the 369 Art Collective influencer program and start earning commissions
                 on every sale you drive. Climb the leaderboard, unlock achievements, and win
                 exclusive prizes!
               </p>

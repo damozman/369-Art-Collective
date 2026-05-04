@@ -17,5 +17,8 @@ declare module "express-session" {
     adminId?: string;
     influencerId?: string;
     creatorstackBuyerId?: string;
+
+    // Coming soon page unlock flag
+    comingSoonUnlocked?: boolean;
   }
 }

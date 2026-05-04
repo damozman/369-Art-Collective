@@ -39,7 +39,7 @@ export function trialDay3Email({ artistName, subscriptionTier, trialDaysLeft, do
     </div>
 
     <p>Questions? Our support team is here to help. Just reply to this email!</p>
-    <p>Happy creating,<br><strong>The 247 Print Network Team</strong></p>
+    <p>Happy creating,<br><strong>The 369 Art Collective Team</strong></p>
   `;
 
   return emailLayout({

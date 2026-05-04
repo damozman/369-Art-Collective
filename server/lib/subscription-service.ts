@@ -20,7 +20,7 @@ function getStripeClient(): Stripe {
   }
   
   return new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-10-28.acacia'
+    apiVersion: '2025-10-29.clover'
   });
 }
 
@@ -67,7 +67,7 @@ const SUBSCRIPTION_CONFIG = {
   pro: {
     priceMonthly: 1500,
     priceId: process.env.STRIPE_PRO_PRICE_ID,
-    name: '247 Print Network Pro',
+    name: '369 Art Collective Pro',
     features: [
       'Unlimited artwork uploads',
       'AI Art Studio access',
@@ -78,7 +78,7 @@ const SUBSCRIPTION_CONFIG = {
   elite: {
     priceMonthly: 4000,
     priceId: process.env.STRIPE_ELITE_PRICE_ID,
-    name: '247 Print Network Elite',
+    name: '369 Art Collective Elite',
     features: [
       'Unlimited artwork uploads',
       'Full AI Art Studio access',
@@ -476,7 +476,7 @@ export class SubscriptionService {
             console.log(`[WARN][METADATA_MISSING] Stripe metadata.tier missing for ${artistId}, derived ${resolvedTier} from price ID`);
           } else {
             // Price derivation failed - fall back to current tier
-            resolvedTier = artist.subscriptionTier;
+            resolvedTier = artist.subscriptionTier as SubscriptionTier;
             console.error(`[ERROR][TIER_RESOLUTION] Cannot derive tier for ${artistId}, falling back to current tier: ${resolvedTier}`);
           }
         }
@@ -525,9 +525,9 @@ export class SubscriptionService {
         }
 
         // Determine final tier: cancellations → Free, otherwise use resolved tier
-        const finalTier: SubscriptionTier = subscription.status === 'canceled' 
-          ? 'free' 
-          : resolvedTier;
+        const finalTier: SubscriptionTier = subscription.status === 'canceled'
+          ? 'free'
+          : (resolvedTier ?? 'free');
 
         // Update artist record with new subscription state
         const updates: any = {

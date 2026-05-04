@@ -1,6 +1,7 @@
+export {};
 /**
  * Targeted Shopify Demo Data Cleanup Script
- * 
+ *
  * Surgically removes demo/test data while preserving critical infrastructure:
  * - Deletes demo products (Sailboat Regatta, Fishing Village, etc.)
  * - Removes empty Manual collections (demo artist collections)

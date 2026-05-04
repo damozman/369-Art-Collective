@@ -209,6 +209,26 @@ export default function Register() {
 
       if (!response.ok) {
         const error = await response.json();
+        if (error.errorCode === "EMAIL_EXISTS") {
+          toast({
+            title: "Email already in use",
+            description: (
+              <div className="flex flex-col gap-2">
+                <span>{error.message}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setLocation("/login")}
+                  className="self-start"
+                >
+                  Go to Login
+                </Button>
+              </div>
+            ) as any,
+            variant: "destructive",
+          });
+          return;
+        }
         throw new Error(error.message || error.error || "Registration failed");
       }
 
@@ -221,7 +241,7 @@ export default function Register() {
       portfolioPreviews.forEach(url => URL.revokeObjectURL(url));
 
       toast({
-        title: "Welcome to 247 Print Network!",
+        title: "Welcome to 369 Art Collective!",
         description: "Your account is pending admin approval.",
       });
 
@@ -601,7 +621,7 @@ export default function Register() {
                             I confirm that all artwork I upload will be my original work OR work I have proper licensing rights to use. 
                             I understand that uploading artwork containing trademarks, copyrighted material, or other intellectual property 
                             I do not own will result in immediate removal of my artwork and forfeiture of any pending earnings. 
-                            I agree to indemnify 247 Print Network against any claims arising from IP violations.
+                            I agree to indemnify 369 Art Collective against any claims arising from IP violations.
                           </p>
                           <FormMessage />
                         </div>

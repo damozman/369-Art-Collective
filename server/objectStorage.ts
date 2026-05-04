@@ -1,27 +1,14 @@
-import { Storage, File } from "@google-cloud/storage";
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Response } from "express";
-import { randomUUID } from "crypto";
 
-const REPLIT_SIDECAR_ENDPOINT = "http://127.0.0.1:1106";
-
-// The object storage client is used to interact with the object storage service.
-export const objectStorageClient = new Storage({
-  credentials: {
-    audience: "replit",
-    subject_token_type: "access_token",
-    token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
-    type: "external_account",
-    credential_source: {
-      url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
-      format: {
-        type: "json",
-        subject_token_field_name: "access_token",
-      },
-    },
-    universe_domain: "googleapis.com",
-  },
-  projectId: "",
-});
+function getSupabase(): SupabaseClient {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set");
+  }
+  return createClient(url, key);
+}
 
 export class ObjectNotFoundError extends Error {
   constructor() {
@@ -31,47 +18,38 @@ export class ObjectNotFoundError extends Error {
   }
 }
 
-// The object storage service is used to interact with the object storage service.
+// Internal handle returned by getFile — wraps bucket + path for downstream methods
+interface StorageFileHandle {
+  bucket: string;
+  path: string;
+}
+
 export class ObjectStorageService {
   constructor() {}
 
-  // Gets the artwork uploads bucket directory
   getArtworkUploadsDir(): string {
-    const dir = process.env.ARTWORK_UPLOADS_DIR || "";
-    if (!dir) {
-      throw new Error(
-        "ARTWORK_UPLOADS_DIR not set. Create a bucket in 'Object Storage' " +
-          "tool and set ARTWORK_UPLOADS_DIR env var (e.g., /my-bucket/artwork-uploads)."
-      );
-    }
-    return dir;
+    const bucket = process.env.SUPABASE_ARTWORK_UPLOADS_BUCKET;
+    if (!bucket) throw new Error("SUPABASE_ARTWORK_UPLOADS_BUCKET is not set");
+    return bucket;
   }
 
-  // Gets the AI preview uploads bucket directory
   getAiPreviewsDir(): string {
-    const dir = process.env.AI_PREVIEWS_DIR || "";
-    if (!dir) {
-      throw new Error(
-        "AI_PREVIEWS_DIR not set. Create a bucket in 'Object Storage' " +
-          "tool and set AI_PREVIEWS_DIR env var (e.g., /my-bucket/ai-previews)."
-      );
-    }
-    return dir;
+    const bucket = process.env.SUPABASE_AI_PREVIEWS_BUCKET;
+    if (!bucket) throw new Error("SUPABASE_AI_PREVIEWS_BUCKET is not set");
+    return bucket;
   }
 
-  // Gets the AI generated images bucket directory
   getAiGeneratedDir(): string {
-    const dir = process.env.AI_GENERATED_DIR || "";
-    if (!dir) {
-      throw new Error(
-        "AI_GENERATED_DIR not set. Create a bucket in 'Object Storage' " +
-          "tool and set AI_GENERATED_DIR env var (e.g., /my-bucket/ai-generated)."
-      );
-    }
-    return dir;
+    const bucket = process.env.SUPABASE_AI_GENERATED_BUCKET;
+    if (!bucket) throw new Error("SUPABASE_AI_GENERATED_BUCKET is not set");
+    return bucket;
   }
 
-  // Upload a file buffer to object storage
+  /**
+   * Upload a file buffer to Supabase Storage.
+   * `directory` is the bucket name (returned by getArtworkUploadsDir etc.).
+   * Returns a public URL string.
+   */
   async uploadFile({
     directory,
     filename,
@@ -83,96 +61,83 @@ export class ObjectStorageService {
     buffer: Buffer;
     contentType?: string;
   }): Promise<string> {
-    const fullPath = `${directory}/${filename}`;
-    const { bucketName, objectName } = parseObjectPath(fullPath);
-    const bucket = objectStorageClient.bucket(bucketName);
-    const file = bucket.file(objectName);
+    const supabase = getSupabase();
+    const { error } = await supabase.storage
+      .from(directory)
+      .upload(filename, buffer, {
+        contentType: contentType || "application/octet-stream",
+        upsert: true,
+      });
 
-    await file.save(buffer, {
-      contentType: contentType || "application/octet-stream",
-      metadata: {
-        cacheControl: "public, max-age=31536000", // 1 year cache for immutable files
-      },
-    });
+    if (error) throw new Error(`Upload failed: ${error.message}`);
 
-    // Return the object path (e.g., /objects/artwork-uploads/filename.jpg)
-    return `/objects/${objectName}`;
+    const { data } = supabase.storage.from(directory).getPublicUrl(filename);
+    return data.publicUrl;
   }
 
-  // Get a file from object storage
-  async getFile(objectPath: string): Promise<File> {
-    if (!objectPath.startsWith("/objects/")) {
+  /**
+   * Resolve a stored URL or /objects/ path to a { bucket, path } handle.
+   */
+  async getFile(objectPath: string): Promise<StorageFileHandle> {
+    // Support both full Supabase public URLs and legacy /objects/ paths
+    const supabase = getSupabase();
+    const supabaseUrl = process.env.SUPABASE_URL!;
+
+    let bucket: string;
+    let path: string;
+
+    if (objectPath.startsWith(supabaseUrl)) {
+      // e.g. https://<project>.supabase.co/storage/v1/object/public/<bucket>/<path>
+      const match = objectPath.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+      if (!match) throw new ObjectNotFoundError();
+      bucket = match[1];
+      path = match[2];
+    } else if (objectPath.startsWith("/objects/")) {
+      // Legacy /objects/<bucket>/<path>
+      const parts = objectPath.replace("/objects/", "").split("/");
+      bucket = parts[0];
+      path = parts.slice(1).join("/");
+    } else {
       throw new ObjectNotFoundError();
     }
 
-    // Map /objects/* URLs to configured directory paths
-    // objectPath examples: /objects/artwork-uploads/file.jpg
-    // env dirs examples: /bucket-name/artwork-uploads
-    
-    const artworkDir = this.getArtworkUploadsDir();
-    const aiPreviewsDir = this.getAiPreviewsDir();
-    const aiGeneratedDir = this.getAiGeneratedDir();
+    // Verify it exists
+    const { data, error } = await supabase.storage.from(bucket).list(
+      path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : "",
+      { search: path.includes("/") ? path.substring(path.lastIndexOf("/") + 1) : path }
+    );
 
-    // Determine which directory this path belongs to
-    let targetDir: string | null = null;
-    
-    if (objectPath.startsWith("/objects/artwork-uploads/")) {
-      targetDir = artworkDir;
-    } else if (objectPath.startsWith("/objects/ai-previews/")) {
-      targetDir = aiPreviewsDir;
-    } else if (objectPath.startsWith("/objects/ai-generated/")) {
-      targetDir = aiGeneratedDir;
-    }
-    
-    if (!targetDir) {
-      throw new ObjectNotFoundError();
-    }
-    
-    // Extract the filename from the object path
-    // /objects/artwork-uploads/file.jpg -> file.jpg
-    const pathParts = objectPath.split("/");
-    const filename = pathParts.slice(3).join("/"); // Skip '', 'objects', 'directory-name'
-    
-    // Construct full path: /bucket-name/directory-name/filename
-    const fullPath = `${targetDir}/${filename}`;
-    const { bucketName, objectName } = parseObjectPath(fullPath);
-    
-    const bucket = objectStorageClient.bucket(bucketName);
-    const file = bucket.file(objectName);
-    
-    const [exists] = await file.exists();
-    if (!exists) {
-      throw new ObjectNotFoundError();
-    }
-    
-    return file;
+    if (error || !data || data.length === 0) throw new ObjectNotFoundError();
+
+    return { bucket, path };
   }
 
-  // Downloads an object to the response
-  async downloadObject(file: File, res: Response, cacheTtlSec: number = 31536000) {
+  /**
+   * Stream a file from Supabase Storage to an Express response.
+   */
+  async downloadObject(file: StorageFileHandle, res: Response, cacheTtlSec: number = 31536000) {
     try {
-      // Get file metadata
-      const [metadata] = await file.getMetadata();
+      const supabase = getSupabase();
+      const { data, error } = await supabase.storage.from(file.bucket).download(file.path);
+      if (error || !data) throw new Error(error?.message || "Download failed");
 
-      // Set appropriate headers
+      const arrayBuffer = await data.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const ext = file.path.split('.').pop()?.toLowerCase();
+      const mimeMap: Record<string, string> = {
+        jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+        gif: "image/gif", webp: "image/webp", pdf: "application/pdf",
+      };
+      const contentType = (ext && mimeMap[ext]) || "application/octet-stream";
+
       res.set({
-        "Content-Type": metadata.contentType || "application/octet-stream",
-        "Content-Length": metadata.size,
+        "Content-Type": contentType,
+        "Content-Length": buffer.length,
         "Cache-Control": `public, max-age=${cacheTtlSec}`,
         "Access-Control-Allow-Origin": "*",
       });
-
-      // Stream the file to the response
-      const stream = file.createReadStream();
-
-      stream.on("error", (err) => {
-        console.error("Stream error:", err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: "Error streaming file" });
-        }
-      });
-
-      stream.pipe(res);
+      res.send(buffer);
     } catch (error) {
       console.error("Error downloading file:", error);
       if (!res.headersSent) {
@@ -182,154 +147,60 @@ export class ObjectStorageService {
   }
 
   /**
-   * Read an object as a Buffer
-   * @param objectPath - URL path like "/objects/artwork-uploads/file.jpg"
+   * Read a stored object as a Buffer.
    */
   async readObjectAsBuffer(objectPath: string): Promise<Buffer> {
     const file = await this.getFile(objectPath);
-    const chunks: Buffer[] = [];
-    
-    const stream = file.createReadStream();
-    
-    return new Promise((resolve, reject) => {
-      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
-      stream.on('end', () => resolve(Buffer.concat(chunks)));
-      stream.on('error', reject);
-    });
+    const supabase = getSupabase();
+    const { data, error } = await supabase.storage.from(file.bucket).download(file.path);
+    if (error || !data) throw new Error(error?.message || "Download failed");
+    return Buffer.from(await data.arrayBuffer());
   }
 
   /**
-   * Write a Buffer to object storage (with security validation)
-   * @param objectPath - URL path like "/objects/ai-previews/file.jpg"
-   * @param buffer - File buffer
-   * @param contentType - MIME type
+   * Write a Buffer to object storage.
    */
-  async putObjectFromBuffer(
-    objectPath: string,
-    buffer: Buffer,
-    contentType: string
-  ): Promise<void> {
-    // Validate path starts with /objects/
-    if (!objectPath.startsWith('/objects/')) {
-      throw new Error('Invalid object path: must start with /objects/');
+  async putObjectFromBuffer(objectPath: string, buffer: Buffer, contentType: string): Promise<void> {
+    const allowedPrefixes = ["/objects/artwork-uploads/", "/objects/ai-generated/", "/objects/ai-previews/"];
+    if (!allowedPrefixes.some(p => objectPath.startsWith(p))) {
+      throw new Error("Security: Upload path must be within allowed directories");
     }
-    
-    // Validate path is within allowed URL directories
-    const allowedUrlPrefixes = [
-      '/objects/artwork-uploads/',
-      '/objects/ai-generated/',
-      '/objects/ai-previews/',
-    ];
-    
-    const isAllowed = allowedUrlPrefixes.some(prefix => objectPath.startsWith(prefix));
-    
-    if (!isAllowed) {
-      throw new Error(`Security: Upload path must be within allowed directories (artwork-uploads, ai-generated, or ai-previews)`);
-    }
-    
-    // Parse and upload
-    const { bucketName, objectName } = parseObjectPath(objectPath);
-    const bucket = objectStorageClient.bucket(bucketName);
-    const file = bucket.file(objectName);
-    
-    await file.save(buffer, {
+    const parts = objectPath.replace("/objects/", "").split("/");
+    const bucket = parts[0];
+    const path = parts.slice(1).join("/");
+
+    const supabase = getSupabase();
+    const { error } = await supabase.storage.from(bucket).upload(path, buffer, {
       contentType,
-      metadata: {
-        cacheControl: "public, max-age=31536000",
-      },
+      upsert: true,
     });
+    if (error) throw new Error(`Upload failed: ${error.message}`);
   }
 
-  /**
-   * Check if an object exists
-   * @param objectPath - URL path like "/objects/artwork-uploads/file.jpg"
-   */
   async objectExists(objectPath: string): Promise<boolean> {
     try {
       await this.getFile(objectPath);
       return true;
     } catch (error: any) {
-      if (error.name === "ObjectNotFoundError") {
-        return false;
-      }
+      if (error.name === "ObjectNotFoundError") return false;
       throw error;
     }
   }
 
-  // Check if a file exists in object storage
   async fileExists(objectPath: string): Promise<boolean> {
     try {
       await this.getFile(objectPath);
       return true;
     } catch (error) {
-      if (error instanceof ObjectNotFoundError) {
-        return false;
-      }
+      if (error instanceof ObjectNotFoundError) return false;
       throw error;
     }
   }
 
-  // Delete a file from object storage
   async deleteFile(objectPath: string): Promise<void> {
     const file = await this.getFile(objectPath);
-    await file.delete();
+    const supabase = getSupabase();
+    const { error } = await supabase.storage.from(file.bucket).remove([file.path]);
+    if (error) throw new Error(`Delete failed: ${error.message}`);
   }
-}
-
-function parseObjectPath(path: string): {
-  bucketName: string;
-  objectName: string;
-} {
-  if (!path.startsWith("/")) {
-    path = `/${path}`;
-  }
-  
-  // Handle /objects/ URL prefix - map to correct bucket based on directory
-  if (path.startsWith("/objects/")) {
-    const objectName = path.substring(9); // Remove "/objects/" prefix
-    
-    // Map directory prefix to corresponding env var
-    let dirEnvVar: string | undefined;
-    if (objectName.startsWith("artwork-uploads/")) {
-      dirEnvVar = process.env.ARTWORK_UPLOADS_DIR;
-    } else if (objectName.startsWith("ai-previews/")) {
-      dirEnvVar = process.env.AI_PREVIEWS_DIR;
-    } else if (objectName.startsWith("ai-generated/")) {
-      dirEnvVar = process.env.AI_GENERATED_DIR;
-    }
-    
-    // Extract bucket ID from the matched directory env var
-    if (!dirEnvVar) {
-      // Fallback: try to get bucket from any configured directory
-      dirEnvVar = process.env.ARTWORK_UPLOADS_DIR || process.env.AI_PREVIEWS_DIR || process.env.AI_GENERATED_DIR;
-      if (!dirEnvVar) {
-        throw new Error("No object storage directories configured");
-      }
-    }
-    
-    // Extract bucket ID from path like "/replit-objstore-xxx/directory/"
-    const bucketName = dirEnvVar.split("/")[1];
-    if (!bucketName || !bucketName.startsWith("replit-objstore-")) {
-      throw new Error(`Invalid bucket path in environment variable: ${dirEnvVar}`);
-    }
-    
-    return {
-      bucketName,
-      objectName,
-    };
-  }
-  
-  // Legacy: Handle full bucket paths like /replit-objstore-xxx/directory/file
-  const pathParts = path.split("/");
-  if (pathParts.length < 3) {
-    throw new Error("Invalid path: must contain at least a bucket name");
-  }
-
-  const bucketName = pathParts[1];
-  const objectName = pathParts.slice(2).join("/");
-
-  return {
-    bucketName,
-    objectName,
-  };
 }

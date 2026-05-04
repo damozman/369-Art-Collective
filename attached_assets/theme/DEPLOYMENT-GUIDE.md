@@ -1,4 +1,4 @@
-# 247 Print Network - Shopify Theme Deployment Guide
+# 369 Art Collective - Shopify Theme Deployment Guide
 
 ## 📦 What's Included
 

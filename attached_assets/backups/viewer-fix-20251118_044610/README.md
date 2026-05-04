@@ -1,7 +1,7 @@
 # Viewer Fix Backup - November 18, 2025 04:46:10
 
 ## Overview
-Successful checkpoint after fixing viewer layout, aspect ratio, and sizing issues for 247 Print Network Shopify product pages.
+Successful checkpoint after fixing viewer layout, aspect ratio, and sizing issues for 369 Art Collective Shopify product pages.
 
 ## What's Working
 ✅ **Fixed viewer layout** - No white space between viewer and info column
@@ -46,8 +46,8 @@ Successful checkpoint after fixing viewer layout, aspect ratio, and sizing issue
 5. Verify frame selection functionality
 
 ## Testing Notes
-- Deployed to live theme #179686146345 on 247printnetwork.myshopify.com
-- Test URL: https://247printnetwork.com/products/abandoned-factory-1
+- Deployed to live theme #179686146345 on 369artcollective.myshopify.com
+- Test URL: https://369artcollective.com/products/abandoned-factory-1
 - All thumbnails showing identical living room mockup for comparison
 - No white space issues observed between viewer and info column
 - Viewer maintains responsive behavior across screen sizes

@@ -37,7 +37,7 @@ Before setting up GitHub integration:
 
 2. **Create new repository:**
    - Repository name: `247-print-network-theme`
-   - Description: `Shopify theme for 247 Print Network`
+   - Description: `Shopify theme for 369 Art Collective`
    - Visibility: **Private** (recommended for your business)
    - ✅ Initialize with README: **NO** (we already have files)
    - Click **"Create repository"**
@@ -70,7 +70,7 @@ git config user.email "your-email@example.com"
 git add .
 
 # Create first commit
-git commit -m "Initial commit: Complete 247 Print Network theme with mockup system"
+git commit -m "Initial commit: Complete 369 Art Collective theme with mockup system"
 
 # Connect to GitHub (replace with YOUR repository URL)
 git remote add origin https://github.com/YOUR_USERNAME/247-print-network-theme.git

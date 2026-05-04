@@ -23,9 +23,9 @@ import {
 } from "lucide-react";
 import type { Testimonial } from "@shared/schema";
 
-type FeaturedTestimonial = Testimonial & {
+type FeaturedTestimonial = Omit<Testimonial, 'featured'> & {
   artistName: string;
-  featuredTier: "admin_override" | "premium" | "merit";
+  featured: "admin_override" | "premium" | "merit";
 };
 
 export default function Home() {
@@ -115,7 +115,7 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Sparkles className="h-7 w-7 text-primary" data-testid="icon-logo" />
-            <span className="font-bold text-2xl md:text-3xl tracking-tight">247 Print Network</span>
+            <span className="font-bold text-2xl md:text-3xl tracking-tight">369 Art Collective</span>
           </div>
 
           {/* Desktop Navigation */}
@@ -296,7 +296,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold font-serif mb-4">
-              Why Artists Choose 247 Print Network
+              Why Artists Choose 369 Art Collective
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Built by creators, for creators. We've removed every barrier between your art and your income.
@@ -355,7 +355,7 @@ export default function Home() {
               Artist Success Stories
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Real artists building real empires with 247 Print Network
+              Real artists building real empires with 369 Art Collective
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -375,11 +375,11 @@ export default function Home() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
                         </svg>
                       </div>
-                      {testimonial.featuredTier === "premium" ? (
+                      {testimonial.featured === "premium" ? (
                         <Badge variant="default" className="absolute top-3 right-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0" data-testid="badge-sponsored">
                           Sponsored
                         </Badge>
-                      ) : testimonial.featuredTier === "admin_override" ? (
+                      ) : testimonial.featured === "admin_override" ? (
                         <Badge variant="default" className="absolute top-3 right-3" data-testid="badge-featured">
                           Featured
                         </Badge>
@@ -635,7 +635,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              <span className="font-semibold font-serif">247 Print Network</span>
+              <span className="font-semibold font-serif">369 Art Collective</span>
             </div>
             <p className="text-sm text-muted-foreground text-center md:text-left">
               Empowering artists with automated print-on-demand commerce
@@ -646,3 +646,4 @@ export default function Home() {
     </div>
   );
 }
+

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# 247 Print Network - Shopify Theme Deployment Script
+# 3six9 Art Collective - Shopify Theme Deployment Script
 # This script helps deploy theme files using Shopify CLI
 
 set -e
 
-echo "🚀 247 Print Network - Shopify Theme Deploy"
+echo "🚀 3six9 Art Collective - Shopify Theme Deploy"
 echo "============================================"
 echo ""
 

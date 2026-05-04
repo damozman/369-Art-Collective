@@ -26,7 +26,7 @@ async function compareProducts() {
       console.log(`Template Suffix: ${product.template_suffix || "NONE"}`);
       
       // Test actual URL
-      const testUrl = `https://247printnetwork.com/products/${handle}`;
+      const testUrl = `https://369artcollective.com/products/${handle}`;
       const testResponse = await fetch(testUrl);
       console.log(`HTTP Test: ${testResponse.status}`);
     }

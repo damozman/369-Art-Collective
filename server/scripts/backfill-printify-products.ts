@@ -158,6 +158,8 @@ async function backfillPrintifyProducts() {
       const printifyResult = await createWallArtProducts(
         imageUrl,
         artwork.title,
+        0,
+        0,
         artwork.description || undefined
       );
 

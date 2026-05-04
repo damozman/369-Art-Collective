@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 247 Print Network - Shopify Theme Deployment Script
+ * 369 Art Collective - Shopify Theme Deployment Script
  * 
  * This script automates the deployment of custom theme files to your Shopify store.
  * It uploads all art product customization files using the Shopify CLI.
@@ -65,7 +65,7 @@ function runCommand(command, description) {
 
 // Main deployment process
 async function deploy() {
-  logSection('247 Print Network - Shopify Theme Deployment');
+  logSection('369 Art Collective - Shopify Theme Deployment');
 
   // Step 1: Verify all theme files exist
   log('Step 1: Verifying theme files...', colors.bright);

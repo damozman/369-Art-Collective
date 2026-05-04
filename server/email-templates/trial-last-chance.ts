@@ -40,7 +40,7 @@ export function trialLastChanceEmail({ artistName, subscriptionTier, domain }: T
     </div>
 
     <p>Questions? Reply to this email - we're here to help!</p>
-    <p>Don't let this opportunity slip away,<br><strong>The 247 Print Network Team</strong></p>
+    <p>Don't let this opportunity slip away,<br><strong>The 369 Art Collective Team</strong></p>
   `;
 
   return emailLayout({

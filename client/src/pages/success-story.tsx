@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, ExternalLink, CheckCircle2, XCircle, Lightbulb, Share2, TrendingUp } from "lucide-react";
-import { SiFacebook, SiX, SiLinkedin } from "react-icons/si";
+import { SiFacebook, SiX } from "react-icons/si";
+import { FaLinkedin } from "react-icons/fa";
 import type { TestimonialWithArtist } from "@shared/schema";
 
 export default function SuccessStory() {
@@ -16,7 +17,7 @@ export default function SuccessStory() {
   const slug = params?.slug;
 
   const { data: testimonial, isLoading, error } = useQuery<TestimonialWithArtist>({
-    queryKey: [`/api/testimonials/${slug}`],
+    queryKey: ['testimonial', slug],
     enabled: !!slug,
   });
 
@@ -36,11 +37,11 @@ export default function SuccessStory() {
     if (utmCampaign) queryParams.set('utm_campaign', utmCampaign);
     
     return `?${queryParams.toString()}`;
-  }, [window.location.search]);
+  }, [slug]);
 
   useEffect(() => {
     if (testimonial) {
-      document.title = `${testimonial.title} - ${testimonial.artistName} | 247 Print Network`;
+      document.title = `${testimonial.title} - ${testimonial.artistName} | 369 Art Collective`;
       
       const metaDescription = document.querySelector('meta[name="description"]');
       if (metaDescription) {
@@ -75,7 +76,7 @@ export default function SuccessStory() {
     if (!testimonial) return;
     
     const url = window.location.href;
-    const text = `${testimonial.title} - ${testimonial.artistName} | 247 Print Network`;
+    const text = `${testimonial.title} - ${testimonial.artistName} | 369 Art Collective`;
     
     let shareUrl = "";
     switch (platform) {
@@ -257,7 +258,7 @@ export default function SuccessStory() {
                 onClick={() => handleSocialShare("linkedin")}
                 data-testid="button-share-linkedin"
               >
-                <SiLinkedin className="w-4 h-4" />
+                <FaLinkedin className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -424,10 +425,11 @@ export default function SuccessStory() {
         {/* Legal Disclaimer - Artist Consent and Authenticity */}
         <div className="text-center text-sm text-muted-foreground py-6 border-t">
           <p>
-            This testimonial represents the authentic experience of <strong>{testimonial.artistName}</strong>, a verified 247 Print Network artist who has consented to share their success story publicly. Individual results may vary based on effort, artwork quality, and market conditions.
+            This testimonial represents the authentic experience of <strong>{testimonial.artistName}</strong>, a verified 369 Art Collective artist who has consented to share their success story publicly. Individual results may vary based on effort, artwork quality, and market conditions.
           </p>
         </div>
       </main>
     </div>
   );
 }
+

@@ -1318,18 +1318,15 @@ class PostgresStorage implements IStorage {
         endDate: null,
         endReason: null,
         stripeSubscriptionId: null,
-        stripeSubscriptionStatus: null,
-        rank: null,
-        artistEarnings: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
       .returning();
     
-    // 6. Update testimonial featuredTier
+    // 6. Mark testimonial as featured
     await db
       .update(testimonials)
-      .set({ featuredTier: "admin_override" })
+      .set({ featured: true })
       .where(eq(testimonials.id, testimonialId));
     
     // 7. Log action
@@ -1370,10 +1367,10 @@ class PostgresStorage implements IStorage {
       reason || `Removed by admin ${adminId}`
     );
     
-    // 3. Clear testimonial featuredTier
+    // 3. Clear testimonial featured flag
     await db
       .update(testimonials)
-      .set({ featuredTier: null })
+      .set({ featured: false })
       .where(eq(testimonials.id, subscription.testimonialId));
     
     // 4. Log action
@@ -1440,9 +1437,9 @@ class PostgresStorage implements IStorage {
       startDate: r.subscription.startDate,
       endDate: r.subscription.endDate,
       stripeSubscriptionId: r.subscription.stripeSubscriptionId || undefined,
-      stripeSubscriptionStatus: r.subscription.stripeSubscriptionStatus || undefined,
-      rank: r.subscription.rank || undefined,
-      monthlyEarnings: r.subscription.artistEarnings || undefined,
+      stripeSubscriptionStatus: r.subscription.subscriptionStatus || undefined,
+      rank: undefined,
+      monthlyEarnings: undefined,
     }));
     
     const slotsByTier = {
@@ -1581,7 +1578,7 @@ class PostgresStorage implements IStorage {
 
   // Subscription Trial methods
   async createSubscriptionTrial(trial: InsertSubscriptionTrial): Promise<SubscriptionTrial> {
-    const [created] = await db.insert(subscriptionTrials).values([trial]).returning();
+    const [created] = await db.insert(subscriptionTrials).values([trial as any]).returning();
     return created;
   }
 
@@ -2051,6 +2048,7 @@ class PostgresStorage implements IStorage {
       firstPlacePrize: c.firstPlacePrize.toString(),
       secondPlacePrize: c.secondPlacePrize?.toString(),
       thirdPlacePrize: c.thirdPlacePrize?.toString(),
+      prizeDescription: c.prizeDescription ?? undefined,
       participantCount: c.participantCount || 0
     }));
   }
@@ -2123,7 +2121,8 @@ class PostgresStorage implements IStorage {
 
     return participants.map(p => ({
       ...p,
-      currentScore: p.currentScore.toString()
+      currentScore: p.currentScore.toString(),
+      rank: p.rank ?? undefined
     }));
   }
 
@@ -2509,7 +2508,7 @@ class PostgresStorage implements IStorage {
   }): Promise<any> {
     const [created] = await db
       .insert(upscaleJobs)
-      .values(job)
+      .values(job as any)
       .returning();
     return created;
   }
@@ -2608,30 +2607,40 @@ class MemStorage implements IStorage {
   async createArtist(insertArtist: InsertArtist): Promise<Artist> {
     const id = randomUUID();
     const referralCode = generateReferralCode(insertArtist.name);
-    const artist: Artist = {
+    const artist = {
       ...insertArtist,
       id,
       referralCode,
       approved: false,
       monthlySales: '0',
+      subscriptionTier: insertArtist.subscriptionTier ?? 'free',
       stripeAccountId: null,
       stripeAccountStatus: null,
-      stripeOnboardingComplete: false,
-      stripeDetailsSubmitted: false,
-      stripeChargesEnabled: false,
-      stripePayoutsEnabled: false,
+      stripeOnboardingComplete: insertArtist.stripeOnboardingComplete ?? false,
+      stripeDetailsSubmitted: insertArtist.stripeDetailsSubmitted ?? false,
+      stripeChargesEnabled: insertArtist.stripeChargesEnabled ?? false,
+      stripePayoutsEnabled: insertArtist.stripePayoutsEnabled ?? false,
       stripeRequirements: null,
       stripeAccountLinkExpiresAt: null,
       stripeDefaultCurrency: null,
       externalAccountLast4: null,
       referredBy: null,
-      referralSource: null,
+      referralSource: insertArtist.referralSource ?? null,
       tosAcceptedAt: null,
       tosIpAddress: null,
       tosVersion: null,
+      isFeaturedEligible: insertArtist.isFeaturedEligible ?? false,
+      featuredPriority: insertArtist.featuredPriority ?? 0,
+      featuredPinnedUntil: null,
+      lastFeaturedAt: null,
+      registrationUpscalesUsed: insertArtist.registrationUpscalesUsed ?? 0,
+      monthlyUpscalesUsed: insertArtist.monthlyUpscalesUsed ?? 0,
+      lastUpscaleResetAt: null,
+      lifetimeUpscalesProcessed: insertArtist.lifetimeUpscalesProcessed ?? 0,
+      totalUpscaleCostCents: insertArtist.totalUpscaleCostCents ?? 0,
       deletedAt: null,
       createdAt: new Date(),
-    };
+    } as unknown as Artist;
     this.artists.set(id, artist);
     return artist;
   }
@@ -2770,10 +2779,11 @@ class MemStorage implements IStorage {
 
   async createArtwork(insertArtwork: InsertArtwork): Promise<Artwork> {
     const id = randomUUID();
-    const artwork: Artwork = {
+    const artwork = {
       ...insertArtwork,
       id,
       description: insertArtwork.description ?? null,
+      artworkStory: insertArtwork.artworkStory ?? null,
       status: "pending",
       rejectionReason: null,
       ipDeclarationText: null,
@@ -2786,7 +2796,7 @@ class MemStorage implements IStorage {
       archiveWarningEmailSentAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    } as unknown as Artwork;
     this.artworks.set(id, artwork);
     return artwork;
   }
@@ -3387,9 +3397,9 @@ class MemStorage implements IStorage {
   async getCreatorstackPurchaseByShopifyOrderLineItem(): Promise<any> { console.log("MemStorage: getCreatorstackPurchaseByShopifyOrderLineItem (stub)"); return undefined; }
   async createCreatorstackPurchase(): Promise<any> { console.log("MemStorage: createCreatorstackPurchase (stub)"); return {}; }
   async updateCreatorstackPurchase(): Promise<any> { console.log("MemStorage: updateCreatorstackPurchase (stub)"); return {}; }
-  async updateCreatorstackPurchaseAccess(): Promise<void> { console.log("MemStorage: updateCreatorstackPurchaseAccess (stub)"); }
-  async createCreatorstackPromptGeneration(): Promise<any> { console.log("MemStorage: createCreatorstackPromptGeneration (stub)"); return {}; }
-  async getCreatorstackPromptGenerationsByBuyer(): Promise<Array<any>> { console.log("MemStorage: getCreatorstackPromptGenerationsByBuyer (stub)"); return []; }
+  async updateCreatorstackPurchaseAccess(_purchaseId: string): Promise<void> { console.log("MemStorage: updateCreatorstackPurchaseAccess (stub)"); }
+  async createCreatorstackPromptGeneration(_generation: any): Promise<any> { console.log("MemStorage: createCreatorstackPromptGeneration (stub)"); return {}; }
+  async getCreatorstackPromptGenerationsByBuyer(_buyerId: string): Promise<Array<any>> { console.log("MemStorage: getCreatorstackPromptGenerationsByBuyer (stub)"); return []; }
 
   // Subscription Trial methods
   async createSubscriptionTrial(trial: InsertSubscriptionTrial): Promise<SubscriptionTrial> {
@@ -3397,19 +3407,25 @@ class MemStorage implements IStorage {
     const created: SubscriptionTrial = {
       ...trial,
       id,
+      createdAt: new Date(),
       trialStartedAt: trial.trialStartedAt || new Date(),
-      trialEndedAt: null,
+      stripeCustomerId: trial.stripeCustomerId ?? null,
+      stripeSubscriptionId: trial.stripeSubscriptionId ?? null,
+      trialSource: trial.trialSource ?? null,
       convertedAt: null,
-      finalTier: null,
+      canceledAt: null,
+      expiredAt: null,
+      downgradedAt: null,
+      cancellationReason: null,
+      lastEmailSentAt: null,
       emailsSent: 0,
-      emailOpenCount: 0,
       emailTemplatesSent: []
     };
     this.subscriptionTrials.set(id, created);
     // Return deep copy to prevent mutation
-    return { 
-      ...created, 
-      emailTemplatesSent: [...created.emailTemplatesSent] 
+    return {
+      ...created,
+      emailTemplatesSent: [...(created.emailTemplatesSent || [])]
     };
   }
 
@@ -3443,23 +3459,23 @@ class MemStorage implements IStorage {
     return this.getArtist(id);
   }
 
-  async createUpscaleJob(): Promise<any> { 
-    console.log("MemStorage: createUpscaleJob (stub)"); 
-    return { id: randomUUID() }; 
+  async createUpscaleJob(_job: { artistId: string; fileHash: string; originalUrl: string; status: string; priority: number; replicateId: string }): Promise<any> {
+    console.log("MemStorage: createUpscaleJob (stub)");
+    return { id: randomUUID() };
   }
 
-  async getUpscaleJobById(): Promise<any | undefined> { 
-    console.log("MemStorage: getUpscaleJobById (stub)"); 
-    return undefined; 
+  async getUpscaleJobById(_id: string): Promise<any | undefined> {
+    console.log("MemStorage: getUpscaleJobById (stub)");
+    return undefined;
   }
 
-  async updateUpscaleJob(): Promise<any> { 
-    console.log("MemStorage: updateUpscaleJob (stub)"); 
-    return {}; 
+  async updateUpscaleJob(_id: string, _updates: Partial<any>): Promise<any> {
+    console.log("MemStorage: updateUpscaleJob (stub)");
+    return {};
   }
 
-  async updateUpscaleUsageByJobId(): Promise<void> { 
-    console.log("MemStorage: updateUpscaleUsageByJobId (stub)"); 
+  async updateUpscaleUsageByJobId(_jobId: string, _updates: Partial<any>): Promise<void> {
+    console.log("MemStorage: updateUpscaleUsageByJobId (stub)");
   }
 
   async getAllUpscaleUsage(): Promise<any[]> {
@@ -3488,4 +3504,4 @@ class MemStorage implements IStorage {
   }
 }
 
-export const storage = isDatabaseConfigured() ? new PostgresStorage() : new MemStorage();
+export const storage: IStorage = isDatabaseConfigured() ? new PostgresStorage() : new MemStorage();

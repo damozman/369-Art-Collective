@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 247 Print Network - Automated Shopify Navigation Setup
+ * 369 Art Collective - Automated Shopify Navigation Setup
  * 
  * This script automatically creates all pages, assigns templates, and sets up
  * navigation menus for your Shopify store using the Shopify Admin REST API.
@@ -133,7 +133,7 @@ const PAGES = [
     title: 'About Us',
     handle: 'about',
     template_suffix: 'about',
-    body_html: '<p>Learn about 247 Print Network - empowering artists through fair royalties and print-on-demand.</p>',
+    body_html: '<p>Learn about 369 Art Collective - empowering artists through fair royalties and print-on-demand.</p>',
     published: true,
   },
   {
@@ -655,7 +655,7 @@ function logMenuItems(items, depth = 0) {
 // Main execution
 async function main() {
   try {
-    logSection('247 Print Network - Automated Navigation Setup');
+    logSection('369 Art Collective - Automated Navigation Setup');
     
     log('Store:', colors.bright);
     log(`  ${shopifyStoreUrl}`, colors.cyan);

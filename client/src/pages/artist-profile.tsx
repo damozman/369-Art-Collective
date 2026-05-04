@@ -153,7 +153,7 @@ export default function ArtistProfile() {
                   className="premium-pill-button" 
                   data-testid="button-view-collection"
                 >
-                  <a href={`https://247printnetwork.com/collections/${artist.shopifyCollectionHandle}`} target="_blank" rel="noopener noreferrer">
+                  <a href={`https://369artcollective.com/collections/${artist.shopifyCollectionHandle}`} target="_blank" rel="noopener noreferrer">
                     Shop Collection
                     <ExternalLink className="w-5 h-5 ml-2" />
                   </a>

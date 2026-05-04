@@ -134,7 +134,7 @@ export default function ComingSoon() {
                 <Lock className="h-6 w-6 absolute -bottom-1 -right-1 text-primary bg-background rounded-full p-1" />
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold">247 Print Network</CardTitle>
+            <CardTitle className="text-3xl font-bold">369 Art Collective</CardTitle>
             <CardDescription className="text-base">
               We're crafting something incredible. Artists + customers + automation = magic.
             </CardDescription>
@@ -409,13 +409,13 @@ export default function ComingSoon() {
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Sparkles className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">247 Print Network</span>
+            <span className="font-bold text-xl">369 Art Collective</span>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Empowering artists to build profitable empires through automated print-on-demand
           </p>
           <p className="text-xs text-muted-foreground">
-            © 2025 3six9 Media Masters LLC. All rights reserved.
+            © 2025 369 Media Masters LLC. All rights reserved.
           </p>
         </div>
       </footer>

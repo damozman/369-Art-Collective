@@ -394,7 +394,7 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
           },
           body: JSON.stringify({
             metafield: {
-              namespace: "247pn",
+              namespace: "369ac",
               key: "artist_id",
               type: "single_line_text_field",
               value: artwork.artistShort,
@@ -409,7 +409,7 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
           },
           body: JSON.stringify({
             metafield: {
-              namespace: "247pn",
+              namespace: "369ac",
               key: "artwork_id",
               type: "single_line_text_field",
               value: String(artwork.artworkId),
@@ -424,7 +424,7 @@ export async function createArtworkProduct(artwork: ArtworkData): Promise<any> {
           },
           body: JSON.stringify({
             metafield: {
-              namespace: "247pn",
+              namespace: "369ac",
               key: "provider",
               type: "single_line_text_field",
               value: "manual",

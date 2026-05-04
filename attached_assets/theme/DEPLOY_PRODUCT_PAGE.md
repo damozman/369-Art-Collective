@@ -64,7 +64,7 @@
 5. ⚠️ **DO NOT skip this** - without CSS, mockups won't resize!
 
 ### Step 3: Test in Incognito Window
-1. Open: https://247printnetwork.com/products/abandoned-factory-1
+1. Open: https://369artcollective.com/products/abandoned-factory-1
 2. Use **incognito/private window** (avoids cache)
 3. Hard refresh: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
 

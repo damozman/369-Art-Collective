@@ -1,6 +1,7 @@
+export {};
 /**
  * Convert Manual Collections to Smart Collections
- * 
+ *
  * Converts empty Manual collections to Smart collections with automatic
  * tag-based rules. This enables fully automated product organization.
  * 

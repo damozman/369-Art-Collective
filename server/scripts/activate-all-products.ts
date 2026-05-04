@@ -15,7 +15,7 @@ async function activateAllProducts() {
   const data = await response.json();
   const products = data.products || [];
   
-  const draftProducts = products.filter(p => p.status === "draft");
+  const draftProducts = products.filter((p: any) => p.status === "draft");
   
   console.log(`Found ${draftProducts.length} draft products to activate\n`);
   

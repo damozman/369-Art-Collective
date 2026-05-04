@@ -1,4 +1,4 @@
-# 247 Print Network - Deployment Scripts
+# 369 Art Collective - Deployment Scripts
 
 This directory contains automation scripts for Shopify theme deployment and management.
 

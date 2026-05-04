@@ -1,4 +1,4 @@
-// Simplified ACL for 247 Print Network
+// Simplified ACL for 369 Art Collective
 // All artist artwork uploads are public by default
 // This file exists for potential future private content needs
 

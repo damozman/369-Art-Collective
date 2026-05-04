@@ -44,17 +44,17 @@ export default function InfluencerApply() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema as any),
     defaultValues: {
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
-      socialLinks: {},
+      socialLinks: {} as Record<string, string>,
       audienceSize: undefined,
       applicationNotes: "",
       niche: "",
-    },
+    } as any,
   });
 
   const onSubmit = async (data: FormData) => {

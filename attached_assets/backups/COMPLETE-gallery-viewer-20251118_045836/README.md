@@ -2,7 +2,7 @@
 
 ## 🎉 STATUS: FULLY FUNCTIONAL
 
-This backup represents the **COMPLETED** and **FULLY FUNCTIONING** gallery viewer page for 247 Print Network's Shopify art print product pages.
+This backup represents the **COMPLETED** and **FULLY FUNCTIONING** gallery viewer page for 369 Art Collective's Shopify art print product pages.
 
 ## ✅ Working Features
 
@@ -78,9 +78,9 @@ Slides 2-5 (data-image-index="1-4"):
 
 ## 🚀 Deployment Info
 
-**Live URL**: https://247printnetwork.com/products/abandoned-factory-1
+**Live URL**: https://369artcollective.com/products/abandoned-factory-1
 **Theme ID**: #179686146345
-**Store**: 247printnetwork.myshopify.com
+**Store**: 369artcollective.myshopify.com
 
 ## 📦 Restore Instructions
 

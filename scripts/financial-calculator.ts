@@ -1,8 +1,8 @@
 /**
- * 3six9 Media Masters - Complete Financial Calculator
+ * 369 Art Collective - Complete Financial Calculator
  * Models ALL revenue streams across both platforms:
- * - 247 Print Network (POD marketplace)
- * - 247 CreatorStack (Digital products & AI tools)
+ * - 369 Art Collective (POD marketplace)
+ * - 369 CreatorStack (Digital products & AI tools)
  */
 
 // ============================================
@@ -108,7 +108,7 @@ function calculateProductMargin(
 // ============================================
 
 interface RevenueStreams {
-  // 247 Print Network
+  // 369 Art Collective
   printNetwork: {
     artistSubscriptions: {
       freeArtists: number;
@@ -242,14 +242,14 @@ function calculateRevenueStreams(params: {
 // ============================================
 
 console.log('\n='.repeat(70));
-console.log('3SIX9 MEDIA MASTERS - COMPLETE FINANCIAL MODEL');
+console.log('369 ART COLLECTIVE - COMPLETE FINANCIAL MODEL');
 console.log('='.repeat(70));
 
 // ============================================
 // PART 1: PRINT NETWORK PRODUCT MARGINS
 // ============================================
 
-console.log('\n📊 PART 1: PRINT NETWORK PRODUCT MARGINS\n');
+console.log('\n📊 PART 1: 369 ART COLLECTIVE PRODUCT MARGINS\n');
 
 const tiers = [
   { name: 'Free Tier', royalty: 30 },
@@ -308,7 +308,7 @@ const conservative = calculateRevenueStreams({
   aiToolPayPerUse: 150,
 });
 
-console.log('\n247 Print Network:');
+console.log('\n369 Art Collective:');
 console.log(`  Artist Subscriptions:`);
 console.log(`    ${conservative.printNetwork.artistSubscriptions.freeArtists} Free + ${conservative.printNetwork.artistSubscriptions.proArtists} Pro + ${conservative.printNetwork.artistSubscriptions.eliteArtists} Elite`);
 console.log(`    MRR: $${conservative.printNetwork.artistSubscriptions.monthlyMRR.toFixed(2)}`);
@@ -355,7 +355,7 @@ const moderate = calculateRevenueStreams({
   aiToolPayPerUse: 400,
 });
 
-console.log('\n247 Print Network:');
+console.log('\n369 Art Collective:');
 console.log(`  Artist Subscriptions:`);
 console.log(`    ${moderate.printNetwork.artistSubscriptions.freeArtists} Free + ${moderate.printNetwork.artistSubscriptions.proArtists} Pro + ${moderate.printNetwork.artistSubscriptions.eliteArtists} Elite`);
 console.log(`    MRR: $${moderate.printNetwork.artistSubscriptions.monthlyMRR.toFixed(2)}`);
@@ -402,7 +402,7 @@ const optimistic = calculateRevenueStreams({
   aiToolPayPerUse: 800,
 });
 
-console.log('\n247 Print Network:');
+console.log('\n369 Art Collective:');
 console.log(`  Artist Subscriptions:`);
 console.log(`    ${optimistic.printNetwork.artistSubscriptions.freeArtists} Free + ${optimistic.printNetwork.artistSubscriptions.proArtists} Pro + ${optimistic.printNetwork.artistSubscriptions.eliteArtists} Elite`);
 console.log(`    MRR: $${optimistic.printNetwork.artistSubscriptions.monthlyMRR.toFixed(2)}`);
@@ -493,7 +493,7 @@ console.log('  Subscription revenue: $0');
 console.log('  AI tools: None');
 console.log('  Featured placement: None\n');
 
-console.log('247 Print Network Artist (Pro Tier):');
+console.log('369 Art Collective Artist (Pro Tier):');
 console.log('  Royalty: 35% guaranteed minimum');
 console.log('  Monthly earnings: $100-1,000+ (higher volume artists)');
 console.log('  Subscription cost: $20/mo');
@@ -502,7 +502,7 @@ console.log('  Featured placement: Hybrid rotation system (fair + performance)')
 console.log('  ROI: If they sell just 2-3 products/month, subscription pays for itself');
 console.log('       Plus they get AI tools, featured placement, unlimited uploads\n');
 
-console.log('247 Print Network Artist (Elite Tier):');
+console.log('369 Art Collective Artist (Elite Tier):');
 console.log('  Royalty: 45% guaranteed (3-5x Redbubble/Displate!)');
 console.log('  Monthly earnings: $500-3,000+ (top performers)');
 console.log('  Subscription cost: $45/mo');

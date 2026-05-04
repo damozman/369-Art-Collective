@@ -162,7 +162,7 @@ function RevenueOverview({ data, isLoading }: { data: any; isLoading: boolean })
       <div className="grid gap-4 md:grid-cols-2">
         <Card data-testid="card-print-network">
           <CardHeader>
-            <CardTitle>247 Print Network</CardTitle>
+            <CardTitle>369 Art Collective</CardTitle>
             <CardDescription>POD marketplace revenue streams</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -261,20 +261,20 @@ async function cleanup() {
   const hashedPassword = await bcrypt.hash(tempPassword, 10);
   
   await db.insert(admins).values({
-    email: "chris@247printnetwork.com",
+    email: "chris@369artcollective.com",
     password: hashedPassword,
     name: "Chris"
   });
   stats.adminsCreated++;
-  console.log("  ✅ Created chris@247printnetwork.com");
+  console.log("  ✅ Created chris@369artcollective.com");
   
   await db.insert(admins).values({
-    email: "admin@247printnetwork.com",
+    email: "admin@369artcollective.com",
     password: hashedPassword,
     name: "Admin"
   });
   stats.adminsCreated++;
-  console.log("  ✅ Created admin@247printnetwork.com");
+  console.log("  ✅ Created admin@369artcollective.com");
   console.log(`  Password for both: ${tempPassword}\n`);
 }
 

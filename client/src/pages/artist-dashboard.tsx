@@ -436,7 +436,7 @@ function FeaturedStatusCard({
   }
 
   const sub = featuredStatus.subscription;
-  const tier = sub?.featuredTier;
+  const tier = sub?.featured;
 
   // State 2: Premium subscription
   if (tier === "premium") {
@@ -1120,3 +1120,4 @@ export default function ArtistDashboard() {
     </ArtistLayout>
   );
 }
+

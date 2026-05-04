@@ -15,7 +15,7 @@ async function getAllProducts(): Promise<Product[]> {
   let url: string | null = `https://${shopifyShopUrl}/admin/api/${apiVersion}/products.json?limit=250&status=active`;
   
   while (url) {
-    const response = await fetch(url, {
+    const response: Response = await fetch(url, {
       headers: { "X-Shopify-Access-Token": shopifyAccessToken },
     });
 
@@ -25,8 +25,8 @@ async function getAllProducts(): Promise<Product[]> {
 
     const data = await response.json();
     products.push(...(data.products || []));
-    
-    const linkHeader = response.headers.get('Link');
+
+    const linkHeader: string | null = response.headers.get('Link');
     url = linkHeader?.match(/<([^>]+)>;\s*rel="next"/)?.[1] || null;
   }
   

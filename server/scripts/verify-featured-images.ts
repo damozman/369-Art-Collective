@@ -36,7 +36,7 @@ async function verifyFeaturedImages() {
     console.log("");
   }
   
-  const handles = products.map(p => p.handle).join(",");
+  const handles = products.map((p: any) => p.handle).join(",");
   console.log("=== COPY THIS LIST ===");
   console.log(handles);
 }

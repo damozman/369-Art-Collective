@@ -122,7 +122,7 @@ export default function JoinCreatorverse() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setLocation("/")}>
             <Sparkles className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl font-serif">247 Print Network</span>
+            <span className="font-bold text-xl font-serif">369 Art Collective</span>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -288,7 +288,7 @@ export default function JoinCreatorverse() {
               Ready to Build Your Creative Empire?
             </h2>
             <p className="text-xl text-muted-foreground">
-              Join hundreds of artists already earning passive income through the 247 Print Network. 
+              Join hundreds of artists already earning passive income through the 369 Art Collective. 
               Your art deserves to be seen—and paid for.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
@@ -320,7 +320,7 @@ export default function JoinCreatorverse() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              <span className="font-bold font-serif">247 Print Network</span>
+              <span className="font-bold font-serif">369 Art Collective</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <button onClick={() => setLocation("/")} className="hover:text-foreground transition-colors">

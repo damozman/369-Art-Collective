@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
 
-const AFFILIATE_COOKIE_NAME = "247pn_affiliate";
+const AFFILIATE_COOKIE_NAME = "369ac_affiliate";
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
 /**

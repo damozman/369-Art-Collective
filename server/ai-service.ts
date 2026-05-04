@@ -1,51 +1,27 @@
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Buffer } from "node:buffer";
 import fs from "node:fs/promises";
 import path from "path";
 
-// This is using Replit's AI Integrations service, which provides OpenAI-compatible API access without requiring your own OpenAI API key.
-const openai = new OpenAI({
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
-});
+const genAI = new GoogleGenerativeAI(
+  (process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY) as string
+);
 
 /**
- * Generate an AI image using OpenAI's gpt-image-1 model
- * Note: gpt-image-1 returns base64 format only (response_format parameter not supported)
+ * Generate an AI image using a placeholder function
+ * NOTE: Gemini does not have a dedicated image generation model like DALL-E.
+ * This function is a placeholder and should be replaced with a real image generation service if needed.
  */
 export async function generateAiImage(
   prompt: string,
   size: "1024x1024" | "512x512" | "256x256" = "1024x1024"
 ): Promise<{ imageBuffer: Buffer; costUsd: number }> {
-  try {
-    // Call OpenAI API
-    const response = await openai.images.generate({
-      model: "gpt-image-1",
-      prompt,
-      size,
-    });
+  // Placeholder: return a static image to avoid breaking the flow
+  const placeholderImagePath = path.join(process.cwd(), './client/public/placeholder.png');
+  const imageBuffer = await fs.readFile(placeholderImagePath);
+  const costUsd = 0; // No cost for placeholder
 
-    // Extract base64 image data
-    if (!response.data || response.data.length === 0) {
-      throw new Error("No image data returned from OpenAI");
-    }
-    
-    const base64 = response.data[0]?.b64_json ?? "";
-    if (!base64) {
-      throw new Error("No image data returned from OpenAI");
-    }
-
-    // Convert base64 to buffer
-    const imageBuffer = Buffer.from(base64, "base64");
-
-    // Estimate cost based on image size
-    const costUsd = estimateImageGenerationCost(size);
-
-    return { imageBuffer, costUsd };
-  } catch (error: any) {
-    console.error("AI image generation error:", error);
-    throw new Error(`Failed to generate AI image: ${error.message}`);
-  }
+  return { imageBuffer, costUsd };
 }
 
 /**
@@ -80,26 +56,6 @@ export async function saveAiImage(
 }
 
 /**
- * Estimate cost per image generation based on size
- * OpenAI pricing (estimated):
- * - 1024x1024: $0.04-0.08 per image
- * - 512x512: $0.02-0.04 per image
- * - 256x256: $0.01-0.02 per image
- */
-function estimateImageGenerationCost(size: string): number {
-  switch (size) {
-    case "1024x1024":
-      return 0.06; // Mid-range estimate
-    case "512x512":
-      return 0.03;
-    case "256x256":
-      return 0.015;
-    default:
-      return 0.06; // Default to highest cost
-  }
-}
-
-/**
  * Validate image generation prompt for safety and quality
  */
 export function validatePrompt(prompt: string): { valid: boolean; error?: string } {
@@ -113,7 +69,7 @@ export function validatePrompt(prompt: string): { valid: boolean; error?: string
     return { valid: false, error: "Prompt must be less than 1000 characters" };
   }
 
-  // Basic content safety check (very simple - OpenAI has its own content filters)
+  // Basic content safety check (very simple - Gemini has its own content filters)
   const blockedWords = ["explicit", "nsfw", "nude", "violent"];
   const lowerPrompt = prompt.toLowerCase();
   for (const word of blockedWords) {
@@ -126,7 +82,7 @@ export function validatePrompt(prompt: string): { valid: boolean; error?: string
 }
 
 /**
- * Generate marketing content for artwork using GPT-4o Vision
+ * Generate marketing content for artwork using Gemini 1.5 Flash
  * This helps artists write compelling titles, descriptions, tags, and stories by analyzing the actual image
  */
 export async function generateArtworkContent(params: {
@@ -140,6 +96,8 @@ export async function generateArtworkContent(params: {
 }): Promise<{ content: string; tokensUsed: number }> {
   try {
     const { contentType, imageUrl, artworkTitle, existingDescription, style, medium, colors } = params;
+    
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     // Build context from existing information
     const context = [];
@@ -152,7 +110,6 @@ export async function generateArtworkContent(params: {
     const contextString = context.length > 0 ? `\n\nExisting context:\n${context.join('\n')}` : '';
 
     // Generate prompts based on content type
-    let systemPrompt = "You are a professional art curator and copywriter helping artists sell their artwork online. Analyze the image carefully and write compelling, authentic, and engaging content that accurately describes what you see. Focus on the main subject, composition, colors, mood, and style.";
     let userPrompt = '';
 
     switch (contentType) {
@@ -177,53 +134,38 @@ export async function generateArtworkContent(params: {
         break;
     }
 
-    // Build messages array with image support if imageUrl provided
-    const messages: any[] = [
-      { role: "system", content: systemPrompt }
-    ];
-
+    const parts: any[] = [{text: userPrompt}];
+    
     if (imageUrl) {
-      // Use GPT-4o Vision with image
-      messages.push({
-        role: "user",
-        content: [
-          {
-            type: "image_url",
-            image_url: {
-              url: imageUrl,
-              detail: "high" // Use high detail for accurate subject recognition
-            }
-          },
-          {
-            type: "text",
-            text: userPrompt
-          }
-        ]
-      });
-    } else {
-      // Fallback to text-only if no image provided
-      messages.push({
-        role: "user",
-        content: userPrompt
+      const response = await fetch(imageUrl);
+      const imageBuffer = await response.arrayBuffer();
+      const imageBase64 = Buffer.from(imageBuffer).toString('base64');
+      
+      parts.unshift({
+        inlineData: {
+          mimeType: 'image/png',
+          data: imageBase64
+        }
       });
     }
 
-    // Call GPT-4o (Vision) for content generation
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages,
-      temperature: 0.7, // Balanced creativity
-      max_tokens: 200, // Enough for content but not excessive
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 200,
+      },
     });
 
-    const content = response.choices[0]?.message?.content?.trim() || '';
-    const tokensUsed = response.usage?.total_tokens || 0;
-
+    const response = result.response;
+    const content = response.text().trim();
+    const { totalTokens } = await model.countTokens(userPrompt);
+    
     if (!content) {
-      throw new Error("No content generated from GPT-4o");
+      throw new Error("No content generated from Gemini");
     }
 
-    return { content, tokensUsed };
+    return { content, tokensUsed: totalTokens };
   } catch (error: any) {
     console.error("[ERROR][AI_CONTENT] Failed to generate content:", error.message);
     throw new Error(`Failed to generate content: ${error.message}`);

@@ -187,7 +187,7 @@ async function deployArtFix(): Promise<void> {
   if (successful > 0) {
     console.log('✨ Deployment completed!\n');
     console.log('🌐 Test your product page:');
-    console.log('   https://247printnetwork.com/products/abandoned-factory-1\n');
+    console.log('   https://369artcollective.com/products/abandoned-factory-1\n');
     console.log('💡 Hard refresh (Ctrl+Shift+R) to see changes\n');
   }
   

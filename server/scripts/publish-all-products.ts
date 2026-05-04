@@ -84,7 +84,7 @@ async function publishAllProducts() {
   console.log(`❌ Failed: ${failCount}`);
   console.log(`📦 Total processed: ${artworksWithProducts.length}`);
   console.log("\n✨ Products are now visible on your storefront!");
-  console.log("🔗 Visit: https://247printnetwork.com/collections/all\n");
+  console.log("🔗 Visit: https://369artcollective.com/collections/all\n");
 }
 
 publishAllProducts();

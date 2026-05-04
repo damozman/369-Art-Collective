@@ -51,7 +51,7 @@ async function auditInventory() {
       continue; // Skip non-art products
     }
 
-    const variants = product.variants?.map(v => ({
+    const variants = product.variants?.map((v: any) => ({
       size: v.option1 || 'unknown',
       finish: v.option2 || 'unknown',
       price: v.price || '0'

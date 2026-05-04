@@ -39,7 +39,7 @@ export function trialEndingSoonEmail({ artistName, subscriptionTier, trialDaysLe
     </p>
 
     <p>Thanks for being part of our artist community!</p>
-    <p>Best,<br><strong>The 247 Print Network Team</strong></p>
+    <p>Best,<br><strong>The 369 Art Collective Team</strong></p>
   `;
 
   return emailLayout({

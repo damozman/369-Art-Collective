@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * 247 Print Network - Homepage Product Population
+ * 369 Art Collective - Homepage Product Population
  * 
  * Automatically updates the Shopify storefront homepage with real products
  * from your store instead of placeholder images.
@@ -135,7 +135,7 @@ async function main() {
       if (indexData.sections.featured_artworks.blocks[blockKey]) {
         indexData.sections.featured_artworks.blocks[blockKey].settings.artwork_title = product.title;
         indexData.sections.featured_artworks.blocks[blockKey].settings.artwork_image = product.images[0].src;
-        indexData.sections.featured_artworks.blocks[blockKey].settings.artwork_url = `https://247printnetwork.com/products/${product.handle}`;
+        indexData.sections.featured_artworks.blocks[blockKey].settings.artwork_url = `https://369artcollective.com/products/${product.handle}`;
       }
     });
     
@@ -162,7 +162,7 @@ async function main() {
     console.log(`  • ${Object.keys(collectionCovers).length} collection covers`);
     console.log(`  • Deployed to live theme: ${LIVE_THEME_ID}`);
     console.log('\n✅ Homepage successfully populated with real products!');
-    console.log('   Visit: https://247printnetwork.com\n');
+    console.log('   Visit: https://369artcollective.com\n');
     
   } catch (error) {
     console.error('\n❌ Error:', error.message);

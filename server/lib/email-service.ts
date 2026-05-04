@@ -40,7 +40,7 @@ async function getUncachableResendClient() {
   };
 }
 
-const FROM_NAME = '247 Print Network Team';
+const FROM_NAME = '369 Art Collective Team';
 
 export type EmailType = 
   | 'welcome'
@@ -63,6 +63,7 @@ export type EmailType =
   | 'trial_last_chance'
   | 'trial_expired_reengage'
   | 'waitlist_notification'
+  | 'tier_upgrade'
   | 'custom';
 
 export interface EmailData {
@@ -110,7 +111,7 @@ export class EmailService {
             ${params.bodyHtml}
           </div>
           <div class="footer">
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -176,7 +177,7 @@ export class EmailService {
   }
 
   async sendWelcomeEmail(artistEmail: string, artistName: string, artistId: string) {
-    const subject = 'Welcome to 247 Print Network!';
+    const subject = 'Welcome to 369 Art Collective!';
     const htmlBody = this.getWelcomeEmailHTML(artistName);
     const textBody = this.getWelcomeEmailText(artistName);
 
@@ -194,7 +195,7 @@ export class EmailService {
 
   async sendPasswordResetEmail(email: string, userType: 'artist' | 'admin', resetToken: string) {
     const resetUrl = `${process.env.VITE_SITE_URL || 'http://localhost:5000'}/reset-password?token=${resetToken}&type=${userType}`;
-    const subject = 'Reset Your Password - 247 Print Network';
+    const subject = 'Reset Your Password - 369 Art Collective';
     const htmlBody = this.getPasswordResetEmailHTML(resetUrl);
     const textBody = this.getPasswordResetEmailText(resetUrl);
 
@@ -245,7 +246,7 @@ export class EmailService {
     artistName: string,
     artistId: string
   ) {
-    const subject = 'Maximize Your Earnings: Understanding 247 Print Network Tiers';
+    const subject = 'Maximize Your Earnings: Understanding 369 Art Collective Tiers';
     const htmlBody = this.getTierExplainerEmailHTML(artistName);
     const textBody = this.getTierExplainerEmailText(artistName);
 
@@ -299,7 +300,7 @@ export class EmailService {
     artworkTitle: string,
     artworkId: string
   ) {
-    const subject = `Action Needed: Keep "${artworkTitle}" Live on 247 Print Network`;
+    const subject = `Action Needed: Keep "${artworkTitle}" Live on 369 Art Collective`;
     const archiveDate = new Date();
     archiveDate.setDate(archiveDate.getDate() + 30);
     
@@ -346,7 +347,7 @@ export class EmailService {
     influencerName: string,
     influencerId: string
   ) {
-    const subject = 'Welcome to 247 Print Network Influencer Program!';
+    const subject = 'Welcome to 369 Art Collective Influencer Program!';
     const htmlBody = this.getInfluencerApplicationHTML(influencerName);
     const textBody = this.getInfluencerApplicationText(influencerName);
 
@@ -403,7 +404,7 @@ export class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>Welcome to 247 Print Network!</h1>
+            <h1>Welcome to 369 Art Collective!</h1>
           </div>
           <div class="content">
             <p>Hi ${artistName},</p>
@@ -432,10 +433,10 @@ export class EmailService {
             
             <p>If you have any questions, feel free to reply to this email.</p>
             
-            <p>Best regards,<br>247 Print Network Team</p>
+            <p>Best regards,<br>369 Art Collective Team</p>
           </div>
           <div class="footer">
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -445,7 +446,7 @@ export class EmailService {
 
   private getWelcomeEmailText(artistName: string): string {
     return `
-Welcome to 247 Print Network!
+Welcome to 369 Art Collective!
 
 Hi ${artistName},
 
@@ -471,9 +472,9 @@ Visit your dashboard: ${process.env.VITE_SITE_URL || 'http://localhost:5000'}/ar
 If you have any questions, feel free to reply to this email.
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -499,7 +500,7 @@ Best regards,
             <h1>Reset Your Password</h1>
           </div>
           <div class="content">
-            <p>You requested to reset your password for your 247 Print Network account.</p>
+            <p>You requested to reset your password for your 369 Art Collective account.</p>
             
             <p>Click the button below to reset your password:</p>
             
@@ -512,10 +513,10 @@ Best regards,
             <p>If the button doesn't work, copy and paste this link into your browser:</p>
             <p style="word-break: break-all; color: #667eea;">${resetUrl}</p>
             
-            <p>Best regards,<br>247 Print Network Team</p>
+            <p>Best regards,<br>369 Art Collective Team</p>
           </div>
           <div class="footer">
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -527,7 +528,7 @@ Best regards,
     return `
 Reset Your Password
 
-You requested to reset your password for your 247 Print Network account.
+You requested to reset your password for your 369 Art Collective account.
 
 Click the link below to reset your password:
 ${resetUrl}
@@ -535,9 +536,9 @@ ${resetUrl}
 SECURITY NOTICE: This link will expire in 60 minutes. If you didn't request this reset, please ignore this email.
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -572,7 +573,7 @@ Best regards,
             <p>Hi ${artistName},</p>
             
             <div class="success">
-              <strong>Congratulations!</strong> Your portfolio has been approved. You're now a 247 Print Network artist!
+              <strong>Congratulations!</strong> Your portfolio has been approved. You're now a 369 Art Collective artist!
             </div>
             
             <p><strong>Your Free Tier Includes:</strong></p>
@@ -626,10 +627,10 @@ Best regards,
             
             <p>We can't wait to see what you create! Questions about tiers or features? Just reply to this email.</p>
             
-            <p>Best regards,<br>247 Print Network Team</p>
+            <p>Best regards,<br>369 Art Collective Team</p>
           </div>
           <div class="footer">
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -643,7 +644,7 @@ Portfolio Approved!
 
 Hi ${artistName},
 
-Congratulations! Your portfolio has been approved. You're now a 247 Print Network artist!
+Congratulations! Your portfolio has been approved. You're now a 369 Art Collective artist!
 
 YOUR FREE TIER INCLUDES:
 • 30% royalty on all sales
@@ -683,9 +684,9 @@ Upload your first artwork: ${process.env.VITE_SITE_URL || 'http://localhost:5000
 We can't wait to see what you create! Questions about tiers or features? Just reply to this email.
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -712,7 +713,7 @@ Best regards,
           <div class="content">
             <p>Hi ${artistName},</p>
             
-            <p>Thank you for your interest in joining 247 Print Network. After reviewing your portfolio submission, we're unable to approve it at this time.</p>
+            <p>Thank you for your interest in joining 369 Art Collective. After reviewing your portfolio submission, we're unable to approve it at this time.</p>
             
             ${reason ? `
               <div class="info">
@@ -725,10 +726,10 @@ Best regards,
             
             <p>We appreciate your interest and wish you the best in your artistic journey!</p>
             
-            <p>Best regards,<br>247 Print Network Team</p>
+            <p>Best regards,<br>369 Art Collective Team</p>
           </div>
           <div class="footer">
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -742,7 +743,7 @@ Portfolio Submission Update
 
 Hi ${artistName},
 
-Thank you for your interest in joining 247 Print Network. After reviewing your portfolio submission, we're unable to approve it at this time.
+Thank you for your interest in joining 369 Art Collective. After reviewing your portfolio submission, we're unable to approve it at this time.
 
 ${reason ? `Feedback: ${reason}` : ''}
 
@@ -751,9 +752,9 @@ We encourage you to continue developing your portfolio and consider reapplying i
 We appreciate your interest and wish you the best in your artistic journey!
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -976,10 +977,10 @@ Best regards,
             
             <p>Keep creating amazing art!</p>
             
-            <p>Best regards,<br>247 Print Network Team</p>
+            <p>Best regards,<br>369 Art Collective Team</p>
           </div>
           <div class="footer">
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -1083,9 +1084,9 @@ Reply to this email and we'll help you choose the right tier for your goals. We 
 Keep creating amazing art!
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -1121,7 +1122,7 @@ Best regards,
             
             <p><strong>What Happens Now:</strong></p>
             <ul>
-              <li>Your artwork is live on the 247 Print Network marketplace</li>
+              <li>Your artwork is live on the 369 Art Collective marketplace</li>
               <li>Products are available in multiple sizes (8x10", 16x20", 24x36", 30x40")</li>
               <li>Two finish options: Premium Paper and Gallery Canvas</li>
               <li>You earn 30-45% royalties on every sale</li>
@@ -1131,10 +1132,10 @@ Best regards,
             
             <p>Keep uploading! The more artwork you have live, the more you can earn.</p>
             
-            <p>Best regards,<br>247 Print Network Sales Team</p>
+            <p>Best regards,<br>369 Art Collective Sales Team</p>
           </div>
           <div class="footer">
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -1153,7 +1154,7 @@ Great news! Your artwork "${artworkTitle}" has been approved and is now live on 
 Your artwork has been transformed into beautiful print-on-demand products across multiple sizes and finishes. Customers can now purchase your art, and you'll earn royalties on every sale.
 
 What Happens Now:
-- Your artwork is live on the 247 Print Network marketplace
+- Your artwork is live on the 369 Art Collective marketplace
 - Products are available in multiple sizes (8x10", 16x20", 24x36", 30x40")
 - Two finish options: Premium Paper and Gallery Canvas
 - You earn 30-45% royalties on every sale
@@ -1163,9 +1164,9 @@ View your dashboard: ${process.env.VITE_SITE_URL || 'http://localhost:5000'}/art
 Keep uploading! The more artwork you have live, the more you can earn.
 
 Best regards,
-247 Print Network Sales Team
+369 Art Collective Sales Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -1214,10 +1215,10 @@ Best regards,
             
             <a href="${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard" class="button">Upload New Artwork</a>
             
-            <p>Best regards,<br>247 Print Network Support Team</p>
+            <p>Best regards,<br>369 Art Collective Support Team</p>
           </div>
           <div class="footer">
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -1246,9 +1247,9 @@ Please address the feedback and feel free to submit new artwork. We're here to h
 Upload new artwork: ${process.env.VITE_SITE_URL || 'http://localhost:5000'}/artist/dashboard
 
 Best regards,
-247 Print Network Support Team
+369 Art Collective Support Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -1308,11 +1309,11 @@ Best regards,
             
             <p>We're here to support your success. If you'd like help promoting this artwork or have questions, reply to this email.</p>
             
-            <p>Best regards,<br>247 Print Network Team</p>
+            <p>Best regards,<br>369 Art Collective Team</p>
           </div>
           <div class="footer">
             <p>This is an automated notice based on our marketplace quality policy. You can manage your artwork anytime in your dashboard.</p>
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -1350,11 +1351,11 @@ Archived artworks are hidden from the marketplace but remain in your dashboard. 
 We're here to support your success. If you'd like help promoting this artwork or have questions, reply to this email.
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
 ---
 This is an automated notice based on our marketplace quality policy. You can manage your artwork anytime in your dashboard.
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -1421,11 +1422,11 @@ This is an automated notice based on our marketplace quality policy. You can man
             
             <p>We value your partnership and are here to help. If you have questions or need marketing support, reply to this email.</p>
             
-            <p>Best regards,<br>247 Print Network Team</p>
+            <p>Best regards,<br>369 Art Collective Team</p>
           </div>
           <div class="footer">
             <p>This action was taken in accordance with our marketplace quality policy and terms of service.</p>
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -1468,11 +1469,11 @@ TIPS FOR SUCCESS:
 We value your partnership and are here to help. If you have questions or need marketing support, reply to this email.
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
 ---
 This action was taken in accordance with our marketplace quality policy and terms of service.
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -1499,7 +1500,7 @@ This action was taken in accordance with our marketplace quality policy and term
           <div class="content">
             <p>Hi ${influencerName},</p>
             
-            <p>Thank you for applying to become a 247 Print Network influencer! We're excited about your interest in partnering with us.</p>
+            <p>Thank you for applying to become a 369 Art Collective influencer! We're excited about your interest in partnering with us.</p>
             
             <div class="info">
               <strong>Application Status:</strong> Pending Review<br>
@@ -1528,10 +1529,10 @@ This action was taken in accordance with our marketplace quality policy and term
             
             <p>If you have any questions in the meantime, feel free to reply to this email.</p>
             
-            <p>Best regards,<br>247 Print Network Partnerships Team</p>
+            <p>Best regards,<br>369 Art Collective Partnerships Team</p>
           </div>
           <div class="footer">
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -1545,7 +1546,7 @@ Welcome to the Influencer Program!
 
 Hi ${influencerName},
 
-Thank you for applying to become a 247 Print Network influencer! We're excited about your interest in partnering with us.
+Thank you for applying to become a 369 Art Collective influencer! We're excited about your interest in partnering with us.
 
 APPLICATION STATUS: Pending Review
 REVIEW TIMELINE: 24-48 hours
@@ -1569,9 +1570,9 @@ We review applications carefully to ensure quality partnerships that benefit bot
 If you have any questions in the meantime, feel free to reply to this email.
 
 Best regards,
-247 Print Network Partnerships Team
+369 Art Collective Partnerships Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -1604,7 +1605,7 @@ Best regards,
             <p>Hi ${influencerName},</p>
             
             <div class="success">
-              <strong>Congratulations!</strong> Your influencer application has been approved. Welcome to the 247 Print Network family!
+              <strong>Congratulations!</strong> Your influencer application has been approved. Welcome to the 369 Art Collective family!
             </div>
             
             <p><strong>Your Unique Affiliate Code:</strong></p>
@@ -1653,10 +1654,10 @@ Best regards,
             
             <p>We're excited to partner with you! If you have any questions or need marketing materials, reply to this email.</p>
             
-            <p>Best regards,<br>247 Print Network Partnerships Team</p>
+            <p>Best regards,<br>369 Art Collective Partnerships Team</p>
           </div>
           <div class="footer">
-            <p>© 2025 247 Print Network. All rights reserved.</p>
+            <p>© 2025 369 Art Collective. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -1673,7 +1674,7 @@ You're Approved!
 
 Hi ${influencerName},
 
-Congratulations! Your influencer application has been approved. Welcome to the 247 Print Network family!
+Congratulations! Your influencer application has been approved. Welcome to the 369 Art Collective family!
 
 YOUR UNIQUE AFFILIATE CODE: ${affiliateCode}
 
@@ -1712,9 +1713,9 @@ PRO TIPS FOR SUCCESS:
 We're excited to partner with you! If you have any questions or need marketing materials, reply to this email.
 
 Best regards,
-247 Print Network Partnerships Team
+369 Art Collective Partnerships Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
   }
 
@@ -1741,7 +1742,7 @@ Best regards,
       <p>Hi ${artistName},</p>
       
       <div class="success">
-        <strong>Your ${tierName} subscription is now active!</strong> Thank you for upgrading your 247 Print Network account.
+        <strong>Your ${tierName} subscription is now active!</strong> Thank you for upgrading your 369 Art Collective account.
       </div>
       
       <p><strong>Your ${tierName} Benefits:</strong></p>
@@ -1788,7 +1789,7 @@ Best regards,
       
       <p>Questions about your subscription or featured rotation? Just reply to this email and we'll help!</p>
       
-      <p>Best regards,<br>247 Print Network Team</p>
+      <p>Best regards,<br>369 Art Collective Team</p>
     `;
 
     const textBody = `
@@ -1796,7 +1797,7 @@ Welcome to ${tierName} - Your Subscription is Active!
 
 Hi ${artistName},
 
-Your ${tierName} subscription is now active! Thank you for upgrading your 247 Print Network account.
+Your ${tierName} subscription is now active! Thank you for upgrading your 369 Art Collective account.
 
 YOUR ${tierName.toUpperCase()} BENEFITS:
 • ${tierRoyalty} minimum royalty on all sales${tier === 'elite' ? ' (guaranteed max tier!)' : ''}
@@ -1831,9 +1832,9 @@ Elite tier offers 45% royalty guarantee, unlimited AI Studio, priority review, a
 Questions about your subscription or featured rotation? Just reply to this email and we'll help!
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
 
     const htmlBody = this.renderEmailLayout({
@@ -1896,7 +1897,7 @@ Best regards,
       
       <p>If you're experiencing financial difficulty, please reply to this email to discuss options. We're here to help!</p>
       
-      <p>Best regards,<br>247 Print Network Team</p>
+      <p>Best regards,<br>369 Art Collective Team</p>
     `;
 
     const textBody = `
@@ -1924,9 +1925,9 @@ Update Payment Method: ${dashboardUrl}
 If you're experiencing financial difficulty, please reply to this email to discuss options. We're here to help!
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
 
     const htmlBody = this.renderEmailLayout({
@@ -1997,7 +1998,7 @@ Best regards,
       
       <p>Keep creating amazing artwork! Every sale earns you 30-45% royalties.</p>
       
-      <p>Best regards,<br>247 Print Network Team</p>
+      <p>Best regards,<br>369 Art Collective Team</p>
     `;
 
     const textBody = `
@@ -2029,9 +2030,9 @@ View Earnings Dashboard: ${dashboardUrl}
 Keep creating amazing artwork! Every sale earns you 30-45% royalties.
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
 
     const htmlBody = this.renderEmailLayout({
@@ -2092,7 +2093,7 @@ Best regards,
       <p><strong>Questions or Need Help?</strong></p>
       <p>Reply to this email or visit our FAQ section. We're here to help you succeed!</p>
       
-      <p>Best regards,<br>247 Print Network Team</p>
+      <p>Best regards,<br>369 Art Collective Team</p>
     `;
 
     const textBody = `
@@ -2120,9 +2121,9 @@ QUESTIONS OR NEED HELP?
 Reply to this email or visit our FAQ section. We're here to help you succeed!
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
 
     const htmlBody = this.renderEmailLayout({
@@ -2195,7 +2196,7 @@ Best regards,
       
       <p>Don't wait until the last minute! Secure your ${tierName} benefits today.</p>
       
-      <p>Best regards,<br>247 Print Network Team</p>
+      <p>Best regards,<br>369 Art Collective Team</p>
     `;
 
     const textBody = `
@@ -2226,9 +2227,9 @@ ${tier === 'pro' ? '• Pro features - Everything you need to grow your art busi
 Don't wait until the last minute! Secure your ${tierName} benefits today.
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
 
     const htmlBody = this.renderEmailLayout({
@@ -2295,7 +2296,7 @@ Best regards,
       
       <p>Don't let this opportunity slip away. Your future self will thank you!</p>
       
-      <p>Best regards,<br>247 Print Network Team</p>
+      <p>Best regards,<br>369 Art Collective Team</p>
     `;
 
     const textBody = `
@@ -2327,9 +2328,9 @@ Act Now: Upgrade in the next 24 hours to keep all your ${tierName} benefits!
 Don't let this opportunity slip away. Your future self will thank you!
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
 
     const htmlBody = this.renderEmailLayout({
@@ -2397,7 +2398,7 @@ Best regards,
       
       <p>We're here whenever you need us. Reply to this email if you have any questions!</p>
       
-      <p>Best regards,<br>247 Print Network Team</p>
+      <p>Best regards,<br>369 Art Collective Team</p>
     `;
 
     const textBody = `
@@ -2430,9 +2431,9 @@ That's okay! You can always upgrade when you're ready. Your Free tier account gi
 We're here whenever you need us. Reply to this email if you have any questions!
 
 Best regards,
-247 Print Network Team
+369 Art Collective Team
 
-© 2025 247 Print Network. All rights reserved.
+© 2025 369 Art Collective. All rights reserved.
     `.trim();
 
     const htmlBody = this.renderEmailLayout({
@@ -2465,7 +2466,7 @@ Best regards,
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Interest:</strong> ${interest === 'both' ? 'Customer & Artist' : interest.charAt(0).toUpperCase() + interest.slice(1)}</p>
       </div>
-      <p>Someone has just joined the 247 Print Network waitlist. Follow up with them when you're ready to launch!</p>
+      <p>Someone has just joined the 369 Art Collective waitlist. Follow up with them when you're ready to launch!</p>
     `;
     
     const textBody = `
@@ -2475,7 +2476,7 @@ Name: ${name}
 Email: ${email}
 Interest: ${interest === 'both' ? 'Customer & Artist' : interest}
 
-This person is interested in 247 Print Network and has joined the waitlist. Follow up with them when you're ready to launch!
+This person is interested in 369 Art Collective and has joined the waitlist. Follow up with them when you're ready to launch!
     `.trim();
     
     const htmlBody = this.renderEmailLayout({

@@ -27,12 +27,12 @@ async function getFeaturedHandles() {
   const products = data.products || [];
   
   console.log("\nProduct Handles for Featured Collection:\n");
-  products.forEach(p => {
+  products.forEach((p: any) => {
     console.log(`"${p.handle}",  // ${p.title}`);
   });
-  
+
   console.log("\nCopy this comma-separated list:");
-  console.log(products.map(p => p.handle).join(','));
+  console.log(products.map((p: any) => p.handle).join(','));
 }
 
 getFeaturedHandles().catch(console.error);

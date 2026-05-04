@@ -320,7 +320,7 @@ export default function CreatorStack() {
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               <span className="font-bold font-serif">247 CreatorStack</span>
-              <span className="text-sm text-muted-foreground">by 3six9 Media Masters</span>
+              <span className="text-sm text-muted-foreground">by 369 Media Masters</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <button onClick={() => setLocation("/")} className="hover:text-foreground transition-colors">

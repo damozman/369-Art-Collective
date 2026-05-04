@@ -42,6 +42,11 @@ type InfluencerWithStats = Influencer & {
     monthlySalesCount: number;
     currentTier: string;
   };
+  // Extended fields from registration form (may be present in API response)
+  audience?: string;
+  niche?: string;
+  motivation?: string;
+  socialHandles?: Record<string, string>;
 };
 
 export default function AdminInfluencers() {
@@ -72,9 +77,7 @@ export default function AdminInfluencers() {
   // Approve mutation
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest(`/api/admin/influencers/${id}/approve`, {
-        method: "PATCH",
-      });
+      return apiRequest("PATCH", `/api/admin/influencers/${id}/approve`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/influencers"] });
@@ -95,10 +98,7 @@ export default function AdminInfluencers() {
   // Update status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      return apiRequest(`/api/admin/influencers/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      });
+      return apiRequest("PATCH", `/api/admin/influencers/${id}`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/influencers"] });
@@ -422,7 +422,7 @@ export default function AdminInfluencers() {
                           .filter(([_, value]) => value)
                           .map(([platform, handle]) => (
                             <div key={platform}>
-                              {platform}: {handle}
+                              {platform}: {String(handle)}
                             </div>
                           ))}
                       </div>

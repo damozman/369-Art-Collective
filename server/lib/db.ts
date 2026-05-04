@@ -3,8 +3,8 @@
  * Connection pooling improves performance for high-traffic applications
  */
 
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "@shared/schema";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -13,17 +13,12 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is not configured");
 }
 
-// Enable connection pooling for production deployments
-// Neon's pooler is automatically used when DATABASE_URL contains the pooler endpoint
-const sql = neon(databaseUrl, {
-  fullResults: true,
-  fetchOptions: {
-    cache: 'no-store',
-  },
+const pool = new Pool({
+  connectionString: databaseUrl,
 });
 
 // Create Drizzle client with schema
-export const db = drizzle(sql, { schema });
+export const db = drizzle(pool, { schema });
 
 export function isDatabaseConfigured(): boolean {
   return Boolean(databaseUrl);

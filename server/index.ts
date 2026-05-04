@@ -41,9 +41,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: true, // Replit uses HTTPS for all environments
+    secure: process.env.NODE_ENV === "production", // true in prod (HTTPS), false on localhost
     httpOnly: true,
-    sameSite: "none", // CRITICAL: 'none' required for cross-origin cookie transmission with credentials
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // lax works on localhost; none required for cross-origin prod
     maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
   },
   proxy: true, // Trust proxy headers (needed for Replit deployments)
@@ -113,9 +113,10 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
+    console.error(`[ERROR] ${status} ${message}`, err.stack || err);
+    if (!res.headersSent) {
+      res.status(status).json({ message });
+    }
   });
 
   // importantly only setup vite in development and after
@@ -132,12 +133,10 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
+  const port = Number(process.env.PORT || 5000);
+
+  // Using the standard arguments to satisfy TypeScript and Windows networking
+  server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });
 })();

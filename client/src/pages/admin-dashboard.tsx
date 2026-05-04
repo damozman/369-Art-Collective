@@ -126,6 +126,12 @@ export default function AdminDashboard() {
 
   const pendingArtistsCount = artists?.filter(a => !a.approved).length || 0;
 
+  // Service health check
+  const { data: healthData } = useQuery<{ services: Record<string, { status: string; message?: string }> }>({
+    queryKey: ["/api/health"],
+    refetchInterval: 60000, // re-check every minute
+  });
+
   // Enhanced filtering with search and sorting
   const filteredArtworks = useMemo(() => {
     if (!artworks) return [];
@@ -382,6 +388,34 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Service Health */}
+        {healthData?.services && (
+          <Card className="mb-6">
+            <CardHeader className="p-4 pb-2">
+              <CardDescription>Connected Services</CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 pt-0 flex flex-wrap gap-2">
+              {Object.entries(healthData.services).map(([name, info]) => {
+                const isOk = info.status === "healthy" || info.status === "configured";
+                const isWarn = info.status === "not_configured";
+                return (
+                  <Badge
+                    key={name}
+                    className={
+                      isOk ? "bg-green-600 hover:bg-green-700" :
+                      isWarn ? "bg-yellow-600 hover:bg-yellow-700" :
+                      "bg-red-600 hover:bg-red-700"
+                    }
+                    title={info.message}
+                  >
+                    {isOk ? "✓" : isWarn ? "–" : "✗"} {name}
+                  </Badge>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Artwork Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="hover-elevate cursor-pointer" onClick={() => handleFilterChange("all")}>

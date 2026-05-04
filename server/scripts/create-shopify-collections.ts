@@ -1,3 +1,4 @@
+export {};
 /**
  * Create Shopify Collections for Homepage
  * Creates style-based collections for browsing artwork

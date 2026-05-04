@@ -1,0 +1,5 @@
+SHOPIFY/PRINTIFY SYNC LOGIC
+1. User approves AI artwork
+2. System triggers Printify mockup API
+3. System pushes to Shopify via Admin API
+4. Webhook updates Supabase with product_id

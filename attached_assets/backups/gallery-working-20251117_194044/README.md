@@ -3,7 +3,7 @@
 **Status:** ✅ WORKING VERSION - TESTED & VERIFIED
 
 ## What This Backup Contains
-This is a complete snapshot of the 247 Print Network gallery system in a fully working state.
+This is a complete snapshot of the 369 Art Collective gallery system in a fully working state.
 
 ### Included Files:
 - `247-art.css` - Gallery styles with thumbnail and mockup positioning
@@ -50,7 +50,7 @@ tsx scripts/deploy-art-fix.ts
 6. ✅ Frame alignment across all mockup slides
 
 ## Test URL:
-https://247printnetwork.com/products/abandoned-factory-1
+https://369artcollective.com/products/abandoned-factory-1
 
 ---
 **PRESERVE THIS BACKUP** - This is the baseline working version for all future gallery development.

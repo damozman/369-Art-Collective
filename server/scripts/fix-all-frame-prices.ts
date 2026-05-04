@@ -1,3 +1,4 @@
+export {};
 const shopifyShopUrl = process.env.SHOPIFY_SHOP_URL || '';
 const shopifyAccessToken = process.env.SHOPIFY_ACCESS_TOKEN || '';
 

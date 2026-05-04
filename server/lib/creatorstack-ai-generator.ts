@@ -1,13 +1,10 @@
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import pLimit from "p-limit";
 import pRetry from "p-retry";
 
-// Using Replit's AI Integrations service for OpenAI-compatible API access
-// This internally uses Replit AI Integrations and charges are billed to your credits
-const openai = new OpenAI({
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
-});
+const genAI = new GoogleGenerativeAI(
+  (process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY) as string
+);
 
 // Helper function to check if error is rate limit or quota violation
 function isRateLimitError(error: any): boolean {
@@ -40,20 +37,20 @@ export interface PromptGenerationResponse {
 }
 
 /**
- * Generate AI content using GPT-5 with retry logic
+ * Generate AI content using Gemini 2.0 Flash with retry logic
  */
 export async function generatePromptContent(
   request: PromptGenerationRequest
 ): Promise<PromptGenerationResponse> {
   try {
     const { template, context } = request;
-    
+
     // Build system prompt based on template type
-    let systemPrompt = `You are a professional content creator helping busy solopreneurs create high-quality content quickly.`;
-    
+    const systemPrompt = `You are a professional content creator helping busy solopreneurs create high-quality content quickly.`;
+
     // Build user prompt with context
     let userPrompt = `${template}\n\nContext:\n`;
-    
+
     if (context.businessType) {
       userPrompt += `- Business Type: ${context.businessType}\n`;
     }
@@ -69,34 +66,26 @@ export async function generatePromptContent(
     if (context.quantity) {
       userPrompt += `- Quantity: Generate ${context.quantity} variations\n`;
     }
-    
+
     // Add any additional context
     Object.keys(context).forEach(key => {
       if (!['businessType', 'targetAudience', 'tone', 'platform', 'quantity'].includes(key)) {
         userPrompt += `- ${key}: ${context[key]}\n`;
       }
     });
-    
-    // Call OpenAI with retry logic
-    const response = await pRetry(
+
+    const combinedPrompt = `${systemPrompt}\n\n${userPrompt}`;
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    // Call Gemini with retry logic
+    const result = await pRetry(
       async () => {
         try {
-          const completion = await openai.chat.completions.create({
-            model: "gpt-4o", // Using gpt-4o which is widely supported and reliable
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt }
-            ],
-            max_tokens: 2048,
-          });
-          
-          return completion;
+          return await model.generateContent(combinedPrompt);
         } catch (error: any) {
-          // Check if it's a rate limit error
           if (isRateLimitError(error)) {
             throw error; // Rethrow to trigger p-retry
           }
-          // For non-rate-limit errors, don't retry - just fail fast
           throw error;
         }
       },
@@ -107,10 +96,11 @@ export async function generatePromptContent(
         factor: 2,
       }
     );
-    
-    const generatedContent = response.choices[0]?.message?.content || "";
-    const tokensUsed = response.usage?.total_tokens || 0;
-    
+
+    const generatedContent = result.response.text().trim();
+    const { totalTokens } = await model.countTokens(combinedPrompt);
+    const tokensUsed = totalTokens || 0;
+
     return {
       success: true,
       generatedContent,
@@ -134,10 +124,10 @@ export async function batchGeneratePrompts(
   requests: PromptGenerationRequest[]
 ): Promise<PromptGenerationResponse[]> {
   const limit = pLimit(2); // Process up to 2 requests concurrently
-  
+
   const processingPromises = requests.map((request) =>
     limit(() => generatePromptContent(request))
   );
-  
+
   return await Promise.all(processingPromises);
 }

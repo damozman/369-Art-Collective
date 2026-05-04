@@ -139,7 +139,7 @@ async function main() {
 
   console.log("\n" + "=".repeat(60));
   console.log("✅ Featured collection populated!\n");
-  console.log("🌐 View at: https://247printnetwork.com/collections/featured");
+  console.log("🌐 View at: https://369artcollective.com/collections/featured");
   console.log("🏠 Hero slider will now activate on homepage\n");
 }
 

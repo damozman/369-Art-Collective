@@ -262,7 +262,7 @@ After uploading, scroll through the Assets folder and verify you see:
 
 2. **Go to product page:**
    ```
-   https://247printnetwork.com/products/abandoned-factory-1
+   https://369artcollective.com/products/abandoned-factory-1
    ```
 
 3. **Hard refresh the page:**
@@ -394,7 +394,7 @@ After uploading, scroll through the Assets folder and verify you see:
 3. Press Ctrl+F (or Cmd+F) and search for: `mockup-slide__overlay`
 4. You should see this line: `transform: translate(-50%, -50%) scale(var(--size-scale, 1.0));`
 5. If you DON'T see that line → Re-upload the CSS file following Step 3 above
-6. Close all browser tabs with 247printnetwork.com
+6. Close all browser tabs with 369artcollective.com
 7. Open fresh incognito window and test again
 
 ---
@@ -404,9 +404,9 @@ After uploading, scroll through the Assets folder and verify you see:
 **Most likely cause:** Browser cache showing old version
 
 **Solution:**
-1. Close **ALL** browser tabs with 247printnetwork.com open
+1. Close **ALL** browser tabs with 369artcollective.com open
 2. Open **new incognito/private window**
-3. Go to: https://247printnetwork.com/products/abandoned-factory-1
+3. Go to: https://369artcollective.com/products/abandoned-factory-1
 4. Press Ctrl+Shift+R (or Cmd+Shift+R) to hard refresh
 5. Test size buttons again
 
@@ -442,7 +442,7 @@ After uploading, scroll through the Assets folder and verify you see:
 
 **Solution:**
 1. Verify both files show "Saved" in Shopify (green checkmark)
-2. Close ALL tabs with 247printnetwork.com
+2. Close ALL tabs with 369artcollective.com
 3. Clear browser cache:
    - Chrome: Ctrl+Shift+Delete → Clear "Cached images and files"
    - Firefox: Ctrl+Shift+Delete → Clear "Cache"

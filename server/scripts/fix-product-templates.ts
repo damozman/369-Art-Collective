@@ -16,7 +16,7 @@ async function fixProductTemplates() {
   const products = data.products || [];
   
   // Filter products that need fixing (no template_suffix or published_scope is not 'web')
-  const needsFixing = products.filter(p => 
+  const needsFixing = products.filter((p: any) =>
     !p.template_suffix || p.published_scope !== 'web'
   );
   

@@ -3,7 +3,7 @@
  * Handles all interactions with Printify for POD fulfillment
  */
 
-const PRINTIFY_API_TOKEN = process.env.PRINTIFY_API_TOKEN || "";
+const PRINTIFY_API_TOKEN = process.env.PRINTIFY_API_KEY || process.env.PRINTIFY_API_TOKEN || "";
 const PRINTIFY_API_BASE = "https://api.printify.com/v1";
 
 export function isPrintifyConfigured(): boolean {

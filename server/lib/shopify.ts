@@ -62,7 +62,7 @@ function convertToFullImageUrl(imageUrl: string): string {
   // Use published app URL for public image access
   // CRITICAL: Shopify cannot access development workspace URLs (picard.replit.dev)
   // Must use published production URL (247portal.replit.app) for image downloads
-  const publicUrl = process.env.PUBLIC_APP_URL || 'https://247portal.replit.app';
+  const publicUrl = process.env.PUBLIC_APP_URL || 'https://369artcollective.com';
 
   // Convert relative path to full URL
   const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;

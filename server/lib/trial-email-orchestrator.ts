@@ -84,7 +84,7 @@ export async function sendTrialDay3Email(artistId: string): Promise<SendTrialEma
     const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
     // Generate email HTML
-    const domain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'example.replit.app';
+    const domain = (process.env.PUBLIC_APP_URL || 'https://369artcollective.com').replace(/^https?:\/\//, '');
     const tierType = trial.tier as 'pro' | 'elite';
     const htmlBody = trialDay3Email({
       artistName: artist.name,
@@ -154,7 +154,7 @@ export async function sendTrialEndingSoonEmail(artistId: string): Promise<SendTr
     const now = new Date();
     const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    const domain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'example.replit.app';
+    const domain = (process.env.PUBLIC_APP_URL || 'https://369artcollective.com').replace(/^https?:\/\//, '');
     const tierType = trial.tier as 'pro' | 'elite';
     const htmlBody = trialEndingSoonEmail({
       artistName: artist.name,
@@ -219,7 +219,7 @@ export async function sendTrialLastChanceEmail(artistId: string): Promise<SendTr
       return { sent: false, reason: 'Last Chance email already sent' };
     }
 
-    const domain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'example.replit.app';
+    const domain = (process.env.PUBLIC_APP_URL || 'https://369artcollective.com').replace(/^https?:\/\//, '');
     const tierType = trial.tier as 'pro' | 'elite';
     const htmlBody = trialLastChanceEmail({
       artistName: artist.name,
@@ -271,7 +271,7 @@ export async function sendReEngagementEmail(
       return { sent: false, reason: 'Re-engagement email already sent recently' };
     }
 
-    const domain = process.env.REPLIT_DOMAINS?.split(',')[0] || 'example.replit.app';
+    const domain = (process.env.PUBLIC_APP_URL || 'https://369artcollective.com').replace(/^https?:\/\//, '');
     const htmlBody = reEngagementEmail({
       artistName: artist.name,
       previousTier,

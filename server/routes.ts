@@ -65,7 +65,7 @@ import Stripe from "stripe";
 // Initialize achievement service
 const achievementService = new AchievementService(storage);
 
- // No local uploads dir needed (Supabase Storage)
+const uploadDir = path.join(process.cwd(), 'uploads'); // legacy dev fallback only
 
 // Configure multer for file uploads (using memory storage for object storage)
 const upload = multer({

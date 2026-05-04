@@ -275,7 +275,8 @@
   }
 
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */
-  .border.toggle-elevate::before {
+  /* Use attribute selector to avoid Tailwind JIT applying `after:` variant to this rule */
+  [class~="border"].toggle-elevate::before {
     inset: -1px;
   }
 
@@ -311,11 +312,12 @@
   }
 
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */
-  .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
-  .border.active-elevate:not(.no-active-interaction-elevate)::after,
-  .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
-  .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
-  .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
+  /* Use attribute selector to avoid Tailwind JIT applying `after:` variant to these rules */
+  [class~="border"].hover-elevate:not(.no-hover-interaction-elevate)::after,
+  [class~="border"].active-elevate:not(.no-active-interaction-elevate)::after,
+  [class~="border"].hover-elevate-2:not(.no-hover-interaction-elevate)::after,
+  [class~="border"].active-elevate-2:not(.no-active-interaction-elevate)::after,
+  [class~="border"].hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
 }

@@ -4,12 +4,6 @@ import connectPgSimple from "connect-pg-simple";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
-declare module 'http' {
-  interface IncomingMessage {
-    rawBody: unknown;
-  }
-}
-
 const app = express();
 const PgSession = connectPgSimple(session);
 

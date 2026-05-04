@@ -35,7 +35,7 @@ app.use(session({
 }));
 
 app.use(express.json({
-  verify: (req, _res, buf) => {
+  verify: (req: any, _res, buf) => {
     req.rawBody = buf;
   },
 }));

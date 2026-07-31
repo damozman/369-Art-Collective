@@ -49,14 +49,14 @@ import type { ShopifyOrder, ShopifyRefund } from "./types";
  * The defaults a store gets before anyone configures it.
  *
  * SKU attribution because that is how a print-on-demand store encodes the
- * artwork, and `feePolicy: "actual"` because the safe default is the one that
- * holds a line rather than the one that quietly absorbs an unknown cost. An
- * owner who wants the quiet behaviour has to choose it, which means somebody
- * decided rather than nobody noticing.
+ * artwork, and `onUnknownFee: "hold"` because the safe default is the one that
+ * stops rather than the one that quietly proceeds on an unknown cost. An owner
+ * who wants the quiet behaviour has to choose it, which means somebody decided
+ * rather than nobody noticing.
  */
 export const DEFAULT_SHOPIFY_SETTINGS: ShopifyMapConfig = {
   attribution: { from: "sku" },
-  feePolicy: "actual",
+  onUnknownFee: "hold",
 };
 
 /**
@@ -73,6 +73,8 @@ export function readShopifySettings(
 
   const raw = settings as {
     attribution?: { from?: unknown; property?: unknown; pattern?: unknown };
+    onUnknownFee?: unknown;
+    /** Superseded by `onUnknownFee`. Read only so older blobs keep working. */
     feePolicy?: unknown;
     allowTestOrders?: unknown;
   };
@@ -93,7 +95,12 @@ export function readShopifySettings(
       pattern:
         typeof raw.attribution?.pattern === "string" ? raw.attribution.pattern : undefined,
     },
-    feePolicy: raw.feePolicy === "none" ? "none" : "actual",
+    // The old `feePolicy: "none"` meant "do not record fees at all", which
+    // conflated absorbing a fee with not knowing it. Its nearest honest
+    // equivalent is "carry on when the fee is unknown" — and fees that *can*
+    // be read are now always recorded, which the old setting suppressed.
+    onUnknownFee:
+      raw.onUnknownFee === "proceed" || raw.feePolicy === "none" ? "proceed" : "hold",
     allowTestOrders: raw.allowTestOrders === true,
   };
 }
@@ -239,18 +246,19 @@ export async function ingestShopifyOrder(
   const costSource = options.costSource ?? new NoLineCostSource();
 
   // Fetching transactions is the only reason the adapter needs API access at
-  // all. A failure here is not fatal — `null` flows into the mapper, which
-  // holds the lines under `feePolicy: "actual"` and ignores it under `"none"`.
+  // all, and it is always attempted: the fee is the business's own cost and
+  // belongs in its records regardless of whose deal deducts it. A failure here
+  // is not fatal — `null` flows into the mapper, which decides by
+  // `onUnknownFee`.
   let transactions = options.transactions;
   if (transactions === undefined) {
-    if (options.config.feePolicy === "actual" && options.client) {
+    transactions = null;
+    if (options.client) {
       try {
         transactions = await options.client.getOrderTransactions(order.id);
       } catch {
         transactions = null;
       }
-    } else {
-      transactions = null;
     }
   }
 

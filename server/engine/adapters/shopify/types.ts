@@ -127,7 +127,7 @@ export interface ShopifyRefund {
  * One payment transaction on an order.
  *
  * The fee lives on `receipt.balance_transaction.fee` and is present only for
- * Shopify Payments. That absence is the whole reason `feePolicy` exists — see
+ * Shopify Payments. That absence is the whole reason `onUnknownFee` exists — see
  * `map.ts`.
  */
 export interface ShopifyTransaction {

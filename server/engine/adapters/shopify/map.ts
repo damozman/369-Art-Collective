@@ -29,13 +29,23 @@
  *    shipping is recorded in metadata for reconciliation; the shipping *cost*
  *    arrives from a `LineCostSource`, not from Shopify.
  *
- * 4. **The payment processing fee is fetched, never assumed.** Shopify does not
- *    put it in the order webhook — it is on the order's transactions, and only
- *    for Shopify Payments. A guessed "2.9% + 30¢" is exactly the invented-cost
- *    bug Phase 0 spent its time removing, so there is no guess here: with
- *    `feePolicy: "actual"` a missing fee holds the line for review, and with
- *    `feePolicy: "none"` the merchant has explicitly chosen to absorb fees and
- *    no fee cost is recorded. There is deliberately no third option.
+ * 4. **The payment processing fee is fetched, never assumed, and always
+ *    recorded when it can be read.** Shopify does not put it in the order
+ *    webhook — it is on the order's transactions, and only for Shopify
+ *    Payments. A guessed "2.9% + 30¢" is exactly the invented-cost bug Phase 0
+ *    spent its time removing, so there is no guess here.
+ *
+ *    NOTE WHAT IS *NOT* DECIDED HERE: whether the fee reduces a contributor's
+ *    share. That is the rule's business — `splitRules.costDeductions` already
+ *    names which cost types a given deal deducts, per contributor and
+ *    effective-dated. Adding a second absorb/deduct switch at the connection
+ *    level would let the two disagree, and would also erase the fee from the
+ *    tenant's own margin reporting when set to "absorb". The adapter's only job
+ *    is to find the number; the rule decides what it means.
+ *
+ *    The one genuine choice is what to do when the fee *cannot* be found —
+ *    PayPal and most non-Shopify-Payments gateways do not report one. See
+ *    `onUnknownFee`.
  *
  * 5. **Test orders never produce events.** Shopify's test mode issues real-
  *    looking orders with `test: true`. One of those reaching a real ledger
@@ -91,19 +101,27 @@ export interface ShopifyAttributionConfig {
 }
 
 /**
- * What to do about payment processing fees. See money decision 4 above.
+ * What to do when the payment fee cannot be determined. See money decision 4.
  *
- * `actual`  — deduct the real fee from the order's transactions. If it cannot
- *             be read, hold the line for review. Correct, and occasionally
- *             noisy on non-Shopify-Payments gateways.
- * `none`    — record no fee cost. The merchant absorbs card fees out of their
- *             own margin. Correct, and quiet, and a deliberate choice.
+ * This is NOT "deduct or absorb" — that lives on the rule, per deal. This is
+ * the narrower question of what to do about a sale whose fee the gateway never
+ * reported, where there is genuinely no right answer:
+ *
+ * `hold`    — record the sale, allocate nothing, put it in the review queue.
+ *             Correct, and noisy on stores that take PayPal.
+ * `proceed` — allocate with no fee recorded. Any rule that deducts
+ *             `processing_fee` simply finds none, so the tenant absorbs it for
+ *             that sale. Quiet, and means two identical sales can pay slightly
+ *             differently depending on how the customer paid.
+ *
+ * Both are defensible; neither invents a number. The default is `hold` because
+ * a held sale is recoverable and an overpaid one is not.
  */
-export type FeePolicy = "actual" | "none";
+export type UnknownFeePolicy = "hold" | "proceed";
 
 export interface ShopifyMapConfig {
   attribution: ShopifyAttributionConfig;
-  feePolicy: FeePolicy;
+  onUnknownFee: UnknownFeePolicy;
   /** Ingest Shopify test-mode orders. Only ever true in a test harness. */
   allowTestOrders?: boolean;
 }
@@ -301,7 +319,7 @@ export function lineGrossMinor(line: ShopifyLineItem, currency: string): bigint 
  *
  * Returns `null` when no fee is discoverable — which is the normal, expected
  * answer for PayPal, manual payments, and most non-Shopify-Payments gateways,
- * not an error. The caller decides what a `null` means; see `feePolicy`.
+ * not an error. The caller decides what a `null` means; see `onUnknownFee`.
  *
  * Sums successful sale and capture transactions only. Refund transactions carry
  * their own fee treatment and are handled on the reversal path, and counting a
@@ -353,7 +371,7 @@ export interface MapOrderOptions {
   /**
    * The order's transactions, when they were fetched. `null` means "not
    * available" and is distinct from `[]`, which means "fetched, and there were
-   * none" — the first is a hold under `feePolicy: "actual"`, the second is a
+   * none" — the first is subject to `onUnknownFee`, the second is a
    * genuine zero.
    */
   transactions?: ShopifyTransaction[] | null;
@@ -417,27 +435,32 @@ export function mapOrder(order: ShopifyOrder, options: MapOrderOptions): MappedO
   const grosses = billable.map((line) => lineGrossMinor(line, currency));
 
   // ---- Fees ----
+  //
+  // Always attempted. The fee is real money leaving the business and belongs in
+  // its records whether or not any contributor's deal deducts it — that
+  // question is settled later, by the rule.
   let feeParts: bigint[] = billable.map(() => 0n);
-  let feeHoldReason: string | null = null;
+  let missingFeeReason: string | null = null;
   let feeSource: string | null = null;
 
-  if (config.feePolicy === "actual") {
-    if (options.transactions == null) {
-      feeHoldReason =
-        "Payment fee not available — the order's transactions could not be read. " +
-        "Nobody is paid on an assumed fee.";
+  if (options.transactions == null) {
+    missingFeeReason =
+      "Payment fee not available — the order's transactions could not be read. " +
+      "Nobody is paid on an assumed fee.";
+  } else {
+    const fee = orderProcessingFeeMinor(options.transactions, currency);
+    if (fee == null) {
+      missingFeeReason =
+        "Payment fee not reported by the payment gateway (common for PayPal and " +
+        "similar). Record it manually, or set this store to carry on without it.";
     } else {
-      const fee = orderProcessingFeeMinor(options.transactions, currency);
-      if (fee == null) {
-        feeHoldReason =
-          "Payment fee not reported by the payment gateway. Set this store's fee " +
-          "policy to 'none' if the business absorbs card fees, or record the fee manually.";
-      } else {
-        feeParts = apportionFee(fee, grosses);
-        feeSource = "shopify_transactions";
-      }
+      feeParts = apportionFee(fee, grosses);
+      feeSource = "shopify_transactions";
     }
   }
+
+  const feeHoldReason =
+    missingFeeReason && config.onUnknownFee === "hold" ? missingFeeReason : null;
 
   const shippingCharged = shopMoney(order.total_shipping_price_set, undefined);
 
@@ -493,8 +516,11 @@ export function mapOrder(order: ShopifyOrder, options: MapOrderOptions): MappedO
     };
   });
 
-  if (config.feePolicy === "none") {
-    warnings.push("Fee policy is 'none' — card fees are absorbed and not deducted");
+  if (missingFeeReason && !feeHoldReason) {
+    warnings.push(
+      "No payment fee could be read for this order and the store is set to carry " +
+        "on without one — the business absorbs it for these lines"
+    );
   }
 
   return {

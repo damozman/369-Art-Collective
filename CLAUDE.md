@@ -125,7 +125,7 @@ Both were resolved in step 5.)
   stuck items — and now **both provider adapters**: the Shopify ingestion path
   (signed webhooks → per-line events → ledger, plus refunds and cancellations) and
   the Stripe `TransferExecutor`.
-- **265 unit tests · 141 end-to-end checks against real Postgres.** Every screen has
+- **266 unit tests · 141 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -220,10 +220,15 @@ offering again before anything runs against real money.**
    appears only in the former, and reading the latter overpays on every discounted
    order), customer-paid shipping recorded but not deducted, **payment fee fetched
    and never assumed**, test orders dropped. Each is argued in the file header.
-2. **There is deliberately no "assume 2.9% + 30¢" option.** `feePolicy` is `actual`
-   (hold the line when the fee cannot be read) or `none` (the tenant absorbs fees,
-   explicitly chosen). A third "estimate" arm would recreate the invented-cost bug
-   Phase 0 existed to remove.
+2. **There is deliberately no "assume 2.9% + 30¢" option**, and **absorb-vs-deduct
+   is NOT a connection setting.** Whether a fee reduces someone's share is already
+   `splitRules.costDeductions` — per contributor, effective-dated. A second switch
+   at the connection level could contradict it, and the version that existed
+   briefly (`feePolicy: "none"`) also stopped *recording* the fee, corrupting the
+   tenant's own margin reporting. Fees are now always recorded when readable. The
+   only connection setting is `onUnknownFee`: `hold` (default) or `proceed`, for
+   gateways that never report one. An "estimate" arm would recreate the
+   invented-cost bug Phase 0 existed to remove — do not add one.
 3. **One event per `${orderId}:${lineItemId}`.** Same key the marketplace learned
    the hard way, now enforced by `(tenantId, source, sourceEventId)`.
 4. **Refund proportions divide by the RECORDED gross, not the payload's list
@@ -234,12 +239,13 @@ offering again before anything runs against real money.**
 
 **One known gap, named rather than hidden.** A line held because its payment fee
 could not be read can still be resolved through `resolveEventContributor`, and doing
-so allocates with **no** `processing_fee` cost — i.e. the tenant silently absorbs the
-fee for that line. The hold reason is shown on the item and says exactly this, so it
-is a visible choice rather than a hidden one, and blocking resolution instead would
-leave an item with no way out. **The proper fix is a "record the missing cost" action
-on the review screen**, which belongs with the settings/artwork screens in
-`WHATS-LEFT.md` step 3. Do not fix it by adding an estimated-fee fallback.
+so allocates with **no** `processing_fee` cost — i.e. the tenant absorbs the fee for
+that line, which is exactly what `onUnknownFee: "proceed"` does deliberately. The
+hold reason is shown on the item, so it is a visible choice rather than a hidden
+one, and blocking resolution instead would leave an item with no way out. **The
+proper fix is a "record the missing cost" action on the review screen**, which
+belongs with the settings/artwork screens in `WHATS-LEFT.md` step 3. Do not fix it
+by adding an estimated-fee fallback.
 
 ### Switching the adapters on
 
@@ -270,7 +276,7 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 265 unit tests, no network, no database
+npm test              # 266 unit tests, no network, no database
 npm run test:e2e      # 141 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
@@ -422,7 +428,7 @@ Sessions do not share memory. Everything below is the state as of the last commi
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 265 unit tests — no network, no database
+npm test          # 266 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```

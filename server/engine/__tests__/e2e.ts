@@ -874,7 +874,7 @@ async function main() {
     webhookSecret: WEBHOOK_SECRET,
     settings: {
       attribution: { from: "sku", pattern: "^ART-(\\d+)-" },
-      feePolicy: "actual",
+      onUnknownFee: "hold",
     },
     status: "active",
   });
@@ -926,7 +926,7 @@ async function main() {
     tenantId: "t-369",
     provider: "shopify",
     externalRef: SHOP,
-    settings: { attribution: { from: "sku", pattern: "^ART-(\\d+)-" }, feePolicy: "actual" },
+    settings: { attribution: { from: "sku", pattern: "^ART-(\\d+)-" }, onUnknownFee: "hold" },
   });
   const afterSettingsUpdate = await findConnectionByExternalRef(db, "shopify", SHOP);
   check("changing a setting leaves the credential intact", () =>
@@ -950,7 +950,7 @@ async function main() {
   check("settings round-trip out of jsonb", () => {
     assert.equal(shopifyConfig.attribution.from, "sku");
     assert.equal(shopifyConfig.attribution.pattern, "^ART-(\\d+)-");
-    assert.equal(shopifyConfig.feePolicy, "actual");
+    assert.equal(shopifyConfig.onUnknownFee, "hold");
   });
 
   const shopifyClient = new FixtureShopifyClient({
@@ -1032,7 +1032,7 @@ async function main() {
   // The unattributable line: revenue recorded, nobody paid, visible for review.
   const unattributable = await ingestShopifyOrder(db, unattributableOrder, {
     tenantId: "t-369",
-    config: { ...shopifyConfig, feePolicy: "none" },
+    config: { ...shopifyConfig, onUnknownFee: "proceed" },
     client: shopifyClient,
   });
   check("a line with no recognisable work is held, not dropped and not guessed at", () => {
@@ -1154,7 +1154,7 @@ async function main() {
     webhookSecret: WEBHOOK_SECRET,
     settings: {
       attribution: { from: "sku", pattern: "^ART-(\\d+)-" },
-      feePolicy: "actual",
+      onUnknownFee: "hold",
     },
     status: "active",
   });

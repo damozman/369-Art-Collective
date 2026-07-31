@@ -194,7 +194,7 @@ export class LiveShopifyClient implements ShopifyAdminClient {
  * An in-memory Shopify. Everything above the seam is tested against this.
  *
  * `failFor` reproduces the failures that actually matter — an order whose
- * transactions cannot be read is the case `feePolicy: "actual"` exists to
+ * transactions cannot be read is the case `onUnknownFee` exists to
  * handle, and it needs to be reachable in a test without breaking a real store.
  */
 export class FixtureShopifyClient implements ShopifyAdminClient {

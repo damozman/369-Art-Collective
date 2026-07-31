@@ -332,32 +332,50 @@ That is the whole argument for the engine in one example.
 
 ---
 
-## 6c. Card fees — a choice only you can make
+## 6c. Card fees — where the choice actually lives
 
 When someone buys something, the card company takes a cut before the money reaches
 you. Roughly 2.9% plus 30¢, though it varies. On a $118 order that is about $4.
 
-**The question is who absorbs it — you, or you and the artist together.**
+**Whether an artist shares that cost is part of their deal, not a store setting.**
 
-There are two honest answers, and the system supports both:
+This is worth being clear about, because it is easy to think of it as one global
+switch and it isn't. Each artist's rate already lists which costs come off before
+their share is worked out — printing, shipping, card fees — and you can set that
+differently for different people, and change it from a date forward without
+touching what you already paid them.
 
-- **Deduct it.** The fee comes off before the artist's share is worked out, so you
-  share the cost of taking payment. This is the default.
-- **Absorb it.** You pay it out of your own margin and the artist's share is worked
-  out on the full sale price. Simpler to explain to artists, slightly worse for you.
+So:
 
-**What the system will never do is guess.** Shopify does not put the fee in the
-sale notification — it has to be looked up separately, and for some payment methods
-(PayPal in particular) it is not available at all. When that happens, the sale is
-recorded and **held** rather than paid on an assumed fee. You will see it in
-"Needs attention".
+- **Want artists to share the card fee?** Leave "card fees" in the list of costs
+  their rate deducts.
+- **Want to absorb it yourself?** Take it out of that list. Their share is then
+  worked out on the full sale price.
 
-That is deliberate, and it is the same principle as the printing costs above: a
-held payment can be fixed, a wrong payment that has already left cannot.
+Either way **the fee is still recorded**, so your own margin reporting stays
+honest. That is the part a global "absorb" switch would have quietly broken — it
+would have stopped recording the fee at all, and your books would have shown you
+keeping about $4 more per order than you really did.
 
-If you would rather never see those holds, choose "absorb" and the question stops
-coming up. If most of your sales go through Shopify Payments, "deduct" will work
-smoothly and the holds will be rare.
+### The one thing that IS a store setting
+
+Shopify doesn't tell us the fee in the sale notification. It has to be looked up
+separately, and for **PayPal and most non-Shopify payment methods it isn't
+available at all**.
+
+When we can't find it, there is no right answer, so you choose:
+
+- **Hold the sale** (the default). It's recorded, nobody is paid from it yet, and
+  it shows up in "Needs attention". Safe, occasionally annoying.
+- **Carry on without it.** The sale pays out with no fee deducted — you absorb it
+  for that order. Quiet, but two identical sales can pay slightly differently
+  depending on how the customer happened to pay.
+
+**What the system will never do is guess a fee.** Same principle as the printing
+costs above: a held payment can be fixed, a wrong payment that has already left
+cannot.
+
+If most of your sales go through Shopify Payments, holds will be rare either way.
 
 ---
 

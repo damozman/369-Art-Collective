@@ -39,7 +39,7 @@ import {
 
 const SKU_CONFIG: ShopifyMapConfig = {
   attribution: { from: "sku", pattern: "^ART-(\\d+)-" },
-  feePolicy: "actual",
+  onUnknownFee: "hold",
 };
 
 // ============================================================
@@ -297,7 +297,7 @@ test("shipping charged to the customer is recorded but not deducted", () => {
   assert.ok(!mapped.lines[0].costs.some((c) => c.type === "shipping"));
 });
 
-test("a missing fee holds the line under the 'actual' policy", () => {
+test("a missing fee holds the line under the 'hold' policy", () => {
   // This is money decision 4. No guessed 2.9% + 30c anywhere.
   const mapped = mapOrder(paypalOrder, {
     config: SKU_CONFIG,
@@ -314,20 +314,36 @@ test("transactions that could not be fetched at all also hold the line", () => {
   assert.ok(mapped.lines[0].holdReason?.includes("could not be read"));
 });
 
-test("the 'none' fee policy records no fee and holds nothing", () => {
+test("'proceed' carries on without a fee, and says so in the warnings", () => {
   const mapped = mapOrder(paypalOrder, {
-    config: { ...SKU_CONFIG, feePolicy: "none" },
+    config: { ...SKU_CONFIG, onUnknownFee: "proceed" },
     transactions: paypalOrderTransactions,
   });
 
   assert.equal(mapped.lines[0].holdReason, undefined);
   assert.deepEqual(mapped.lines[0].costs, []);
-  assert.ok(mapped.warnings.some((w) => w.includes("absorbed")));
+  assert.ok(mapped.warnings.some((w) => w.includes("absorbs")));
+});
+
+test("'proceed' does NOT stop a fee that IS available from being recorded", () => {
+  // The setting is about the unknown case only. A fee we can read is the
+  // business's own cost and belongs in its records regardless of whose deal
+  // deducts it — that question belongs to the rule, not to this setting.
+  const mapped = mapOrder(twoLineOrder, {
+    config: { ...SKU_CONFIG, onUnknownFee: "proceed" },
+    transactions: twoLineOrderTransactions,
+  });
+
+  const fees = mapped.lines.map(
+    (l) => l.costs.find((c) => c.type === "processing_fee")?.amountMinor ?? 0n
+  );
+  assert.equal(fees.reduce((a, b) => a + b, 0n), 429n);
+  assert.deepEqual(mapped.warnings, []);
 });
 
 test("an unattributable line is held, with the reason naming where we looked", () => {
   const mapped = mapOrder(unattributableOrder, {
-    config: { ...SKU_CONFIG, feePolicy: "none" },
+    config: { ...SKU_CONFIG, onUnknownFee: "proceed" },
     transactions: [],
   });
 

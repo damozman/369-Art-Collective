@@ -47,7 +47,7 @@ working software and a business.
 - **Store credentials encrypted at rest**, so a database backup is not a set of
   live keys to somebody's shop.
 
-265 unit tests, 141 end-to-end checks against a real database, every screen driven
+266 unit tests, 141 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
@@ -103,11 +103,15 @@ payout executor already were. When the Partner account and Connect verification 
 through, it is a swap rather than a build. The approvals now wait on *themselves*
 rather than on us — which was the whole point of doing this first.
 
-One decision came out of it and is recorded in `docs/SOP.md` §6c: **whether card
-processing fees are deducted before an artist's share, or absorbed by the business.**
-The system supports both and guesses at neither. Where a fee cannot be read — PayPal
-and most non-Shopify-Payments gateways do not report one — the sale is held rather
-than paid on an assumption.
+A question came out of it — who absorbs card fees — and the answer turned out to be
+that it was already answered. Whether a fee reduces someone's share is part of
+**their rate**, per person and effective-dated, not a store-wide switch. Recorded in
+`docs/SOP.md` §6c.
+
+What *is* a store setting is narrower: what to do when the fee cannot be read at all,
+which happens with PayPal and most non-Shopify payment methods. Hold the sale
+(default) or carry on without it. Fees that *can* be read are always recorded, so
+margin reporting stays honest either way. Nothing is ever guessed.
 
 **2. Artist bank onboarding.**
 Without it, nobody can be paid even once Stripe is connected. Naturally follows

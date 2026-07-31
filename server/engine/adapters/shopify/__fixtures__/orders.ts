@@ -214,7 +214,7 @@ export const discountedOrderTransactions: ShopifyTransaction[] = [
 
 /**
  * PayPal. The receipt carries no `balance_transaction`, so no fee is
- * discoverable — the normal case that `feePolicy` exists to decide about, not
+ * discoverable — the normal case that `onUnknownFee` exists to decide about, not
  * an error.
  */
 export const paypalOrder: ShopifyOrder = {

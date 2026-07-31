@@ -48,9 +48,6 @@ import SuccessStory from "@/pages/success-story";
 import ArtistProfile from "@/pages/artist-profile";
 import Creators from "@/pages/creators";
 import JoinCreatorverse from "@/pages/join-creatorverse";
-import CreatorStack from "@/pages/creatorstack";
-import CreatorStackLogin from "@/pages/creatorstack-login";
-import CreatorStackDashboard from "@/pages/creatorstack-dashboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -59,9 +56,6 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/coming-soon" component={ComingSoon} />
       <Route path="/join" component={JoinCreatorverse} />
-      <Route path="/creatorstack" component={CreatorStack} />
-      <Route path="/creatorstack/login" component={CreatorStackLogin} />
-      <Route path="/creatorstack/dashboard" component={CreatorStackDashboard} />
       <Route path="/creators" component={Creators} />
       <Route path="/leaderboard" component={PublicLeaderboard} />
       <Route path="/success-stories/:slug" component={SuccessStory} />

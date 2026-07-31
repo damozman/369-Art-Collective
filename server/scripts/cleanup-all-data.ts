@@ -17,7 +17,7 @@ import {
   artists, artworks, admins, portfolioSubmissions, upscaleJobs, upscaleUsage,
   subscriptionTrials, adminActions, orders, passwordResetTokens, violationReports,
   achievements, sales, referrals, artistReferrals, payouts, stripeWebhookEvents,
-  emailLogs, creatorstackPurchases, affiliateClicks, affiliateConversions,
+  emailLogs, affiliateClicks, affiliateConversions,
   influencers, artworkApprovalLog, activityFeedEvents, aiGenerations, aiCredits,
   aiCreditPurchases, waitlist, featuredSubscriptions, featuredRotationLog, testimonials
 } from "../../shared/schema";
@@ -207,7 +207,6 @@ async function cleanup() {
   await deleteFromTable(payouts, "payouts");
   await deleteFromTable(artistReferrals, "artist_referrals");
   await deleteFromTable(referrals, "referrals");
-  await deleteFromTable(creatorstackPurchases, "creatorstack_purchases");
   await deleteFromTable(featuredRotationLog, "featured_rotation_log");
   await deleteFromTable(featuredSubscriptions, "featured_subscriptions");
   await deleteFromTable(aiCreditPurchases, "ai_credit_purchases");

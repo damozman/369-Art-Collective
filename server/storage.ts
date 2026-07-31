@@ -24,10 +24,6 @@ import {
   aiGenerations,
   aiCredits,
   aiCreditPurchases,
-  creatorstackKits,
-  creatorstackBuyers,
-  creatorstackPurchases,
-  creatorstackPromptGenerations,
   upscaleJobs,
   upscaleUsage,
   waitlist,
@@ -384,37 +380,6 @@ export interface IStorage {
   getAiCreditPurchasesByArtist(artistId: string): Promise<AiCreditPurchase[]>;
   getAiCreditPurchaseByStripePaymentIntent(paymentIntentId: string): Promise<AiCreditPurchase | undefined>;
 
-  // ===================================
-  // CREATORSTACK METHODS
-  // ===================================
-  
-  // CreatorStack Buyer CRUD
-  getCreatorstackBuyerById(id: string): Promise<any | undefined>;
-  getCreatorstackBuyerByEmail(email: string): Promise<any | undefined>;
-  createCreatorstackBuyer(buyer: { email: string; password: string; name: string; isPro: boolean }): Promise<any>;
-  updateCreatorstackBuyer(id: string, updates: any): Promise<any>;
-  
-  // CreatorStack Kit CRUD
-  getCreatorstackKitById(id: string): Promise<any | undefined>;
-  getCreatorstackKitBySlug(slug: string): Promise<any | undefined>;
-  getAllCreatorstackKits(): Promise<any[]>;
-  getActiveCreatorstackKits(): Promise<any[]>;
-  createCreatorstackKit(kit: any): Promise<any>;
-  updateCreatorstackKit(id: string, updates: any): Promise<any>;
-  
-  // CreatorStack Purchase CRUD
-  getCreatorstackPurchaseById(id: string): Promise<any | undefined>;
-  getCreatorstackPurchasesByBuyerId(buyerId: string): Promise<any[]>;
-  getCreatorstackPurchaseByOrderId(shopifyOrderId: string): Promise<any | undefined>;
-  getCreatorstackPurchaseByShopifyOrderLineItem(shopifyOrderId: string, shopifyLineItemId: string): Promise<any | undefined>;
-  createCreatorstackPurchase(purchase: any): Promise<any>;
-  updateCreatorstackPurchase(id: string, updates: any): Promise<any>;
-  updateCreatorstackPurchaseAccess(purchaseId: string): Promise<void>;
-  
-  // CreatorStack Prompt Generation CRUD
-  createCreatorstackPromptGeneration(generation: any): Promise<any>;
-  getCreatorstackPromptGenerationsByBuyer(buyerId: string): Promise<any[]>;
-  
   // ===================================
   // AI UPSCALING METHODS
   // ===================================
@@ -2315,182 +2280,6 @@ class PostgresStorage implements IStorage {
   }
 
   // ===================================
-  // CREATORSTACK METHODS
-  // ===================================
-
-  // CreatorStack Buyer CRUD
-  async getCreatorstackBuyerById(id: string): Promise<any | undefined> {
-    const [buyer] = await db
-      .select()
-      .from(creatorstackBuyers)
-      .where(eq(creatorstackBuyers.id, id))
-      .limit(1);
-    return buyer;
-  }
-
-  async getCreatorstackBuyerByEmail(email: string): Promise<any | undefined> {
-    const [buyer] = await db
-      .select()
-      .from(creatorstackBuyers)
-      .where(eq(creatorstackBuyers.email, email))
-      .limit(1);
-    return buyer;
-  }
-
-  async createCreatorstackBuyer(buyer: { email: string; password: string; name: string; isPro: boolean }): Promise<any> {
-    const [created] = await db
-      .insert(creatorstackBuyers)
-      .values(buyer)
-      .returning();
-    return created;
-  }
-
-  async updateCreatorstackBuyer(id: string, updates: any): Promise<any> {
-    const [updated] = await db
-      .update(creatorstackBuyers)
-      .set(updates)
-      .where(eq(creatorstackBuyers.id, id))
-      .returning();
-    return updated;
-  }
-
-  // CreatorStack Kit CRUD
-  async getCreatorstackKitById(id: string): Promise<any | undefined> {
-    const [kit] = await db
-      .select()
-      .from(creatorstackKits)
-      .where(eq(creatorstackKits.id, id))
-      .limit(1);
-    return kit;
-  }
-
-  async getCreatorstackKitBySlug(slug: string): Promise<any | undefined> {
-    const [kit] = await db
-      .select()
-      .from(creatorstackKits)
-      .where(eq(creatorstackKits.slug, slug))
-      .limit(1);
-    return kit;
-  }
-
-  async getAllCreatorstackKits(): Promise<any[]> {
-    return await db
-      .select()
-      .from(creatorstackKits)
-      .orderBy(desc(creatorstackKits.createdAt));
-  }
-
-  async getActiveCreatorstackKits(): Promise<any[]> {
-    return await db
-      .select()
-      .from(creatorstackKits)
-      .where(eq(creatorstackKits.status, 'active'))
-      .orderBy(desc(creatorstackKits.createdAt));
-  }
-
-  async createCreatorstackKit(kit: any): Promise<any> {
-    const [created] = await db
-      .insert(creatorstackKits)
-      .values(kit)
-      .returning();
-    return created;
-  }
-
-  async updateCreatorstackKit(id: string, updates: any): Promise<any> {
-    const [updated] = await db
-      .update(creatorstackKits)
-      .set(updates)
-      .where(eq(creatorstackKits.id, id))
-      .returning();
-    return updated;
-  }
-
-  // CreatorStack Purchase CRUD
-  async getCreatorstackPurchaseById(id: string): Promise<any | undefined> {
-    const [purchase] = await db
-      .select()
-      .from(creatorstackPurchases)
-      .where(eq(creatorstackPurchases.id, id))
-      .limit(1);
-    return purchase;
-  }
-
-  async getCreatorstackPurchasesByBuyerId(buyerId: string): Promise<any[]> {
-    return await db
-      .select()
-      .from(creatorstackPurchases)
-      .where(eq(creatorstackPurchases.buyerId, buyerId))
-      .orderBy(desc(creatorstackPurchases.createdAt));
-  }
-
-  async getCreatorstackPurchaseByOrderId(shopifyOrderId: string): Promise<any | undefined> {
-    const [purchase] = await db
-      .select()
-      .from(creatorstackPurchases)
-      .where(eq(creatorstackPurchases.shopifyOrderId, shopifyOrderId))
-      .limit(1);
-    return purchase;
-  }
-
-  async getCreatorstackPurchaseByShopifyOrderLineItem(shopifyOrderId: string, shopifyLineItemId: string): Promise<any | undefined> {
-    const [purchase] = await db
-      .select()
-      .from(creatorstackPurchases)
-      .where(
-        and(
-          eq(creatorstackPurchases.shopifyOrderId, shopifyOrderId),
-          eq(creatorstackPurchases.shopifyLineItemId, shopifyLineItemId)
-        )
-      )
-      .limit(1);
-    return purchase;
-  }
-
-  async createCreatorstackPurchase(purchase: any): Promise<any> {
-    const [created] = await db
-      .insert(creatorstackPurchases)
-      .values(purchase)
-      .returning();
-    return created;
-  }
-
-  async updateCreatorstackPurchase(id: string, updates: any): Promise<any> {
-    const [updated] = await db
-      .update(creatorstackPurchases)
-      .set(updates)
-      .where(eq(creatorstackPurchases.id, id))
-      .returning();
-    return updated;
-  }
-
-  async updateCreatorstackPurchaseAccess(purchaseId: string): Promise<void> {
-    await db
-      .update(creatorstackPurchases)
-      .set({
-        lastAccessedAt: new Date(),
-        downloadCount: drizzleSql`${creatorstackPurchases.downloadCount} + 1`,
-      })
-      .where(eq(creatorstackPurchases.id, purchaseId));
-  }
-
-  // CreatorStack Prompt Generation CRUD
-  async createCreatorstackPromptGeneration(generation: any): Promise<any> {
-    const [created] = await db
-      .insert(creatorstackPromptGenerations)
-      .values(generation)
-      .returning();
-    return created;
-  }
-
-  async getCreatorstackPromptGenerationsByBuyer(buyerId: string): Promise<any[]> {
-    return await db
-      .select()
-      .from(creatorstackPromptGenerations)
-      .where(eq(creatorstackPromptGenerations.buyerId, buyerId))
-      .orderBy(desc(creatorstackPromptGenerations.createdAt));
-  }
-
-  // ===================================
   // AI UPSCALING METHODS
   // ===================================
 
@@ -3379,27 +3168,6 @@ class MemStorage implements IStorage {
   async updateAiCreditPurchase(): Promise<any> { console.log("MemStorage: updateAiCreditPurchase (stub)"); return {} as AiCreditPurchase; }
   async getAiCreditPurchasesByArtist(): Promise<Array<any>> { console.log("MemStorage: getAiCreditPurchasesByArtist (stub)"); return []; }
   async getAiCreditPurchaseByStripePaymentIntent(): Promise<any> { console.log("MemStorage: getAiCreditPurchaseByStripePaymentIntent (stub)"); return undefined; }
-
-  // CreatorStack stubs
-  async getCreatorstackBuyerById(): Promise<any> { console.log("MemStorage: getCreatorstackBuyerById (stub)"); return undefined; }
-  async getCreatorstackBuyerByEmail(): Promise<any> { console.log("MemStorage: getCreatorstackBuyerByEmail (stub)"); return undefined; }
-  async createCreatorstackBuyer(): Promise<any> { console.log("MemStorage: createCreatorstackBuyer (stub)"); return {}; }
-  async updateCreatorstackBuyer(): Promise<any> { console.log("MemStorage: updateCreatorstackBuyer (stub)"); return {}; }
-  async getCreatorstackKitById(): Promise<any> { console.log("MemStorage: getCreatorstackKitById (stub)"); return undefined; }
-  async getCreatorstackKitBySlug(): Promise<any> { console.log("MemStorage: getCreatorstackKitBySlug (stub)"); return undefined; }
-  async getAllCreatorstackKits(): Promise<Array<any>> { console.log("MemStorage: getAllCreatorstackKits (stub)"); return []; }
-  async getActiveCreatorstackKits(): Promise<Array<any>> { console.log("MemStorage: getActiveCreatorstackKits (stub)"); return []; }
-  async createCreatorstackKit(): Promise<any> { console.log("MemStorage: createCreatorstackKit (stub)"); return {}; }
-  async updateCreatorstackKit(): Promise<any> { console.log("MemStorage: updateCreatorstackKit (stub)"); return {}; }
-  async getCreatorstackPurchaseById(): Promise<any> { console.log("MemStorage: getCreatorstackPurchaseById (stub)"); return undefined; }
-  async getCreatorstackPurchasesByBuyerId(): Promise<Array<any>> { console.log("MemStorage: getCreatorstackPurchasesByBuyerId (stub)"); return []; }
-  async getCreatorstackPurchaseByOrderId(): Promise<any> { console.log("MemStorage: getCreatorstackPurchaseByOrderId (stub)"); return undefined; }
-  async getCreatorstackPurchaseByShopifyOrderLineItem(): Promise<any> { console.log("MemStorage: getCreatorstackPurchaseByShopifyOrderLineItem (stub)"); return undefined; }
-  async createCreatorstackPurchase(): Promise<any> { console.log("MemStorage: createCreatorstackPurchase (stub)"); return {}; }
-  async updateCreatorstackPurchase(): Promise<any> { console.log("MemStorage: updateCreatorstackPurchase (stub)"); return {}; }
-  async updateCreatorstackPurchaseAccess(_purchaseId: string): Promise<void> { console.log("MemStorage: updateCreatorstackPurchaseAccess (stub)"); }
-  async createCreatorstackPromptGeneration(_generation: any): Promise<any> { console.log("MemStorage: createCreatorstackPromptGeneration (stub)"); return {}; }
-  async getCreatorstackPromptGenerationsByBuyer(_buyerId: string): Promise<Array<any>> { console.log("MemStorage: getCreatorstackPromptGenerationsByBuyer (stub)"); return []; }
 
   // Subscription Trial methods
   async createSubscriptionTrial(trial: InsertSubscriptionTrial): Promise<SubscriptionTrial> {

@@ -448,8 +448,15 @@ implementation, so the money path is provable without Stripe credentials. A fail
 transfer never debits the ledger, and the provider idempotency key is derived from
 the payout row so a retry after an ambiguous failure cannot pay twice.
 
-Still outstanding in Phase 1: contributor login (ratified decision #2) and statement
-rendering from the stored trace.
+Contributor login and statements are built. Identity is `(tenant, email)` rather than
+email alone — the same freelancer legitimately works for several tenants, and email-only
+lookup would either collide or authenticate someone into the wrong tenant's earnings.
+Statements are **assembled from stored rows, never recomputed**: a statement answers
+"what did this contributor actually earn", which diverges from "what would this earn
+under today's rules" the moment a rate changes.
+
+Phase 1 is functionally complete. What remains before it is *usable* is HTTP routes and
+a UI over the engine.
 
 **Phase 2 — First adapter + payouts + portal.** Shopify ingestion, Stripe Connect
 payouts, contributor login, statements with the explanation trace. **369 Art Collective

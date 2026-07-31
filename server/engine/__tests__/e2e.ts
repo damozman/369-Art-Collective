@@ -33,6 +33,15 @@ import {
   retryPayout,
 } from "../payout";
 import type { RevenueEvent } from "../revenue-event";
+import {
+  authenticateContributor,
+  assertCanReadContributor,
+  AuthError,
+  loadSessionContributor,
+  setContributorPassword,
+} from "../auth";
+import { getPayoutHistory, getStatement } from "../statement-query";
+import { renderStatementText } from "../statement";
 
 const results: string[] = [];
 function check(label: string, fn: () => void) {
@@ -362,6 +371,112 @@ async function main() {
   check("the attempt count records that a retry happened", () =>
     assert.equal(retriedRow.attemptCount, 2)
   );
+
+  // ---- 11. Contributor login ----
+  console.log("\n11. Contributor login");
+
+  // The same email in two tenants — the case that breaks email-only lookup.
+  await db.update(schema.contributors).set({ email: "shared@example.com" })
+    .where(eq(schema.contributors.id, "c-alice"));
+  await db.update(schema.contributors).set({ email: "shared@example.com" })
+    .where(eq(schema.contributors.id, "c-eve"));
+
+  await setContributorPassword(db, "t-369", "c-alice", "correct horse battery");
+  await setContributorPassword(db, "t-press", "c-eve", "a different password");
+
+  const aliceSession = await authenticateContributor(
+    db, "t-369", "shared@example.com", "correct horse battery"
+  );
+  check("a contributor can log in", () => assert.equal(aliceSession?.contributorId, "c-alice"));
+
+  const eveSession = await authenticateContributor(
+    db, "t-press", "shared@example.com", "a different password"
+  );
+  check("the same email in another tenant resolves to a different person", () =>
+    assert.equal(eveSession?.contributorId, "c-eve")
+  );
+
+  const crossTenant = await authenticateContributor(
+    db, "t-press", "shared@example.com", "correct horse battery"
+  );
+  check("one tenant's password does not unlock the other tenant's account", () =>
+    assert.equal(crossTenant, null)
+  );
+
+  check("a wrong password is refused", async () => {});
+  assert.equal(await authenticateContributor(db, "t-369", "shared@example.com", "wrong"), null);
+
+  check("an unknown email is refused", async () => {});
+  assert.equal(await authenticateContributor(db, "t-369", "nobody@example.com", "x"), null);
+
+  const reloaded = await loadSessionContributor(db, "t-369", "c-alice");
+  check("a session reloads against the tenant", () => assert.ok(reloaded));
+  check("a session cannot be reloaded under the wrong tenant", async () => {});
+  assert.equal(await loadSessionContributor(db, "t-press", "c-alice"), null);
+
+  check("a contributor may read their own earnings", () =>
+    assert.doesNotThrow(() => assertCanReadContributor(aliceSession!, "t-369", "c-alice"))
+  );
+  check("a contributor may NOT read someone else's", () =>
+    assert.throws(() => assertCanReadContributor(aliceSession!, "t-369", "c-bob"), AuthError)
+  );
+  check("a contributor may NOT read across tenants", () =>
+    assert.throws(() => assertCanReadContributor(aliceSession!, "t-press", "c-eve"), AuthError)
+  );
+
+  // Deactivating cuts access immediately, not at next login.
+  await db.update(schema.contributors).set({ active: false })
+    .where(eq(schema.contributors.id, "c-alice"));
+  check("a deactivated contributor loses access mid-session", async () => {});
+  assert.equal(await loadSessionContributor(db, "t-369", "c-alice"), null);
+  await db.update(schema.contributors).set({ active: true })
+    .where(eq(schema.contributors.id, "c-alice"));
+
+  // ---- 12. Statements ----
+  console.log("\n12. Statements");
+  const stmt = await getStatement(db, {
+    tenantId: "t-369",
+    contributorId: "c-alice",
+    periodStart: new Date("2026-01-01T00:00:00Z"),
+    periodEnd: new Date("2026-12-31T23:59:59Z"),
+  });
+
+  check("the statement carries the stored explanation verbatim", () => {
+    const earned = stmt.lines.find((l) => l.type === "allocation")!;
+    assert.match(earned.explanation!, /30% of net \$21\.86/);
+    assert.match(earned.explanation!, /rule artist-standard v1/);
+  });
+
+  check("the statement names the work the money came from", () => {
+    const earned = stmt.lines.find((l) => l.type === "allocation")!;
+    assert.equal(earned.workTitle, "Sunset");
+  });
+
+  check("the statement shows the refund as its own line", () => {
+    assert.ok(stmt.lines.some((l) => l.type === "reversal"));
+  });
+
+  check("the statement shows the payout as its own line", () => {
+    assert.ok(stmt.lines.some((l) => l.type === "payout"));
+  });
+
+  const ledgerBalance = await deriveContributorBalance(db, "t-369", "c-alice");
+  check("the statement's closing balance equals the ledger", () =>
+    assert.equal(stmt.totals.closingBalanceMinor, ledgerBalance)
+  );
+
+  check("the statement summary is plain language", () =>
+    assert.match(stmt.summary, /Alice earned/)
+  );
+
+  const history = await getPayoutHistory(db, "t-369", "c-alice");
+  check("payout history is visible to the contributor", () =>
+    assert.ok(history.length >= 1 && history.some((p) => p.status === "paid"))
+  );
+
+  console.log("\n--- Alice's statement as she would see it ---");
+  console.log(renderStatementText(stmt));
+  console.log("---\n");
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

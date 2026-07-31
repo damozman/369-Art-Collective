@@ -109,12 +109,14 @@ Both were resolved in step 5.)
   not yet wired to anything user-facing.**
 - **What exists now:** the engine schema (15 `engine_*` tables), the canonical
   `RevenueEvent`, the §6 rules engine, the immutable ledger, §8 reversals and
-  clawbacks, the ingestion path that ties them together in one transaction, and
-  payout batch execution against the state machine.
-  138 unit tests plus 44 end-to-end checks against real Postgres.
-- **What Phase 1 still needs:** contributor login (ratified decision #2) and statement
-  rendering from the stored explanation trace. Then Phase 2 — Shopify adapter, a real
-  `TransferExecutor` against Stripe Connect, and 369 migrated on as tenant #1.
+  clawbacks, the ingestion path that ties them together in one transaction,
+  payout batch execution against the state machine, contributor login, and
+  statements assembled from the stored explanation trace.
+  161 unit tests plus 62 end-to-end checks against real Postgres.
+- **Phase 1 is functionally complete.** What remains before it is *usable* is HTTP
+  routes and a UI over the engine — the engine itself does everything §9 lists.
+  Then Phase 2 — Shopify adapter, a real `TransferExecutor` against Stripe Connect,
+  and 369 migrated on as tenant #1.
 - **Money has still never flowed through any payout path.** All fixes remain
   **forward-only — no recalculation migration needed.**
 - **Track A: not started as of 2026-07-31.** Confirmed by the user, who intends to
@@ -141,6 +143,9 @@ Both were resolved in step 5.)
 | `server/engine/reversal.ts` | §8 reversals + recoup/absorb/reserve policies |
 | `server/engine/ingest.ts` | the DB-facing path: resolve → evaluate → allocate → ledger |
 | `server/engine/payout.ts` | batch selection, the payout state machine, `TransferExecutor` seam |
+| `server/engine/auth.ts` | contributor login, tenant-scoped; identity is `(tenant, email)` |
+| `server/engine/statement.ts` | statement assembly — pure, reads stored rows, never recomputes |
+| `server/engine/statement-query.ts` | the DB reads a statement is assembled from |
 
 ```bash
 npm test              # 125 unit tests, no network, no database

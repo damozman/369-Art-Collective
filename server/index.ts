@@ -108,6 +108,15 @@ app.use((req, res, next) => {
   const { bootstrapAdmin } = await import("./bootstrap");
   await bootstrapAdmin();
 
+  // The engine mounts as its own router, deliberately not merged into the
+  // marketplace's registerRoutes. When the marketplace is retired in Phase 2,
+  // this line and the engine directory are what survive.
+  const { createEngineRouter } = await import("./engine/routes");
+  const { getEngineDb, isEngineDbConfigured } = await import("./engine/db");
+  if (isEngineDbConfigured()) {
+    app.use("/api/engine", createEngineRouter(getEngineDb()));
+  }
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

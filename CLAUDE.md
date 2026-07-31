@@ -105,18 +105,21 @@ Both were resolved in step 5.)
 
 ## Current status
 
-- **Phase:** Phase 0 ✅ complete. **Phase 1 (engine core) — core built and verified;
-  not yet wired to anything user-facing.**
+- **Phase:** Phase 0 ✅ complete. **Phase 1 — engine and HTTP API done, verified;
+  no contributor UI yet.**
 - **What exists now:** the engine schema (15 `engine_*` tables), the canonical
   `RevenueEvent`, the §6 rules engine, the immutable ledger, §8 reversals and
   clawbacks, the ingestion path that ties them together in one transaction,
-  payout batch execution against the state machine, contributor login, and
-  statements assembled from the stored explanation trace.
-  161 unit tests plus 62 end-to-end checks against real Postgres.
-- **Phase 1 is functionally complete.** What remains before it is *usable* is HTTP
-  routes and a UI over the engine — the engine itself does everything §9 lists.
-  Then Phase 2 — Shopify adapter, a real `TransferExecutor` against Stripe Connect,
-  and 369 migrated on as tenant #1.
+  payout batch execution against the state machine, contributor login,
+  statements assembled from the stored explanation trace, and the contributor
+  portal HTTP API.
+  161 unit tests plus 62 end-to-end checks against real Postgres, and the HTTP
+  endpoints exercised with real requests including cross-tenant rejection.
+- **Phase 1 engine + HTTP are done. The contributor UI is not.** The engine does
+  everything §9 lists and is reachable over HTTP at `/api/engine/t/:tenantSlug/*`,
+  verified with real requests. There is **no React page over it yet** — that is the
+  next task. Then Phase 2 — Shopify adapter, a real `TransferExecutor` against Stripe
+  Connect, and 369 migrated on as tenant #1.
 - **Money has still never flowed through any payout path.** All fixes remain
   **forward-only — no recalculation migration needed.**
 - **Track A: not started as of 2026-07-31.** Confirmed by the user, who intends to
@@ -146,6 +149,8 @@ Both were resolved in step 5.)
 | `server/engine/auth.ts` | contributor login, tenant-scoped; identity is `(tenant, email)` |
 | `server/engine/statement.ts` | statement assembly — pure, reads stored rows, never recomputes |
 | `server/engine/statement-query.ts` | the DB reads a statement is assembled from |
+| `server/engine/routes.ts` | contributor portal HTTP API, mounted at `/api/engine` |
+| `server/engine/db.ts` | the engine's own Drizzle client (lazy; separate from `lib/db.ts`) |
 
 ```bash
 npm test              # 125 unit tests, no network, no database
@@ -277,6 +282,95 @@ routes, and both client pages. `artists.referredBy`, `artist_referrals`, and the
 readable. Nothing writes them, and nothing computes a payment from them.
 
 **Still deferred, deliberately:** upscaling's fate (see step 4) is still open.
+
+## Picking this up in a NEW SESSION — read this first
+
+Sessions do not share memory. Everything below is the state as of the last commit on
+`claude/business-idea-feedback-7uwumw`. Trust the repo, not any recollection.
+
+**Orientation, in order:**
+1. This file's "Ratified decisions" (ten of them) and "Known defects".
+2. `docs/BLUEPRINT.md` §5 (the fourteen expensive-to-retrofit decisions), §6 (rule
+   shape), §8 (reversals), §9 (phasing), plus **§10a and §10b** — two open items
+   recorded rather than resolved.
+3. The engine table above. Every module opens with a comment explaining *why* it is
+   shaped the way it is; those comments are load-bearing, not decoration.
+
+**Verify the state before changing anything:**
+```bash
+npm test          # 161 unit tests — no network, no database
+npx tsc --noEmit  # must be clean
+npm run build     # must pass
+```
+
+For the end-to-end run (62 checks against real Postgres) start the local database
+first — see "Running the app in a cloud sandbox" below, then:
+```bash
+DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e
+```
+The e2e **truncates and reseeds** the engine tables, so it doubles as the way to get
+demo data. It seeds two tenants (`369`, `press`), contributors Alice/Bob/Eve, and a
+login: `shared@example.com` / `correct horse battery` on tenant `369`.
+
+### The immediate next task — contributor portal UI
+
+The API is built and verified; the screen is not. Endpoints, all under
+`/api/engine/t/:tenantSlug`:
+
+| Method | Path | Returns |
+|---|---|---|
+| GET | `/` | tenant name, slug, currency |
+| POST | `/login` | `{email, password}` → contributor + tenant |
+| POST | `/logout` | `{ok:true}` |
+| GET | `/me` | balance, payable, held |
+| GET | `/statement?from=&to=` | lines with the stored derivation + totals + summary |
+| GET | `/payouts` | payout history |
+
+**Three things the UI must get right:**
+
+1. **Money arrives as STRINGS, never JSON numbers.** `{minor: "2186", formatted:
+   "21.86"}`. `JSON.stringify` cannot serialise a bigint, and coercing to `number`
+   silently rounds above 2^53 — the exact failure the bigint columns exist to prevent.
+   Never `Number(...)` a money field.
+2. **Show the derivation, do not recompute it.** Every allocation line carries
+   `explanation` (a sentence) and `trace` (structured steps). Render those. The whole
+   product thesis is that a contributor can answer "why is it this number?" without
+   emailing anyone.
+3. **Held lines must be visibly distinct.** `held: true` means earned but inside the
+   refund window. A contributor seeing a balance they cannot yet withdraw needs the
+   reason on the same screen.
+
+Route it at something like `/portal/:tenantSlug`. It is a **separate surface from the
+marketplace's artist pages** — do not extend `client/src/pages/artist-*`; those belong
+to the system being retired.
+
+### Traps that have already bitten, in this repo
+
+- **`npm run build` and `tsc` are not evidence the app works.** Load the pages. This
+  has now caught four separate defects that both passed clean.
+- **A real database catches what unit tests cannot.** Three bugs so far were found only
+  by the Postgres run: the Drizzle-wrapped SQLSTATE on `error.cause`, a fixture
+  minting colliding transfer ids, and a stale test assumption about a balance.
+- **`server/vite.ts:36` calls `process.exit(1)`** from the vite logger's error handler,
+  and vite forwards *client-side* console errors to it. A benign React warning kills
+  the dev server the moment a page renders. Comment it out while working on the UI;
+  do not commit that.
+- **Do not merge the drizzle configs.** `drizzle.config.ts` (marketplace) and
+  `drizzle.engine.config.ts` (engine) are separate on purpose; one config makes
+  drizzle-kit offer to *rename* marketplace tables into engine tables.
+- **`drizzle-kit push` prompts interactively** and fails without a TTY. Use
+  `npx drizzle-kit generate --config=drizzle.engine.config.ts` then apply the SQL with
+  `psql`.
+
+### Still true, and still the constraints
+
+- **No money has ever moved through any payout path.** All fixes are forward-only.
+- **The Printify cost fixtures are invented numbers** with placeholder catalog IDs.
+  See the warning section above. This is the one thing blocking real payouts.
+- **Track A had not started as of 2026-07-31** and is the real critical path. Ask for
+  status; do not assume.
+- **Task #8 is an outstanding user request:** a full plain-language SOP explaining the
+  system end to end, aimed at the business owner rather than a developer.
 
 ## Working agreements
 

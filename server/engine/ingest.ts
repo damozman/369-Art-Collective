@@ -258,7 +258,21 @@ export async function resolveReferences(
 export async function ingestEvent(
   db: EngineDb,
   event: RevenueEvent,
-  options: { trailingVolumeWindowDays?: number } = {}
+  options: {
+    trailingVolumeWindowDays?: number;
+    /**
+     * Record the event and its costs, but do not allocate — a caller-supplied
+     * reason for holding, alongside the ones ingestion discovers itself.
+     *
+     * Exists because an adapter can know something the engine cannot: Shopify
+     * knows a payment fee was unavailable, and paying a contributor as though
+     * the fee were zero would overpay them out of the merchant's margin.
+     * Holding writes the revenue where the owner can see it and resolve it,
+     * which is the same treatment an unmatched contributor gets. The
+     * alternative — dropping the webhook — loses the sale silently.
+     */
+    holdForReview?: string;
+  } = {}
 ): Promise<IngestResult> {
   validateRevenueEvent(event);
 
@@ -272,7 +286,21 @@ export async function ingestEvent(
     throw new Error(`Unknown tenant ${event.tenantId}`);
   }
 
-  const resolution = await resolveReferences(db, event);
+  const discovered = await resolveReferences(db, event);
+
+  // Both reasons are kept when both apply. An owner who fixes only the
+  // attribution on a line that is *also* missing its payment fee must not have
+  // it allocated as though the fee were zero, and a single-reason field would
+  // have hidden the second problem.
+  const resolution = options.holdForReview
+    ? {
+        ...discovered,
+        needsReview: true,
+        reviewReason: discovered.reviewReason
+          ? `${options.holdForReview} ${discovered.reviewReason}`
+          : options.holdForReview,
+      }
+    : discovered;
 
   // Insert the event first, outside the work of calculating. If this throws a
   // unique violation the webhook is a replay and we stop — no allocations, no

@@ -13,9 +13,10 @@
  */
 
 import assert from "node:assert/strict";
+import express from "express";
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import * as schema from "@shared/engine-schema";
 import {
@@ -55,6 +56,36 @@ import {
 import { isEffectiveAt } from "../rules";
 import { dismissReview, resolveEventContributor, writeOffDeficit } from "../review";
 import { renderStatementText } from "../statement";
+import {
+  ConnectionError,
+  disconnectConnection,
+  findConnectionByExternalRef,
+  openCredential,
+  openWebhookSecret,
+  upsertConnection,
+} from "../connections";
+import { FixtureShopifyClient } from "../adapters/shopify/client";
+import {
+  ingestShopifyOrder,
+  ingestShopifyRefund,
+  readShopifySettings,
+} from "../adapters/shopify/ingest";
+import { createShopifyWebhookRouter } from "../adapters/shopify/routes";
+import { signWebhookBody } from "../adapters/shopify/webhook-auth";
+import {
+  discountedOrder,
+  discountedOrderTransactions,
+  fixtureOrders,
+  fixtureTransactions,
+  halfRefundOnDiscountedLine,
+  partialRefund,
+  paypalOrder,
+  paypalOrderTransactions,
+  refundForUnknownLine,
+  testModeOrder,
+  twoLineOrder,
+  unattributableOrder,
+} from "../adapters/shopify/__fixtures__/orders";
 
 const results: string[] = [];
 function check(label: string, fn: () => void) {
@@ -811,6 +842,459 @@ async function main() {
     assert.ok(actions.includes("resolve_review"));
     assert.ok(actions.includes("dismiss_review"));
     assert.ok(actions.includes("write_off"));
+  });
+
+  // ============================================================
+  // Connections and the Shopify adapter
+  // ============================================================
+  //
+  // Everything below this line is the part unit tests cannot reach. The mapper
+  // is proved exhaustively in `shopify-map.test.ts` with no database; what is
+  // proved here is the half that needs one — sealing round-tripping through a
+  // real column, the uniqueness constraint that routes a webhook to the right
+  // tenant, and idempotency coming from Postgres rather than from a pre-check.
+
+  console.log("\n-- connections and the Shopify adapter --");
+
+  // A deterministic key so the run is repeatable. Production reads a real one
+  // from the environment; a test that generated a fresh key each run could not
+  // tell "sealing is broken" from "wrong key".
+  process.env.ENGINE_SECRET_KEY ??= "e2e-only-passphrase-not-a-production-key";
+
+  const SHOP = "369-e2e.myshopify.com";
+  const WEBHOOK_SECRET = "shpss_e2e_secret";
+  const ACCESS_TOKEN = "shpat_e2e_access_token";
+
+  const connection = await upsertConnection(db, {
+    tenantId: "t-369",
+    provider: "shopify",
+    externalRef: SHOP,
+    label: SHOP,
+    credential: ACCESS_TOKEN,
+    webhookSecret: WEBHOOK_SECRET,
+    settings: {
+      attribution: { from: "sku", pattern: "^ART-(\\d+)-" },
+      feePolicy: "actual",
+    },
+    status: "active",
+  });
+
+  check("a connection summary carries no secret material", () => {
+    const serialised = JSON.stringify(connection);
+    assert.ok(!serialised.includes(ACCESS_TOKEN));
+    assert.ok(!serialised.includes(WEBHOOK_SECRET));
+    assert.equal(connection.hasCredential, true);
+    assert.equal(connection.hasWebhookSecret, true);
+  });
+
+  const storedRow = await db
+    .select()
+    .from(schema.sourceConnections)
+    .where(eq(schema.sourceConnections.id, connection.id));
+
+  check("the credential is ciphertext in the column, not plaintext", () => {
+    assert.ok(storedRow[0].credentialSealed);
+    assert.ok(!storedRow[0].credentialSealed!.includes(ACCESS_TOKEN));
+    assert.match(storedRow[0].credentialSealed!, /^v1\./);
+  });
+
+  const routed = await findConnectionByExternalRef(db, "shopify", SHOP);
+  check("a webhook's shop domain routes to the right tenant, and the token opens", () => {
+    assert.ok(routed);
+    assert.equal(routed!.tenantId, "t-369");
+    assert.equal(openCredential(routed!), ACCESS_TOKEN);
+    assert.equal(openWebhookSecret(routed!), WEBHOOK_SECRET);
+  });
+
+  let claimRejected = false;
+  try {
+    await upsertConnection(db, {
+      tenantId: "t-press",
+      provider: "shopify",
+      externalRef: SHOP,
+      credential: "shpat_someone_elses",
+    });
+  } catch (error) {
+    claimRejected = error instanceof ConnectionError;
+  }
+  check("another tenant cannot claim a store that is already connected", () =>
+    assert.equal(claimRejected, true)
+  );
+
+  // Updating a setting must not wipe the stored token as a side effect.
+  await upsertConnection(db, {
+    tenantId: "t-369",
+    provider: "shopify",
+    externalRef: SHOP,
+    settings: { attribution: { from: "sku", pattern: "^ART-(\\d+)-" }, feePolicy: "actual" },
+  });
+  const afterSettingsUpdate = await findConnectionByExternalRef(db, "shopify", SHOP);
+  check("changing a setting leaves the credential intact", () =>
+    assert.equal(openCredential(afterSettingsUpdate!), ACCESS_TOKEN)
+  );
+
+  // ---- The works the fixture order's SKUs point at ----
+  await db.insert(schema.works).values([
+    { id: "w-1042", tenantId: "t-369", title: "Desert Bloom", externalRef: "1042", productType: "canvas" },
+    { id: "w-2073", tenantId: "t-369", title: "Night Arroyo", externalRef: "2073", productType: "print" },
+  ]);
+  await db.insert(schema.workContributors).values([
+    { tenantId: "t-369", workId: "w-1042", contributorId: "c-alice", role: "artist" },
+    { tenantId: "t-369", workId: "w-1042", contributorId: "c-bob", role: "producer" },
+    { tenantId: "t-369", workId: "w-2073", contributorId: "c-alice", role: "artist" },
+  ]);
+
+  const shopifyConfig = readShopifySettings(
+    afterSettingsUpdate!.settings as Record<string, unknown> | null
+  );
+  check("settings round-trip out of jsonb", () => {
+    assert.equal(shopifyConfig.attribution.from, "sku");
+    assert.equal(shopifyConfig.attribution.pattern, "^ART-(\\d+)-");
+    assert.equal(shopifyConfig.feePolicy, "actual");
+  });
+
+  const shopifyClient = new FixtureShopifyClient({
+    orders: fixtureOrders,
+    transactions: fixtureTransactions,
+  });
+
+  const orderResult = await ingestShopifyOrder(db, twoLineOrder, {
+    tenantId: "t-369",
+    config: shopifyConfig,
+    client: shopifyClient,
+  });
+
+  check("a two-line Shopify order ingests as two separately-keyed events", () => {
+    assert.equal(
+      orderResult.ingested,
+      2,
+      orderResult.lines.map((l) => `${l.sourceEventId}=${l.status}:${l.reason ?? ""}`).join(" | ")
+    );
+    assert.equal(orderResult.heldForReview, 0);
+    assert.deepEqual(
+      orderResult.lines.map((l) => l.sourceEventId).sort(),
+      ["5001000001:12001", "5001000001:12002"]
+    );
+  });
+
+  const ingestedEvents = await db
+    .select()
+    .from(schema.revenueEvents)
+    .where(
+      and(
+        eq(schema.revenueEvents.tenantId, "t-369"),
+        inArray(schema.revenueEvents.sourceEventId, [
+          "5001000001:12001",
+          "5001000001:12002",
+        ])
+      )
+    );
+
+  check("both lines were stored with their own gross, not the order total", () => {
+    const byId = new Map(ingestedEvents.map((e) => [e.sourceEventId, BigInt(e.grossAmountMinor)]));
+    assert.equal(byId.get("5001000001:12001"), 7800n);
+    assert.equal(byId.get("5001000001:12002"), 4000n);
+  });
+
+  const storedFees = await db
+    .select()
+    .from(schema.costComponents)
+    .where(
+      and(
+        eq(schema.costComponents.tenantId, "t-369"),
+        inArray(
+          schema.costComponents.revenueEventId,
+          ingestedEvents.map((e) => e.id)
+        )
+      )
+    );
+
+  check("the real payment fee was apportioned and stored, summing to exactly the fee", () => {
+    const fees = storedFees.filter((c) => c.type === "processing_fee");
+    assert.equal(fees.length, 2);
+    assert.equal(
+      fees.reduce((sum, f) => sum + BigInt(f.amountMinor), 0n),
+      429n
+    );
+    assert.ok(fees.every((f) => f.source === "shopify_transactions"));
+  });
+
+  const redelivered = await ingestShopifyOrder(db, twoLineOrder, {
+    tenantId: "t-369",
+    config: shopifyConfig,
+    client: shopifyClient,
+  });
+  check("a re-delivered webhook is a no-op, caught by the database not a pre-check", () => {
+    assert.equal(redelivered.duplicates, 2);
+    assert.equal(redelivered.ingested, 0);
+  });
+
+  // The unattributable line: revenue recorded, nobody paid, visible for review.
+  const unattributable = await ingestShopifyOrder(db, unattributableOrder, {
+    tenantId: "t-369",
+    config: { ...shopifyConfig, feePolicy: "none" },
+    client: shopifyClient,
+  });
+  check("a line with no recognisable work is held, not dropped and not guessed at", () => {
+    assert.equal(unattributable.heldForReview, 1);
+    assert.equal(unattributable.ingested, 0);
+  });
+
+  const heldQueue = await listNeedsReview(db, "t-369");
+  check("the held line appears in the owner's review queue", () =>
+    assert.ok(heldQueue.some((r) => r.sourceEventId === "5001000004:12030"))
+  );
+
+  const heldAllocations = await db
+    .select()
+    .from(schema.allocations)
+    .where(eq(schema.allocations.revenueEventId, unattributable.lines[0].eventId!));
+  check("nothing was allocated from the held line", () =>
+    assert.equal(heldAllocations.length, 0)
+  );
+
+  // A missing fee under `actual` holds even when attribution succeeds.
+  const feelessResult = await ingestShopifyOrder(db, paypalOrder, {
+    tenantId: "t-369",
+    config: shopifyConfig,
+    client: shopifyClient,
+    transactions: paypalOrderTransactions,
+  });
+  check("an unknown payment fee holds the line rather than assuming zero", () => {
+    assert.equal(feelessResult.heldForReview, 1);
+    assert.match(feelessResult.lines[0].reason ?? "", /fee/i);
+  });
+
+  const testOrderResult = await ingestShopifyOrder(db, testModeOrder, {
+    tenantId: "t-369",
+    config: shopifyConfig,
+    client: shopifyClient,
+  });
+  check("a Shopify test order creates nothing at all", () => {
+    assert.equal(testOrderResult.ingested, 0);
+    assert.equal(testOrderResult.heldForReview, 0);
+    assert.equal(testOrderResult.skipped, 2);
+  });
+
+  // ---- Refund through the real reversal path ----
+  const balanceBeforeRefund = await deriveContributorBalance(db, "t-369", "c-alice");
+
+  const refundResult = await ingestShopifyRefund(db, partialRefund, {
+    tenantId: "t-369",
+    currency: "USD",
+  });
+  check("a Shopify refund reverses the original allocation", () => {
+    assert.equal(refundResult.reversals.length, 1);
+    assert.equal(refundResult.reversals[0].status, "reversed");
+    assert.ok(refundResult.totalContributorImpactMinor !== 0n);
+  });
+
+  const balanceAfterRefund = await deriveContributorBalance(db, "t-369", "c-alice");
+  check("the refund reduced the contributor's derived balance", () =>
+    assert.ok(balanceAfterRefund < balanceBeforeRefund)
+  );
+
+  const replayedRefund = await ingestShopifyRefund(db, partialRefund, {
+    tenantId: "t-369",
+    currency: "USD",
+  });
+  const balanceAfterReplay = await deriveContributorBalance(db, "t-369", "c-alice");
+  check("a re-delivered refund does not claw back twice", () => {
+    assert.ok(
+      replayedRefund.reversals.every((r) => r.status !== "reversed"),
+      replayedRefund.reversals.map((r) => `${r.sourceEventId}=${r.status}`).join(" | ")
+    );
+    assert.equal(balanceAfterReplay, balanceAfterRefund);
+  });
+
+  const orphanRefund = await ingestShopifyRefund(db, refundForUnknownLine, {
+    tenantId: "t-369",
+    currency: "USD",
+  });
+  check("a refund naming a line we never saw is reported, not crashed on", () => {
+    assert.equal(orphanRefund.reversals[0].status, "unmatched");
+    assert.equal(orphanRefund.needsReview.length, 1);
+  });
+
+  // ---- Cross-tenant isolation on the adapter path ----
+  const wrongTenant = await ingestShopifyOrder(db, discountedOrder, {
+    tenantId: "t-press",
+    config: shopifyConfig,
+    client: shopifyClient,
+    transactions: discountedOrderTransactions,
+  });
+  check("the same order ingested for another tenant matches none of 369's works", () => {
+    assert.equal(wrongTenant.ingested, 0);
+    assert.equal(wrongTenant.heldForReview, 2);
+  });
+
+  // ============================================================
+  // The webhook endpoint, over real HTTP
+  // ============================================================
+  //
+  // The adapter is proved above by calling it directly. This proves the thing
+  // in front of it: that a signed delivery arriving over HTTP reaches the
+  // ledger, and that an unsigned one does not. The dependency worth testing for
+  // real is the raw body — `verifyShopifyWebhook` needs the exact bytes Shopify
+  // sent, and `express.json` hands back a parsed object. If the `verify` hook
+  // in `server/index.ts` ever stops populating `req.rawBody`, every legitimate
+  // delivery fails signature verification, and nothing but this catches it.
+
+  console.log("\n-- the webhook endpoint over HTTP --");
+
+  // A second store, so the uninstall below revokes this one rather than the
+  // connection the direct-call checks above are still using.
+  const SHOP_HTTP = "369-http.myshopify.com";
+  await upsertConnection(db, {
+    tenantId: "t-369",
+    provider: "shopify",
+    externalRef: SHOP_HTTP,
+    label: SHOP_HTTP,
+    credential: "shpat_http_access_token",
+    webhookSecret: WEBHOOK_SECRET,
+    settings: {
+      attribution: { from: "sku", pattern: "^ART-(\\d+)-" },
+      feePolicy: "actual",
+    },
+    status: "active",
+  });
+
+  const webhookApp = express();
+  webhookApp.use(
+    express.json({
+      verify: (req, _res, buf) => {
+        (req as unknown as { rawBody: Buffer }).rawBody = buf;
+      },
+    })
+  );
+  webhookApp.use(
+    "/api/engine",
+    createShopifyWebhookRouter(db, {
+      clientFor: () =>
+        new FixtureShopifyClient({ orders: fixtureOrders, transactions: fixtureTransactions }),
+    })
+  );
+
+  const server = await new Promise<import("node:http").Server>((resolve) => {
+    const s = webhookApp.listen(0, () => resolve(s));
+  });
+  const port = (server.address() as { port: number }).port;
+  const webhookUrl = `http://127.0.0.1:${port}/api/engine/webhooks/shopify`;
+
+  async function deliver(
+    topic: string,
+    payload: unknown,
+    options: { secret?: string | null; shop?: string } = {}
+  ) {
+    const body = JSON.stringify(payload);
+    const headers: Record<string, string> = {
+      "content-type": "application/json",
+      "x-shopify-topic": topic,
+      "x-shopify-shop-domain": options.shop ?? SHOP_HTTP,
+    };
+    if (options.secret !== null) {
+      headers["x-shopify-hmac-sha256"] = signWebhookBody(
+        body,
+        options.secret ?? WEBHOOK_SECRET
+      );
+    }
+    const response = await fetch(webhookUrl, { method: "POST", headers, body });
+    return {
+      status: response.status,
+      body: (await response.json().catch(() => ({}))) as Record<string, unknown>,
+    };
+  }
+
+  const unsigned = await deliver("orders/paid", discountedOrder, { secret: null });
+  check("an unsigned delivery is rejected", () => assert.equal(unsigned.status, 401));
+
+  const wrongSignature = await deliver("orders/paid", discountedOrder, {
+    secret: "the-wrong-secret",
+  });
+  check("a wrongly-signed delivery is rejected", () =>
+    assert.equal(wrongSignature.status, 401)
+  );
+
+  const unknownShop = await deliver("orders/paid", discountedOrder, {
+    shop: "not-connected.myshopify.com",
+  });
+  check("a delivery from a store we have no connection to is rejected", () =>
+    assert.equal(unknownShop.status, 401)
+  );
+
+  const nothingWritten = await db
+    .select()
+    .from(schema.revenueEvents)
+    .where(
+      and(
+        eq(schema.revenueEvents.tenantId, "t-369"),
+        eq(schema.revenueEvents.sourceEventId, "5001000002:12010")
+      )
+    );
+  check("no rejected delivery wrote anything to the ledger", () =>
+    assert.equal(nothingWritten.length, 0)
+  );
+
+  const accepted = await deliver("orders/paid", discountedOrder);
+  check("a correctly signed order is accepted and ingested over HTTP", () => {
+    assert.equal(accepted.status, 200);
+    assert.equal(accepted.body.ingested, 2);
+  });
+
+  const httpEvents = await db
+    .select()
+    .from(schema.revenueEvents)
+    .where(
+      and(
+        eq(schema.revenueEvents.tenantId, "t-369"),
+        eq(schema.revenueEvents.sourceEventId, "5001000002:12010")
+      )
+    );
+  check("the discounted line was stored net of its cart-level discount", () =>
+    // $78.00 list, $7.80 code. Reading `total_discount` would have stored 7800.
+    assert.equal(BigInt(httpEvents[0].grossAmountMinor), 7020n)
+  );
+
+  const redeliveredOverHttp = await deliver("orders/paid", discountedOrder);
+  check("Shopify re-delivering the same order changes nothing", () => {
+    assert.equal(redeliveredOverHttp.status, 200);
+    assert.equal(redeliveredOverHttp.body.duplicates, 2);
+    assert.equal(redeliveredOverHttp.body.ingested, 0);
+  });
+
+  const unhandled = await deliver("orders/fulfilled", discountedOrder);
+  check("an unhandled topic is acknowledged so Shopify stops retrying it", () => {
+    assert.equal(unhandled.status, 200);
+    assert.equal(unhandled.body.ignored, "orders/fulfilled");
+  });
+
+  const refundOverHttp = await deliver("refunds/create", halfRefundOnDiscountedLine);
+  check("a refund delivered over HTTP reverses the sale", () => {
+    assert.equal(refundOverHttp.status, 200);
+    assert.equal(refundOverHttp.body.reversed, 1);
+  });
+
+  const uninstall = await deliver("app/uninstalled", { shop_domain: SHOP_HTTP });
+  check("an uninstall disconnects the store", () => {
+    assert.equal(uninstall.status, 200);
+    assert.equal(uninstall.body.disconnected, true);
+  });
+
+  const afterUninstall = await findConnectionByExternalRef(db, "shopify", SHOP_HTTP);
+  check("the uninstalled store's token is destroyed, not orphaned", () => {
+    assert.equal(afterUninstall!.status, "revoked");
+    assert.equal(afterUninstall!.credentialSealed, null);
+  });
+
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+
+  // ---- Disconnection destroys the credential ----
+  await disconnectConnection(db, connection.id, "revoked");
+  const afterDisconnect = await findConnectionByExternalRef(db, "shopify", SHOP);
+  check("uninstalling destroys the stored token rather than orphaning it", () => {
+    assert.equal(afterDisconnect!.status, "revoked");
+    assert.equal(afterDisconnect!.credentialSealed, null);
+    assert.equal(afterDisconnect!.webhookSecretSealed, null);
   });
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);

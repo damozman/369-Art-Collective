@@ -244,8 +244,9 @@ Be honest with yourself about this list.
 |---|---|
 | **No real money has ever moved** | Everything is proven with test data. The maths is right; the live payment connection is untested. |
 | **Printing costs are placeholders** | The cost numbers are educated guesses, not real Printify prices. **Must be fixed before any real payout.** Needs your Printify account — about 10 minutes on your own computer. |
-| **Not connected to Shopify live** | Real store sales don't flow in automatically yet. |
-| **Not connected to Stripe live** | Real payments can't be sent yet. Needs your Stripe Connect application approved. |
+| **Shopify: built, not switched on** | The whole path is written and tested — a sale arrives, gets split, lands in your books. It is running against practice data because a live store needs a Partner account. When that comes through it is a settings change, not a build. |
+| **Stripe: built, not switched on** | Same story. The system can send a payment, refuses honestly when it can't, and never double-pays. It needs your Connect approval before it points at a real bank. |
+| **Artists can't connect a bank yet** | Even with Stripe live, there's no screen for an artist to add their bank details. That's the next piece. |
 | **Advances not supported** | Paying someone up front and earning it back isn't built. Needed for music and book publishing. Don't sell to those industries yet. |
 
 ---
@@ -328,6 +329,35 @@ paid artists a percentage of a guessed cost would have drained the business
 quietly, on every order, with nobody noticing until the bank balance did.
 
 That is the whole argument for the engine in one example.
+
+---
+
+## 6c. Card fees — a choice only you can make
+
+When someone buys something, the card company takes a cut before the money reaches
+you. Roughly 2.9% plus 30¢, though it varies. On a $118 order that is about $4.
+
+**The question is who absorbs it — you, or you and the artist together.**
+
+There are two honest answers, and the system supports both:
+
+- **Deduct it.** The fee comes off before the artist's share is worked out, so you
+  share the cost of taking payment. This is the default.
+- **Absorb it.** You pay it out of your own margin and the artist's share is worked
+  out on the full sale price. Simpler to explain to artists, slightly worse for you.
+
+**What the system will never do is guess.** Shopify does not put the fee in the
+sale notification — it has to be looked up separately, and for some payment methods
+(PayPal in particular) it is not available at all. When that happens, the sale is
+recorded and **held** rather than paid on an assumed fee. You will see it in
+"Needs attention".
+
+That is deliberate, and it is the same principle as the printing costs above: a
+held payment can be fixed, a wrong payment that has already left cannot.
+
+If you would rather never see those holds, choose "absorb" and the question stops
+coming up. If most of your sales go through Shopify Payments, "deduct" will work
+smoothly and the holds will be rare.
 
 ---
 

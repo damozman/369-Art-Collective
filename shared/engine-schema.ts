@@ -153,6 +153,21 @@ export const taxIdentityStatusEnum = pgEnum("engine_tax_identity_status", [
   "invalid",
 ]);
 
+/**
+ * Lifecycle of a link to an external system.
+ *
+ * `revoked` is distinct from `disconnected` on purpose: the merchant uninstalling
+ * our app and an owner switching stores look identical in the data but need
+ * different responses — one is a support conversation, the other is routine.
+ */
+export const connectionStatusEnum = pgEnum("engine_connection_status", [
+  "pending",
+  "active",
+  "disconnected",
+  "revoked",
+  "error",
+]);
+
 // ============================================================
 // Tenancy
 // ============================================================
@@ -843,6 +858,95 @@ export const payouts = pgTable(
 );
 
 // ============================================================
+// Source connections
+// ============================================================
+
+/**
+ * A tenant's link to an external system — the Shopify store whose orders arrive
+ * as revenue events, or the Stripe account payouts are instructed against.
+ *
+ * WHY THIS IS A TABLE RATHER THAN ENVIRONMENT VARIABLES. The marketplace reads
+ * `SHOPIFY_ACCESS_TOKEN` from the process environment because it serves exactly
+ * one store. The engine serves many tenants at once, and an inbound webhook
+ * arrives identified only by its shop domain — so the domain has to be a lookup
+ * key into per-tenant credentials, not a constant.
+ *
+ * WHY THE CREDENTIAL COLUMNS ARE SEALED. `credentialSealed` and
+ * `webhookSecretSealed` hold AES-256-GCM ciphertext from `secrets.ts`, never
+ * plaintext. A Shopify offline access token is a standing grant to read a
+ * merchant's orders and a database backup is a file that gets copied around;
+ * the two should not meet. The sealing key lives in `ENGINE_SECRET_KEY` and is
+ * never stored here.
+ *
+ * `externalRef` is the provider's own identifier for the connection — the
+ * `myshopify.com` domain for Shopify, the `acct_…` id for Stripe — and is what
+ * an inbound webhook is matched on. It is unique per provider across ALL
+ * tenants, deliberately: one store belongs to one tenant, and two tenants
+ * claiming the same store is a misconfiguration that should fail at write time
+ * rather than route someone else's revenue into the wrong ledger.
+ */
+export const sourceConnections = pgTable(
+  "engine_source_connections",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    tenantId: varchar("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+
+    /** `shopify` | `stripe`. Free text rather than an enum so adding an adapter
+     *  is a code change, not a migration. */
+    provider: text("provider").notNull(),
+
+    /** The provider's identifier for this connection. Webhook routing key. */
+    externalRef: text("external_ref").notNull(),
+
+    /** Human label shown in the console: "369artcollective.myshopify.com". */
+    label: text("label"),
+
+    status: connectionStatusEnum("status").notNull().default("pending"),
+
+    /** AES-256-GCM ciphertext. Never plaintext. See `server/engine/secrets.ts`. */
+    credentialSealed: text("credential_sealed"),
+    webhookSecretSealed: text("webhook_secret_sealed"),
+
+    /** OAuth scopes actually granted, so a missing scope is diagnosable. */
+    scopes: jsonb("scopes"),
+
+    /**
+     * Adapter configuration — for Shopify, where the work reference is read
+     * from and what to do about payment fees. Per connection rather than per
+     * tenant because a tenant may eventually run two stores with different
+     * conventions, and because these are the settings an owner changes when
+     * every sale starts landing in the review queue.
+     */
+    settings: jsonb("settings"),
+
+    /** Set when the provider last rejected our credential — the signal to reconnect. */
+    lastErrorAt: timestamp("last_error_at"),
+    lastError: text("last_error"),
+
+    /** Set on every successfully processed inbound event. Staleness is a symptom. */
+    lastEventAt: timestamp("last_event_at"),
+
+    connectedAt: timestamp("connected_at"),
+    disconnectedAt: timestamp("disconnected_at"),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    providerRefUnique: uniqueIndex("engine_source_connections_provider_ref_unique").on(
+      table.provider,
+      table.externalRef
+    ),
+    tenantProviderIdx: index("engine_source_connections_tenant_provider_idx").on(
+      table.tenantId,
+      table.provider
+    ),
+  })
+);
+
+// ============================================================
 // Audit
 // ============================================================
 
@@ -890,3 +994,4 @@ export type LedgerEntry = typeof ledgerEntries.$inferSelect;
 export type Adjustment = typeof adjustments.$inferSelect;
 export type PayoutBatch = typeof payoutBatches.$inferSelect;
 export type Payout = typeof payouts.$inferSelect;
+export type SourceConnection = typeof sourceConnections.$inferSelect;

@@ -5,7 +5,7 @@ An honest map of the distance between here and a product someone pays for.
 Written for the owner. Kept current as things land — if this file says something is
 missing and it isn't, fix the file.
 
-Last updated: 2026-07-31.
+Last updated: 2026-07-31 (step 1 of the build order below is done).
 
 ---
 
@@ -37,9 +37,18 @@ working software and a business.
 - Adding and editing people
 - Resolving stuck items — assign, dismiss, write off
 - Demo data (`npm run seed:demo`)
+- **The Shopify sales connection** — signed webhooks, one event per line item,
+  discounts and tax handled correctly, refunds and cancellations reversed,
+  re-deliveries ignored. Runs against practice data; needs a Partner account to
+  point at a real store.
+- **The Stripe payment connection** — transfers instructed against the business's
+  own Stripe account, retries that cannot double-pay, failures written in plain
+  language. Refuses to move money when nothing is configured.
+- **Store credentials encrypted at rest**, so a database backup is not a set of
+  live keys to somebody's shop.
 
-175 unit tests, 109 end-to-end checks against a real database, every screen driven
-in a real browser.
+265 unit tests, 141 end-to-end checks against a real database, every screen driven
+in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
 
@@ -49,13 +58,14 @@ in a real browser.
 
 | Missing | What it means | Waits on |
 |---|---|---|
-| **Shopify connection** | Sales don't arrive automatically. Everything is entered by hand. | Partner account approval |
-| **Stripe transfers** | Money doesn't actually move. The seam exists; the real provider doesn't. | Connect verification |
+| ~~Shopify connection~~ | **Built.** Sales arrive, split and land in the ledger. Pointing it at a real store needs the Partner account — a settings change, not a build. | Partner approval only |
+| ~~Stripe transfers~~ | **Built.** The real provider exists and refuses honestly when unconfigured. Pointing it at real money needs Connect. | Connect verification only |
+| **Connect-a-store screen** | The connection is stored and used correctly, but there's no screen to create one — it's inserted by hand today. Small, and only worth doing once the Partner account exists. | Partner approval |
 | **Artist bank onboarding** | No way for a contributor to connect their account. Currently set by hand in the database. | Connect verification |
 | **Customer billing** | **No way to charge a business for using this.** | Nothing — buildable now |
 | **Customer signup** | No way for a business to create an account. You'd add them yourself. | Nothing — buildable now |
 
-Note the pattern: the first three wait on other people, the last two don't.
+Note the pattern: the first four wait on other people, the last two don't.
 
 ### Group 2 — Completes "run it without a developer"
 
@@ -87,11 +97,17 @@ Note the pattern: the first three wait on other people, the last two don't.
 
 Chosen so each step is useful on its own and nothing waits unnecessarily.
 
-**1. Shopify and Stripe, built against fixtures.**
-Both can be written now and tested without credentials, exactly as the cost resolver
-and payout executor already are. When the Partner account and Connect verification
-come through, it's a swap rather than a build. This means the approvals wait on
-*themselves* rather than on us.
+**1. Shopify and Stripe, built against fixtures. ✅ DONE.**
+Both are written and tested without credentials, exactly as the cost resolver and
+payout executor already were. When the Partner account and Connect verification come
+through, it is a swap rather than a build. The approvals now wait on *themselves*
+rather than on us — which was the whole point of doing this first.
+
+One decision came out of it and is recorded in `docs/SOP.md` §6c: **whether card
+processing fees are deducted before an artist's share, or absorbed by the business.**
+The system supports both and guesses at neither. Where a fee cannot be read — PayPal
+and most non-Shopify-Payments gateways do not report one — the sale is held rather
+than paid on an assumption.
 
 **2. Artist bank onboarding.**
 Without it, nobody can be paid even once Stripe is connected. Naturally follows

@@ -115,18 +115,23 @@ Both were resolved in step 5.)
 
 ## Current status
 
-- **Phase 0 ✅ · Phase 1 ✅ · the owner-facing product is built.**
-- **What exists:** the engine (15 `engine_*` tables, canonical `RevenueEvent`, §6
+- **Phase 0 ✅ · Phase 1 ✅ · the owner-facing product is built ✅ · WHATS-LEFT
+  step 1 (Shopify + Stripe against fixtures) ✅.**
+- **What exists:** the engine (16 `engine_*` tables, canonical `RevenueEvent`, §6
   rules, immutable ledger, §8 reversals, transactional ingestion, payout batches
-  with the state machine), the **contributor portal** at `/portal/:tenantSlug`, and
-  the **owner console** at `/manage/:tenantSlug` — dashboard, people, review queue,
+  with the state machine), the **contributor portal** at `/portal/:tenantSlug`, the
+  **owner console** at `/manage/:tenantSlug` — dashboard, people, review queue,
   rates, payout preview and run, plus rate editing with versioning and resolving
-  stuck items.
-- **175 unit tests · 109 end-to-end checks against real Postgres.** Every screen has
-  been driven in a real browser, not just type-checked.
-- **Money has still never moved.** No Stripe, no Shopify. The transfer seam is
-  behind `TransferExecutor` with a fixture; pressing "Pay" without a provider fails
-  honestly rather than pretending.
+  stuck items — and now **both provider adapters**: the Shopify ingestion path
+  (signed webhooks → per-line events → ledger, plus refunds and cancellations) and
+  the Stripe `TransferExecutor`.
+- **265 unit tests · 141 end-to-end checks against real Postgres.** Every screen has
+  been driven in a real browser, and the webhook endpoint over real HTTP.
+- **Money has still never moved, and no live store is connected.** Both adapters are
+  written and proven against fixtures; neither has credentials. `getTransferExecutor`
+  returns `UnconfiguredTransferExecutor` without `STRIPE_SECRET_KEY`, so pressing
+  "Pay" fails honestly rather than pretending. This is a *swap*, not a build — see
+  "Switching the adapters on" below.
 - **Cost fixtures are still invented** — see below. The first real capture happened
   on 2026-07-31 and is recorded in `docs/SOP.md` §6b, but the fixture file has not
   been replaced (one product, one variant; the user is changing supplier first).
@@ -143,10 +148,11 @@ Keep it current: if it claims something is missing and it is not, fix the file.
 
 Summary of that order:
 
-1. **Shopify and Stripe against fixtures** — both writable now without credentials,
-   exactly as `CostResolver` and `TransferExecutor` already are. The approvals then
-   wait on themselves rather than on us.
+1. ~~**Shopify and Stripe against fixtures**~~ — **done.** See "The adapters" below.
+   The approvals now wait on themselves rather than on us.
 2. **Artist bank onboarding** — nobody can be paid without it, even with Stripe live.
+   `StripeClient.getAccountStatus` already exists for the status half; what is
+   missing is Account Links, the onboarding return/refresh routes, and the screen.
 3. **Artwork and settings screens** — finishes "operable without a developer".
 4. **Customer billing and signup** — turns it into a business. **There is currently
    no way to charge anyone**, which is easy to leave until last and then discover is
@@ -170,7 +176,7 @@ offering again before anything runs against real money.**
 
 | Path | What |
 |---|---|
-| `shared/engine-schema.ts` | 15 `engine_*` tables. Every §5 decision annotated where it lands |
+| `shared/engine-schema.ts` | 16 `engine_*` tables. Every §5 decision annotated where it lands |
 | `server/engine/money.ts` | bigint minor units, basis points, largest-remainder `allocate()` |
 | `server/engine/revenue-event.ts` | canonical event (§7), validation, `buildReversal` |
 | `server/engine/rules.ts` | §6 evaluator — pure, clock-free, emits the explain trace |
@@ -189,6 +195,67 @@ offering again before anything runs against real money.**
 | `server/engine/review.ts` | resolving stuck items: assign, dismiss, write off |
 | `server/engine/seed-demo.ts` | realistic demo data (`npm run seed:demo`) |
 | `server/engine/db.ts` | the engine's own Drizzle client (lazy; separate from `lib/db.ts`) |
+| `server/engine/secrets.ts` | AES-256-GCM seal/open for provider credentials + `safeEqual` |
+| `server/engine/connections.ts` | `engine_source_connections` CRUD; the ONLY module that touches sealed columns |
+
+### The adapters — §4's two seams, filled in
+
+| Path | What |
+|---|---|
+| `server/engine/adapters/cost-source.ts` | `LineCostSource` — where supplier costs (Printify et al) plug in. Default returns none |
+| `server/engine/adapters/shopify/types.ts` | the slice of Shopify payloads we read, hand-written on purpose |
+| `server/engine/adapters/shopify/webhook-auth.ts` | HMAC verification over the RAW body, timing-safe; shop-domain normalisation |
+| `server/engine/adapters/shopify/map.ts` | **pure.** All five money decisions live here — read its header before changing anything |
+| `server/engine/adapters/shopify/client.ts` | Admin API seam + `LiveShopifyClient` + `FixtureShopifyClient` + `syncWebhooks` |
+| `server/engine/adapters/shopify/ingest.ts` | DB-facing: attribution via `works`/`work_contributors`, then `ingestEvent` |
+| `server/engine/adapters/shopify/routes.ts` | `POST /api/engine/webhooks/shopify` — one URL for all tenants |
+| `server/engine/adapters/stripe/client.ts` | four-call Stripe surface + `LiveStripeClient` + `FixtureStripeClient` |
+| `server/engine/adapters/stripe/transfer-executor.ts` | `TransferExecutor` over Stripe; bigint→number checked, never rounded |
+| `server/engine/adapters/stripe/factory.ts` | `getTransferExecutor()` — refuses by default, fixture is opt-in |
+
+**Five things about the adapters that are load-bearing:**
+
+1. **`map.ts` is pure and contains every money decision.** Tax excluded, discounts
+   deducted from `discount_allocations` (NOT `total_discount` — a cart-level code
+   appears only in the former, and reading the latter overpays on every discounted
+   order), customer-paid shipping recorded but not deducted, **payment fee fetched
+   and never assumed**, test orders dropped. Each is argued in the file header.
+2. **There is deliberately no "assume 2.9% + 30¢" option.** `feePolicy` is `actual`
+   (hold the line when the fee cannot be read) or `none` (the tenant absorbs fees,
+   explicitly chosen). A third "estimate" arm would recreate the invented-cost bug
+   Phase 0 existed to remove.
+3. **One event per `${orderId}:${lineItemId}`.** Same key the marketplace learned
+   the hard way, now enforced by `(tenantId, source, sourceEventId)`.
+4. **Refund proportions divide by the RECORDED gross, not the payload's list
+   price.** A refund of a discounted line otherwise under-recovers, permanently.
+5. **`ingestEvent` gained `holdForReview`.** An adapter can know something the
+   engine cannot (a missing fee). Held events record the revenue and their costs,
+   allocate nothing, and land in the existing review queue.
+
+**One known gap, named rather than hidden.** A line held because its payment fee
+could not be read can still be resolved through `resolveEventContributor`, and doing
+so allocates with **no** `processing_fee` cost — i.e. the tenant silently absorbs the
+fee for that line. The hold reason is shown on the item and says exactly this, so it
+is a visible choice rather than a hidden one, and blocking resolution instead would
+leave an item with no way out. **The proper fix is a "record the missing cost" action
+on the review screen**, which belongs with the settings/artwork screens in
+`WHATS-LEFT.md` step 3. Do not fix it by adding an estimated-fee fallback.
+
+### Switching the adapters on
+
+Neither adapter needs a code change to go live.
+
+- **Stripe:** set `STRIPE_SECRET_KEY` and put the tenant's connected account id on
+  `engine_tenants.stripe_account_id`. `getTransferExecutor` picks up the live path.
+  `ALLOW_FIXTURE_TRANSFERS=true` forces the fixture — **never set it anywhere real**;
+  it marks payouts paid and debits balances while moving nothing.
+- **Shopify:** insert a row in `engine_source_connections` (`provider: 'shopify'`,
+  `external_ref`: the myshopify domain, sealed access token and webhook secret) and
+  point the app's webhooks at `POST /api/engine/webhooks/shopify`. `syncWebhooks`
+  registers the four topics. There is **no UI for this yet** — see `WHATS-LEFT.md`.
+- **`ENGINE_SECRET_KEY` is now required** for anything touching connections
+  (`openssl rand -hex 32`, or any passphrase locally). Without it, sealing throws
+  rather than storing plaintext.
 
 The portal UI, which is the engine's surface rather than the marketplace's:
 
@@ -203,8 +270,8 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 175 unit tests, no network, no database
-npm run test:e2e      # 109 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 265 unit tests, no network, no database
+npm run test:e2e      # 141 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -355,12 +422,12 @@ Sessions do not share memory. Everything below is the state as of the last commi
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 175 unit tests — no network, no database
+npm test          # 265 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (62 checks against real Postgres) start the local database
+For the end-to-end run (141 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e
@@ -498,6 +565,12 @@ npm run db:push   # drizzle-kit push
 **Credentials required** for the payout path to run: `DATABASE_URL`,
 `PRINTIFY_API_TOKEN`, `SHOPIFY_ACCESS_TOKEN`, `STRIPE_SECRET_KEY`. Not present in
 cloud sandboxes — verification of money-affecting changes must happen where they are.
+
+**`ENGINE_SECRET_KEY` is required by the engine** wherever `engine_source_connections`
+is read or written — it is the AES key that seals provider credentials. Generate with
+`openssl rand -hex 32`; a passphrase also works locally. It is *not* interchangeable
+with `SESSION_SECRET`, and losing it makes every stored store token unreadable (the
+fix is reconnecting the stores, not a data-recovery exercise).
 
 ### Handling credentials — standing rule
 

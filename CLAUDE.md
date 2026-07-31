@@ -407,6 +407,23 @@ pages** — do not extend `client/src/pages/artist-*`, and do not reach for
 - **Task #8 is an outstanding user request:** a full plain-language SOP explaining the
   system end to end, aimed at the business owner rather than a developer.
 
+## How to communicate with the user — IMPORTANT
+
+The user is the business owner, not a developer. They asked directly (2026-07-31) to
+stop being given implementation detail they cannot use. Follow this:
+
+- **Debrief in plain language after each chunk of work.** What changed, what it means
+  for the business, what it protects against. No file names, no function names, no
+  framework jargon unless they ask.
+- **End every response with a clear DECISIONS NEEDED list** — each item one line of
+  what the decision is, plus a short description of each path. Never bury a question
+  inside a paragraph.
+- **Ask questions the moment they arise**, not only at the end.
+- **Be brief.** They said explicitly that long technical passages waste tokens and give
+  them nothing. Detail belongs in this file and in code comments, not in chat.
+- Technical depth is still expected *in the repo* — comments, docs, commit messages.
+  The rigour does not drop; only the chat register changes.
+
 ## Working agreements
 
 - **Decisions live in the repo, not in chat.** Sessions do not share memory across

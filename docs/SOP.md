@@ -138,8 +138,29 @@ stamp, so if a payment succeeded but the confirmation got lost, retrying is safe
 
 ### Every week or two
 
-- **Check the "needs review" list.** These are sales nobody has been paid for. Usually
-  an unrecognised product or a missing cost. Fix the underlying data and they clear.
+**Check "Needs attention" in your console.** Two kinds of thing land there, and
+they need different answers.
+
+**A sale nobody could be matched to.** The system didn't recognise who it belonged
+to, so it paid nobody. Click **Resolve**, choose the person, and press **Assign and
+pay**.
+
+Two things happen that are worth knowing:
+
+- It pays **the rate that applied on the day of the sale**, not today's rate. A
+  three-month-old sale resolved now pays what it would have paid then. How long it
+  sat waiting never changes what somebody earns.
+- It **remembers the reference**, so the next sale from that source matches on its
+  own and you only fix it once.
+
+**A refund that couldn't be recovered.** Money had already been paid out when the
+chargeback landed. There is nothing to fix — the money is gone. You can **Dismiss**
+it with a note, which clears the flag and leaves the loss on the record to recoup
+from their future earnings. The note is required, because a dismissal with no
+reason is indistinguishable later from a mistake.
+
+If you'd rather absorb it entirely, that's a **write-off**: their balance returns
+to zero and the original loss stays visible in the history. Nothing is ever deleted.
 
 ### Every month (or whatever cycle you choose)
 

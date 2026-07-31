@@ -15,7 +15,7 @@
 import assert from "node:assert/strict";
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import * as schema from "@shared/engine-schema";
 import {
@@ -53,6 +53,7 @@ import {
   updateContributor,
 } from "../admin-mutations";
 import { isEffectiveAt } from "../rules";
+import { dismissReview, resolveEventContributor, writeOffDeficit } from "../review";
 import { renderStatementText } from "../statement";
 
 const results: string[] = [];
@@ -697,6 +698,120 @@ async function main() {
     title: "New Piece", externalRef: "art-999", productType: "poster",
   });
   check("a work can be added", () => assert.ok(workId));
+
+  // ---- 15. Resolving review items ----
+  console.log("\n15. Resolving review items");
+
+  const stuck = (await listNeedsReview(db, "t-369")).find((r) =>
+    /Unresolved contributor/.test(r.reviewReason ?? "")
+  )!;
+  check("the stuck sale is in the queue", () => assert.ok(stuck));
+
+  // Assign to Alice deliberately: her rate was superseded to 40% in section 14
+  // with an effective date of today, while this sale happened in June. If the
+  // resolution used today's rate she would be paid 40%; she must get 30%.
+  const balanceBefore = await deriveContributorBalance(db, "t-369", "c-alice");
+
+  const resolved = await resolveEventContributor(db, {
+    tenantId: "t-369", eventId: stuck.id, contributorId: "c-alice",
+  });
+  check("assigning it pays the person", () => assert.equal(resolved.status, "resolved"));
+  check("money actually moved", () => assert.ok(resolved.totalAllocatedMinor > 0n));
+
+  const balanceAfter = await deriveContributorBalance(db, "t-369", "c-alice");
+  check("their balance went up by exactly what was allocated", () =>
+    assert.equal(balanceAfter - balanceBefore, resolved.totalAllocatedMinor)
+  );
+
+  // The rate in force when the sale HAPPENED, not today's — artist-standard was
+  // superseded to 40% in section 14, but this sale predates that.
+  const resolvedAlloc = await db
+    .select().from(schema.allocations)
+    .where(eq(schema.allocations.revenueEventId, stuck.id));
+  check("it paid the rate that applied on the sale date, not today's", () =>
+    assert.equal(resolvedAlloc[0].rateBasisPoints, 3000)
+  );
+
+  check("it is out of the queue", async () => {});
+  assert.ok(!(await listNeedsReview(db, "t-369")).some((r) => r.id === stuck.id));
+
+  await assert.rejects(
+    () => resolveEventContributor(db, {
+      tenantId: "t-369", eventId: stuck.id, contributorId: "c-alice",
+    }),
+    /already been dealt with/
+  );
+  check("resolving the same item twice is refused — no double payment", async () => {});
+
+  await assert.rejects(
+    () => resolveEventContributor(db, {
+      tenantId: "t-press", eventId: stuck.id, contributorId: "c-eve",
+    }),
+    /not in this business/
+  );
+  check("one business cannot resolve another's items", async () => {});
+
+  // The unrecoverable chargeback: acknowledge rather than pay.
+  const chargeback = (await listNeedsReview(db, "t-369")).find((r) =>
+    /already been paid out/.test(r.reviewReason ?? "")
+  )!;
+  check("the chargeback is still in the queue", () => assert.ok(chargeback));
+
+  await assert.rejects(
+    () => dismissReview(db, { tenantId: "t-369", eventId: chargeback.id, note: "" }),
+    /Say why/
+  );
+  check("dismissing without a reason is refused", async () => {});
+
+  await dismissReview(db, {
+    tenantId: "t-369", eventId: chargeback.id,
+    note: "Absorbing this one; customer disputed in good faith",
+  });
+  check("it can be dismissed with a reason", async () => {});
+  assert.ok(!(await listNeedsReview(db, "t-369")).some((r) => r.id === chargeback.id));
+
+  const dismissedRow = await db
+    .select().from(schema.revenueEvents)
+    .where(eq(schema.revenueEvents.id, chargeback.id));
+  check("the original reason is kept alongside the dismissal", () => {
+    assert.match(dismissedRow[0].reviewReason!, /Absorbing this one/);
+    assert.match(dismissedRow[0].reviewReason!, /was: /);
+  });
+
+  // Writing off a deficit.
+  await db.insert(schema.ledgerEntries).values({
+    tenantId: "t-369", contributorId: "c-alice", entryType: "reversal",
+    amountMinor: -5000n, currency: "USD", occurredAt: new Date(),
+  });
+  const deficit = await deriveContributorBalance(db, "t-369", "c-alice");
+  check("a contributor is in deficit", () => assert.ok(deficit < 0n));
+
+  await writeOffDeficit(db, {
+    tenantId: "t-369", contributorId: "c-alice",
+    amountMinor: -deficit, note: "Written off after chargeback",
+  });
+  check("writing it off clears the balance to zero", async () => {});
+  assert.equal(await deriveContributorBalance(db, "t-369", "c-alice"), 0n);
+
+  const reversalStillThere = await db
+    .select().from(schema.ledgerEntries)
+    .where(and(
+      eq(schema.ledgerEntries.contributorId, "c-alice"),
+      eq(schema.ledgerEntries.entryType, "reversal")
+    ));
+  check("the original loss is still on the record — nothing was deleted", () =>
+    assert.ok(reversalStillThere.length > 0)
+  );
+
+  const audit = await db
+    .select().from(schema.auditLog)
+    .where(eq(schema.auditLog.tenantId, "t-369"));
+  check("every resolution is written to the audit log", () => {
+    const actions = audit.map((a) => a.action);
+    assert.ok(actions.includes("resolve_review"));
+    assert.ok(actions.includes("dismiss_review"));
+    assert.ok(actions.includes("write_off"));
+  });
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

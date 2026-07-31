@@ -339,13 +339,80 @@ export async function ingestEvent(
     };
   }
 
+  const allocated = await allocateEvent(db, {
+    eventId,
+    event,
+    workId: resolution.workId,
+    contributors: resolution.contributors,
+    payoutHoldDays: tenant.payoutHoldDays,
+    trailingVolumeWindowDays: options.trailingVolumeWindowDays,
+  });
+
+  if (allocated.allocationIds.length === 0) {
+    await db
+      .update(schema.revenueEvents)
+      .set({
+        needsReview: true,
+        reviewReason: allocated.warnings.join("; ") || "No allocations produced",
+      })
+      .where(eq(schema.revenueEvents.id, eventId));
+
+    return {
+      status: "needs_review",
+      eventId,
+      allocationIds: [],
+      totalAllocatedMinor: 0n,
+      warnings: allocated.warnings,
+      reviewReason: allocated.warnings.join("; ") || "No allocations produced",
+    };
+  }
+
+  return {
+    status: "ingested",
+    eventId,
+    allocationIds: allocated.allocationIds,
+    totalAllocatedMinor: allocated.totalAllocatedMinor,
+    warnings: allocated.warnings,
+  };
+}
+
+/**
+ * Evaluate the rules for one already-recorded event and write the results.
+ *
+ * SHARED BY INGESTION AND BY RESOLVING A HELD EVENT, deliberately. When an owner
+ * fixes a sale that was stuck in review, the money must be calculated by exactly
+ * the same code that would have calculated it at ingestion — a second
+ * implementation is how a codebase ends up with five disagreeing royalty
+ * definitions, which is the defect Phase 0 spent its time removing.
+ *
+ * Writes allocations and their ledger entries in one transaction: an event with
+ * allocations but no ledger entries is worse than one with neither, because it
+ * looks finished.
+ */
+export async function allocateEvent(
+  db: EngineDb,
+  params: {
+    eventId: string;
+    event: RevenueEvent;
+    workId: string | null;
+    contributors: RuleContext["contributors"];
+    payoutHoldDays: number;
+    trailingVolumeWindowDays?: number;
+  }
+): Promise<{
+  allocationIds: string[];
+  totalAllocatedMinor: bigint;
+  warnings: string[];
+}> {
+  const { event, eventId } = params;
+
   // Trailing volume for tiered rules — derived, never stored.
-  const windowDays = options.trailingVolumeWindowDays ?? 30;
+  const windowDays = params.trailingVolumeWindowDays ?? 30;
   const windowStart = new Date(event.occurredAt.getTime());
   windowStart.setUTCDate(windowStart.getUTCDate() - windowDays);
 
   const contributorsWithVolume: RuleContext["contributors"] = [];
-  for (const contributor of resolution.contributors) {
+  for (const contributor of params.contributors) {
     contributorsWithVolume.push({
       ...contributor,
       trailingVolumeMinor: await deriveTrailingVolume(
@@ -358,43 +425,29 @@ export async function ingestEvent(
     });
   }
 
-  const [work] = resolution.workId
-    ? await db.select().from(schema.works).where(eq(schema.works.id, resolution.workId)).limit(1)
+  const [work] = params.workId
+    ? await db.select().from(schema.works).where(eq(schema.works.id, params.workId)).limit(1)
     : [undefined];
 
+  // Rules are selected against the event's own date, never today's. Resolving a
+  // three-month-old stuck sale must pay what applied three months ago.
   const rules = await loadApplicableRules(db, event.tenantId, event.occurredAt);
 
   const result = evaluate(rules, event, {
     tenantId: event.tenantId,
     occurredAt: event.occurredAt,
-    workId: resolution.workId,
+    workId: params.workId,
     productType: work?.productType ?? null,
     contributors: contributorsWithVolume,
   });
 
   if (result.allocations.length === 0) {
-    await db
-      .update(schema.revenueEvents)
-      .set({
-        needsReview: true,
-        reviewReason: result.warnings.join("; ") || "No allocations produced",
-      })
-      .where(eq(schema.revenueEvents.id, eventId));
-
-    return {
-      status: "needs_review",
-      eventId,
-      allocationIds: [],
-      totalAllocatedMinor: 0n,
-      warnings: result.warnings,
-      reviewReason: result.warnings.join("; ") || "No allocations produced",
-    };
+    return { allocationIds: [], totalAllocatedMinor: 0n, warnings: result.warnings };
   }
 
   const allocationIds: string[] = [];
   let totalAllocatedMinor = 0n;
 
-  // Allocations and their ledger entries land together or not at all.
   await db.transaction(async (tx) => {
     const inserted = await tx
       .insert(schema.allocations)
@@ -442,7 +495,7 @@ export async function ingestEvent(
       {
         tenantId: event.tenantId,
         occurredAt: event.occurredAt,
-        payoutHoldDays: tenant.payoutHoldDays,
+        payoutHoldDays: params.payoutHoldDays,
         isReversal: event.direction === "reversal",
       }
     );
@@ -455,13 +508,7 @@ export async function ingestEvent(
     }
   });
 
-  return {
-    status: "ingested",
-    eventId,
-    allocationIds,
-    totalAllocatedMinor,
-    warnings: result.warnings,
-  };
+  return { allocationIds, totalAllocatedMinor, warnings: result.warnings };
 }
 
 /** Validate before appending — an append-only store has no undo. */

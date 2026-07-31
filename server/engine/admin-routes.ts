@@ -47,6 +47,7 @@ import {
   supersedeRule,
   updateContributor,
 } from "./admin-mutations";
+import { dismissReview, resolveEventContributor, writeOffDeficit } from "./review";
 import { AuthError } from "./auth";
 import type { EngineDb } from "./ingest";
 import { formatMinor } from "./money";
@@ -581,6 +582,66 @@ export function createAdminRouter(
       });
 
       res.json({ ok: true });
+    })
+  );
+
+  // ---- Resolving review items ----
+
+  router.post(
+    "/t/:tenantSlug/admin/review/:eventId/assign",
+    requireAdmin,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      const result = await resolveEventContributor(db, {
+        tenantId: tenant.id,
+        eventId: String(req.params.eventId),
+        contributorId: String(body.contributorId ?? ""),
+        role: body.role ?? null,
+        rememberReference: Boolean(body.rememberReference),
+        actorId: session.tenantUserId,
+      });
+
+      res.json({
+        status: result.status,
+        allocated: money(result.totalAllocatedMinor),
+        warnings: result.warnings,
+      });
+    })
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/review/:eventId/dismiss",
+    requireAdmin,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+      await dismissReview(db, {
+        tenantId: tenant.id,
+        eventId: String(req.params.eventId),
+        note: String((req.body ?? {}).note ?? ""),
+        actorId: session.tenantUserId,
+      });
+      res.json({ ok: true });
+    })
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/contributors/:contributorId/write-off",
+    requireAdmin,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      const id = await writeOffDeficit(db, {
+        tenantId: tenant.id,
+        contributorId: String(req.params.contributorId),
+        amountMinor: BigInt(body.amountMinor ?? 0),
+        note: String(body.note ?? ""),
+        actorId: session.tenantUserId,
+      });
+
+      res.json({ id });
     })
   );
 

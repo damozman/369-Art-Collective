@@ -37,6 +37,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getContributors,
@@ -44,6 +53,8 @@ import {
   getPayoutBatches,
   getReview,
   getRules,
+  assignReviewItem,
+  dismissReviewItem,
   logout,
   previewPayouts,
   runPayouts,
@@ -519,9 +530,53 @@ function PeopleTab({
 // ---- Needs attention ----
 
 function AttentionTab({ slug, currency }: { slug: string; currency: string }) {
+  const queryClient = useQueryClient();
+  const [acting, setActing] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<Record<string, string>>({});
+  const [note, setNote] = useState<Record<string, string>>({});
+  const [message, setMessage] = useState<string | null>(null);
+
   const query = useQuery({
     queryKey: ["admin-review", slug],
     queryFn: () => getReview(slug),
+  });
+
+  const people = useQuery({
+    queryKey: ["admin-contributors", slug],
+    queryFn: () => getContributors(slug),
+  });
+
+  function refresh() {
+    queryClient.invalidateQueries({ queryKey: ["admin-review", slug] });
+    queryClient.invalidateQueries({ queryKey: ["admin-overview", slug] });
+    queryClient.invalidateQueries({ queryKey: ["admin-contributors", slug] });
+    queryClient.invalidateQueries({ queryKey: ["admin-payouts", slug] });
+  }
+
+  const assign = useMutation({
+    mutationFn: ({ eventId, contributorId }: { eventId: string; contributorId: string }) =>
+      assignReviewItem(slug, eventId, contributorId, true),
+    onSuccess: (data) => {
+      setMessage(
+        data.status === "resolved"
+          ? `Paid ${data.allocated.formatted}. Future sales from this reference will resolve on their own.`
+          : `Still stuck: ${data.warnings.join("; ")}`
+      );
+      setActing(null);
+      refresh();
+    },
+    onError: (error) => setMessage((error as Error).message),
+  });
+
+  const dismiss = useMutation({
+    mutationFn: ({ eventId, why }: { eventId: string; why: string }) =>
+      dismissReviewItem(slug, eventId, why),
+    onSuccess: () => {
+      setMessage("Dismissed.");
+      setActing(null);
+      refresh();
+    },
+    onError: (error) => setMessage((error as Error).message),
   });
 
   if (query.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -549,25 +604,134 @@ function AttentionTab({ slug, currency }: { slug: string; currency: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {message && (
+          <p className="mb-4 text-sm" data-testid="text-review-message">
+            {message}
+          </p>
+        )}
+
         <ul className="space-y-3" data-testid="list-review">
-          {query.data.items.map((item) => (
-            <li key={item.id} className="rounded-md border p-3">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-medium">
-                    {formatMoney(item.gross.minor, currency)}
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {item.source} · {item.sourceEventId}
+          {query.data.items.map((item) => {
+            // A refund cannot be "assigned" to anyone — the money is already gone.
+            // Only an unmatched sale has somebody to point it at.
+            const isRefund = item.gross.minor.startsWith("-");
+            const open = acting === item.id;
+
+            return (
+              <li key={item.id} className="rounded-md border p-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="font-medium">
+                      {formatMoney(item.gross.minor, currency)}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {item.source} · {item.sourceEventId}
+                      </span>
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">{item.reason}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(item.occurredAt)}
                     </span>
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">{item.reason}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setMessage(null);
+                        setActing(open ? null : item.id);
+                      }}
+                      data-testid={`button-resolve-${item.id}`}
+                    >
+                      {open ? "Close" : "Resolve"}
+                    </Button>
+                  </div>
                 </div>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {formatDate(item.occurredAt)}
-                </span>
-              </div>
-            </li>
-          ))}
+
+                {open && (
+                  <div className="mt-4 space-y-3 border-t pt-3">
+                    {!isRefund && (
+                      <div className="space-y-2">
+                        <Label>Who should be paid for this?</Label>
+                        <div className="flex flex-wrap gap-2">
+                          <Select
+                            value={chosen[item.id] ?? ""}
+                            onValueChange={(v) =>
+                              setChosen((c) => ({ ...c, [item.id]: v }))
+                            }
+                          >
+                            <SelectTrigger className="w-64" data-testid={`select-assign-${item.id}`}>
+                              <SelectValue placeholder="Choose someone" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(people.data?.contributors ?? []).map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            disabled={!chosen[item.id] || assign.isPending}
+                            onClick={() =>
+                              assign.mutate({
+                                eventId: item.id,
+                                contributorId: chosen[item.id],
+                              })
+                            }
+                            data-testid={`button-assign-${item.id}`}
+                          >
+                            {assign.isPending ? "Working…" : "Assign and pay"}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Pays what the rates said on {formatDate(item.occurredAt)} — not
+                          today's rate. Future sales from this reference will match on
+                          their own.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label>
+                        {isRefund ? "Acknowledge this" : "Or dismiss it"}
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        <Input
+                          className="w-64"
+                          placeholder="Why? (kept on the record)"
+                          value={note[item.id] ?? ""}
+                          onChange={(e) =>
+                            setNote((n) => ({ ...n, [item.id]: e.target.value }))
+                          }
+                          data-testid={`input-dismiss-${item.id}`}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={dismiss.isPending}
+                          onClick={() =>
+                            dismiss.mutate({
+                              eventId: item.id,
+                              why: note[item.id] ?? "",
+                            })
+                          }
+                          data-testid={`button-dismiss-${item.id}`}
+                        >
+                          Dismiss
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {isRefund
+                          ? "The money is already gone; this only clears the flag. The loss stays on the record and recoups from future earnings."
+                          : "Clears the flag without paying anyone. The sale stays on the record."}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </CardContent>
     </Card>

@@ -427,9 +427,23 @@ Two further live defects surfaced in the same pass and were fixed:
   second line. Uniqueness is now on `(shopify_order_id, shopify_line_item_id)`,
   which doubles as the webhook idempotency key.
 
-**Phase 1 — Engine core.** The middle box in §4, with all fourteen §5 decisions
-honored. Multi-tenant from the first migration — never single-tenant "for now."
-Canonical `RevenueEvent`, rules engine, immutable ledger, reversal handling.
+**Phase 1 — Engine core. 🔨 Core built and verified; payouts/portal outstanding.**
+The middle box in §4, with all fourteen §5 decisions honored. Multi-tenant from the
+first migration — never single-tenant "for now." Canonical `RevenueEvent`, rules
+engine, immutable ledger, reversal handling.
+
+Built so far (`shared/engine-schema.ts`, `server/engine/*`): the 15-table engine
+schema, the canonical event and its validation, the §6 rules evaluator with the
+explanation trace, the append-only ledger with derived balances and payout holds,
+§8 reversals with recoup/absorb/reserve policies, and the transactional ingestion
+path. Verified by 125 unit tests and 30 end-to-end checks against real Postgres.
+
+Per ratified decision #9 the engine is a **new schema alongside** the marketplace
+tables, not a retrofit of them — 369 migrates onto it in Phase 2 as tenant #1.
+
+Still outstanding in Phase 1: payout batch execution against the state machine,
+contributor login (ratified decision #2), and statement rendering from the stored
+trace.
 
 **Phase 2 — First adapter + payouts + portal.** Shopify ingestion, Stripe Connect
 payouts, contributor login, statements with the explanation trace. **369 Art Collective

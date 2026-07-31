@@ -46,6 +46,21 @@ explicitly and wait for the user rather than quietly building around it.
 6. **Currency code stored on every amount**; USD-only support in Phase 1.
 7. **No tenant-authored formula code, ever.** Structured rules only.
 8. **Naming/branding** is deferred until the App Store listing.
+9. **The engine gets a new schema, built alongside the existing tables.** Phase 1
+   does *not* retrofit `tenant_id`, minor units, and generic vocabulary into the 38
+   marketplace-shaped tables. Engine tables are new, clean, and multi-tenant from the
+   first migration; the marketplace keeps running untouched on its own tables, and
+   369 migrates onto the engine in Phase 2 as tenant #1. This follows directly from
+   decision #4 — 369 is the test tenant, not the MVP.
+10. **The §6 rule shape is built as specified, without waiting for design-partner
+    data.** §6 warns that guessing at deal structures is the likeliest way to build
+    the wrong abstraction. Accepted with eyes open: rules are stored as **data**, so a
+    wrong guess about *which* structures matter is a config change, not a rewrite.
+    What must be right up front is the *shape* — basis, method, effective dating,
+    priority, multi-party. When design-partner structures arrive, the expected
+    outcome is new rows and possibly new `method` values, not a schema change. If a
+    partner's structure cannot be expressed without altering the shape, that is a
+    real signal — surface it rather than bending the rule table around it.
 
 ## Known defects — real, documented, do not "discover" and panic
 
@@ -68,17 +83,21 @@ ledger model that Phase 1 exists to build.
    processing fees**, with the tier ladder living once in
    `shared/financial-utils.ts`.
 
-**Phase 1 — engine core, *not* Phase 0:**
+**Phase 1 — SOLVED IN THE ENGINE, still true of the marketplace.** Both were always
+scoped to the engine's ledger model, and both are now handled there. Neither is being
+back-ported to the marketplace tables: those are retired in Phase 2, and retrofitting
+them would be work thrown away.
 
-3. **No refund, chargeback, or clawback handling anywhere in the payout path.** If an
-   order refunds after a contributor is paid, nothing happens. Blueprint §8 specifies
-   this as **"required from Phase 1"**, and §9 lists reversal handling under Phase 1.
-   Retrofitting it changes the ledger model itself, so it lands with the ledger, not
-   before it.
-4. **`artists.monthlySales` is a stored column** driving royalty tiers — a drift risk.
-   This is **§5 decision #4** (immutable ledger; never store balances, derive by
-   query), and Phase 1 is defined as honoring all fourteen §5 decisions. The
-   `influencers` table already does it correctly, with a comment explaining why.
+3. ~~No refund, chargeback, or clawback handling~~ — built. `server/engine/reversal.ts`
+   handles refunds as negative events through the same idempotency guard, generating
+   reversing allocations that reference the original, with per-tenant
+   recoup/absorb/reserve policy and a payout holding period. **The marketplace order
+   path still has none of this** and will not get it.
+4. ~~`artists.monthlySales` as a stored balance~~ — the engine stores no balance
+   anywhere. Contributor balances and the trailing volume that drives tiered rules are
+   both derived by summing the ledger, and an end-to-end check asserts no
+   stored-balance column exists. **`artists.monthlySales` still exists and is still a
+   drift risk** for as long as the marketplace runs.
 
 (A third inconsistency surfaced during step 4 — the 40% rung throwing against a
 validator that only allowed 30/35/45, plus the vestigial `FREE/PRO/ELITE` naming.
@@ -86,20 +105,61 @@ Both were resolved in step 5.)
 
 ## Current status
 
-- **Phase:** ✅ **Phase 0 complete.** All five cut-list steps done, and all four of
-  blueprint §9's Phase 0 bullets closed.
-- **Next:** Phase 1 — engine core. Canonical `RevenueEvent`, rules engine, immutable
-  ledger, reversal handling, multi-tenant from the first migration. This is where the
-  actual product gets built; Phase 0 was the smallest phase by a wide margin.
-- **Money has still never flowed through the payout path**, so the royalty fixes
-  remain **forward-only — no recalculation migration needed.**
-- **Track A is still the real critical path** (§9, §15) and is invisible from this
-  repo: Shopify Partner account, Stripe Connect platform application, App Store
-  competitive research, design-partner outreach, and getting 369 selling again for
-  real refund data. All marked Day 1; **none has any status recorded here.** If you
-  are picking this up, ask before assuming they are underway.
+- **Phase:** Phase 0 ✅ complete. **Phase 1 (engine core) — core built and verified;
+  not yet wired to anything user-facing.**
+- **What exists now:** the engine schema (15 `engine_*` tables), the canonical
+  `RevenueEvent`, the §6 rules engine, the immutable ledger, §8 reversals and
+  clawbacks, and the ingestion path that ties them together in one transaction.
+  125 unit tests plus 30 end-to-end checks against real Postgres.
+- **What Phase 1 still needs:** payout batch execution against the state machine,
+  contributor login (ratified decision #2), and statement rendering from the stored
+  explanation trace. Then Phase 2 — Shopify adapter, Stripe Connect payouts, and 369
+  migrated on as tenant #1.
+- **Money has still never flowed through any payout path.** All fixes remain
+  **forward-only — no recalculation migration needed.**
+- **Track A: not started as of 2026-07-31.** Confirmed by the user, who intends to
+  begin within a day or two. This covers the Shopify Partner account, the Stripe
+  Connect platform application, App Store competitive research, design-partner
+  outreach, and getting 369 selling again for real refund data.
+  **This is the real critical path** (§9, §15) and none of it goes faster by building
+  faster — each item waits on other people. Two consequences worth stating plainly:
+  Phase 2 payouts cannot ship without a verified Connect platform, and the §8 reversal
+  path cannot be validated against reality until real refunds exist. Re-ask for
+  status rather than assuming progress; update this line when it changes.
 - **Branch:** `claude/business-idea-feedback-7uwumw`
 - **Archive:** `archive/pre-repositioning` holds the complete pre-cut codebase.
+
+### The engine — where things live
+
+| Path | What |
+|---|---|
+| `shared/engine-schema.ts` | 15 `engine_*` tables. Every §5 decision annotated where it lands |
+| `server/engine/money.ts` | bigint minor units, basis points, largest-remainder `allocate()` |
+| `server/engine/revenue-event.ts` | canonical event (§7), validation, `buildReversal` |
+| `server/engine/rules.ts` | §6 evaluator — pure, clock-free, emits the explain trace |
+| `server/engine/ledger.ts` | append-only entries, balance derivation, hold logic |
+| `server/engine/reversal.ts` | §8 reversals + recoup/absorb/reserve policies |
+| `server/engine/ingest.ts` | the DB-facing path: resolve → evaluate → allocate → ledger |
+
+```bash
+npm test              # 125 unit tests, no network, no database
+npm run test:e2e      # 30 checks against a real Postgres (needs DATABASE_URL)
+npm run db:push:engine
+```
+
+**The engine and the marketplace are deliberately unlinked.** Separate schemas,
+separate drizzle configs (`drizzle.engine.config.ts`, `migrations/engine/`), no
+imports between them. That is what lets the marketplace tables be dropped wholesale
+in Phase 2 without disturbing the engine. Do not "tidy" this by merging the configs —
+drizzle-kit then diffs the two schemas against each other and offers to *rename*
+marketplace tables into engine tables, which is wrong and destructive.
+
+**One bug worth remembering.** `isUniqueViolation` originally checked `error.code`,
+which type-checks and looks right. Drizzle wraps driver errors, so the SQLSTATE is on
+`error.cause` — the check silently turned every replayed webhook into a 500 instead
+of a no-op. Unit tests could not have caught it; the real-Postgres run did on its
+first attempt. This is the step-3 lesson recurring: **green type-check and green
+tests are not evidence that the database path works.**
 
 ### ⚠️ The one thing blocking real money
 

@@ -111,10 +111,39 @@ npm run build     # vite build
 npm run db:push   # drizzle-kit push
 ```
 
-**Layout:** `client/src/pages/` (routes), `server/routes.ts` (142 endpoints),
-`server/lib/` (services), `shared/schema.ts` (38 Drizzle tables), `config/` (pricing
-JSON), `docs/` (documentation).
-
 **Credentials required** for the payout path to run: `DATABASE_URL`,
 `PRINTIFY_API_TOKEN`, `SHOPIFY_ACCESS_TOKEN`, `STRIPE_SECRET_KEY`. Not present in
 cloud sandboxes — verification of money-affecting changes must happen where they are.
+
+## Navigating this repo — read before searching
+
+Only ~240 of 1,131 tracked files are source. **71% of the repo is `attached_assets/`,
+and 650 files are images.** Searching blind is slow and, worse, returns stale results.
+
+**Where real code lives:**
+
+| Path | What |
+|---|---|
+| `shared/schema.ts` | 38 Drizzle tables — the data model, start here |
+| `server/routes.ts` | 142 endpoints (large; read by range, not whole) |
+| `server/lib/` | services — payouts, Stripe, Printify, Shopify, royalties |
+| `server/storage.ts` | data access layer (large) |
+| `client/src/pages/` | routes/screens |
+| `config/` | pricing JSON |
+| `docs/BLUEPRINT.md` | the canonical plan |
+
+**Do not search these** unless the task is explicitly about them:
+
+- `attached_assets/**` — 804 files, mostly screenshots and generated images
+- `attached_assets/backups/**` — **stale duplicates.** Contains a dozen dated copies of
+  `247-art.css` / `247-art.js` / `247-art-product.liquid`. Reading one of these instead
+  of the live theme file is a real and repeated failure mode. Live theme files are in
+  `attached_assets/theme/`.
+- `server/*.bak`, `server/*.backup`, `server/storage.ts.FINAL_RESCUE.bak` — dead copies
+- `server/scripts/**` — ~70 one-off operational scripts, mostly obsolete. Useful as
+  reference for API usage patterns, misleading as current architecture.
+- `docs/legacy/**`, `docs/PROJECT_SUMMARY.md` — describes a much earlier version of this
+  system and contradicts current reality. Do not treat as current.
+
+Prefer `Grep` with a `glob` filter (e.g. `--glob '*.ts'`) over broad searches, and
+read large files by line range.

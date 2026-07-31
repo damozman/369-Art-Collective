@@ -152,7 +152,8 @@ test("reserveForPayout only withholds under the reserve policy", () => {
 test("a reversal that leaves a contributor in deficit is flagged", () => {
   const result = needsReview(0n, -2186n, "recoup");
   assert.equal(result.needsReview, true);
-  assert.match(result.reason!, /already paid out/);
+  assert.match(result.reason!, /already been paid out/);
+  assert.match(result.reason!, /\$21\.86/);
 });
 
 test("a reversal covered by an existing balance is routine", () => {

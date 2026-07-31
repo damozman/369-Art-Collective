@@ -25,7 +25,7 @@
  * reversing allocations exist rather than being tangled into their computation.
  */
 
-import { applyBasisPoints, sumMinor } from "./money";
+import { applyBasisPoints, formatMoney, sumMinor } from "./money";
 import type { LedgerEntryInput } from "./ledger";
 
 export type ClawbackPolicy = "recoup" | "absorb" | "reserve";
@@ -268,11 +268,14 @@ export function needsReview(
 
   const resulting = contributorBalanceMinor + reversalAmountMinor;
   if (resulting < 0n) {
+    // Formatted, not raw minor units: this string is shown to the business
+    // owner in the admin console, and "-2185 minor units" is meaningless to
+    // the person whose money it is.
     return {
       needsReview: true,
       reason:
-        `Reversal leaves contributor at ${resulting} minor units. ` +
-        "The money was already paid out and cannot be recovered automatically.",
+        `This refund leaves them owing ${formatMoney(-resulting)}. ` +
+        "The money had already been paid out, so it will be recovered from their future earnings.",
     };
   }
 

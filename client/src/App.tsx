@@ -45,6 +45,7 @@ import ArtistProfile from "@/pages/artist-profile";
 import Creators from "@/pages/creators";
 import JoinCreatorverse from "@/pages/join-creatorverse";
 import Portal from "@/pages/portal";
+import EngineAdmin from "@/pages/engine-admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -238,6 +239,12 @@ function Router() {
         when everything else in this file is deleted.
       */}
       <Route path="/portal/:tenantSlug" component={Portal} />
+
+      {/*
+        The tenant owner's console — the other engine surface. Same reasoning as
+        the portal above: its own session, its own API, survives Phase 2.
+      */}
+      <Route path="/manage/:tenantSlug" component={EngineAdmin} />
 
       {/* Parameterized routes must come last to avoid catching specific routes */}
       <Route path="/artists/:id" component={ArtistProfile} />

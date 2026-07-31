@@ -41,6 +41,8 @@ import {
   setContributorPassword,
 } from "../auth";
 import { getPayoutHistory, getStatement } from "../statement-query";
+import { authenticateTenantUser, createTenantUser } from "../admin-auth";
+import { getOverview, listContributors, listNeedsReview, listRules } from "../admin-query";
 import { renderStatementText } from "../statement";
 
 const results: string[] = [];
@@ -477,6 +479,86 @@ async function main() {
   console.log("\n--- Alice's statement as she would see it ---");
   console.log(renderStatementText(stmt));
   console.log("---\n");
+
+  // ---- 13. Admin console ----
+  console.log("\n13. Admin console");
+
+  await createTenantUser(db, {
+    tenantId: "t-369", email: "owner@369.example", name: "Owner",
+    password: "manage the money", role: "admin",
+  });
+  await createTenantUser(db, {
+    tenantId: "t-369", email: "books@369.example", name: "Bookkeeper",
+    password: "read only please", role: "viewer",
+  });
+  await createTenantUser(db, {
+    tenantId: "t-press", email: "owner@press.example", name: "Press Owner",
+    password: "different business", role: "admin",
+  });
+
+  const ownerSession = await authenticateTenantUser(
+    db, "t-369", "369", "owner@369.example", "manage the money"
+  );
+  check("a tenant owner can sign in", () => assert.equal(ownerSession?.role, "admin"));
+
+  const viewerSession = await authenticateTenantUser(
+    db, "t-369", "369", "books@369.example", "read only please"
+  );
+  check("a read-only account signs in as viewer", () =>
+    assert.equal(viewerSession?.role, "viewer")
+  );
+
+  const wrongTenantAdmin = await authenticateTenantUser(
+    db, "t-press", "press", "owner@369.example", "manage the money"
+  );
+  check("an owner cannot sign in to another business", () =>
+    assert.equal(wrongTenantAdmin, null)
+  );
+
+  const overview = await getOverview(db, "t-369", new Date("2026-12-01T00:00:00Z"));
+  // Five $99 sales less one $99 refund. The reversal is itself an event with a
+  // negative gross, so recorded sales are shown net of refunds — which is the
+  // number an owner actually wants, not the pre-refund figure.
+  check("the overview totals only this tenant's sales, net of refunds", () =>
+    assert.equal(overview.grossMinor, 9900n * 4n)
+  );
+  // Two, and both are real: the sale with an unknown contributor, and the
+  // chargeback that left Alice in deficit with the money already paid out.
+  check("the overview counts everything needing a human", () =>
+    assert.equal(overview.needsReviewCount, 2)
+  );
+  check("the overview counts this tenant's people only", () =>
+    assert.equal(overview.contributorCount, 2)
+  );
+
+  const pressOverview = await getOverview(db, "t-press", new Date("2026-12-01T00:00:00Z"));
+  check("the other business sees its own numbers", () =>
+    assert.equal(pressOverview.grossMinor, 9900n)
+  );
+
+  const people = await listContributors(
+    db, "t-369", new Date("2026-12-01T00:00:00Z"), 1000n
+  );
+  check("the people list covers this tenant only", () => assert.equal(people.length, 2));
+  check("everyone's blocked reason is stated plainly", () =>
+    assert.ok(people.every((p) => p.blockedReason === null || p.blockedReason.length > 0))
+  );
+
+  const review = await listNeedsReview(db, "t-369");
+  check("the review queue lists both", () => assert.equal(review.length, 2));
+  check("the unresolvable sale says why", () =>
+    assert.ok(review.some((r) => /Unresolved contributor/.test(r.reviewReason ?? "")))
+  );
+  check("the unrecoverable chargeback says why", () =>
+    assert.ok(review.some((r) => /already been paid out/.test(r.reviewReason ?? "")))
+  );
+
+  const adminRules = await listRules(db, "t-369");
+  check("rules render as plain sentences", () => {
+    const artistRule = adminRules.find((r) => r.ruleKey === "artist-standard")!;
+    assert.match(artistRule.description, /earns 30% of profit/);
+    assert.match(artistRule.description, /production, shipping, processing_fee/);
+  });
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

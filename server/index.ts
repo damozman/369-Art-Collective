@@ -114,7 +114,10 @@ app.use((req, res, next) => {
   const { createEngineRouter } = await import("./engine/routes");
   const { getEngineDb, isEngineDbConfigured } = await import("./engine/db");
   if (isEngineDbConfigured()) {
-    app.use("/api/engine", createEngineRouter(getEngineDb()));
+    const engineDb = getEngineDb();
+    app.use("/api/engine", createEngineRouter(engineDb));
+    const { createAdminRouter } = await import("./engine/admin-routes");
+    app.use("/api/engine", createAdminRouter(engineDb));
   }
 
   const server = await registerRoutes(app);

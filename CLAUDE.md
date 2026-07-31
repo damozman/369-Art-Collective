@@ -52,6 +52,16 @@ explicitly and wait for the user rather than quietly building around it.
    first migration; the marketplace keeps running untouched on its own tables, and
    369 migrates onto the engine in Phase 2 as tenant #1. This follows directly from
    decision #4 — 369 is the test tenant, not the MVP.
+11. **Build the generic product out before branding it as 369.** The user asked
+    (2026-07-31) to evaluate the out-of-the-box product cleanly — what a *customer*
+    sees — before it is dressed as their art business, so the two are never confused.
+    This reinforces decision #4 rather than changing it: 369 is the test tenant, not
+    the MVP. Practical consequence: keep tenant-neutral naming and copy in the engine
+    surfaces, demo with `npm run seed:demo` rather than real 369 data, and do NOT
+    migrate 369 onto the engine until the user says the generic product is ready to
+    judge. 369 can keep selling on the old marketplace meanwhile — the two are
+    unlinked, which is exactly what decision #9 bought.
+
 10. **The §6 rule shape is built as specified, without waiting for design-partner
     data.** §6 warns that guessing at deal structures is the likeliest way to build
     the wrong abstraction. Accepted with eyes open: rules are stored as **data**, so a

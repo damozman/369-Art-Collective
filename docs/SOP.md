@@ -207,8 +207,31 @@ Be honest with yourself about this list.
 | **Printing costs are placeholders** | The cost numbers are educated guesses, not real Printify prices. **Must be fixed before any real payout.** Needs your Printify account — about 10 minutes on your own computer. |
 | **Not connected to Shopify live** | Real store sales don't flow in automatically yet. |
 | **Not connected to Stripe live** | Real payments can't be sent yet. Needs your Stripe Connect application approved. |
-| **No admin screens** | You can't yet see sales, set rates, or trigger payouts yourself — those need a developer today. |
+| **Rates can't be edited on screen** | You can see every rate and what it means, but changing one still needs a developer. |
 | **Advances not supported** | Paying someone up front and earning it back isn't built. Needed for music and book publishing. Don't sell to those industries yet. |
+
+---
+
+## 6a. Seeing it for yourself
+
+Two screens, both live:
+
+- **`/manage/369`** — your console. Sales, who's owed what, what needs attention,
+  the rates, and paying people.
+- **`/portal/369`** — what an artist sees. Their earnings, the full breakdown of
+  every payment, and their payout history.
+
+To load them with realistic sample data, run `npm run seed:demo`. That creates a
+business partway through a month: money already paid last cycle, money ready to pay
+now, money still inside the refund window, one refund that landed after payout, one
+sale nobody could be paid for, and one artist who hasn't connected a bank account.
+Every one of those is a state you'll meet in real life.
+
+The sign-ins are printed when the command finishes.
+
+**Note:** pressing "Pay everyone listed" in the demo will fail on purpose, saying
+*"No transfer provider configured."* That's the system refusing to pretend it sent
+money when no payment provider is connected yet. Nobody's balance is touched.
 
 ---
 

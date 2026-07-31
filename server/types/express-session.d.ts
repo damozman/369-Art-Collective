@@ -31,6 +31,24 @@ declare module "express-session" {
      * Carries `tenantId` because engine identity is `(tenant, contributor)`,
      * never a contributor id alone.
      */
+    /**
+     * Engine tenant-admin session — a THIRD namespace, separate from both
+     * `user` (marketplace) and `engineContributor` above.
+     *
+     * A contributor can read only their own earnings; an admin can read
+     * everyone's in their tenant and can move money. Different powers over
+     * different tables, so different sessions — sharing one key is how an
+     * artist login ends up able to trigger a payout run.
+     */
+    engineAdmin?: {
+      tenantUserId: string;
+      tenantId: string;
+      tenantSlug: string;
+      name: string;
+      email: string;
+      role: "admin" | "viewer";
+    };
+
     engineContributor?: {
       contributorId: string;
       tenantId: string;

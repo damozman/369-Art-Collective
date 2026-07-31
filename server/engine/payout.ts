@@ -262,6 +262,12 @@ export interface BatchResult {
   totalPaidMinor: bigint;
   totalReservedMinor: bigint;
   skipped_reasons: Array<{ contributorId: string; reason: string }>;
+  /**
+   * Why each failed payout failed. Surfaced to the owner: "2 failed" with no
+   * reason reads as a broken system, when the actual cause is usually something
+   * they can fix (no provider connected, a frozen account).
+   */
+  failures: Array<{ contributorId: string; name: string; reason: string }>;
 }
 
 /**
@@ -319,6 +325,7 @@ export async function runPayoutBatch(
       contributorId: c.contributorId,
       reason: c.skipReason!,
     })),
+    failures: [],
   };
 
   if (options.dryRun) {
@@ -396,6 +403,11 @@ export async function runPayoutBatch(
       // No ledger entry. The contributor keeps their balance and rolls into
       // the next run.
       result.failed += 1;
+      result.failures.push({
+        contributorId: candidate.contributorId,
+        name: candidate.contributorName,
+        reason: transfer.failureReason ?? "Transfer failed",
+      });
       continue;
     }
 

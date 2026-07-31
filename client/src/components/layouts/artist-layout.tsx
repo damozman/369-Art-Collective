@@ -73,11 +73,6 @@ export function ArtistLayout({ children }: ArtistLayoutProps) {
           path: "/artist/upload",
           icon: Upload,
         },
-        {
-          label: "AI Studio",
-          path: "/artist/ai-studio",
-          icon: Sparkles,
-        },
       ],
     },
     {

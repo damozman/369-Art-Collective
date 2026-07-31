@@ -44,11 +44,6 @@ export async function bootstrapAdmin() {
       console.log(`   Email: ${adminEmail}`);
       console.log(`   Password: ${adminPassword}`);
 
-      const newArtist = await storage.getArtistByEmail(adminEmail);
-      if (newArtist) {
-        await storage.getOrCreateAiCredits(newArtist.id, 'artist');
-        console.log("âœ“ AI Credits: 10 free credits available for new test artist");
-      }
     }
 
   } catch (error) {

@@ -18,8 +18,8 @@ import {
   subscriptionTrials, adminActions, orders, passwordResetTokens, violationReports,
   achievements, sales, referrals, artistReferrals, payouts, stripeWebhookEvents,
   emailLogs, affiliateClicks, affiliateConversions,
-  influencers, artworkApprovalLog, activityFeedEvents, aiGenerations, aiCredits,
-  aiCreditPurchases, waitlist, featuredSubscriptions, featuredRotationLog, testimonials
+  influencers, artworkApprovalLog, activityFeedEvents,
+  waitlist, featuredSubscriptions, featuredRotationLog, testimonials
 } from "../../shared/schema";
 import { ObjectStorageService } from "../objectStorage";
 import * as bcrypt from "bcryptjs";
@@ -209,9 +209,6 @@ async function cleanup() {
   await deleteFromTable(referrals, "referrals");
   await deleteFromTable(featuredRotationLog, "featured_rotation_log");
   await deleteFromTable(featuredSubscriptions, "featured_subscriptions");
-  await deleteFromTable(aiCreditPurchases, "ai_credit_purchases");
-  await deleteFromTable(aiCredits, "ai_credits");
-  await deleteFromTable(aiGenerations, "ai_generations");
   await deleteFromTable(subscriptionTrials, "subscription_trials");
   await deleteFromTable(portfolioSubmissions, "portfolio_submissions");
   await deleteFromTable(upscaleUsage, "upscale_usage");

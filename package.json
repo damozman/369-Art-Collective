@@ -10,6 +10,7 @@
     "test": "tsx --test server/lib/__tests__/*.test.ts server/engine/__tests__/*.test.ts client/src/lib/__tests__/*.test.ts",
     "test:e2e": "tsx server/engine/__tests__/e2e.ts",
     "seed:demo": "tsx server/engine/seed-demo.ts",
+    "printify:costs": "tsx -r dotenv/config --env-file=.env.local scripts/fetch-printify-costs.ts",
     "db:push:engine": "drizzle-kit push --config=drizzle.engine.config.ts",
     "shopify:auth": "shopify auth login",
     "shopify:deploy": "node scripts/deploy-shopify-theme.js",

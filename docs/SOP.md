@@ -138,8 +138,29 @@ stamp, so if a payment succeeded but the confirmation got lost, retrying is safe
 
 ### Every week or two
 
-- **Check the "needs review" list.** These are sales nobody has been paid for. Usually
-  an unrecognised product or a missing cost. Fix the underlying data and they clear.
+**Check "Needs attention" in your console.** Two kinds of thing land there, and
+they need different answers.
+
+**A sale nobody could be matched to.** The system didn't recognise who it belonged
+to, so it paid nobody. Click **Resolve**, choose the person, and press **Assign and
+pay**.
+
+Two things happen that are worth knowing:
+
+- It pays **the rate that applied on the day of the sale**, not today's rate. A
+  three-month-old sale resolved now pays what it would have paid then. How long it
+  sat waiting never changes what somebody earns.
+- It **remembers the reference**, so the next sale from that source matches on its
+  own and you only fix it once.
+
+**A refund that couldn't be recovered.** Money had already been paid out when the
+chargeback landed. There is nothing to fix — the money is gone. You can **Dismiss**
+it with a note, which clears the flag and leaves the loss on the record to recoup
+from their future earnings. The note is required, because a dismissal with no
+reason is indistinguishable later from a mistake.
+
+If you'd rather absorb it entirely, that's a **write-off**: their balance returns
+to zero and the original loss stays visible in the history. Nothing is ever deleted.
 
 ### Every month (or whatever cycle you choose)
 
@@ -223,8 +244,9 @@ Be honest with yourself about this list.
 |---|---|
 | **No real money has ever moved** | Everything is proven with test data. The maths is right; the live payment connection is untested. |
 | **Printing costs are placeholders** | The cost numbers are educated guesses, not real Printify prices. **Must be fixed before any real payout.** Needs your Printify account — about 10 minutes on your own computer. |
-| **Not connected to Shopify live** | Real store sales don't flow in automatically yet. |
-| **Not connected to Stripe live** | Real payments can't be sent yet. Needs your Stripe Connect application approved. |
+| **Shopify: built, not switched on** | The whole path is written and tested — a sale arrives, gets split, lands in your books. It is running against practice data because a live store needs a Partner account. When that comes through it is a settings change, not a build. |
+| **Stripe: built, not switched on** | Same story. The system can send a payment, refuses honestly when it can't, and never double-pays. It needs your Connect approval before it points at a real bank. |
+| **Artists can't connect a bank yet** | Even with Stripe live, there's no screen for an artist to add their bank details. That's the next piece. |
 | **Advances not supported** | Paying someone up front and earning it back isn't built. Needed for music and book publishing. Don't sell to those industries yet. |
 
 ---
@@ -249,6 +271,111 @@ The sign-ins are printed when the command finishes.
 **Note:** pressing "Pay everyone listed" in the demo will fail on purpose, saying
 *"No transfer provider configured."* That's the system refusing to pretend it sent
 money when no payment provider is connected yet. Nobody's balance is touched.
+
+---
+
+## 6b. What the first real cost capture proved (2026-07-31)
+
+**Context first, so nobody misreads this as an emergency.** The storefront has been
+dormant for about a year and never went into production. The product and supplier
+below are stale data. The value here is that it **proved the maths works against
+real numbers** — not that there is a fire to put out.
+
+With that said, the one product still in the account —
+*Divine Blessing of Sophia's Light*, 12″×16″ canvas — would **lose money on every
+US sale** at these figures:
+
+| | |
+|---|---|
+| Sells for | $59.99 |
+| Printing | −$36.60 |
+| Shipping to a US customer | −$32.39 |
+| Card fee | −$2.04 |
+| **Result** | **−$11.04 per sale** |
+
+### Why
+
+Print provider **69** appears to print in Europe. Shipping to Greece or Moldova
+costs $13.49; to the US it costs $32.39. If your customers are mostly American,
+you are paying trans-Atlantic freight on every order. The $36.60 print cost is
+also roughly 50% above typical for that size.
+
+### If and when the storefront is revisited
+
+Customers would be **mostly US**, so a European provider is the wrong fit. Options,
+best first:
+
+1. **Pick a US print provider.** Production around $25 and US shipping around $8
+   would turn a $11 loss into roughly $23 profit at the same $59.99 price. Printify
+   has many suppliers; they are worth comparing properly at that point.
+2. **Raise the price** — with the current provider this canvas needs **$93–108** to
+   pay an artist 30% and keep about $15.
+3. **Charge shipping separately** rather than absorbing it.
+4. **Drop the product.**
+
+None of this is urgent. Supplier choice is an open question for whenever that
+business is picked back up.
+
+### What the system did about it
+
+Exactly what it should. It records the real loss, and the artist's share **floors
+at zero** rather than paying them a percentage of money you never made. Nobody is
+overpaid and the loss stays visible.
+
+**The real lesson.** This is why the system refuses to pay from unverified costs.
+The invented numbers it shipped with said this canvas cost $12.00 to print and
+$7.50 to ship. Reality was $36.60 and $32.39 — off by 3x and 4x. A system that
+paid artists a percentage of a guessed cost would have drained the business
+quietly, on every order, with nobody noticing until the bank balance did.
+
+That is the whole argument for the engine in one example.
+
+---
+
+## 6c. Card fees — where the choice actually lives
+
+When someone buys something, the card company takes a cut before the money reaches
+you. Roughly 2.9% plus 30¢, though it varies. On a $118 order that is about $4.
+
+**Whether an artist shares that cost is part of their deal, not a store setting.**
+
+This is worth being clear about, because it is easy to think of it as one global
+switch and it isn't. Each artist's rate already lists which costs come off before
+their share is worked out — printing, shipping, card fees — and you can set that
+differently for different people, and change it from a date forward without
+touching what you already paid them.
+
+So:
+
+- **Want artists to share the card fee?** Leave "card fees" in the list of costs
+  their rate deducts.
+- **Want to absorb it yourself?** Take it out of that list. Their share is then
+  worked out on the full sale price.
+
+Either way **the fee is still recorded**, so your own margin reporting stays
+honest. That is the part a global "absorb" switch would have quietly broken — it
+would have stopped recording the fee at all, and your books would have shown you
+keeping about $4 more per order than you really did.
+
+### The one thing that IS a store setting
+
+Shopify doesn't tell us the fee in the sale notification. It has to be looked up
+separately, and for **PayPal and most non-Shopify payment methods it isn't
+available at all**.
+
+When we can't find it, there is no right answer, so you choose:
+
+- **Hold the sale** (the default). It's recorded, nobody is paid from it yet, and
+  it shows up in "Needs attention". Safe, occasionally annoying.
+- **Carry on without it.** The sale pays out with no fee deducted — you absorb it
+  for that order. Quiet, but two identical sales can pay slightly differently
+  depending on how the customer happened to pay.
+
+**What the system will never do is guess a fee.** Same principle as the printing
+costs above: a held payment can be fixed, a wrong payment that has already left
+cannot.
+
+If most of your sales go through Shopify Payments, holds will be rare either way.
 
 ---
 

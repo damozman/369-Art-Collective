@@ -118,6 +118,12 @@ app.use((req, res, next) => {
     app.use("/api/engine", createEngineRouter(engineDb));
     const { createAdminRouter } = await import("./engine/admin-routes");
     app.use("/api/engine", createAdminRouter(engineDb));
+
+    // Inbound Shopify deliveries. Mounted outside the tenant-scoped routers
+    // because Shopify posts every store to one URL and identifies the store in
+    // a header — the tenant is resolved from that, not from the path.
+    const { createShopifyWebhookRouter } = await import("./engine/adapters/shopify/routes");
+    app.use("/api/engine", createShopifyWebhookRouter(engineDb));
   }
 
   const server = await registerRoutes(app);

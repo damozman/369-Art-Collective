@@ -47,6 +47,7 @@ import {
   supersedeRule,
   updateContributor,
 } from "./admin-mutations";
+import { dismissReview, resolveEventContributor, writeOffDeficit } from "./review";
 import { AuthError } from "./auth";
 import type { EngineDb } from "./ingest";
 import { formatMinor } from "./money";
@@ -79,17 +80,40 @@ const money = (amount: bigint) => ({
 /**
  * How transfers are executed for admin-triggered payout runs.
  *
- * Defaults to refusing, exactly like the cost resolver refuses to invent costs.
- * Phase 2 swaps in a real Stripe implementation; until then an admin who clicks
- * "run payouts" gets honest failures rather than payouts that look successful
- * and moved nothing.
+ * RESOLVED PER TENANT, NOT ONCE PER PROCESS. Transfers are instructed against
+ * the tenant's own connected Stripe account — we never hold the funds (ratified
+ * decision #1) — so a single shared executor would send one tenant's payouts
+ * out of another tenant's balance. The lookup is cheap and the alternative is
+ * unrecoverable.
+ *
+ * Still defaults to refusing, exactly like the cost resolver refuses to invent
+ * costs: with no Stripe key configured, `getTransferExecutor` returns the
+ * unconfigured executor and an admin who clicks "run payouts" gets honest
+ * failures rather than payouts that look successful and moved nothing.
  */
 export function createAdminRouter(
   db: EngineDb,
-  options: { transferExecutor?: TransferExecutor } = {}
+  options: {
+    /** Overrides everything. Tests and dry runs only. */
+    transferExecutor?: TransferExecutor;
+  } = {}
 ): Router {
   const router = Router({ mergeParams: true });
-  const executor = options.transferExecutor ?? new UnconfiguredTransferExecutor();
+
+  async function executorForTenant(tenantId: string): Promise<TransferExecutor> {
+    if (options.transferExecutor) return options.transferExecutor;
+
+    const [tenant] = await db
+      .select({ stripeAccountId: schema.tenants.stripeAccountId })
+      .from(schema.tenants)
+      .where(eq(schema.tenants.id, tenantId))
+      .limit(1);
+
+    if (!tenant) return new UnconfiguredTransferExecutor();
+
+    const { getTransferExecutor } = await import("./adapters/stripe/factory");
+    return getTransferExecutor({ tenantStripeAccountId: tenant.stripeAccountId });
+  }
 
   async function resolveTenant(req: TenantRequest, res: Response, next: NextFunction) {
     const slug = String(req.params.tenantSlug ?? "");
@@ -378,7 +402,7 @@ export function createAdminRouter(
       const result = await runPayoutBatch(db, {
         tenantId: tenant.id,
         asOf: new Date(),
-        executor,
+        executor: await executorForTenant(tenant.id),
         createdBy: session.tenantUserId,
       });
 
@@ -425,7 +449,7 @@ export function createAdminRouter(
         return res.status(404).json({ message: "Not found" });
       }
 
-      const result = await retryPayout(db, payoutId, executor);
+      const result = await retryPayout(db, payoutId, await executorForTenant(tenant.id));
       res.json(result);
     }
   );
@@ -581,6 +605,66 @@ export function createAdminRouter(
       });
 
       res.json({ ok: true });
+    })
+  );
+
+  // ---- Resolving review items ----
+
+  router.post(
+    "/t/:tenantSlug/admin/review/:eventId/assign",
+    requireAdmin,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      const result = await resolveEventContributor(db, {
+        tenantId: tenant.id,
+        eventId: String(req.params.eventId),
+        contributorId: String(body.contributorId ?? ""),
+        role: body.role ?? null,
+        rememberReference: Boolean(body.rememberReference),
+        actorId: session.tenantUserId,
+      });
+
+      res.json({
+        status: result.status,
+        allocated: money(result.totalAllocatedMinor),
+        warnings: result.warnings,
+      });
+    })
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/review/:eventId/dismiss",
+    requireAdmin,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+      await dismissReview(db, {
+        tenantId: tenant.id,
+        eventId: String(req.params.eventId),
+        note: String((req.body ?? {}).note ?? ""),
+        actorId: session.tenantUserId,
+      });
+      res.json({ ok: true });
+    })
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/contributors/:contributorId/write-off",
+    requireAdmin,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      const id = await writeOffDeficit(db, {
+        tenantId: tenant.id,
+        contributorId: String(req.params.contributorId),
+        amountMinor: BigInt(body.amountMinor ?? 0),
+        note: String(body.note ?? ""),
+        actorId: session.tenantUserId,
+      });
+
+      res.json({ id });
     })
   );
 

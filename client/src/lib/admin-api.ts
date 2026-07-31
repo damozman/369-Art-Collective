@@ -301,6 +301,41 @@ export function linkWorkContributor(
   });
 }
 
+export function assignReviewItem(
+  tenantSlug: string,
+  eventId: string,
+  contributorId: string,
+  rememberReference = false
+): Promise<{ status: string; allocated: Money; warnings: string[] }> {
+  return request(`${base(tenantSlug)}/review/${encodeURIComponent(eventId)}/assign`, {
+    method: "POST",
+    body: JSON.stringify({ contributorId, rememberReference }),
+  });
+}
+
+export function dismissReviewItem(
+  tenantSlug: string,
+  eventId: string,
+  note: string
+): Promise<{ ok: boolean }> {
+  return request(`${base(tenantSlug)}/review/${encodeURIComponent(eventId)}/dismiss`, {
+    method: "POST",
+    body: JSON.stringify({ note }),
+  });
+}
+
+export function writeOffDeficit(
+  tenantSlug: string,
+  contributorId: string,
+  amountMinor: string,
+  note: string
+): Promise<{ id: string }> {
+  return request(
+    `${base(tenantSlug)}/contributors/${encodeURIComponent(contributorId)}/write-off`,
+    { method: "POST", body: JSON.stringify({ amountMinor, note }) }
+  );
+}
+
 export function retryPayout(
   tenantSlug: string,
   payoutId: string

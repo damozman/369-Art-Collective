@@ -68,22 +68,41 @@ new findings.
 
 ## Current status
 
-- **Phase:** Phase 0 not yet started. Blueprint ratified.
+- **Phase:** Phase 0 in progress — cut list 3 of 5 done.
 - **Branch:** `claude/business-idea-feedback-7uwumw`
-- **Committed so far:** documentation only. No code changed.
-- **Open question to the user:** is there historical payout data that needs
-  reconciling? Fixing the cost placeholders changes what artists are owed, so this
-  determines whether Phase 0 needs a recalculation migration or only a forward fix.
+- **Archive:** `archive/pre-repositioning` holds the complete pre-cut codebase.
+- **Resolved:** no money has ever flowed through the payout path and no artist has been
+  paid, so the royalty fixes are **forward-only — no recalculation migration needed.**
 
-### Phase 0 scope (next work)
-1. Replace hardcoded costs with real Printify API costs, **snapshotted at event time**
-   (never looked up later — providers change prices without notice).
-2. Collapse the three royalty definitions into one canonical basis: **net after COGS,
-   shipping, and processing fees.**
-3. Subtract payment processing fees from net.
-4. Archive the cut list to a dormant branch — influencer gamification (challenges,
-   badges, leaderboards), AI studio and credits, artist-recruits-artist residuals,
-   featured-artist paid rotation.
+### Phase 0 progress
+
+**Done** (each removed separately, type-check clean after every step):
+1. ✅ CreatorStack subsystem — 4 tables, buyer auth, webhook processor, 3 pages
+2. ✅ AI art studio + credits — 3 tables, 6 routes, `ai-service.ts`, studio page
+3. ✅ Influencer gamification — 5 tables, leaderboard/challenges/badges, achievement service
+
+Since the cut began: `routes.ts` 6189→5443, `storage.ts` 3507→2650,
+`schema.ts` 1225→832. Production build passes.
+
+**Remaining, in this order** (ordering matters — these are coupled):
+4. ⬜ **Featured rotation + artist subscription tiers, together.** `subscription-service.ts`
+   calls `updateFeaturedStatusForTier()` and featured placement is sold as a tier perk;
+   removing them separately means editing the same file twice.
+5. ⬜ **Recruitment residuals + royalty unification, together.** `calculateRecruitmentBonus()`
+   lives in `royalty-calculator.ts`, which the royalty rewrite replaces anyway.
+   - Replace hardcoded costs with real Printify costs, **snapshotted at event time**
+     (never looked up later — providers change prices without notice). Use the existing
+     `getVariants()` / `getShipping()` in `server/lib/printify.ts`.
+   - Collapse the three royalty definitions into one basis: **net after COGS, shipping,
+     and processing fees.**
+   - Put cost resolution behind an interface with a fixture-backed test implementation —
+     cloud sandbox sessions cannot reach `api.printify.com`.
+
+**Known deferred cleanup:** `financial-service.ts` and `AdminFinancialDashboard.tsx`
+still carry hardcoded CreatorStack and AI-credit revenue projections. They type-check
+because the figures are placeholders, not queries. Clear them during step 5, when
+`financial-service.ts` is rewritten anyway. `email-service.ts` trial emails also still
+reference the AI studio — fix during step 4 with the subscription work.
 
 ## Working agreements
 

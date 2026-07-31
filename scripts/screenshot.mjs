@@ -11,8 +11,30 @@
  *   node scripts/screenshot.mjs http://localhost:5000 /tmp/mobile.png --width=390 --height=844
  *
  * Requires: npm i -D playwright && npx playwright install chromium
+ * (skip the install in the cloud sandbox — Chromium is preinstalled, see below)
  */
 import { chromium } from "playwright";
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+
+/**
+ * Cloud sandboxes ship a preinstalled Chromium under PLAYWRIGHT_BROWSERS_PATH,
+ * but its build number rarely matches whatever playwright version npm resolved,
+ * so the default launch fails with "browser not found". Find the binary that is
+ * actually on disk and point at it directly.
+ */
+function preinstalledChromium() {
+  const root = process.env.PLAYWRIGHT_BROWSERS_PATH;
+  if (!root || !existsSync(root)) return undefined;
+  const candidates = readdirSync(root)
+    .filter((d) => d.startsWith("chromium-"))
+    .sort()
+    .reverse()
+    .map((d) => join(root, d, "chrome-linux", "chrome"));
+  return candidates.find((p) => existsSync(p));
+}
+
+const executablePath = preinstalledChromium();
 
 const args = process.argv.slice(2);
 const flags = Object.fromEntries(
@@ -33,7 +55,10 @@ if (!url) {
   process.exit(1);
 }
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({
+  ...(executablePath ? { executablePath } : {}),
+  args: ["--no-sandbox"], // sandbox sessions run as root
+});
 const page = await browser.newPage({
   viewport: {
     width: Number(flags.width ?? 1280),

@@ -66,6 +66,147 @@ function Router() {
       <Route path="/artist" component={Login} />
       
       
+      <Route path="/artist/pending">
+        <ProtectedRoute requiredType="artist">
+          <ArtistLayout>
+            <ArtistPending />
+          </ArtistLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/artist/dashboard">
+        <ProtectedRoute requiredType="artist">
+          <ArtistDashboard />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/artist/upload">
+        <ProtectedRoute requiredType="artist">
+          <ArtistLayout>
+            <UploadArtwork />
+          </ArtistLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      
+      <Route path="/artist/earnings">
+        <ProtectedRoute requiredType="artist">
+          <ArtistLayout>
+            <ArtistEarnings />
+          </ArtistLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/artist/referrals">
+        <ProtectedRoute requiredType="artist">
+          <ArtistLayout>
+            <ArtistReferrals />
+          </ArtistLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/artist/payouts">
+        <ProtectedRoute requiredType="artist">
+          <ArtistLayout>
+            <ArtistPayouts />
+          </ArtistLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/artist/settings">
+        <ProtectedRoute requiredType="artist">
+          <ArtistLayout>
+            <ArtistSettings />
+          </ArtistLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/artist/analytics">
+        <ProtectedRoute requiredType="artist">
+          <ArtistLayout>
+            <ArtistAnalytics />
+          </ArtistLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/dashboard">
+        <ProtectedRoute requiredType="admin">
+          <AdminDashboard />
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/artists">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminArtists />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/artists/:id">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminArtistDetail />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/archived">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminArchivedArtworks />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/payouts">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminPayouts />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/testimonials">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminTestimonials />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/empire">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminEmpire />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/settings">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminSettings />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/tools">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminTools />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/admin/influencers">
+        <ProtectedRoute requiredType="admin">
+          <AdminLayout>
+            <AdminInfluencers />
+          </AdminLayout>
+        </ProtectedRoute>
+      </Route>
+      
       <Route path="/admin/financial">
         <ProtectedRoute requiredType="admin">
           <AdminLayout>

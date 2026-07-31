@@ -14,9 +14,7 @@ import { useAuth } from "@/lib/auth-context";
 interface EmpireStats {
   totalRevenue: number;
   totalReferralBonuses: number;
-  totalRecruitmentBonuses: number;
   totalArtists: number;
-  totalRecruitedArtists: number;
   topArtists: Array<{
     id: string;
     name: string;
@@ -24,13 +22,6 @@ interface EmpireStats {
     totalEarnings: number;
     salesCount: number;
     currentTier: string;
-  }>;
-  topRecruiters: Array<{
-    id: string;
-    name: string;
-    email: string;
-    recruitedCount: number;
-    recruitmentEarnings: number;
   }>;
 }
 
@@ -208,27 +199,12 @@ export default function AdminEmpire() {
           <Card>
             <CardHeader className="p-4">
               <CardDescription className="flex items-center gap-1">
-                <Network className="h-4 w-4" />
-                Recruitment Bonuses
-              </CardDescription>
-              <CardTitle className="text-3xl text-purple-600" data-testid="text-recruitment-bonuses">
-                ${(empireStats?.totalRecruitmentBonuses || 0).toFixed(2)}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader className="p-4">
-              <CardDescription className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
                 Network Size
               </CardDescription>
               <CardTitle className="text-3xl text-blue-600" data-testid="text-total-artists">
                 {empireStats?.totalArtists || 0}
               </CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">
-                {empireStats?.totalRecruitedArtists || 0} recruited
-              </p>
             </CardHeader>
           </Card>
         </div>
@@ -293,54 +269,6 @@ export default function AdminEmpire() {
           </CardContent>
         </Card>
 
-        {/* Top Recruiters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Recruiters</CardTitle>
-            <CardDescription>Artists driving network growth</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {empireStats?.topRecruiters && empireStats.topRecruiters.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-3 font-semibold">Rank</th>
-                      <th className="text-left p-3 font-semibold">Recruiter</th>
-                      <th className="text-right p-3 font-semibold">Artists Recruited</th>
-                      <th className="text-right p-3 font-semibold">Recruitment Earnings</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {empireStats.topRecruiters.map((recruiter, index) => (
-                      <tr key={recruiter.id} className="border-b hover-elevate" data-testid={`row-recruiter-${recruiter.id}`}>
-                        <td className="p-3">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 font-bold">
-                            {index + 1}
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <div>
-                            <p className="font-semibold">{recruiter.name}</p>
-                            <p className="text-sm text-muted-foreground">{recruiter.email}</p>
-                          </div>
-                        </td>
-                        <td className="p-3 text-right">{recruiter.recruitedCount}</td>
-                        <td className="p-3 text-right font-semibold text-purple-600">
-                          ${recruiter.recruitmentEarnings.toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No recruitment data yet</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </main>
     </div>
   );

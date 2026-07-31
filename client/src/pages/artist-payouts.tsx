@@ -30,7 +30,6 @@ interface Payout {
   salesCount: number;
   baseRoyalties: string;
   referralBonuses: string;
-  recruitmentBonuses: string;
   createdAt: string;
   completedAt: string | null;
   failureReason: string | null;
@@ -281,9 +280,6 @@ export default function ArtistPayouts() {
                               Base: ${parseFloat(payout.baseRoyalties).toFixed(2)}
                               {parseFloat(payout.referralBonuses) > 0 && (
                                 <> + ${parseFloat(payout.referralBonuses).toFixed(2)} ref</>
-                              )}
-                              {parseFloat(payout.recruitmentBonuses) > 0 && (
-                                <> + ${parseFloat(payout.recruitmentBonuses).toFixed(2)} recruit</>
                               )}
                             </p>
                           </div>

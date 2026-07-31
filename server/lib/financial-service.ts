@@ -6,9 +6,9 @@
  */
 
 import { storage } from "../storage";
-import { getBlueprint } from "./printify";
+import { getCostResolver } from "./cost-resolver-factory";
+import { CATALOG_MAP } from "./__fixtures__/printify-costs";
 import {
-  ROYALTY_TIERS,
   VALID_ROYALTY_PERCENTAGES,
   PRINTIFY_PRODUCTS,
   calculateProductMargin as sharedCalculateProductMargin,
@@ -19,193 +19,179 @@ import {
 } from "@shared/financial-utils";
 
 // Re-export shared utilities for convenience
-export { ROYALTY_TIERS, VALID_ROYALTY_PERCENTAGES, isValidRoyaltyTier, clampToValidRoyaltyTier };
+export { VALID_ROYALTY_PERCENTAGES, isValidRoyaltyTier, clampToValidRoyaltyTier };
 export type { MarginCalculation, RoyaltyTier };
 
 // ============================================
 // PRINTIFY PRODUCT COST MAPPING
 // ============================================
 
-interface ProductCostData {
-  blueprintId: number;
-  name: string;
-  estimatedCost: number;
-  estimatedShipping: number;
-}
-
-// Blueprint IDs for wall art products (based on replit.md)
-export const WALL_ART_BLUEPRINTS = {
-  POSTER: 852,
-  CANVAS: 555,
-  FRAMED: 492,
-  METAL: 1206,
-};
-
-// Estimated costs by size (fallback if API unavailable)
-// These match PRINTIFY_PRODUCTS from shared/financial-utils.ts
-const ESTIMATED_COSTS: Record<string, ProductCostData[]> = {
-  poster: [
-    { blueprintId: 852, name: '11x8"', estimatedCost: 4.04, estimatedShipping: 6.29 },
-    { blueprintId: 852, name: '18x24"', estimatedCost: 5.50, estimatedShipping: 6.29 },
-    { blueprintId: 852, name: '24x36"', estimatedCost: 6.29, estimatedShipping: 7.00 },
-  ],
-  canvas: [
-    { blueprintId: 555, name: '12x9"', estimatedCost: 8.09, estimatedShipping: 7.00 },
-    { blueprintId: 555, name: '16x20"', estimatedCost: 12.00, estimatedShipping: 7.50 },
-    { blueprintId: 555, name: '24x32"', estimatedCost: 18.00, estimatedShipping: 8.50 },
-  ],
-  framed: [
-    { blueprintId: 492, name: '12x16"', estimatedCost: 15.00, estimatedShipping: 8.00 },
-    { blueprintId: 492, name: '18x24"', estimatedCost: 22.00, estimatedShipping: 9.00 },
-    { blueprintId: 492, name: '24x36"', estimatedCost: 28.00, estimatedShipping: 10.00 },
-  ],
-  metal: [
-    { blueprintId: 1206, name: '12x16"', estimatedCost: 25.00, estimatedShipping: 8.50 },
-    { blueprintId: 1206, name: '18x24"', estimatedCost: 35.00, estimatedShipping: 9.00 },
-    { blueprintId: 1206, name: '24x36"', estimatedCost: 45.00, estimatedShipping: 10.00 },
-  ],
-};
-
 /**
- * Fetch live Printify costs for a product (or use estimates)
+ * Live cost lookup for the admin cost panel.
+ *
+ * This used to be `getPrintifyProductCost`, which called the Printify API,
+ * ignored the response entirely, and returned a hardcoded estimate — while
+ * labelling the result `source: 'estimate'` in a UI that read like live data.
+ *
+ * It now goes through the same `CostResolver` the payout path uses, so the
+ * panel shows what a sale would actually be costed at, and `source` reports
+ * where the number genuinely came from.
  */
-export async function getPrintifyProductCost(
-  blueprintId: number,
-  variantId?: number
-): Promise<{ cost: number; shipping: number; source: 'api' | 'estimate' }> {
-  try {
-    // Try to fetch from Printify API
-    const blueprint = await getBlueprint(blueprintId);
-    
-    // For now, return estimates since live API pricing requires print provider context
-    // In production, you'd parse the blueprint variants to get exact costs
-    const productType = Object.entries(WALL_ART_BLUEPRINTS).find(
-      ([_, id]) => id === blueprintId
-    )?.[0]?.toLowerCase();
+export async function getResolvedProductCosts(): Promise<
+  Array<{
+    finish: string;
+    size: string;
+    productionMinor: number;
+    shippingMinor: number;
+    currency: string;
+    source: string;
+    error?: string;
+  }>
+> {
+  const resolver = getCostResolver();
 
-    if (productType && ESTIMATED_COSTS[productType]) {
-      const estimate = ESTIMATED_COSTS[productType][1]; // Use medium size as default
-      return {
-        cost: estimate.estimatedCost,
-        shipping: estimate.estimatedShipping,
-        source: 'estimate',
-      };
-    }
+  return Promise.all(
+    CATALOG_MAP.map(async (entry) => {
+      try {
+        const cost = await resolver.resolveCost({
+          blueprintId: entry.blueprintId,
+          printProviderId: entry.printProviderId,
+          variantId: entry.variantId,
+          quantity: 1,
+          destinationCountry: "US",
+        });
 
-    return { cost: 15, shipping: 8, source: 'estimate' };
-  } catch (error) {
-    console.error('[ERROR] Failed to fetch Printify costs:', error);
-    return { cost: 15, shipping: 8, source: 'estimate' };
-  }
+        return {
+          finish: entry.finish,
+          size: entry.size,
+          productionMinor: cost.productionMinor,
+          shippingMinor: cost.shippingMinor,
+          currency: cost.currency,
+          source: cost.source,
+        };
+      } catch (error: any) {
+        return {
+          finish: entry.finish,
+          size: entry.size,
+          productionMinor: 0,
+          shippingMinor: 0,
+          currency: "USD",
+          source: "unresolved",
+          error: error?.message ?? "Cost resolution failed",
+        };
+      }
+    })
+  );
 }
 
 // ============================================
 // REVENUE CALCULATION
 // ============================================
 
+/**
+ * Revenue metrics.
+ *
+ * The CreatorStack, AI-credit, and membership-MRR streams that used to appear
+ * here were removed with those products in Phase 0 steps 1–4. They survived as
+ * hardcoded zeroes and placeholder projections, which type-checked fine and
+ * reported confident numbers for businesses that no longer exist. Gone now.
+ *
+ * What remains is derived from the orders and sales tables rather than
+ * asserted. Where a figure cannot yet be derived it is absent, not zero.
+ */
 export interface RevenueMetrics {
-  // Print Network
-  printNetwork: {
-    artists: {
-      activeCount: number;
-    };
-    productSales: {
-      totalOrders: number;
-      totalRevenue: number;
-      averageOrderValue: number;
-      platformMargin: number;
-      artistRoyalties: number;
-    };
-    aiCredits: {
-      totalPurchases: number;
-      revenue: number;
-    };
+  artists: {
+    activeCount: number;
   };
-  
-  // CreatorStack
-  creatorStack: {
-    kitSales: {
-      totalSales: number;
-      revenue: number;
-    };
-    proMemberships: {
-      activeMembers: number;
-      monthlyMRR: number;
-      annualProjection: number;
-    };
+  productSales: {
+    totalOrders: number;
+    grossRevenueMinor: number;
+    productionCostMinor: number;
+    shippingCostMinor: number;
+    processingFeeMinor: number;
+    netMinor: number;
+    artistRoyaltiesMinor: number;
+    platformMarginMinor: number;
+    averageOrderValueMinor: number;
   };
-
-  // Totals
-  totals: {
-    totalMRR: number;
-    totalAnnualRecurring: number;
-    totalOneTimeRevenue: number;
-    totalMonthlyRevenue: number;
+  /** Line items held because their costs could not be resolved. */
+  needsReview: {
+    orderCount: number;
+    grossRevenueMinor: number;
   };
+  currency: string;
 }
 
 /**
- * Calculate comprehensive revenue metrics across all streams
+ * Revenue metrics, derived from recorded orders and sales.
+ *
+ * Every figure below is summed from snapshot columns written at event time.
+ * Nothing is projected, estimated, or assumed — the previous version of this
+ * function returned a structure full of hardcoded zeroes and called them
+ * metrics.
  */
 export async function calculateRevenueMetrics(
   startDate?: Date,
   endDate?: Date
 ): Promise<RevenueMetrics> {
-  const now = new Date();
-  const monthStart = startDate || new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthEnd = endDate || new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
   const allArtists = await storage.getAllArtists();
   const activeArtists = allArtists.filter(a => !a.deletedAt);
 
-  // Get product sales data (from orders table if available, or calculate)
-  // For now, we'll use estimated data - in production, query actual orders
-  const productSales = {
-    totalOrders: 0,
-    totalRevenue: 0,
-    averageOrderValue: 0,
-    platformMargin: 0,
-    artistRoyalties: 0,
-  };
+  const allOrders = await storage.getAllOrders();
+  const inPeriod = allOrders.filter(o => {
+    if (!startDate && !endDate) return true;
+    const created = new Date(o.createdAt);
+    if (startDate && created < startDate) return false;
+    if (endDate && created > endDate) return false;
+    return true;
+  });
 
-  // AI credit purchases - query from database
-  const aiCredits = {
-    totalPurchases: 0,
-    revenue: 0,
-  };
+  const priced = inPeriod.filter(o => o.status !== "needs_review");
+  const held = inPeriod.filter(o => o.status === "needs_review");
 
-  // CreatorStack data (would come from buyer purchases table)
-  const creatorStack = {
-    kitSales: {
-      totalSales: 0,
-      revenue: 0,
-    },
-    proMemberships: {
-      activeMembers: 0,
-      monthlyMRR: 0,
-      annualProjection: 0,
-    },
-  };
+  const sum = (rows: any[], field: string) =>
+    rows.reduce((total, row) => total + (row[field] ?? 0), 0);
 
-  // Calculate totals
-  const totalMRR = creatorStack.proMemberships.monthlyMRR;
-  const totalOneTimeRevenue = productSales.platformMargin + aiCredits.revenue + creatorStack.kitSales.revenue;
+  const grossRevenueMinor = sum(priced, "grossMinor");
+  const productionCostMinor = sum(priced, "productionMinor");
+  const shippingCostMinor = sum(priced, "shippingMinorAmount");
+  const processingFeeMinor = sum(priced, "processingFeeMinor");
+  const netMinor = sum(priced, "netMinor");
+
+  // Royalties are read from the sales rows rather than recomputed — the amount
+  // owed was decided when the sale was recorded and must not be re-derived.
+  let artistRoyaltiesMinor = 0;
+  for (const artist of activeArtists) {
+    const sales = await storage.getSalesByArtist(artist.id);
+    for (const sale of sales) {
+      const created = new Date(sale.createdAt);
+      if (startDate && created < startDate) continue;
+      if (endDate && created > endDate) continue;
+      artistRoyaltiesMinor += sale.totalEarningsMinor ?? 0;
+    }
+  }
 
   return {
-    printNetwork: {
-      artists: {
-        activeCount: activeArtists.length,
-      },
-      productSales,
-      aiCredits,
+    artists: {
+      activeCount: activeArtists.length,
     },
-    creatorStack,
-    totals: {
-      totalMRR,
-      totalAnnualRecurring: totalMRR * 12,
-      totalOneTimeRevenue,
-      totalMonthlyRevenue: totalMRR + totalOneTimeRevenue,
+    productSales: {
+      totalOrders: priced.length,
+      grossRevenueMinor,
+      productionCostMinor,
+      shippingCostMinor,
+      processingFeeMinor,
+      netMinor,
+      artistRoyaltiesMinor,
+      platformMarginMinor: netMinor - artistRoyaltiesMinor,
+      averageOrderValueMinor:
+        priced.length === 0 ? 0 : Math.round(grossRevenueMinor / priced.length),
     },
+    needsReview: {
+      orderCount: held.length,
+      grossRevenueMinor: sum(held, "grossMinor"),
+    },
+    currency: "USD",
   };
 }
 

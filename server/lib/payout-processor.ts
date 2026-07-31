@@ -69,13 +69,11 @@ export async function processPayouts(): Promise<PayoutResult> {
         let totalAmount = 0;
         let baseRoyalties = 0;
         let referralBonuses = 0;
-        let recruitmentBonuses = 0;
 
         unpaidSales.forEach((sale) => {
           totalAmount += parseFloat(sale.totalEarnings || '0');
           baseRoyalties += parseFloat(sale.baseRoyalty || '0');
           referralBonuses += parseFloat(sale.referralBonus || '0');
-          recruitmentBonuses += parseFloat(sale.recruitmentBonus || '0');
         });
 
         // Skip if amount is too small (less than $1)
@@ -87,7 +85,6 @@ export async function processPayouts(): Promise<PayoutResult> {
         console.log(`  💵 Total earnings: $${totalAmount.toFixed(2)}`);
         console.log(`     - Base royalties: $${baseRoyalties.toFixed(2)}`);
         console.log(`     - Referral bonuses: $${referralBonuses.toFixed(2)}`);
-        console.log(`     - Recruitment bonuses: $${recruitmentBonuses.toFixed(2)}`);
 
         // Determine period (first sale to last sale)
         const periodStart = new Date(unpaidSales[0].createdAt);
@@ -103,7 +100,6 @@ export async function processPayouts(): Promise<PayoutResult> {
           salesCount: unpaidSales.length,
           baseRoyalties: baseRoyalties.toFixed(2),
           referralBonuses: referralBonuses.toFixed(2),
-          recruitmentBonuses: recruitmentBonuses.toFixed(2),
         });
 
         console.log(`  ✅ Created payout record: ${payout.id}`);

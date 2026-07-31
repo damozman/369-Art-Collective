@@ -124,7 +124,6 @@ async function testOrderCapture() {
     console.log(`   Royalty Tier: ${sale.royaltyTier}%`);
     console.log(`   Base Royalty: $${sale.baseRoyalty}`);
     console.log(`   Referral Bonus: $${sale.referralBonus}`);
-    console.log(`   Recruitment Bonus: $${sale.recruitmentBonus}`);
     console.log(`   Total Earnings: $${sale.totalEarnings}`);
 
     console.log('\n6️⃣ Testing tier calculation (higher monthly sales)...');

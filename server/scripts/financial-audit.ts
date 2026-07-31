@@ -15,7 +15,14 @@ import {
   getShipping,
   isPrintifyConfigured 
 } from '../lib/printify';
-import { PRINTIFY_PRODUCTS, calculateProductMargin, ROYALTY_TIERS } from '../../shared/financial-utils';
+import { PRINTIFY_PRODUCTS, calculateProductMargin } from '../../shared/financial-utils';
+
+// The royalty ladder no longer has named subscription tiers (FREE/PRO/ELITE
+// referred to a product that no longer exists). These scripts sample three
+// rungs of the performance ladder for comparison.
+const RATE_LOW = 30;
+const RATE_MID = 35;
+const RATE_HIGH = 45;
 import { getAllProducts, isShopifyConfigured } from '../lib/shopify';
 
 // Wall art blueprint IDs (verified from identify-wall-art-blueprints.ts)
@@ -329,9 +336,9 @@ async function runFinancialAudit() {
       let margins = null;
       
       if (shopifyPrice) {
-        const freeMargin = calculateProductMargin(shopifyPrice, liveCosts.production, liveCosts.shipping, ROYALTY_TIERS.FREE);
-        const proMargin = calculateProductMargin(shopifyPrice, liveCosts.production, liveCosts.shipping, ROYALTY_TIERS.PRO);
-        const eliteMargin = calculateProductMargin(shopifyPrice, liveCosts.production, liveCosts.shipping, ROYALTY_TIERS.ELITE);
+        const freeMargin = calculateProductMargin(shopifyPrice, liveCosts.production, liveCosts.shipping, RATE_LOW);
+        const proMargin = calculateProductMargin(shopifyPrice, liveCosts.production, liveCosts.shipping, RATE_MID);
+        const eliteMargin = calculateProductMargin(shopifyPrice, liveCosts.production, liveCosts.shipping, RATE_HIGH);
         
         margins = {
           free: {

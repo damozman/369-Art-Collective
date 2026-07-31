@@ -39,7 +39,13 @@ import { syncPrintifyMockupsWithRetry } from "./lib/printify-mockup-sync";
 import { requireAuth, requireArtist, requireAdmin, requireInfluencer } from "./middleware/auth";
 import { getAffiliateCodeFromCookie } from "./middleware/affiliate-tracking";
 
-import { processShopifyOrder } from "./lib/financials";
+import { processShopifyOrder } from "./lib/order-processor";
+import { getCostResolver } from "./lib/cost-resolver-factory";
+import { parseDecimalToMinor } from "./lib/money";
+import {
+  ROYALTY_TIER_LADDER,
+  royaltyPercentForMonthlySales,
+} from "@shared/financial-utils";
 import { verifyShopifyWebhook } from "./lib/shopify-webhook-security";
 import { 
   validateImageQuality, 
@@ -247,17 +253,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).send('Unauthorized');
       }
 
-      processShopifyOrder(req.body).catch(error => {
-        console.error("Error processing Shopify order:", error);
-      });
-
       console.log("âœ… Webhook HMAC verified");
 
       // Body is already parsed by express.json middleware
       const shopifyOrder = req.body;
-      
-      // Process order asynchronously (don't block webhook response)
-      processShopifyOrder(shopifyOrder).catch(error => {
+
+      // Process order asynchronously (don't block webhook response).
+      // NOTE: this used to be called twice on every webhook — once above the
+      // HMAC log line and once here — racing two royalty calculations for the
+      // same order against each other.
+      processShopifyOrder(shopifyOrder, getCostResolver(), storage).catch(error => {
         console.error("Order processing failed:", error);
       });
 
@@ -3333,27 +3338,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get monthly sales amount for tier calculation
       const monthlySales = parseFloat(artist.monthlySales || '0');
+      const monthlySalesMinor = parseDecimalToMinor(artist.monthlySales || '0');
 
-      // Determine current tier
-      const { getRoyaltyTierPercentage } = await import("./lib/royalty-calculator");
-      const currentTier = getRoyaltyTierPercentage(monthlySales);
+      // Current and next rung both come from the one ladder. The thresholds
+      // used to be spelled out again here, giving a fourth place for them to
+      // drift out of agreement with the rate actually paid.
+      const currentTier = royaltyPercentForMonthlySales(monthlySalesMinor);
 
-      // Determine next tier threshold
-      let nextTierThreshold = 0;
-      let nextTierPercentage = 0;
-      if (monthlySales < 1000) {
-        nextTierThreshold = 1000;
-        nextTierPercentage = 35;
-      } else if (monthlySales < 5000) {
-        nextTierThreshold = 5000;
-        nextTierPercentage = 40;
-      } else if (monthlySales < 10000) {
-        nextTierThreshold = 10000;
-        nextTierPercentage = 45;
-      } else {
-        nextTierThreshold = 10000;
-        nextTierPercentage = 45; // Max tier
-      }
+      const ascendingLadder = [...ROYALTY_TIER_LADDER].sort(
+        (a, b) => a.minMonthlySalesMinor - b.minMonthlySalesMinor
+      );
+      const nextRung = ascendingLadder.find(
+        (rung) => rung.minMonthlySalesMinor > monthlySalesMinor
+      );
+      const topRung = ascendingLadder[ascendingLadder.length - 1];
+
+      const nextTierThreshold = (nextRung ?? topRung).minMonthlySalesMinor / 100;
+      const nextTierPercentage = (nextRung ?? topRung).percent;
 
       // Get sales with artwork details
       const salesWithArtwork = await Promise.all(
@@ -3396,19 +3397,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Artist not found" });
       }
 
-      // Get all sales for this artist (includes recruitment bonuses)
       const sales = await storage.getSalesByArtist(id);
-      
-      // Calculate referral-driven sales (sales where artist drove traffic)
+
+      // Referral-driven sales: the artist drove traffic that converted.
+      // Recruitment residuals (earning a cut of another artist's royalties)
+      // were removed in Phase 0 step 5 and are no longer reported.
       const referralSales = sales.filter(sale => parseFloat(sale.referralBonus || '0') > 0);
       const totalReferralEarnings = referralSales.reduce((sum, sale) => {
         return sum + parseFloat(sale.referralBonus || '0');
-      }, 0);
-      
-      // Calculate recruitment bonuses (sales where this artist recruited someone)
-      const recruitmentSales = sales.filter(sale => parseFloat(sale.recruitmentBonus || '0') > 0);
-      const totalRecruitmentEarnings = recruitmentSales.reduce((sum, sale) => {
-        return sum + parseFloat(sale.recruitmentBonus || '0');
       }, 0);
 
       // Get list of artists recruited by this artist
@@ -3459,7 +3455,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalReferralSales: referralSales.length,
           totalReferralEarnings,
           totalArtistsRecruited: recruitedArtists.length,
-          totalRecruitmentEarnings,
           testimonialRecruits: testimonialRecruits.length,
           generalRecruits: generalRecruits.length,
         },
@@ -3566,7 +3561,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate total revenue from all sales
       let totalRevenue = 0;
       let totalReferralBonuses = 0;
-      let totalRecruitmentBonuses = 0;
 
       // Build artist earnings map
       const artistEarningsMap = new Map<string, {
@@ -3574,7 +3568,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         salesCount: number;
         monthlySales: number;
         referralEarnings: number;
-        recruitmentEarnings: number;
         recruitedCount: number;
       }>();
 
@@ -3585,7 +3578,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           salesCount: 0,
           monthlySales: parseFloat(artist.monthlySales || '0'),
           referralEarnings: 0,
-          recruitmentEarnings: 0,
           recruitedCount: 0,
         });
       });
@@ -3599,11 +3591,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           for (const sale of orderSales) {
             const earnings = parseFloat(sale.totalEarnings || '0');
             const referralBonus = parseFloat(sale.referralBonus || '0');
-            const recruitmentBonus = parseFloat(sale.recruitmentBonus || '0');
 
             totalRevenue += earnings;
             totalReferralBonuses += referralBonus;
-            totalRecruitmentBonuses += recruitmentBonus;
 
             // Update artist's earnings
             const artistStats = artistEarningsMap.get(sale.artistId);
@@ -3611,14 +3601,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               artistStats.totalEarnings += earnings;
               artistStats.salesCount += 1;
               artistStats.referralEarnings += referralBonus;
-            }
-
-            // Track recruitment earnings for recruiter
-            if (order.referralArtistId && order.referralArtistId !== sale.artistId) {
-              const recruiterStats = artistEarningsMap.get(order.referralArtistId);
-              if (recruiterStats) {
-                recruiterStats.recruitmentEarnings += recruitmentBonus;
-              }
             }
           }
         }
@@ -3670,7 +3652,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             name: artist.name,
             email: artist.email,
             recruitedCount: stats.recruitedCount,
-            recruitmentEarnings: stats.recruitmentEarnings,
           };
         })
         .filter(a => a !== null && a.recruitedCount > 0)
@@ -3682,7 +3663,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         totalRevenue,
         totalReferralBonuses,
-        totalRecruitmentBonuses,
         totalArtists: allArtists.length,
         totalRecruitedArtists,
         topArtists,
@@ -4027,34 +4007,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get Printify product costs (live or estimated)
-  app.get("/api/admin/financial/printify-costs", requireAdmin, async (req, res) => {
+  // Product costs, resolved through the same path the payout uses.
+  // Each row reports its own `source`, so an admin can tell live Printify
+  // pricing from fixture values at a glance rather than being shown a number
+  // with no provenance.
+  app.get("/api/admin/financial/printify-costs", requireAdmin, async (_req, res) => {
     try {
-      const { getPrintifyProductCost, WALL_ART_BLUEPRINTS } = await import('./lib/financial-service');
-      const { blueprintId } = req.query;
-
-      if (!blueprintId) {
-        // Return all product costs
-        const costs = await Promise.all([
-          getPrintifyProductCost(WALL_ART_BLUEPRINTS.POSTER),
-          getPrintifyProductCost(WALL_ART_BLUEPRINTS.CANVAS),
-          getPrintifyProductCost(WALL_ART_BLUEPRINTS.FRAMED),
-          getPrintifyProductCost(WALL_ART_BLUEPRINTS.METAL),
-        ]);
-
-        res.json({
-          poster: costs[0],
-          canvas: costs[1],
-          framed: costs[2],
-          metal: costs[3],
-        });
-      } else {
-        const cost = await getPrintifyProductCost(parseInt(blueprintId as string));
-        res.json(cost);
-      }
+      const { getResolvedProductCosts } = await import('./lib/financial-service');
+      res.json({ costs: await getResolvedProductCosts() });
     } catch (error: any) {
       console.error("Printify costs error:", error);
-      res.status(500).json({ message: "Failed to fetch Printify costs" });
+      res.status(500).json({ message: "Failed to resolve product costs" });
     }
   });
 

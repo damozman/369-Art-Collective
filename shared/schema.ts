@@ -368,22 +368,54 @@ export const printifyProducts = pgTable("printify_products", {
 // Orders - Track customer orders
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  shopifyOrderId: text("shopify_order_id").notNull().unique(),
+  // One row per Shopify LINE ITEM, not per order. `shopify_order_id` was
+  // previously UNIQUE, which meant any order containing two artworks failed to
+  // insert its second line — the constraint silently discarded revenue. The
+  // pair below is what is actually unique, and it is also the idempotency key
+  // that makes re-delivered webhooks safe to replay.
+  shopifyOrderId: text("shopify_order_id").notNull(),
+  shopifyLineItemId: text("shopify_line_item_id"),
   printifyOrderId: text("printify_order_id"), // Printify order ID after fulfillment
   artworkId: varchar("artwork_id").notNull().references(() => artworks.id),
   artistId: varchar("artist_id").notNull().references(() => artists.id),
+  // LEGACY decimal money columns. Retained so existing reads keep working;
+  // they are written from the minor-unit columns below, never the other way
+  // round. Migrating away from them is Phase 1 work.
   productPrice: decimal("product_price", { precision: 10, scale: 2 }).notNull(),
   printifyCost: decimal("printify_cost", { precision: 10, scale: 2 }).notNull(),
   shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }).notNull(),
   profit: decimal("profit", { precision: 10, scale: 2 }).notNull(), // Product price - Printify cost - shipping
+
+  // ---- Cost snapshot (authoritative). Integer minor units + currency. ----
+  // Written once, at the moment the revenue event is recorded, and never
+  // re-resolved. Providers change prices without notice, so a cost looked up
+  // later is not the cost that applied to this sale.
+  currency: text("currency").notNull().default("USD"),
+  grossMinor: integer("gross_minor"), // retail charged, whole quantity
+  productionMinor: integer("production_minor"), // snapshotted Printify production cost
+  shippingMinorAmount: integer("shipping_minor_amount"), // snapshotted shipping
+  processingFeeMinor: integer("processing_fee_minor"), // this line's share of the order fee
+  netMinor: integer("net_minor"), // gross − production − shipping − processing. May be negative.
+  costSource: text("cost_source"), // printify-catalog | printify-product | fixture
+  costResolvedAt: timestamp("cost_resolved_at"), // when the snapshot was taken
+  costResolutionError: text("cost_resolution_error"), // why a line was held for review
   utmSource: text("utm_source"), // UTM source parameter (e.g., artist referral code)
   utmMedium: text("utm_medium"), // UTM medium (e.g., social, email)
   utmCampaign: text("utm_campaign"), // UTM campaign (e.g., spring2025)
   referralArtistId: varchar("referral_artist_id").references(() => artists.id), // Artist who referred this sale
   referralBonus: boolean("referral_bonus").notNull().default(false), // +5% bonus applied?
-  status: text("status").notNull().default("pending"), // pending, fulfilled, cancelled
+  // pending | fulfilled | cancelled | needs_review
+  // needs_review means costs could not be resolved for the line, so no royalty
+  // was calculated. It is deliberately not fulfillable without a human.
+  status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  // Idempotency: a replayed Shopify webhook must not create a second sale.
+  shopifyLineUnique: uniqueIndex("orders_shopify_line_unique").on(
+    table.shopifyOrderId,
+    table.shopifyLineItemId
+  ),
+}));
 
 // Sales - Individual sales for royalty calculation
 export const sales = pgTable("sales", {
@@ -391,13 +423,24 @@ export const sales = pgTable("sales", {
   orderId: varchar("order_id").notNull().references(() => orders.id),
   artistId: varchar("artist_id").notNull().references(() => artists.id),
   artworkId: varchar("artwork_id").notNull().references(() => artworks.id),
+  // LEGACY decimal money columns — written from the minor-unit columns below.
   saleAmount: decimal("sale_amount", { precision: 10, scale: 2 }).notNull(),
   profit: decimal("profit", { precision: 10, scale: 2 }).notNull(),
   royaltyTier: integer("royalty_tier").notNull(), // 30, 35, 40, 45 (percentage)
   baseRoyalty: decimal("base_royalty", { precision: 10, scale: 2 }).notNull(),
   referralBonus: decimal("referral_bonus", { precision: 10, scale: 2 }).notNull().default('0'),
+  // VESTIGIAL: recruitment residuals were removed in Phase 0 step 5. Kept so
+  // historical rows stay readable; nothing writes a non-zero value.
   recruitmentBonus: decimal("recruitment_bonus", { precision: 10, scale: 2 }).notNull().default('0'),
   totalEarnings: decimal("total_earnings", { precision: 10, scale: 2 }).notNull(),
+
+  // ---- Authoritative minor-unit amounts ----
+  currency: text("currency").notNull().default("USD"),
+  netMinor: integer("net_minor"), // the basis the royalty was taken from
+  baseRoyaltyMinor: integer("base_royalty_minor"),
+  referralBonusMinor: integer("referral_bonus_minor"),
+  totalEarningsMinor: integer("total_earnings_minor"),
+
   payoutId: varchar("payout_id").references((): any => payouts.id), // Which payout this was included in
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -415,6 +458,11 @@ export const referrals = pgTable("referrals", {
 });
 
 // Artist Referrals - Track when artists recruit other artists
+//
+// VESTIGIAL: the recruitment residual (a recruiter earning 5% of a recruited
+// artist's royalties) was removed in Phase 0 step 5. This table and
+// `artists.referredBy` are retained for attribution history only — nothing
+// computes a payment from them.
 export const artistReferrals = pgTable("artist_referrals", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   recruiterId: varchar("recruiter_id").notNull().references(() => artists.id), // Artist who recruited
@@ -436,6 +484,8 @@ export const payouts = pgTable("payouts", {
   salesCount: integer("sales_count").notNull(), // Number of sales in this payout
   baseRoyalties: decimal("base_royalties", { precision: 10, scale: 2 }).notNull(),
   referralBonuses: decimal("referral_bonuses", { precision: 10, scale: 2 }).notNull().default('0'),
+  // VESTIGIAL: recruitment residuals were removed in Phase 0 step 5. Kept so
+  // historical payout rows stay readable; nothing writes a non-zero value.
   recruitmentBonuses: decimal("recruitment_bonuses", { precision: 10, scale: 2 }).notNull().default('0'),
   failureReason: text("failure_reason"),
   lastSyncedAt: timestamp("last_synced_at"), // Last time we synced with Stripe

@@ -50,19 +50,23 @@ explicitly and wait for the user rather than quietly building around it.
 ## Known defects — real, documented, do not "discover" and panic
 
 All four are known. Do not fix them ad hoc or treat them as new findings — **and note
-which phase each belongs to.** Two are Phase 0; two are Phase 1 and must not be
-attempted early, because both change the ledger model that Phase 1 exists to build.
+which phase each belongs to.** The two Phase 0 defects are now **fixed**; the two
+Phase 1 defects remain open and must not be attempted early, because both change the
+ledger model that Phase 1 exists to build.
 
-**Phase 0 — fix in cut-list step 5:**
+**Phase 0 — FIXED in step 5. Left here as history; do not "rediscover" them:**
 
-1. **`server/lib/order-processor.ts:163-164`** — royalties are computed from
-   **hardcoded placeholder costs** (`printifyCost = 15.00`, `shippingCost = 5.00`)
-   rather than real Printify costs. Every royalty the system has ever calculated is
-   wrong; low-priced items underpay by roughly 3x.
-2. **Three conflicting royalty definitions.** `order-processor.ts` applies the
-   percentage to net profit; `shared/financial-utils.ts` applies it to retail price;
-   and the former's "profit" is derived from the fake costs above. Neither subtracts
-   Stripe processing fees.
+1. ~~`server/lib/order-processor.ts:163-164` hardcoded costs~~ — fixed. **But the
+   file was dead code.** The webhook actually called `server/lib/financials.ts`
+   (flat 36.9% of price-minus-assumed-40%-COGS, shipping hardcoded to zero). Both
+   files are gone; the live path is now `order-processor.ts` rewritten around a
+   `CostResolver`.
+2. ~~Three conflicting royalty definitions~~ — there were **five**
+   (`financials.ts`, `order-processor.ts`, `shared/financial-utils.ts`,
+   `royalty-calculator.ts`, and a *sales-count* ladder in `payout-service.ts`).
+   All collapsed into `server/lib/royalty.ts`: **net after COGS, shipping and
+   processing fees**, with the tier ladder living once in
+   `shared/financial-utils.ts`.
 
 **Phase 1 — engine core, *not* Phase 0:**
 
@@ -76,30 +80,44 @@ attempted early, because both change the ledger model that Phase 1 exists to bui
    query), and Phase 1 is defined as honoring all fourteen §5 decisions. The
    `influencers` table already does it correctly, with a comment explaining why.
 
-A third inconsistency surfaced during step 4 and also belongs to step 5: see
-"Two live inconsistencies" below.
+(A third inconsistency surfaced during step 4 — the 40% rung throwing against a
+validator that only allowed 30/35/45, plus the vestigial `FREE/PRO/ELITE` naming.
+Both were resolved in step 5.)
 
 ## Current status
 
-- **Phase:** Phase 0 in progress — cut list 4 of 5 done.
-- **Careful reading that:** the cut list is only **one of Phase 0's four bullets** in
-  blueprint §9. The other three (real Printify costs, one royalty basis, subtract
-  processing fees) are all bundled into cut-list step 5, so step 5 closes Phase 0
-  entirely. "4 of 5" therefore overstates progress — steps 1–4 deleted code no money
-  ever flowed through; step 5 is the only one that changes what a contributor is paid,
-  and it needs live credentials to verify.
-- **Phase 0 is the smallest phase.** Phases 1–5 follow, and Phase 1 (engine core) is
-  where the actual product gets built. Do not read "Phase 0 nearly done" as "nearly
-  done."
-- **Track A is the real critical path** (§9, §15) and is invisible from this repo:
-  Shopify Partner account, Stripe Connect platform application, App Store competitive
-  research, design-partner outreach, and getting 369 selling again for real refund
-  data. All marked Day 1; none has any status recorded here. If you are picking this
-  up, ask before assuming they are underway.
+- **Phase:** ✅ **Phase 0 complete.** All five cut-list steps done, and all four of
+  blueprint §9's Phase 0 bullets closed.
+- **Next:** Phase 1 — engine core. Canonical `RevenueEvent`, rules engine, immutable
+  ledger, reversal handling, multi-tenant from the first migration. This is where the
+  actual product gets built; Phase 0 was the smallest phase by a wide margin.
+- **Money has still never flowed through the payout path**, so the royalty fixes
+  remain **forward-only — no recalculation migration needed.**
+- **Track A is still the real critical path** (§9, §15) and is invisible from this
+  repo: Shopify Partner account, Stripe Connect platform application, App Store
+  competitive research, design-partner outreach, and getting 369 selling again for
+  real refund data. All marked Day 1; **none has any status recorded here.** If you
+  are picking this up, ask before assuming they are underway.
 - **Branch:** `claude/business-idea-feedback-7uwumw`
 - **Archive:** `archive/pre-repositioning` holds the complete pre-cut codebase.
-- **Resolved:** no money has ever flowed through the payout path and no artist has been
-  paid, so the royalty fixes are **forward-only — no recalculation migration needed.**
+
+### ⚠️ The one thing blocking real money
+
+**The cost fixtures are invented numbers.** `server/lib/__fixtures__/printify-costs.ts`
+is interpolated from an undated table, and its variant and print-provider IDs are
+placeholders, not live catalog IDs. Sandbox sessions cannot reach `api.printify.com`,
+so they could not be verified here.
+
+The calculation is proven; the *inputs* are not. Before anyone is paid:
+
+1. Run `PrintifyCostResolver` locally with real credentials already in `.env.local`.
+2. Replace the fixture values and the placeholder IDs with what comes back.
+3. Re-run `npm test` — the assertions encode the arithmetic, not the prices, so they
+   should still pass with real numbers substituted.
+
+Until then the resolver factory refuses to invent costs: without `PRINTIFY_API_TOKEN`
+and without `ALLOW_FIXTURE_COSTS=true`, **every line item is held for review and
+nothing is paid.** That is deliberate. No royalty is better than a wrong one.
 
 ### Phase 0 progress
 
@@ -129,38 +147,70 @@ Three decisions made during step 4, all reversible:
   question**, deliberately deferred rather than decided.
 - **The 20-artwork cap now applies to everyone** rather than gating a paid upgrade.
 - **Royalties come from the performance tier alone.** `getRoyaltyTierPercentage()`
-  lost its subscription-minimum arm. The three conflicting definitions are still
-  unreconciled — that is step 5, unchanged.
+  lost its subscription-minimum arm. (The conflicting definitions were reconciled in
+  step 5; `getRoyaltyTierPercentage()` itself is gone.)
 
-**Remaining:**
-5. ⬜ **Recruitment residuals + royalty unification, together.** `calculateRecruitmentBonus()`
-   lives in `royalty-calculator.ts`, which the royalty rewrite replaces anyway.
-   - Replace hardcoded costs with real Printify costs, **snapshotted at event time**
-     (never looked up later — providers change prices without notice). Use the existing
-     `getVariants()` / `getShipping()` in `server/lib/printify.ts`.
-   - Collapse the three royalty definitions into one basis: **net after COGS, shipping,
-     and processing fees.**
-   - Put cost resolution behind an interface with a fixture-backed test implementation —
-     cloud sandbox sessions cannot reach `api.printify.com`.
+**5. ✅ Recruitment residuals + royalty unification.** What step 5 actually did:
 
-**Known deferred cleanup:** `financial-service.ts` and `AdminFinancialDashboard.tsx`
-still carry hardcoded CreatorStack and AI-credit revenue projections. They type-check
-because the figures are placeholders, not queries. Clear them during step 5, when
-`financial-service.ts` is rewritten anyway. (The artist-subscription MRR stream and
-the tier break-even calculator are already gone — step 4 removed those.)
+**New modules** (all covered by `npm test` — 43 tests, no network, no database):
 
-**Two live inconsistencies to fix in step 5, both now visible:**
+| File | Purpose |
+|---|---|
+| `server/lib/money.ts` | Integer minor units. String-exact decimal parsing (float parsing loses cents non-deterministically), half-away-from-zero rounding, largest-remainder `allocate()` |
+| `server/lib/cost-resolver.ts` | `CostResolver` interface + `PrintifyCostResolver` + `FixtureCostResolver` |
+| `server/lib/cost-resolver-factory.ts` | Picks the resolver; **refuses to invent costs** unless `ALLOW_FIXTURE_COSTS=true` |
+| `server/lib/royalty.ts` | The one royalty definition |
+| `server/lib/sku-catalog.ts` | SKU → Printify blueprint/provider/variant. **This bridge did not exist**, which is a large part of why the cost was a hardcoded constant |
+| `server/lib/__fixtures__/printify-costs.ts` | Fixture costs — see the warning above |
 
-1. `shared/financial-utils.ts` hard-validates royalty as exactly **30/35/45** and
-   throws otherwise, while the performance ladder in `royalty-calculator.ts` also has
-   a **40%** rung. Any code path that computes a margin at 40% throws today. The admin
-   pricing tool is restricted to the three validated rates so it cannot hit this.
-2. `ROYALTY_TIERS` in `shared/financial-utils.ts` still names its constants
-   `FREE/PRO/ELITE` after subscription tiers that no longer exist.
+**Deleted:** `server/lib/financials.ts`, `server/lib/royalty-calculator.ts`.
 
-**Vestigial, intentionally left:** `upscale_usage.tier` and the `elite_unlimited`
-value in `upscaleQuotaTypeEnum` are kept so historical rows stay readable. Nothing
-writes them; new rows record a flat `'standard'`.
+**Schema.** `orders` gained a cost snapshot in minor units (`gross_minor`,
+`production_minor`, `shipping_minor_amount`, `processing_fee_minor`, `net_minor`,
+`currency`, `cost_source`, `cost_resolved_at`, `cost_resolution_error`) plus
+`shopify_line_item_id`; `sales` gained `net_minor`, `base_royalty_minor`,
+`referral_bonus_minor`, `total_earnings_minor`, `currency`. Legacy `decimal` columns
+are still written **from** the minor-unit values so existing reads keep working —
+migrating off them is Phase 1.
+
+**Three design decisions worth knowing, all reversible:**
+
+- **Unresolvable cost ⇒ `status: 'needs_review'`, no sale row, nothing owed.** Never
+  a fallback estimate. An unpaid line that is held can be fixed; a royalty paid on an
+  invented cost cannot be, once the money is gone.
+- **Payout is now pure summation.** `payout-service.ts` lost its recalculate-at-payout
+  fallback, which silently overwrote what a contributor was told they had earned. A
+  royalty is decided once, at event time.
+- **Loss-making lines floor at zero rather than going negative.** The negative net is
+  still recorded on the order so the loss stays visible.
+
+**Also fixed, found in passing** (both live, both would have cost real money):
+
+- The Shopify webhook called the order processor **twice per delivery**.
+- `orders.shopify_order_id` was UNIQUE while one row is written per *line item*, so
+  **any order with two artworks lost its second line.** Now unique on
+  `(shopify_order_id, shopify_line_item_id)`, which is also the idempotency key.
+
+**Both previously-noted inconsistencies are resolved:** the 40% rung no longer throws
+(one ladder feeds both the payout and the validator), and `FREE/PRO/ELITE` are gone.
+
+**Verified beyond type-check and build** (per the step-3 lesson below): ran the app
+against local Postgres, processed a two-line order end-to-end through real storage,
+confirmed the snapshot columns persist and that the admin financial dashboard,
+empire, and payouts pages all render. Fee apportionment reconciled by hand:
+$118.00 order → $3.72 fee (2.9% + one 30¢), split 60¢/312¢.
+
+**Recruitment residuals removed** from the royalty path, payout processor, admin
+routes, and both client pages. `artists.referredBy`, `artist_referrals`, and the
+`recruitment_bonus(es)` columns are **retained as vestigial** for attribution history
+— nothing computes a payment from them.
+
+**Vestigial, intentionally left:** `upscale_usage.tier` and `elite_unlimited` in
+`upscaleQuotaTypeEnum`; `artists.referredBy`, the `artist_referrals` table, and the
+`recruitment_bonus`/`recruitment_bonuses` columns. All kept so historical rows stay
+readable. Nothing writes them, and nothing computes a payment from them.
+
+**Still deferred, deliberately:** upscaling's fate (see step 4) is still open.
 
 ## Working agreements
 

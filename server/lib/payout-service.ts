@@ -1,4 +1,5 @@
 import { storage } from "../storage";
+import { parseDecimalToMinor } from "./money";
 import { stripeConnectService } from "./stripe-connect";
 
 interface PayoutCalculation {
@@ -7,46 +8,30 @@ interface PayoutCalculation {
   totalEarnings: number;
   baseRoyalties: number;
   referralBonuses: number;
-  recruitmentBonuses: number;
   salesCount: number;
 }
 
 /**
- * Calculate tiered royalty percentage based on monthly sales volume
- * Tiers: 1-10 sales = 30%, 11-25 sales = 35%, 26-50 sales = 40%, 51+ sales = 45%
+ * NOTE ON WHAT USED TO BE HERE.
+ *
+ * This file previously owned two things it had no business owning:
+ *
+ * 1. `calculateRoyaltyTier()` — a second tier ladder keyed on the *number* of
+ *    unpaid sales (1-10/11-25/26-50/51+), disagreeing with the amount-keyed
+ *    ladder used when the sale was recorded. An artist's rate therefore
+ *    depended on which function happened to ask.
+ * 2. `calculateSaleRoyalty()` — a fallback that *recalculated* royalties at
+ *    payout time from the current tier, silently overwriting what the
+ *    contributor was told they had earned when the sale happened.
+ *
+ * Both are gone. Payout is now pure summation of what was recorded at event
+ * time. A royalty is decided once, when the revenue event is recorded, and is
+ * never recomputed — that is what makes a statement explainable and what makes
+ * the ledger the authority instead of a cache.
+ *
+ * The single ladder now lives in `shared/financial-utils.ts` and is applied in
+ * `server/lib/royalty.ts`.
  */
-export function calculateRoyaltyTier(monthlySalesCount: number): number {
-  if (monthlySalesCount <= 10) return 30;
-  if (monthlySalesCount <= 25) return 35;
-  if (monthlySalesCount <= 50) return 40;
-  return 45;
-}
-
-/**
- * Calculate royalty amount for a single sale
- */
-export function calculateSaleRoyalty(
-  profit: number,
-  royaltyTier: number,
-  hasReferralBonus: boolean = false,
-  recruitmentBonus: number = 0
-): {
-  baseRoyalty: number;
-  referralBonus: number;
-  recruitmentBonus: number;
-  totalEarnings: number;
-} {
-  const baseRoyalty = profit * (royaltyTier / 100);
-  const referralBonus = hasReferralBonus ? profit * 0.05 : 0; // 5% bonus
-  const total = baseRoyalty + referralBonus + recruitmentBonus;
-
-  return {
-    baseRoyalty: parseFloat(baseRoyalty.toFixed(2)),
-    referralBonus: parseFloat(referralBonus.toFixed(2)),
-    recruitmentBonus: parseFloat(recruitmentBonus.toFixed(2)),
-    totalEarnings: parseFloat(total.toFixed(2)),
-  };
-}
 
 /**
  * Get unpaid sales for an artist within a period and calculate payout with tiered royalties
@@ -75,42 +60,28 @@ export async function calculateArtistPayout(
     return null;
   }
 
-  // Calculate royalty tier based on number of sales in this period
-  const royaltyTier = calculateRoyaltyTier(unpaidSales.length);
-
-  // Calculate totals using the tiered royalty percentage
-  let totalEarnings = 0;
-  let baseRoyalties = 0;
-  let referralBonuses = 0;
-  let recruitmentBonuses = 0;
+  // Sum what was recorded at event time. Amounts are summed in minor units so
+  // repeated addition cannot drift; the legacy decimal columns are the fallback
+  // for rows written before the minor-unit columns existed.
+  let totalEarningsMinor = 0;
+  let baseRoyaltiesMinor = 0;
+  let referralBonusesMinor = 0;
 
   for (const sale of unpaidSales) {
-    const profit = parseFloat(sale.profit);
-    
-    // Use stored values if available (already calculated during sale creation)
-    // Otherwise recalculate based on current tier
-    if (sale.baseRoyalty && sale.referralBonus !== undefined && sale.recruitmentBonus !== undefined) {
-      baseRoyalties += parseFloat(sale.baseRoyalty);
-      referralBonuses += parseFloat(sale.referralBonus);
-      recruitmentBonuses += parseFloat(sale.recruitmentBonus);
-      totalEarnings += parseFloat(sale.totalEarnings);
-    } else {
-      // Fallback: recalculate using current tier
-      const calculation = calculateSaleRoyalty(profit, royaltyTier, false, 0);
-      baseRoyalties += calculation.baseRoyalty;
-      referralBonuses += calculation.referralBonus;
-      recruitmentBonuses += calculation.recruitmentBonus;
-      totalEarnings += calculation.totalEarnings;
-    }
+    baseRoyaltiesMinor +=
+      sale.baseRoyaltyMinor ?? parseDecimalToMinor(sale.baseRoyalty ?? "0");
+    referralBonusesMinor +=
+      sale.referralBonusMinor ?? parseDecimalToMinor(sale.referralBonus ?? "0");
+    totalEarningsMinor +=
+      sale.totalEarningsMinor ?? parseDecimalToMinor(sale.totalEarnings ?? "0");
   }
 
   return {
     artistId,
     unpaidSales,
-    totalEarnings: parseFloat(totalEarnings.toFixed(2)),
-    baseRoyalties: parseFloat(baseRoyalties.toFixed(2)),
-    referralBonuses: parseFloat(referralBonuses.toFixed(2)),
-    recruitmentBonuses: parseFloat(recruitmentBonuses.toFixed(2)),
+    totalEarnings: totalEarningsMinor / 100,
+    baseRoyalties: baseRoyaltiesMinor / 100,
+    referralBonuses: referralBonusesMinor / 100,
     salesCount: unpaidSales.length,
   };
 }
@@ -160,7 +131,6 @@ export async function executeArtistPayout(
       salesCount: calculation.salesCount,
       baseRoyalties: calculation.baseRoyalties.toString(),
       referralBonuses: calculation.referralBonuses.toString(),
-      recruitmentBonuses: calculation.recruitmentBonuses.toString(),
     });
 
     let stripeTransferId: string | undefined;

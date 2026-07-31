@@ -5,25 +5,45 @@
  */
 
 // ============================================
-// ROYALTY TIER CONSTANTS (from replit.md)
+// ROYALTY TIER LADDER — single source of truth
 // ============================================
 
-export const ROYALTY_TIERS = {
-  FREE: 30,
-  PRO: 35,
-  ELITE: 45,
-} as const;
-
-export const VALID_ROYALTY_PERCENTAGES = [
-  ROYALTY_TIERS.FREE,
-  ROYALTY_TIERS.PRO,
-  ROYALTY_TIERS.ELITE,
+/**
+ * Royalty percentage by the artist's trailing monthly sales.
+ *
+ * This ladder is the only one. It previously existed in three places that did
+ * not agree: this file named its rungs FREE/PRO/ELITE after subscription tiers
+ * that no longer exist and omitted 40% entirely, `royalty-calculator.ts` keyed
+ * on sales *amount*, and `payout-service.ts` keyed on sales *count* with
+ * different thresholds. Amount-keyed won — a payout should not change because
+ * an artist sold the same revenue across more, cheaper orders.
+ *
+ * Thresholds are in minor units, per the repo rule that money is never a float.
+ */
+export const ROYALTY_TIER_LADDER = [
+  { minMonthlySalesMinor: 1_000_000, percent: 45 }, // $10,000+
+  { minMonthlySalesMinor: 500_000, percent: 40 },   // $5,000–$9,999
+  { minMonthlySalesMinor: 100_000, percent: 35 },   // $1,000–$4,999
+  { minMonthlySalesMinor: 0, percent: 30 },         // $0–$999
 ] as const;
+
+export const VALID_ROYALTY_PERCENTAGES = [30, 35, 40, 45] as const;
 
 export type RoyaltyTier = typeof VALID_ROYALTY_PERCENTAGES[number];
 
+/** Resolve the royalty rung for a given trailing monthly sales figure. */
+export function royaltyPercentForMonthlySales(monthlySalesMinor: number): number {
+  const rung = ROYALTY_TIER_LADDER.find(
+    (t) => monthlySalesMinor >= t.minMonthlySalesMinor
+  );
+  return rung ? rung.percent : 30;
+}
+
 /**
- * Validate that royalty percentage is one of the allowed tiers
+ * Validate that royalty percentage is one of the allowed tiers.
+ *
+ * This used to reject 40 while the performance ladder happily produced it, so
+ * any margin computed at the 40% rung threw. Both now read from the same list.
  */
 export function isValidRoyaltyTier(percent: number): percent is RoyaltyTier {
   return VALID_ROYALTY_PERCENTAGES.includes(percent as RoyaltyTier);
@@ -33,14 +53,42 @@ export function isValidRoyaltyTier(percent: number): percent is RoyaltyTier {
  * Clamp royalty to nearest valid tier
  */
 export function clampToValidRoyaltyTier(percent: number): RoyaltyTier {
-  if (percent <= ROYALTY_TIERS.FREE) return ROYALTY_TIERS.FREE;
-  if (percent <= ROYALTY_TIERS.PRO) return ROYALTY_TIERS.PRO;
-  return ROYALTY_TIERS.ELITE;
+  const ascending = [...VALID_ROYALTY_PERCENTAGES].sort((a, b) => a - b);
+  return ascending.find((t) => percent <= t) ?? ascending[ascending.length - 1];
 }
+
+// ============================================
+// PAYMENT PROCESSING
+// ============================================
+
+/**
+ * Payment processing cost, charged per transaction.
+ *
+ * Subtracted from net before royalties — previously nothing subtracted it,
+ * which meant the platform absorbed the whole fee while paying the contributor
+ * as though it did not exist.
+ */
+export const PAYMENT_PROCESSING = {
+  percent: 2.9,
+  /** Fixed per-transaction component, minor units. */
+  fixedMinor: 30,
+  currency: "USD",
+} as const;
+
+/** Referral bonus: +5% of net when a sale arrives via an artist's referral link. */
+export const REFERRAL_BONUS_PERCENT = 5;
 
 // ============================================
 // PRINTIFY PRODUCT COSTS (2025 Data)
 // ============================================
+//
+// REFERENCE ESTIMATES ONLY — for pricing and margin planning.
+//
+// These are static, undated, and unverified against the live catalog. They must
+// never reach the payout path: costs that decide what a contributor is paid are
+// resolved through `server/lib/cost-resolver.ts` and snapshotted onto the order
+// at event time. A table like this one is exactly how the payout path came to
+// run on invented numbers in the first place.
 
 export interface ProductCost {
   name: string;
@@ -96,20 +144,26 @@ export interface MarginCalculation {
 }
 
 /**
- * Calculate margin for a specific product
- * ENFORCES: artistRoyaltyPercent must be 30%, 35%, or 45% (replit.md policy)
+ * Calculate margin for a specific product, at a given royalty rung.
+ *
+ * NOTE ON BASIS: this is a *pricing tool*, not the payout path. It applies the
+ * royalty percentage to retail in order to answer "what margin is left at this
+ * price point", which is a planning question. It is deliberately not the basis
+ * used to pay anyone — `server/lib/royalty.ts` owns that, and applies the
+ * percentage to net after costs. Do not reuse this function to compute an
+ * amount owed to a contributor.
  */
 export function calculateProductMargin(
   retailPrice: number,
   printifyCost: number,
   shipping: number,
   artistRoyaltyPercent: number,
-  paymentProcessingPercent: number = 3.0
+  paymentProcessingPercent: number = PAYMENT_PROCESSING.percent
 ): MarginCalculation {
   // CRITICAL: Enforce royalty tier validation
   if (!isValidRoyaltyTier(artistRoyaltyPercent)) {
     throw new Error(
-      `Invalid royalty percentage: ${artistRoyaltyPercent}%. Must be 30%, 35%, or 45% per replit.md policy`
+      `Invalid royalty percentage: ${artistRoyaltyPercent}%. Must be one of ${VALID_ROYALTY_PERCENTAGES.join(", ")}`
     );
   }
 

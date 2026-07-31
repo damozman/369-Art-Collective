@@ -7,6 +7,7 @@
     "build": "vite build",
     "start": "NODE_ENV=production tsx server/index.ts",
     "db:push": "drizzle-kit push:pg --config=drizzle.config.ts",
+    "test": "tsx --test server/lib/__tests__/*.test.ts",
     "shopify:auth": "shopify auth login",
     "shopify:deploy": "node scripts/deploy-shopify-theme.js",
     "shopify:assign-templates": "node scripts/assign-art-template.js",

@@ -1,15 +1,33 @@
 /**
  * Order Processor
- * Handles order capture from Shopify and submission to Printify for fulfillment
+ *
+ * Turns a Shopify order into recorded revenue events and contributor royalties.
+ * This is the only path from a sale to money owed; `server/lib/financials.ts`
+ * previously duplicated it with a different, worse calculation and was the one
+ * the webhook actually called. It has been deleted.
+ *
+ * What changed in Phase 0 step 5:
+ *
+ * - Costs are **resolved and snapshotted** per line item instead of assumed.
+ *   The old code used `printifyCost = 15.00` and `shippingCost = 5.00` flat,
+ *   which underpaid cheap items by roughly 3x and overpaid expensive ones.
+ * - Payment processing fees are computed **once per order** and apportioned
+ *   across its lines, then subtracted before royalties.
+ * - A line whose costs cannot be resolved is **held for review**, not paid on
+ *   an assumption. See the note on `needs_review` below.
+ * - Recruitment residuals are gone — no sale generates a second sale row for
+ *   somebody else.
  */
 
-import { storage } from "../storage";
-import { createOrder as submitPrintifyOrder } from "./printify";
+import type { CostResolver } from "./cost-resolver";
+import { CostResolutionError } from "./cost-resolver";
+import { formatMinorToDecimal, parseDecimalToMinor } from "./money";
 import {
+  allocateProcessingFee,
+  calculateProcessingFee,
   calculateRoyalty,
-  getArtistMonthlySales,
-  calculateRecruitmentBonus,
-} from "./royalty-calculator";
+} from "./royalty";
+import { resolveSku } from "./sku-catalog";
 
 interface ShopifyLineItem {
   id: number;
@@ -28,6 +46,7 @@ interface ShopifyOrder {
   email: string;
   created_at: string;
   total_price: string;
+  currency?: string;
   line_items: ShopifyLineItem[];
   shipping_address?: {
     first_name: string;
@@ -47,21 +66,6 @@ interface ShopifyOrder {
 }
 
 /**
- * Parse SKU to extract artwork and artist information
- * SKU format: ART-{artistShort}-{artworkId}-{size}-{finish}
- * Example: ART-JH-abc123-16x20-Canvas
- */
-function parseSKU(sku: string): { artistShort: string; artworkId: string } | null {
-  const match = sku.match(/^ART-([A-Z0-9]+)-([a-f0-9-]+)-/);
-  if (!match) return null;
-  
-  return {
-    artistShort: match[1],
-    artworkId: match[2],
-  };
-}
-
-/**
  * Extract UTM parameters from landing site URL
  */
 function extractUTMParams(landingSite?: string): {
@@ -71,184 +75,328 @@ function extractUTMParams(landingSite?: string): {
   referralCode?: string;
 } | null {
   if (!landingSite) return null;
-  
+
   try {
     const url = new URL(landingSite);
     const params = new URLSearchParams(url.search);
-    
-    const utmSource = params.get('utm_source') || undefined;
-    const utmMedium = params.get('utm_medium') || undefined;
-    const utmCampaign = params.get('utm_campaign') || undefined;
-    
+
+    const utmSource = params.get("utm_source") || undefined;
+    const utmMedium = params.get("utm_medium") || undefined;
+    const utmCampaign = params.get("utm_campaign") || undefined;
+
     // Check if utm_source contains a referral code
     const referralCode = utmSource?.match(/^[A-Z]+-[A-Z0-9]{8}$/)?.[0];
-    
+
     if (utmSource || utmMedium || utmCampaign) {
-      return {
-        utmSource,
-        utmMedium,
-        utmCampaign,
-        referralCode,
-      };
+      return { utmSource, utmMedium, utmCampaign, referralCode };
     }
   } catch (error) {
-    console.error('Error parsing landing site URL:', error);
+    console.error("Error parsing landing site URL:", error);
   }
-  
+
   return null;
 }
 
+/** A line item that has been costed and is ready to have a royalty taken. */
+interface CostedLine {
+  lineItem: ShopifyLineItem;
+  artwork: any;
+  artist: any;
+  grossMinor: number;
+  productionMinor: number;
+  shippingMinor: number;
+  currency: string;
+  costSource: string;
+  costResolvedAt: Date;
+}
+
+/** A line item that could not be costed, and therefore must not be paid on. */
+interface HeldLine {
+  lineItem: ShopifyLineItem;
+  artwork: any | null;
+  artist: any | null;
+  grossMinor: number;
+  reason: string;
+}
+
 /**
- * Process a Shopify order
- * 1. Parse order data
- * 2. Extract UTM/referral tracking
- * 3. Create order records in database
- * 4. Calculate royalties for each line item (with +5% referral bonus if applicable)
- * 5. Create sale records
- * 6. Submit to Printify for fulfillment
+ * The slice of storage this processor needs.
+ *
+ * Declared as a port rather than importing `storage` directly, for the same
+ * reason cost resolution sits behind an interface: importing the real storage
+ * module opens a database connection at import time, which would make the
+ * money math untestable in exactly the environments where it most needs
+ * proving. The webhook passes the real implementation.
  */
-export async function processShopifyOrder(shopifyOrder: ShopifyOrder) {
+export interface OrderStore {
+  getAllArtists(): Promise<any[]>;
+  getArtwork(id: string): Promise<any>;
+  getArtist(id: string): Promise<any>;
+  createOrder(values: any): Promise<any>;
+  createSale(values: any): Promise<any>;
+  updateArtworkLastSaleDate(artworkId: string, date: Date): Promise<any>;
+}
+
+export interface ProcessOrderResult {
+  processed: number;
+  heldForReview: number;
+  skipped: number;
+}
+
+/**
+ * Process a Shopify order.
+ *
+ * Runs in two passes. The first resolves and snapshots costs for every line;
+ * the second calculates royalties once the order-level processing fee is known
+ * and can be apportioned. A single pass cannot do this — the fee depends on the
+ * order total, which is not known until every line has been seen.
+ */
+export async function processShopifyOrder(
+  shopifyOrder: ShopifyOrder,
+  costResolver: CostResolver,
+  store: OrderStore
+): Promise<ProcessOrderResult> {
   console.log(`Processing Shopify order: ${shopifyOrder.id}`);
-  
-  // Extract UTM parameters and referral code
+
+  const orderCurrency = shopifyOrder.currency ?? "USD";
+  const destinationCountry = shopifyOrder.shipping_address?.country_code ?? "US";
+
   const utmParams = extractUTMParams(shopifyOrder.landing_site);
   let referralArtist = null;
-  
+
   if (utmParams?.referralCode) {
-    // Find artist by referral code
-    const allArtists = await storage.getAllArtists();
-    referralArtist = allArtists.find(a => a.referralCode === utmParams.referralCode);
-    
+    const allArtists = await store.getAllArtists();
+    referralArtist = allArtists.find((a) => a.referralCode === utmParams.referralCode);
     if (referralArtist) {
-      console.log(`Order referred by artist: ${referralArtist.name} (${referralArtist.referralCode})`);
+      console.log(
+        `Order referred by artist: ${referralArtist.name} (${referralArtist.referralCode})`
+      );
     }
   }
 
-  // Process each line item (could be multiple artworks in one order)
+  // ---- Pass 1: resolve costs -------------------------------------------
+  const costed: CostedLine[] = [];
+  const held: HeldLine[] = [];
+  let skipped = 0;
+
   for (const lineItem of shopifyOrder.line_items) {
-    // Skip if no SKU (shouldn't happen but safety check)
     if (!lineItem.sku) {
       console.warn(`Line item ${lineItem.id} has no SKU, skipping`);
+      skipped++;
       continue;
     }
 
-    // Parse SKU to get artwork/artist info
-    const skuParts = parseSKU(lineItem.sku);
-    if (!skuParts) {
-      console.warn(`Could not parse SKU: ${lineItem.sku}, skipping`);
+    const resolved = resolveSku(lineItem.sku);
+    if (!resolved) {
+      console.warn(`Could not resolve SKU to a catalog entry: ${lineItem.sku}, skipping`);
+      skipped++;
       continue;
     }
+
+    const grossMinor = parseDecimalToMinor(lineItem.price) * lineItem.quantity;
 
     try {
-      // Get artwork and artist
-      const artwork = await storage.getArtwork(skuParts.artworkId);
+      const artwork = await store.getArtwork(resolved.parts.artworkId);
       if (!artwork) {
-        console.error(`Artwork not found: ${skuParts.artworkId}`);
+        console.error(`Artwork not found: ${resolved.parts.artworkId}`);
+        skipped++;
         continue;
       }
 
-      const artist = await storage.getArtist(artwork.artistId);
+      const artist = await store.getArtist(artwork.artistId);
       if (!artist) {
         console.error(`Artist not found: ${artwork.artistId}`);
+        skipped++;
         continue;
       }
 
-      // Get Printify product ID (we need this for fulfillment)
-      if (!artwork.printifyProductId) {
-        console.error(`Artwork ${artwork.id} has no Printify product ID`);
-        continue;
+      try {
+        const cost = await costResolver.resolveCost({
+          blueprintId: resolved.catalog.blueprintId,
+          printProviderId: resolved.catalog.printProviderId,
+          variantId: resolved.catalog.variantId,
+          quantity: lineItem.quantity,
+          destinationCountry,
+          printifyProductId: artwork.printifyProductId ?? undefined,
+        });
+
+        if (cost.currency !== orderCurrency) {
+          throw new CostResolutionError(
+            `Cost currency ${cost.currency} does not match order currency ${orderCurrency}`,
+            {
+              blueprintId: resolved.catalog.blueprintId,
+              printProviderId: resolved.catalog.printProviderId,
+              variantId: resolved.catalog.variantId,
+              quantity: lineItem.quantity,
+              destinationCountry,
+            }
+          );
+        }
+
+        costed.push({
+          lineItem,
+          artwork,
+          artist,
+          grossMinor,
+          productionMinor: cost.productionMinor,
+          shippingMinor: cost.shippingMinor,
+          currency: cost.currency,
+          costSource: cost.source,
+          costResolvedAt: cost.resolvedAt,
+        });
+      } catch (costError: any) {
+        // Deliberate: hold the line rather than assume a cost. An unpaid line
+        // held for review can be fixed; a royalty paid on an invented cost
+        // cannot be, once the money has left.
+        console.error(
+          `Cost resolution failed for line ${lineItem.id} (${lineItem.sku}): ${costError.message}`
+        );
+        held.push({
+          lineItem,
+          artwork,
+          artist,
+          grossMinor,
+          reason: costError.message ?? "Cost resolution failed",
+        });
+      }
+    } catch (error: any) {
+      console.error(`Error preparing line item ${lineItem.id}:`, error);
+      skipped++;
+    }
+  }
+
+  // ---- Processing fee: once per order, then apportioned ------------------
+  // Charged per transaction, so it is computed on the order total (including
+  // lines held for review — the fee was incurred regardless) and split across
+  // the lines by gross. Computing it per line would multiply the fixed 30c
+  // component by the number of lines.
+  const allLines = [...costed, ...held];
+  const orderGrossMinor = allLines.reduce((sum, l) => sum + l.grossMinor, 0);
+  const totalFeeMinor = calculateProcessingFee(orderGrossMinor);
+  const feeShares = allocateProcessingFee(
+    allLines.map((l) => l.grossMinor),
+    totalFeeMinor
+  );
+
+  // ---- Pass 2: record ----------------------------------------------------
+  for (let i = 0; i < costed.length; i++) {
+    const line = costed[i];
+    const processingFeeMinor = feeShares[i];
+
+    try {
+      const monthlySalesMinor = parseDecimalToMinor(line.artist.monthlySales ?? "0");
+      const hasReferralBonus = !!referralArtist && referralArtist.id !== line.artist.id;
+
+      const royalty = calculateRoyalty(
+        {
+          grossMinor: line.grossMinor,
+          productionMinor: line.productionMinor,
+          shippingMinor: line.shippingMinor,
+          processingFeeMinor,
+          currency: line.currency,
+        },
+        monthlySalesMinor,
+        hasReferralBonus
+      );
+
+      if (royalty.netMinor < 0) {
+        console.warn(
+          `Order ${shopifyOrder.id} line ${line.lineItem.id} is loss-making: net ${formatMinorToDecimal(royalty.netMinor)} ${line.currency}. Royalty floored at zero.`
+        );
       }
 
-      // Calculate costs and profit
-      const productPrice = parseFloat(lineItem.price) * lineItem.quantity;
-      const printifyCost = 15.00 * lineItem.quantity; // Placeholder - should get from Printify API
-      const shippingCost = 5.00 * lineItem.quantity; // Placeholder - should calculate actual
-      const profit = productPrice - printifyCost - shippingCost;
-
-      // Check for referral bonus (+5% if referred by another artist)
-      const hasReferralBonus = !!referralArtist && referralArtist.id !== artist.id;
-
-      // Get artist's current monthly sales for tier calculation
-      const monthlySales = await getArtistMonthlySales(artist.id);
-
-      // Calculate royalties from the performance tier + referral bonus
-      const royaltyData = calculateRoyalty(profit, monthlySales, hasReferralBonus);
-      
-      if (hasReferralBonus) {
-        console.log(`Referral bonus applied: +5% for artist ${artist.name}`);
-      }
-
-      // Calculate recruitment bonus if artist was recruited (5% of their base royalty goes to recruiter)
-      const recruitmentData = await calculateRecruitmentBonus(artist.id, royaltyData.baseRoyalty);
-
-      // Create order record with UTM tracking
-      const order = await storage.createOrder({
+      const order = await store.createOrder({
         shopifyOrderId: shopifyOrder.id.toString(),
-        artworkId: artwork.id,
-        artistId: artist.id,
-        productPrice: productPrice.toFixed(2),
-        printifyCost: printifyCost.toFixed(2),
-        shippingCost: shippingCost.toFixed(2),
-        profit: profit.toFixed(2),
+        shopifyLineItemId: line.lineItem.id.toString(),
+        artworkId: line.artwork.id,
+        artistId: line.artist.id,
+        productPrice: formatMinorToDecimal(line.grossMinor),
+        printifyCost: formatMinorToDecimal(line.productionMinor),
+        shippingCost: formatMinorToDecimal(line.shippingMinor),
+        profit: formatMinorToDecimal(royalty.netMinor),
+        currency: line.currency,
+        grossMinor: line.grossMinor,
+        productionMinor: line.productionMinor,
+        shippingMinorAmount: line.shippingMinor,
+        processingFeeMinor,
+        netMinor: royalty.netMinor,
+        costSource: line.costSource,
+        costResolvedAt: line.costResolvedAt,
         utmSource: utmParams?.utmSource || null,
         utmMedium: utmParams?.utmMedium || null,
         utmCampaign: utmParams?.utmCampaign || null,
         referralArtistId: referralArtist?.id || null,
         referralBonus: hasReferralBonus,
         status: "pending",
-      });
+      } as any);
 
-      console.log(`Order created: ${order.id}`);
-
-      // Create sale record with royalty information
-      const sale = await storage.createSale({
+      const sale = await store.createSale({
         orderId: order.id,
-        artistId: artist.id,
-        artworkId: artwork.id,
-        saleAmount: productPrice.toFixed(2),
-        profit: profit.toFixed(2),
-        royaltyTier: royaltyData.royaltyTier,
-        baseRoyalty: royaltyData.baseRoyalty.toFixed(2),
-        referralBonus: royaltyData.referralBonus.toFixed(2),
-        recruitmentBonus: '0', // This sale doesn't earn recruitment bonus, it generates it for the recruiter
-        totalEarnings: royaltyData.totalEarnings.toFixed(2),
-      });
-      
-      // If artist was recruited, create a separate bonus sale for the recruiter
-      if (recruitmentData.recruiterId) {
-        const recruiterBonus = await storage.createSale({
-          orderId: order.id,
-          artistId: recruitmentData.recruiterId,
-          artworkId: artwork.id,
-          saleAmount: '0', // No direct sale, just bonus
-          profit: '0',
-          royaltyTier: 0,
-          baseRoyalty: '0',
-          referralBonus: '0',
-          recruitmentBonus: recruitmentData.recruitmentBonus.toFixed(2),
-          totalEarnings: recruitmentData.recruitmentBonus.toFixed(2),
-        });
-        
-        console.log(`Recruitment bonus created: ${recruiterBonus.id}, Recruiter earns: $${recruiterBonus.totalEarnings}`);
-      }
+        artistId: line.artist.id,
+        artworkId: line.artwork.id,
+        saleAmount: formatMinorToDecimal(line.grossMinor),
+        profit: formatMinorToDecimal(royalty.netMinor),
+        royaltyTier: royalty.royaltyTierPercent,
+        baseRoyalty: formatMinorToDecimal(royalty.baseRoyaltyMinor),
+        referralBonus: formatMinorToDecimal(royalty.referralBonusMinor),
+        recruitmentBonus: "0",
+        totalEarnings: formatMinorToDecimal(royalty.totalEarningsMinor),
+        currency: royalty.currency,
+        netMinor: royalty.netMinor,
+        baseRoyaltyMinor: royalty.baseRoyaltyMinor,
+        referralBonusMinor: royalty.referralBonusMinor,
+        totalEarningsMinor: royalty.totalEarningsMinor,
+      } as any);
 
-      console.log(`Sale recorded: ${sale.id}, Artist earns: $${sale.totalEarnings}`);
+      console.log(
+        `Sale ${sale.id}: gross ${formatMinorToDecimal(line.grossMinor)}, ` +
+          `costs ${formatMinorToDecimal(line.productionMinor + line.shippingMinor + processingFeeMinor)}, ` +
+          `net ${formatMinorToDecimal(royalty.netMinor)}, ` +
+          `artist earns ${formatMinorToDecimal(royalty.totalEarningsMinor)} ${royalty.currency} ` +
+          `at ${royalty.royaltyTierPercent}%`
+      );
 
-      // Update artwork's lastSaleDate to track activity for archive system
-      await storage.updateArtworkLastSaleDate(artwork.id, new Date());
-      console.log(`Updated lastSaleDate for artwork: ${artwork.id}`);
-
-      // MVP: Skip Printify submission for now - focus on order tracking first
-      // TODO: Implement Printify fulfillment post-MVP
-      console.log(`Order tracked, Printify fulfillment to be implemented`);
-      
-      // Mark as pending fulfillment
-      await storage.updateOrder(order.id, {
-        status: "pending",
-      });
+      await store.updateArtworkLastSaleDate(line.artwork.id, new Date());
     } catch (error) {
-      console.error(`Error processing line item ${lineItem.id}:`, error);
-      // Continue processing other items
+      console.error(`Error recording line item ${line.lineItem.id}:`, error);
     }
   }
+
+  // Held lines are recorded so the revenue is not lost, but with no sale row —
+  // nothing is owed until a human resolves the cost.
+  for (let i = 0; i < held.length; i++) {
+    const line = held[i];
+    const processingFeeMinor = feeShares[costed.length + i];
+
+    try {
+      await store.createOrder({
+        shopifyOrderId: shopifyOrder.id.toString(),
+        shopifyLineItemId: line.lineItem.id.toString(),
+        artworkId: line.artwork.id,
+        artistId: line.artist.id,
+        productPrice: formatMinorToDecimal(line.grossMinor),
+        printifyCost: "0",
+        shippingCost: "0",
+        profit: "0",
+        currency: orderCurrency,
+        grossMinor: line.grossMinor,
+        processingFeeMinor,
+        costResolutionError: line.reason,
+        utmSource: utmParams?.utmSource || null,
+        utmMedium: utmParams?.utmMedium || null,
+        utmCampaign: utmParams?.utmCampaign || null,
+        referralArtistId: referralArtist?.id || null,
+        referralBonus: false,
+        status: "needs_review",
+      } as any);
+
+      console.warn(
+        `Line ${line.lineItem.id} held for review — no royalty calculated: ${line.reason}`
+      );
+    } catch (error) {
+      console.error(`Failed to record held line ${line.lineItem.id}:`, error);
+    }
+  }
+
+  return { processed: costed.length, heldForReview: held.length, skipped };
 }

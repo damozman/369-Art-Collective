@@ -73,38 +73,60 @@ function RevenueOverview({ data, isLoading }: { data: any; isLoading: boolean })
     return <Card><CardContent className="p-6">No revenue data available</CardContent></Card>;
   }
 
-  const { printNetwork, creatorStack, totals } = data;
+  const { artists, productSales, needsReview } = data;
+
+  // Server returns integer minor units; format at the edge.
+  const fmt = (minor: number) =>
+    `$${(minor / 100).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   return (
     <>
       {/* Key Metrics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card data-testid="card-total-mrr">
+        <Card data-testid="card-gross-revenue">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total MRR</CardTitle>
+            <CardTitle className="text-sm font-medium">Gross Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="value-total-mrr">
-              ${totals.totalMRR.toFixed(2)}
+            <div className="text-2xl font-bold" data-testid="value-gross-revenue">
+              {fmt(productSales.grossRevenueMinor)}
             </div>
             <p className="text-xs text-muted-foreground">
-              ${totals.totalAnnualRecurring.toFixed(0)}/year ARR
+              {productSales.totalOrders} line items · {fmt(productSales.averageOrderValueMinor)} avg
             </p>
           </CardContent>
         </Card>
 
-        <Card data-testid="card-monthly-revenue">
+        <Card data-testid="card-net-revenue">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Monthly Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Net After Costs</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="value-monthly-revenue">
-              ${totals.totalMonthlyRevenue.toFixed(2)}
+            <div className="text-2xl font-bold" data-testid="value-net-revenue">
+              {fmt(productSales.netMinor)}
             </div>
             <p className="text-xs text-muted-foreground">
-              MRR + Variable Revenue
+              After production, shipping &amp; processing
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-platform-margin">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Platform Margin</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="value-platform-margin">
+              {fmt(productSales.platformMarginMinor)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {fmt(productSales.artistRoyaltiesMinor)} paid to artists
             </p>
           </CardContent>
         </Card>
@@ -116,92 +138,74 @@ function RevenueOverview({ data, isLoading }: { data: any; isLoading: boolean })
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold" data-testid="value-artist-count">
-              {printNetwork.artists.activeCount}
+              {artists.activeCount}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card data-testid="card-product-sales">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Product Sales</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold" data-testid="value-product-sales">
-              {printNetwork.productSales.totalOrders}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              ${printNetwork.productSales.platformMargin.toFixed(2)} margin
-            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Detailed Breakdown */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card data-testid="card-print-network">
+        <Card data-testid="card-cost-breakdown">
           <CardHeader>
-            <CardTitle>369 Art Collective</CardTitle>
-            <CardDescription>POD marketplace revenue streams</CardDescription>
+            <CardTitle>Where the money went</CardTitle>
+            <CardDescription>
+              Snapshotted at the time of each sale, not looked up later
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium">Product Sales</span>
-                <span className="text-sm font-bold" data-testid="value-print-sales">
-                  ${printNetwork.productSales.platformMargin.toFixed(2)}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {printNetwork.productSales.totalOrders} orders · 
-                ${printNetwork.productSales.averageOrderValue.toFixed(2)} avg · 
-                ${printNetwork.productSales.artistRoyalties.toFixed(2)} artist royalties
-              </p>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Production (Printify)</span>
+              <span className="text-sm font-bold" data-testid="value-production-cost">
+                {fmt(productSales.productionCostMinor)}
+              </span>
             </div>
-
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium">AI Studio Credits</span>
-                <span className="text-sm font-bold" data-testid="value-ai-credits">
-                  ${printNetwork.aiCredits.revenue.toFixed(2)}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {printNetwork.aiCredits.totalPurchases} purchases
-              </p>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Shipping</span>
+              <span className="text-sm font-bold" data-testid="value-shipping-cost">
+                {fmt(productSales.shippingCostMinor)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Payment processing</span>
+              <span className="text-sm font-bold" data-testid="value-processing-fee">
+                {fmt(productSales.processingFeeMinor)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Artist royalties</span>
+              <span className="text-sm font-bold" data-testid="value-artist-royalties">
+                {fmt(productSales.artistRoyaltiesMinor)}
+              </span>
             </div>
           </CardContent>
         </Card>
 
-        <Card data-testid="card-creatorstack">
+        <Card data-testid="card-needs-review">
           <CardHeader>
-            <CardTitle>247 CreatorStack</CardTitle>
-            <CardDescription>Digital products & AI tools</CardDescription>
+            <CardTitle>Held for review</CardTitle>
+            <CardDescription>
+              Line items whose costs could not be resolved. No royalty has been
+              calculated for these — they are waiting on a human, not accruing
+              silently against an assumed cost.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium">Kit Sales</span>
-                <span className="text-sm font-bold" data-testid="value-kit-sales">
-                  ${creatorStack.kitSales.revenue.toFixed(2)}
-                </span>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              {needsReview.orderCount > 0 ? (
+                <Clock className="h-5 w-5 text-amber-500" />
+              ) : (
+                <UserCheck className="h-5 w-5 text-emerald-500" />
+              )}
+              <div className="text-2xl font-bold" data-testid="value-needs-review-count">
+                {needsReview.orderCount}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {creatorStack.kitSales.totalSales} kits sold
-              </p>
             </div>
-            
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-sm font-medium">Pro Memberships</span>
-                <span className="text-sm font-bold" data-testid="value-creatorstack-memberships">
-                  ${creatorStack.proMemberships.monthlyMRR.toFixed(2)}/mo
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {creatorStack.proMemberships.activeMembers} active members @ $29/mo
-              </p>
-            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {needsReview.orderCount === 0
+                ? "Every line item was costed successfully."
+                : `${fmt(needsReview.grossRevenueMinor)} of revenue awaiting cost resolution`}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -214,40 +218,65 @@ function RevenueOverview({ data, isLoading }: { data: any; isLoading: boolean })
 // ============================================
 
 function PrintifyCostsOverview({ data, isLoading }: { data: any; isLoading: boolean }) {
-  if (isLoading || !data) return null;
+  if (isLoading) {
+    return <Card><CardContent className="p-6">Loading product costs...</CardContent></Card>;
+  }
+
+  const costs: any[] = data?.costs ?? [];
+
+  if (costs.length === 0) {
+    return <Card><CardContent className="p-6">No product costs available</CardContent></Card>;
+  }
+
+  const fmt = (minor: number) => `$${(minor / 100).toFixed(2)}`;
+
+  const sourceLabel: Record<string, { text: string; variant: "default" | "secondary" | "destructive" }> = {
+    "printify-catalog": { text: "Live (catalog)", variant: "default" },
+    "printify-product": { text: "Live (product)", variant: "default" },
+    fixture: { text: "Fixture — not real pricing", variant: "secondary" },
+    unresolved: { text: "Unresolved", variant: "destructive" },
+  };
 
   return (
     <Card data-testid="card-printify-costs">
       <CardHeader>
-        <CardTitle>Printify Product Costs</CardTitle>
-        <CardDescription>Current production and shipping costs (estimated)</CardDescription>
+        <CardTitle>Product costs</CardTitle>
+        <CardDescription>
+          Resolved through the same path used to cost a real sale. The source
+          column says where each number came from — anything not marked live is
+          not pricing truth.
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-sm font-medium">Posters</p>
-            <p className="text-xs text-muted-foreground">
-              ${data.poster.cost.toFixed(2)} + ${data.poster.shipping.toFixed(2)} ship
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium">Canvas</p>
-            <p className="text-xs text-muted-foreground">
-              ${data.canvas.cost.toFixed(2)} + ${data.canvas.shipping.toFixed(2)} ship
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium">Framed</p>
-            <p className="text-xs text-muted-foreground">
-              ${data.framed.cost.toFixed(2)} + ${data.framed.shipping.toFixed(2)} ship
-            </p>
-          </div>
-          <div>
-            <p className="text-sm font-medium">Metal</p>
-            <p className="text-xs text-muted-foreground">
-              ${data.metal.cost.toFixed(2)} + ${data.metal.shipping.toFixed(2)} ship
-            </p>
-          </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-2 pr-4 font-medium">Product</th>
+                <th className="py-2 pr-4 font-medium">Production</th>
+                <th className="py-2 pr-4 font-medium">Shipping (US)</th>
+                <th className="py-2 font-medium">Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              {costs.map((c) => {
+                const label = sourceLabel[c.source] ?? { text: c.source, variant: "secondary" as const };
+                return (
+                  <tr key={`${c.finish}-${c.size}`} className="border-b last:border-0">
+                    <td className="py-2 pr-4">{c.finish} {c.size}</td>
+                    <td className="py-2 pr-4">{c.error ? "—" : fmt(c.productionMinor)}</td>
+                    <td className="py-2 pr-4">{c.error ? "—" : fmt(c.shippingMinor)}</td>
+                    <td className="py-2">
+                      <Badge variant={label.variant}>{label.text}</Badge>
+                      {c.error && (
+                        <span className="ml-2 text-xs text-muted-foreground">{c.error}</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>

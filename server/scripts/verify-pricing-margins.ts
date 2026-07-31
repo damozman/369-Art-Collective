@@ -10,7 +10,14 @@
  * 4. Show exact platform profit breakdown
  */
 
-import { PRINTIFY_PRODUCTS, calculateProductMargin, ROYALTY_TIERS } from '../../shared/financial-utils';
+import { PRINTIFY_PRODUCTS, calculateProductMargin } from '../../shared/financial-utils';
+
+// The royalty ladder no longer has named subscription tiers (FREE/PRO/ELITE
+// referred to a product that no longer exists). These scripts sample three
+// rungs of the performance ladder for comparison.
+const RATE_LOW = 30;
+const RATE_MID = 35;
+const RATE_HIGH = 45;
 import { getAllProducts, isShopifyConfigured } from '../lib/shopify';
 import fs from 'fs/promises';
 
@@ -108,9 +115,9 @@ async function analyzeAllProducts(): Promise<ProductAnalysis[]> {
     // Calculate current margins (if we have Shopify price)
     let currentMargins = null;
     if (shopifyPrice) {
-      const freeCalc = calculateProductMargin(shopifyPrice, config.printifyCost, config.shipping, ROYALTY_TIERS.FREE);
-      const proCalc = calculateProductMargin(shopifyPrice, config.printifyCost, config.shipping, ROYALTY_TIERS.PRO);
-      const eliteCalc = calculateProductMargin(shopifyPrice, config.printifyCost, config.shipping, ROYALTY_TIERS.ELITE);
+      const freeCalc = calculateProductMargin(shopifyPrice, config.printifyCost, config.shipping, RATE_LOW);
+      const proCalc = calculateProductMargin(shopifyPrice, config.printifyCost, config.shipping, RATE_MID);
+      const eliteCalc = calculateProductMargin(shopifyPrice, config.printifyCost, config.shipping, RATE_HIGH);
       
       currentMargins = {
         free: {
@@ -138,9 +145,9 @@ async function analyzeAllProducts(): Promise<ProductAnalysis[]> {
     const recommendedFreeShipPrice = Math.ceil(totalCOGS + 10); // Round up, add $10 buffer for margins
     
     // Calculate free shipping margins
-    const freeShipFreeCalc = calculateProductMargin(recommendedFreeShipPrice, config.printifyCost, config.shipping, ROYALTY_TIERS.FREE);
-    const freeShipProCalc = calculateProductMargin(recommendedFreeShipPrice, config.printifyCost, config.shipping, ROYALTY_TIERS.PRO);
-    const freeShipEliteCalc = calculateProductMargin(recommendedFreeShipPrice, config.printifyCost, config.shipping, ROYALTY_TIERS.ELITE);
+    const freeShipFreeCalc = calculateProductMargin(recommendedFreeShipPrice, config.printifyCost, config.shipping, RATE_LOW);
+    const freeShipProCalc = calculateProductMargin(recommendedFreeShipPrice, config.printifyCost, config.shipping, RATE_MID);
+    const freeShipEliteCalc = calculateProductMargin(recommendedFreeShipPrice, config.printifyCost, config.shipping, RATE_HIGH);
     
     const freeShipMargins = {
       free: {

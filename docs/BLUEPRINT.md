@@ -399,13 +399,33 @@ and guessing at it is the most likely way to build the wrong abstraction.
 
 ### Track B — Build. Effort-bound; goes as fast as you go.
 
-**Phase 0 — Fix what's broken.**
-- Fix the **hardcoded cost placeholders** (`order-processor.ts:163-164`) — real
-  Printify costs via API. *Today every royalty is computed from invented numbers.*
-- Collapse the **three conflicting royalty definitions** into one canonical basis.
-- Subtract payment processing fees from net.
-- Archive the cut list (influencer gamification, AI studio, recruitment residuals,
-  featured rotation) to a dormant branch.
+**Phase 0 — Fix what's broken. ✅ COMPLETE.**
+- ~~Fix the **hardcoded cost placeholders**~~ — done. Costs now resolve through
+  `server/lib/cost-resolver.ts` and are **snapshotted onto the order row** at event
+  time. A line whose cost cannot be resolved is **held for review**, never costed
+  from an assumption.
+- ~~Collapse the **three conflicting royalty definitions**~~ — done, and there were
+  **five**, not three (see the correction below). One basis now:
+  **net after COGS, shipping and processing fees**, in `server/lib/royalty.ts`.
+- ~~Subtract payment processing fees from net~~ — done. 2.9% + 30¢, computed once
+  per order and apportioned across lines by largest-remainder.
+- ~~Archive the cut list~~ — done, `archive/pre-repositioning`.
+
+**Correction to this section, found during step 5.** The defect was recorded here as
+living at `order-processor.ts:163-164`. That file was **dead code — nothing imported
+it.** The Shopify webhook actually called `server/lib/financials.ts`, which paid a
+flat **36.9% of (price − 40%-of-price-as-assumed-COGS)** with shipping hardcoded to
+zero. So the royalty that would have been paid was worse than the one documented,
+and fixing only the documented file would have changed nothing. Both files are gone.
+
+Two further live defects surfaced in the same pass and were fixed:
+
+- The webhook called the order processor **twice per delivery**, racing two royalty
+  calculations against each other.
+- `orders.shopify_order_id` was **UNIQUE** while the processor wrote one row per
+  *line item*, so any order containing two artworks silently failed to record its
+  second line. Uniqueness is now on `(shopify_order_id, shopify_line_item_id)`,
+  which doubles as the webhook idempotency key.
 
 **Phase 1 — Engine core.** The middle box in §4, with all fourteen §5 decisions
 honored. Multi-tenant from the first migration — never single-tenant "for now."

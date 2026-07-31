@@ -154,12 +154,30 @@ stamp, so if a payment succeeded but the confirmation got lost, retrying is safe
 3. They connect their own bank details through Stripe — **you never see or store
    their bank information**
 
-### When changing someone's rate
+### Adding someone
 
-Change it and set the date it starts from. **Old sales keep their old rate.** If you
-raise someone from 30% to 40% on 1 March, February's sales are still calculated at
-30%. This is not a limitation — it's the point. Rewriting history silently is how
-payout systems lose people's trust.
+In your console, **People → Add someone**. The field that matters most is the
+**reference** — that's how an incoming sale is matched to them, usually the code in
+your product SKUs. If it doesn't match, their sales land in "Needs attention"
+instead of being paid, because the system will not guess.
+
+Setting a password is optional and separate from paying them. It only controls
+whether they can sign in and see their own earnings.
+
+They connect their own bank details through Stripe. **You never see or store their
+bank information.**
+
+### Changing someone's rate
+
+In your console, **Rates → Change**. It saves as a new version.
+
+**Old sales keep their old rate.** If you raise someone from 30% to 40% today,
+last month's sales are still calculated at 30%, and nobody gets re-paid. This is
+not a limitation — it's the point. Rewriting history silently is how payout systems
+lose people's trust.
+
+If you genuinely want to top someone up for past work, that's a separate manual
+adjustment, not a rate change.
 
 ---
 
@@ -207,7 +225,6 @@ Be honest with yourself about this list.
 | **Printing costs are placeholders** | The cost numbers are educated guesses, not real Printify prices. **Must be fixed before any real payout.** Needs your Printify account — about 10 minutes on your own computer. |
 | **Not connected to Shopify live** | Real store sales don't flow in automatically yet. |
 | **Not connected to Stripe live** | Real payments can't be sent yet. Needs your Stripe Connect application approved. |
-| **Rates can't be edited on screen** | You can see every rate and what it means, but changing one still needs a developer. |
 | **Advances not supported** | Paying someone up front and earning it back isn't built. Needed for music and book publishing. Don't sell to those industries yet. |
 
 ---

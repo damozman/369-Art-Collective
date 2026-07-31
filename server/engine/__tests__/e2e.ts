@@ -43,6 +43,16 @@ import {
 import { getPayoutHistory, getStatement } from "../statement-query";
 import { authenticateTenantUser, createTenantUser } from "../admin-auth";
 import { getOverview, listContributors, listNeedsReview, listRules } from "../admin-query";
+import {
+  AdminValidationError,
+  createContributor,
+  createRule,
+  createWork,
+  deactivateRule,
+  supersedeRule,
+  updateContributor,
+} from "../admin-mutations";
+import { isEffectiveAt } from "../rules";
 import { renderStatementText } from "../statement";
 
 const results: string[] = [];
@@ -559,6 +569,134 @@ async function main() {
     assert.match(artistRule.description, /earns 30% of profit/);
     assert.match(artistRule.description, /production, shipping, processing_fee/);
   });
+
+  // ---- 14. Editing rates and people ----
+  console.log("\n14. Editing rates and people");
+
+  const newRuleId = await createRule(db, "t-369", {
+    ruleKey: "poster-rate", scope: "product_type", scopeRef: "poster",
+    basis: "net", method: "percent", percent: 25,
+    costDeductions: ["production", "shipping"], priority: 5,
+  });
+  check("a new rate can be created", () => assert.ok(newRuleId));
+
+  await assert.rejects(
+    () => createRule(db, "t-369", {
+      ruleKey: "poster-rate", scope: "tenant", basis: "net", method: "percent", percent: 40,
+    }),
+    AdminValidationError
+  );
+  check("creating a duplicate rate name is refused", async () => {});
+
+  // The invariant that matters most: changing a rate must not rewrite history.
+  const before = await listRules(db, "t-369");
+  const originalArtistRule = before.find((r) => r.ruleKey === "artist-standard")!;
+
+  const changed = await supersedeRule(db, "t-369", {
+    ruleKey: "artist-standard", scope: "contributor", scopeRef: "c-alice",
+    contributorId: "c-alice",
+    basis: "net", method: "percent", percent: 40,
+    costDeductions: ["production", "shipping", "processing_fee"], priority: 10,
+  });
+  check("changing a rate creates version 2", () => assert.equal(changed.version, 2));
+
+  const after = await listRules(db, "t-369");
+  const v1 = after.find((r) => r.ruleKey === "artist-standard" && r.version === 1)!;
+  const v2 = after.find((r) => r.ruleKey === "artist-standard" && r.version === 2)!;
+
+  check("version 1 still exists, unedited", () => {
+    assert.equal(v1.id, originalArtistRule.id);
+    assert.equal(v1.valueBasisPoints, 3000, "the old rate is untouched");
+  });
+  check("version 2 carries the new rate", () => assert.equal(v2.valueBasisPoints, 4000));
+  check("version 1 was closed exactly where version 2 opens", () =>
+    assert.equal(v1.effectiveTo?.getTime(), v2.effectiveFrom.getTime())
+  );
+  check("no gap and no overlap between versions", () => {
+    const boundary = v2.effectiveFrom;
+    const asRule = (r: typeof v1) => ({
+      ...r, active: r.active, effectiveFrom: r.effectiveFrom, effectiveTo: r.effectiveTo,
+    }) as any;
+    assert.equal(isEffectiveAt(asRule(v1), new Date(boundary.getTime() - 1)), true);
+    assert.equal(isEffectiveAt(asRule(v1), boundary), false, "old version ends at the boundary");
+    assert.equal(isEffectiveAt(asRule(v2), boundary), true, "new version starts at it");
+  });
+
+  // The past payment is a snapshot and must be completely unaffected.
+  const aliceAllocs = await db
+    .select().from(schema.allocations)
+    .where(eq(schema.allocations.contributorId, "c-alice"));
+  check("payments already made still show the OLD rate", () =>
+    assert.ok(aliceAllocs.every((a) => a.rateBasisPoints === 3000 || a.amountMinor < 0n))
+  );
+
+  await assert.rejects(
+    () => supersedeRule(db, "t-369", {
+      ruleKey: "artist-standard", scope: "tenant", basis: "net", method: "percent",
+      percent: 50, effectiveFrom: new Date("2020-01-01"),
+    }),
+    /cannot start before/
+  );
+  check("backdating a change before the version it replaces is refused", async () => {});
+
+  await assert.rejects(
+    () => createRule(db, "t-369", {
+      ruleKey: "bad-rate", scope: "tenant", basis: "net", method: "percent", percent: 150,
+    }),
+    /between 0 and 100/
+  );
+  check("an impossible percentage is refused", async () => {});
+
+  await assert.rejects(
+    () => createRule(db, "t-369", {
+      ruleKey: "too-precise", scope: "tenant", basis: "net", method: "percent", percent: 30.005,
+    }),
+    /two decimal places/
+  );
+  check("a percentage finer than storage allows is refused", async () => {});
+
+  await deactivateRule(db, "t-369", "poster-rate");
+  const afterDeactivate = await listRules(db, "t-369");
+  check("a deactivated rate stays on record rather than being deleted", () =>
+    assert.ok(afterDeactivate.some((r) => r.ruleKey === "poster-rate" && !r.active))
+  );
+
+  // People
+  const newPersonId = await createContributor(db, "t-369", {
+    name: "Casey Kim", email: "casey@example.com", externalRef: "casey",
+    password: "a good long password",
+  });
+  check("a person can be added", () => assert.ok(newPersonId));
+
+  await assert.rejects(
+    () => createContributor(db, "t-369", { name: "Impostor", externalRef: "casey" }),
+    /References must be unique/
+  );
+  check("a duplicate reference is refused with a readable message", async () => {});
+
+  const caseyLogin = await authenticateContributor(
+    db, "t-369", "casey@example.com", "a good long password"
+  );
+  check("the person can sign in with the password that was set", () =>
+    assert.equal(caseyLogin?.contributorId, newPersonId)
+  );
+
+  await updateContributor(db, "t-369", newPersonId, { name: "Casey Kim-Alvarez" });
+  const updatedPeople = await listContributors(db, "t-369", new Date(), 1000n);
+  check("editing a person's details works", () =>
+    assert.ok(updatedPeople.some((p) => p.name === "Casey Kim-Alvarez"))
+  );
+
+  await assert.rejects(
+    () => updateContributor(db, "t-press", newPersonId, { name: "Hijacked" }),
+    /not in this business/
+  );
+  check("one business cannot edit another's people", async () => {});
+
+  const workId = await createWork(db, "t-369", {
+    title: "New Piece", externalRef: "art-999", productType: "poster",
+  });
+  check("a work can be added", () => assert.ok(workId));
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

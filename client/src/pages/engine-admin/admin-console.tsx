@@ -47,9 +47,13 @@ import {
   logout,
   previewPayouts,
   runPayouts,
+  type AdminContributor,
   type AdminMe,
+  type AdminRule,
   type RunResult,
 } from "@/lib/admin-api";
+import { RateEditor } from "./rate-editor";
+import { PeopleEditor } from "./people-editor";
 import { formatMoney, isPositive, signOf } from "@/lib/portal-money";
 import { formatDate } from "@/lib/portal-date";
 
@@ -159,7 +163,7 @@ export function AdminConsole({
           </TabsContent>
 
           <TabsContent value="people" className="mt-4">
-            <PeopleTab slug={slug} currency={currency} />
+            <PeopleTab slug={slug} currency={currency} canWrite={me.role === "admin"} />
           </TabsContent>
 
           <TabsContent value="attention" className="mt-4">
@@ -167,7 +171,7 @@ export function AdminConsole({
           </TabsContent>
 
           <TabsContent value="rules" className="mt-4">
-            <RulesTab slug={slug} />
+            <RulesTab slug={slug} canWrite={me.role === "admin"} />
           </TabsContent>
 
           <TabsContent value="history" className="mt-4">
@@ -389,7 +393,17 @@ function PayTab({
 
 // ---- People ----
 
-function PeopleTab({ slug, currency }: { slug: string; currency: string }) {
+function PeopleTab({
+  slug,
+  currency,
+  canWrite,
+}: {
+  slug: string;
+  currency: string;
+  canWrite: boolean;
+}) {
+  const [editing, setEditing] = useState<AdminContributor | "new" | null>(null);
+
   const query = useQuery({
     queryKey: ["admin-contributors", slug],
     queryFn: () => getContributors(slug),
@@ -398,12 +412,28 @@ function PeopleTab({ slug, currency }: { slug: string; currency: string }) {
   if (query.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!query.data) return null;
 
+  if (editing) {
+    return (
+      <PeopleEditor
+        slug={slug}
+        existing={editing === "new" ? undefined : editing}
+        onDone={() => setEditing(null)}
+        onCancel={() => setEditing(null)}
+      />
+    );
+  }
+
   if (query.data.contributors.length === 0) {
     return (
       <Card>
         <CardContent className="py-8 text-center text-sm text-muted-foreground">
           <Users className="mx-auto mb-2 h-6 w-6" />
-          Nobody has been added yet.
+          <p className="mb-4">Nobody has been added yet.</p>
+          {canWrite && (
+            <Button onClick={() => setEditing("new")} data-testid="button-add-first-person">
+              Add someone
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -411,11 +441,18 @@ function PeopleTab({ slug, currency }: { slug: string; currency: string }) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>People you pay</CardTitle>
-        <CardDescription>
-          Minimum payout is {formatMoney(query.data.minimumPayout.minor, currency)}.
-        </CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div>
+          <CardTitle>People you pay</CardTitle>
+          <CardDescription>
+            Minimum payout is {formatMoney(query.data.minimumPayout.minor, currency)}.
+          </CardDescription>
+        </div>
+        {canWrite && (
+          <Button size="sm" onClick={() => setEditing("new")} data-testid="button-add-person">
+            Add someone
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -425,7 +462,8 @@ function PeopleTab({ slug, currency }: { slug: string; currency: string }) {
                 <th className="py-2 pr-4 font-medium">Name</th>
                 <th className="py-2 pr-4 font-medium">Balance</th>
                 <th className="py-2 pr-4 font-medium">Ready now</th>
-                <th className="py-2 font-medium">Status</th>
+                <th className="py-2 pr-4 font-medium">Status</th>
+                <th className="py-2 font-medium" />
               </tr>
             </thead>
             <tbody data-testid="table-contributors">
@@ -447,13 +485,25 @@ function PeopleTab({ slug, currency }: { slug: string; currency: string }) {
                       ? formatMoney(person.payable.minor, currency)
                       : "—"}
                   </td>
-                  <td className="py-2">
+                  <td className="py-2 pr-4">
                     {person.blockedReason ? (
                       <span className="text-xs text-muted-foreground">
                         {person.blockedReason}
                       </span>
                     ) : (
                       <Badge variant="default">Ready</Badge>
+                    )}
+                  </td>
+                  <td className="py-2 text-right">
+                    {canWrite && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditing(person)}
+                        data-testid={`button-edit-person-${person.id}`}
+                      >
+                        Edit
+                      </Button>
                     )}
                   </td>
                 </tr>
@@ -526,30 +576,66 @@ function AttentionTab({ slug, currency }: { slug: string; currency: string }) {
 
 // ---- Rules ----
 
-function RulesTab({ slug }: { slug: string }) {
+function RulesTab({ slug, canWrite }: { slug: string; canWrite: boolean }) {
+  const [editing, setEditing] = useState<AdminRule | "new" | null>(null);
+
   const query = useQuery({
     queryKey: ["admin-rules", slug],
     queryFn: () => getRules(slug),
   });
 
+  const contributorsQuery = useQuery({
+    queryKey: ["admin-contributors", slug],
+    queryFn: () => getContributors(slug),
+  });
+
   if (query.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!query.data) return null;
 
+  if (editing) {
+    return (
+      <RateEditor
+        slug={slug}
+        contributors={contributorsQuery.data?.contributors ?? []}
+        existing={editing === "new" ? undefined : editing}
+        onDone={() => setEditing(null)}
+        onCancel={() => setEditing(null)}
+      />
+    );
+  }
+
+  // Only the newest version of each rate — older versions are history, not
+  // something to act on, and listing them all makes the screen unreadable.
+  const currentRules = Object.values(
+    query.data.rules.reduce<Record<string, AdminRule>>((acc, rule) => {
+      const seen = acc[rule.ruleKey];
+      if (!seen || rule.version > seen.version) acc[rule.ruleKey] = rule;
+      return acc;
+    }, {})
+  );
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>What everyone earns</CardTitle>
-        <CardDescription>
-          Changing a rate creates a new version — past sales keep the rate that applied
-          at the time. Editing these from here comes later; for now they are set for you.
-        </CardDescription>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div>
+          <CardTitle>What everyone earns</CardTitle>
+          <CardDescription>
+            Changing a rate creates a new version — past sales keep the rate that
+            applied at the time.
+          </CardDescription>
+        </div>
+        {canWrite && (
+          <Button size="sm" onClick={() => setEditing("new")} data-testid="button-add-rate">
+            New rate
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
-        {query.data.rules.length === 0 ? (
+        {currentRules.length === 0 ? (
           <p className="text-sm text-muted-foreground">No rates set up yet.</p>
         ) : (
           <ul className="space-y-3" data-testid="list-rules">
-            {query.data.rules.map((rule) => (
+            {currentRules.map((rule) => (
               <li key={rule.id} className="rounded-md border p-3">
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -559,10 +645,22 @@ function RulesTab({ slug }: { slug: string }) {
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {rule.contributorName ? `${rule.contributorName} · ` : ""}
-                      {rule.ruleKey} v{rule.version}
+                      {rule.ruleKey} · version {rule.version}
                     </p>
                   </div>
-                  {!rule.active && <Badge variant="secondary">Inactive</Badge>}
+                  <div className="flex shrink-0 items-center gap-2">
+                    {!rule.active && <Badge variant="secondary">Inactive</Badge>}
+                    {canWrite && rule.active && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditing(rule)}
+                        data-testid={`button-edit-rate-${rule.ruleKey}`}
+                      >
+                        Change
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </li>
             ))}

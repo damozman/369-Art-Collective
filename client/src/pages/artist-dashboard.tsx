@@ -6,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
 import { Upload, CheckCircle, Clock, XCircle, DollarSign, Users, Wallet, Eye, EyeOff, Crown, Sparkles, ExternalLink, BarChart3, Archive, RefreshCw, Zap, TrendingUp, Settings, Image as ImageIcon } from "lucide-react";
-import { useSubscriptionStatus, getTrialStatusText, type SubscriptionStatus } from "@/hooks/use-subscription-status";
 import type { Artwork } from "@shared/schema";
 import { ArtistLayout } from "@/components/layouts/artist-layout";
 import {
@@ -24,182 +23,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
-// Subscription Tier Card Component
-function SubscriptionTierCard({ 
-  subscription, 
-  isLoading,
-  artworkCount
-}: { 
-  subscription: SubscriptionStatus | null;
-  isLoading: boolean;
-  artworkCount: number;
-}) {
-  const [, setLocation] = useLocation();
-  
-  if (isLoading) {
-    return (
-      <Card className="mb-8" data-testid="card-subscription-loading">
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-3/4" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const tier = subscription?.tier || "free";
-  const tierName = tier === "free" ? "Free" : tier === "pro" ? "Pro" : "Elite";
-  const tierColor = tier === "free" ? "secondary" : tier === "pro" ? "default" : "default";
-  const royaltyRate = tier === "free" ? "30%" : tier === "pro" ? "35% minimum" : "45% guaranteed";
-  const FREE_TIER_LIMIT = 20;
-  const remainingUploads = tier === "free" ? Math.max(0, FREE_TIER_LIMIT - artworkCount) : null;
-
-  // Free tier
-  if (tier === "free") {
-    return (
-      <Card className="mb-8 border-primary/20" data-testid="card-subscription-free">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-muted-foreground" />
-              <CardTitle>Subscription: {tierName}</CardTitle>
-            </div>
-            <Badge variant={tierColor} data-testid="badge-tier-free">
-              {tierName}
-            </Badge>
-          </div>
-          <CardDescription>
-            Upgrade to unlock unlimited uploads and premium features
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div className="flex items-start gap-2">
-                <Upload className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="font-medium">{remainingUploads}/{FREE_TIER_LIMIT} Uploads Left</p>
-                  <p className="text-muted-foreground text-xs">Limited artwork</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="font-medium">{royaltyRate} Royalty</p>
-                  <p className="text-muted-foreground text-xs">Base tier rate</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2">
-                <XCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="font-medium">No AI Tools</p>
-                  <p className="text-muted-foreground text-xs">Upgrade to unlock</p>
-                </div>
-              </div>
-            </div>
-            <Button onClick={() => setLocation("/artist/settings")} className="w-full" data-testid="button-upgrade-subscription">
-              <Crown className="mr-2 h-4 w-4" />
-              Start Free Trial
-            </Button>
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              14-day Pro trial or 7-day Elite trial • No charge until trial ends
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Pro/Elite tier
-  return (
-    <Card className="mb-8 border-primary/40 bg-primary/5" data-testid={`card-subscription-${tier}`}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Crown className="h-5 w-5 text-primary" />
-            <CardTitle>Subscription: {tierName}</CardTitle>
-          </div>
-          {subscription?.isOnTrial ? (
-            <Badge variant="default" className="bg-blue-600 dark:bg-blue-500" data-testid="badge-trial-status">
-              Trial: {getTrialStatusText(subscription)}
-            </Badge>
-          ) : (
-            <Badge variant={tierColor} className="bg-primary" data-testid={`badge-tier-${tier}`}>
-              <Sparkles className="w-3 h-3 mr-1" />
-              {tierName}
-            </Badge>
-          )}
-        </div>
-        <CardDescription>
-          {subscription?.isOnTrial 
-            ? `${tierName} trial active • Full access to all features`
-            : tier === "pro" ? "Unlimited uploads and AI Art Studio access" : "Full access with guaranteed 45% royalty"
-          }
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Artwork Limit</span>
-            <span className="font-medium text-primary">Unlimited</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Royalty Rate</span>
-            <span className="font-medium text-primary">{royaltyRate}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">AI Art Studio</span>
-            <span className="font-medium text-primary flex items-center gap-1">
-              <CheckCircle className="w-3 h-3" />
-              Enabled
-            </span>
-          </div>
-          {subscription?.isOnTrial && subscription?.trialEndDate ? (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Trial Ends</span>
-              <span className="font-medium">
-                {subscription.trialEndDate.toLocaleDateString()}
-              </span>
-            </div>
-          ) : subscription?.subscriptionPeriodEnd && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Renews</span>
-              <span className="font-medium">
-                {new Date(subscription.subscriptionPeriodEnd).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-          <div className="pt-2 border-t">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setLocation("/artist/settings")} 
-              className="w-full"
-              data-testid="button-manage-subscription"
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Manage Subscription
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 // AI Upscale Quota Widget Component
-function QuotaWidget({ tier }: { tier: string }) {
-  const [, setLocation] = useLocation();
-  
+function QuotaWidget() {
   const { data: quotaData, isLoading } = useQuery<{
     hasQuota: boolean;
-    quotaType: 'registration_bonus' | 'monthly' | 'elite_unlimited';
+    quotaType: 'registration_bonus' | 'monthly';
     remaining: number;
     total: number;
-    tier: string;
     message: string;
     analytics: {
       lifetimeTotal: number;
@@ -227,12 +57,9 @@ function QuotaWidget({ tier }: { tier: string }) {
 
   if (!quotaData) return null;
 
-  const isUnlimited = quotaData.quotaType === 'elite_unlimited';
-  const hasQuota = quotaData.total > 0;
-  const percentageUsed = isUnlimited || !hasQuota ? 0 : ((quotaData.total - quotaData.remaining) / quotaData.total) * 100;
-  const isLowQuota = hasQuota && !isUnlimited && percentageUsed >= 80;
-  const isExhausted = hasQuota && !isUnlimited && quotaData.remaining === 0;
-  const hasZeroQuota = !isUnlimited && !hasQuota;
+  const percentageUsed = ((quotaData.total - quotaData.remaining) / quotaData.total) * 100;
+  const isLowQuota = percentageUsed >= 80;
+  const isExhausted = quotaData.remaining === 0;
 
   return (
     <Card className="mb-8" data-testid="card-quota">
@@ -242,34 +69,17 @@ function QuotaWidget({ tier }: { tier: string }) {
             <Zap className="h-5 w-5 text-primary" />
             <CardTitle>AI Image Upscaling</CardTitle>
           </div>
-          {isUnlimited ? (
-            <Badge variant="default" className="bg-primary" data-testid="badge-quota-unlimited">
-              <Sparkles className="w-3 h-3 mr-1" />
-              Unlimited
-            </Badge>
-          ) : (
-            <Badge variant={isExhausted ? "destructive" : isLowQuota ? "secondary" : "outline"} data-testid="badge-quota-remaining">
-              {quotaData.remaining} / {quotaData.total} remaining
-            </Badge>
-          )}
+          <Badge variant={isExhausted ? "destructive" : isLowQuota ? "secondary" : "outline"} data-testid="badge-quota-remaining">
+            {quotaData.remaining} / {quotaData.total} remaining
+          </Badge>
         </div>
         <CardDescription>
-          {isUnlimited 
-            ? "Enhance any image to professional print quality with priority processing"
-            : "Boost low-resolution images to meet print quality standards"}
+          Boost low-resolution images to meet print quality standards
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {hasZeroQuota && (
-            <div className="p-4 bg-muted/50 rounded-lg border border-muted">
-              <p className="text-sm text-muted-foreground">
-                No AI upscale quota assigned. Upgrade to start enhancing your images.
-              </p>
-            </div>
-          )}
-
-          {!isUnlimited && hasQuota && (
+          {(
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Quota Usage</span>
@@ -308,50 +118,13 @@ function QuotaWidget({ tier }: { tier: string }) {
                 <p className="text-muted-foreground text-xs">This month</p>
               </div>
             </div>
-            {isUnlimited && (
-              <div className="flex items-start gap-2">
-                <Sparkles className="h-4 w-4 text-primary mt-0.5" />
-                <div>
-                  <p className="font-medium">Priority Queue</p>
-                  <p className="text-muted-foreground text-xs">Fastest processing</p>
-                </div>
-              </div>
-            )}
           </div>
 
-          {hasZeroQuota && (
+          {isExhausted && (
             <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground mb-3">
-                AI upscaling is available with Pro or Elite subscriptions.
+              <p className="text-sm text-muted-foreground" data-testid="text-quota-exhausted">
+                You've used all your AI upscales for this cycle. Your quota resets monthly.
               </p>
-              <Button onClick={() => setLocation("/artist/settings")} className="w-full" data-testid="button-upgrade-quota-zero">
-                <Crown className="mr-2 h-4 w-4" />
-                Upgrade to Get AI Upscales
-              </Button>
-            </div>
-          )}
-
-          {isExhausted && !hasZeroQuota && (
-            <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground mb-3">
-                You've used all your AI upscales. Upgrade to continue enhancing images.
-              </p>
-              <Button onClick={() => setLocation("/artist/settings")} className="w-full" data-testid="button-upgrade-quota">
-                <Crown className="mr-2 h-4 w-4" />
-                Upgrade for More Upscales
-              </Button>
-            </div>
-          )}
-
-          {isLowQuota && !isExhausted && !hasZeroQuota && (
-            <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground mb-3">
-                Running low on upscales. Upgrade for unlimited AI enhancements.
-              </p>
-              <Button variant="outline" onClick={() => setLocation("/artist/settings")} className="w-full" size="sm" data-testid="button-upgrade-quota-low">
-                <Crown className="mr-2 h-4 w-4" />
-                View Upgrade Options
-              </Button>
             </div>
           )}
         </div>
@@ -377,8 +150,6 @@ export default function ArtistDashboard() {
   const { data: payoutData, isLoading: payoutLoading, isError: payoutError } = useQuery<{ payouts: any[]; unpaidEarnings: number; unpaidSalesCount: number }>({
     queryKey: ["/api/artists/payouts"],
   });
-
-  const { subscriptionDetails: subscription, isLoading: subscriptionLoading } = useSubscriptionStatus();
 
   const stats = {
     total: artworks?.length || 0,
@@ -582,15 +353,8 @@ export default function ArtistDashboard() {
             </Card>
           </div>
 
-          {/* Subscription Tier Section */}
-          <SubscriptionTierCard
-            subscription={subscription}
-            isLoading={subscriptionLoading}
-            artworkCount={stats.total}
-          />
-
           {/* AI Upscale Quota Section */}
-          <QuotaWidget tier={subscription?.tier || "free"} />
+          <QuotaWidget />
 
         </div>
 

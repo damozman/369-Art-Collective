@@ -106,12 +106,8 @@ export async function getPrintifyProductCost(
 export interface RevenueMetrics {
   // Print Network
   printNetwork: {
-    artistSubscriptions: {
-      freeCount: number;
-      proCount: number;
-      eliteCount: number;
-      monthlyMRR: number;
-      annualProjection: number;
+    artists: {
+      activeCount: number;
     };
     productSales: {
       totalOrders: number;
@@ -159,17 +155,8 @@ export async function calculateRevenueMetrics(
   const monthStart = startDate || new Date(now.getFullYear(), now.getMonth(), 1);
   const monthEnd = endDate || new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-  // Get all artists with subscription data
   const allArtists = await storage.getAllArtists();
-  
-  const freeArtists = allArtists.filter(a => a.subscriptionTier === 'free' && !a.deletedAt);
-  const proArtists = allArtists.filter(a => a.subscriptionTier === 'pro' && !a.deletedAt);
-  const eliteArtists = allArtists.filter(a => a.subscriptionTier === 'elite' && !a.deletedAt);
-
-  // Artist subscription MRR (based on replit.md pricing)
-  const proPrice = 20; // $20/mo for Pro
-  const elitePrice = 45; // $45/mo for Elite
-  const artistSubscriptionMRR = (proArtists.length * proPrice) + (eliteArtists.length * elitePrice);
+  const activeArtists = allArtists.filter(a => !a.deletedAt);
 
   // Get product sales data (from orders table if available, or calculate)
   // For now, we'll use estimated data - in production, query actual orders
@@ -201,17 +188,13 @@ export async function calculateRevenueMetrics(
   };
 
   // Calculate totals
-  const totalMRR = artistSubscriptionMRR + creatorStack.proMemberships.monthlyMRR;
+  const totalMRR = creatorStack.proMemberships.monthlyMRR;
   const totalOneTimeRevenue = productSales.platformMargin + aiCredits.revenue + creatorStack.kitSales.revenue;
 
   return {
     printNetwork: {
-      artistSubscriptions: {
-        freeCount: freeArtists.length,
-        proCount: proArtists.length,
-        eliteCount: eliteArtists.length,
-        monthlyMRR: artistSubscriptionMRR,
-        annualProjection: artistSubscriptionMRR * 12,
+      artists: {
+        activeCount: activeArtists.length,
       },
       productSales,
       aiCredits,
@@ -254,52 +237,6 @@ export function calculateProductMargin(
 }
 
 // ============================================
-// ARTIST BREAK-EVEN CALCULATOR
-// ============================================
-
-export interface ArtistBreakEven {
-  subscriptionCost: number;
-  subscriptionTier: 'free' | 'pro' | 'elite';
-  royaltyPercent: number;
-  averageProductRevenue: number; // Average $ they earn per sale
-  salesNeededToBreakEven: number;
-  monthlyROI: {
-    breakEvenSales: number;
-    benefits: string[];
-  };
-}
-
-/**
- * Calculate how many sales an artist needs to break even on subscription
- */
-export function calculateArtistBreakEven(
-  subscriptionTier: 'free' | 'pro' | 'elite',
-  averageOrderValue: number = 89.99
-): ArtistBreakEven {
-  const tierData = {
-    free: { cost: 0, royalty: 30, benefits: ['30% royalty', '20 artwork limit', 'Basic features'] },
-    pro: { cost: 20, royalty: 35, benefits: ['35% royalty', 'Unlimited artworks', '50 AI credits/month', 'Featured rotation eligibility'] },
-    elite: { cost: 45, royalty: 45, benefits: ['45% royalty', 'Unlimited artworks', 'Unlimited AI credits', 'Guaranteed featured placement', 'Priority support'] },
-  };
-
-  const tier = tierData[subscriptionTier];
-  const averageProductRevenue = averageOrderValue * (tier.royalty / 100);
-  const salesNeededToBreakEven = tier.cost > 0 ? Math.ceil(tier.cost / averageProductRevenue) : 0;
-
-  return {
-    subscriptionCost: tier.cost,
-    subscriptionTier,
-    royaltyPercent: tier.royalty,
-    averageProductRevenue,
-    salesNeededToBreakEven,
-    monthlyROI: {
-      breakEvenSales: salesNeededToBreakEven,
-      benefits: tier.benefits,
-    },
-  };
-}
-
-// ============================================
 // PRICING STRATEGY TOOL
 // ============================================
 
@@ -308,10 +245,11 @@ export interface PricingStrategy {
   currentPrice: number;
   suggestedPrices: Array<{
     price: number;
+    // Platform margin at each valid royalty rate (see VALID_ROYALTY_PERCENTAGES)
     margins: {
-      free: MarginCalculation;
-      pro: MarginCalculation;
-      elite: MarginCalculation;
+      rate30: MarginCalculation;
+      rate35: MarginCalculation;
+      rate45: MarginCalculation;
     };
   }>;
 }
@@ -336,9 +274,9 @@ export async function generatePricingStrategy(
   const suggestedPrices = pricePoints.map(price => ({
     price: Math.round(price * 100) / 100, // Round to 2 decimals
     margins: {
-      free: calculateProductMargin(price, printifyCost, shipping, 30),
-      pro: calculateProductMargin(price, printifyCost, shipping, 35),
-      elite: calculateProductMargin(price, printifyCost, shipping, 45),
+      rate30: calculateProductMargin(price, printifyCost, shipping, 30),
+      rate35: calculateProductMargin(price, printifyCost, shipping, 35),
+      rate45: calculateProductMargin(price, printifyCost, shipping, 45),
     },
   }));
 

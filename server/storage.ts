@@ -10,7 +10,6 @@ import {
   violationReports,
   stripeWebhookEvents,
   testimonials,
-  subscriptionTrials,
   influencers,
   affiliateClicks,
   affiliateConversions,
@@ -35,8 +34,6 @@ import {
   type Testimonial,
   type InsertTestimonial,
   type TestimonialWithArtist,
-  type SubscriptionTrial,
-  type InsertSubscriptionTrial,
   type Influencer,
   type InsertInfluencer,
   type AffiliateClick,
@@ -91,7 +88,7 @@ export interface IStorage {
   getArtworksByArtist(artistId: string): Promise<Artwork[]>;
   getAllArtworks(): Promise<ArtworkWithArtist[]>;
   createArtwork(artwork: InsertArtwork): Promise<Artwork>;
-  createArtworkWithLimitCheck(artwork: InsertArtwork, subscriptionTier: string, freeLimit: number): Promise<Artwork>;
+  createArtworkWithLimitCheck(artwork: InsertArtwork, uploadLimit: number): Promise<Artwork>;
   updateArtwork(id: string, updates: Partial<Artwork>): Promise<Artwork>;
   
   // Artwork archive methods
@@ -139,10 +136,6 @@ export interface IStorage {
   getTestimonialBySlugWithArtist(slug: string): Promise<TestimonialWithArtist | undefined>;
   getFeaturedTestimonialsWithArtist(): Promise<TestimonialWithArtist[]>;
 
-  // Subscription Trial methods
-  createSubscriptionTrial(trial: InsertSubscriptionTrial): Promise<SubscriptionTrial>;
-  getSubscriptionTrialsByArtist(artistId: string): Promise<SubscriptionTrial[]>;
-  updateSubscriptionTrial(id: string, updates: Partial<SubscriptionTrial>): Promise<SubscriptionTrial>;
   
   // ===================================
   // INFLUENCER AFFILIATE PROGRAM METHODS
@@ -487,19 +480,8 @@ class PostgresStorage implements IStorage {
 
   async createArtworkWithLimitCheck(
     insertArtwork: InsertArtwork,
-    subscriptionTier: string,
-    freeLimit: number
+    uploadLimit: number
   ): Promise<Artwork> {
-    // Pro and Elite tiers have unlimited uploads
-    if (subscriptionTier === "pro" || subscriptionTier === "elite") {
-      const [artwork] = await db
-        .insert(artworksTable)
-        .values(insertArtwork)
-        .returning();
-      return artwork;
-    }
-
-    // Free tier: check limit before creating
     // Note: Small race condition possible without transactions, but acceptable for MVP
     // Admin review process will catch any edge cases
     const count = await db
@@ -509,9 +491,9 @@ class PostgresStorage implements IStorage {
 
     const artworkCount = count[0]?.count || 0;
 
-    if (artworkCount >= freeLimit) {
+    if (artworkCount >= uploadLimit) {
       throw new Error(
-        `Upload limit reached. Free tier allows ${freeLimit} artworks. Upgrade to Pro or Elite for unlimited uploads.`
+        `Upload limit reached. Each artist may have up to ${uploadLimit} artworks.`
       );
     }
 
@@ -961,28 +943,6 @@ class PostgresStorage implements IStorage {
     return results.rows as any[];
   }
 
-  // Subscription Trial methods
-  async createSubscriptionTrial(trial: InsertSubscriptionTrial): Promise<SubscriptionTrial> {
-    const [created] = await db.insert(subscriptionTrials).values([trial as any]).returning();
-    return created;
-  }
-
-  async getSubscriptionTrialsByArtist(artistId: string): Promise<SubscriptionTrial[]> {
-    return await db
-      .select()
-      .from(subscriptionTrials)
-      .where(eq(subscriptionTrials.artistId, artistId))
-      .orderBy(desc(subscriptionTrials.trialStartedAt));
-  }
-
-  async updateSubscriptionTrial(id: string, updates: Partial<SubscriptionTrial>): Promise<SubscriptionTrial> {
-    const [updated] = await db
-      .update(subscriptionTrials)
-      .set(updates)
-      .where(eq(subscriptionTrials.id, id))
-      .returning();
-    return updated;
-  }
 
   // ===================================
   // INFLUENCER AFFILIATE PROGRAM IMPLEMENTATION
@@ -1303,7 +1263,6 @@ class MemStorage implements IStorage {
   private portfolioSubmissions: Map<string, PortfolioSubmission> = new Map();
   private violationReports: Map<string, ViolationReport> = new Map();
   private artworks: Map<string, Artwork> = new Map();
-  private subscriptionTrials: Map<string, SubscriptionTrial> = new Map();
   private waitlist: Map<string, Waitlist> = new Map();
 
   // Helper methods for transactions (not used in MemStorage but required by interface)
@@ -1350,7 +1309,6 @@ class MemStorage implements IStorage {
       referralCode,
       approved: false,
       monthlySales: '0',
-      subscriptionTier: insertArtist.subscriptionTier ?? 'free',
       stripeAccountId: null,
       stripeAccountStatus: null,
       stripeOnboardingComplete: insertArtist.stripeOnboardingComplete ?? false,
@@ -1536,19 +1494,12 @@ class MemStorage implements IStorage {
 
   async createArtworkWithLimitCheck(
     insertArtwork: InsertArtwork,
-    subscriptionTier: string,
-    freeLimit: number
+    uploadLimit: number
   ): Promise<Artwork> {
-    // Pro and Elite tiers have unlimited uploads
-    if (subscriptionTier === "pro" || subscriptionTier === "elite") {
-      return this.createArtwork(insertArtwork);
-    }
-
-    // Free tier: check limit
     const artworks = await this.getArtworksByArtist(insertArtwork.artistId);
-    if (artworks.length >= freeLimit) {
+    if (artworks.length >= uploadLimit) {
       throw new Error(
-        `Upload limit reached. Free tier allows ${freeLimit} artworks. Upgrade to Pro or Elite for unlimited uploads.`
+        `Upload limit reached. Each artist may have up to ${uploadLimit} artworks.`
       );
     }
 
@@ -1973,55 +1924,6 @@ class MemStorage implements IStorage {
   }
 
   
-  // Subscription Trial methods
-  async createSubscriptionTrial(trial: InsertSubscriptionTrial): Promise<SubscriptionTrial> {
-    const id = randomUUID();
-    const created: SubscriptionTrial = {
-      ...trial,
-      id,
-      createdAt: new Date(),
-      trialStartedAt: trial.trialStartedAt || new Date(),
-      stripeCustomerId: trial.stripeCustomerId ?? null,
-      stripeSubscriptionId: trial.stripeSubscriptionId ?? null,
-      trialSource: trial.trialSource ?? null,
-      convertedAt: null,
-      canceledAt: null,
-      expiredAt: null,
-      downgradedAt: null,
-      cancellationReason: null,
-      lastEmailSentAt: null,
-      emailsSent: 0,
-      emailTemplatesSent: []
-    };
-    this.subscriptionTrials.set(id, created);
-    // Return deep copy to prevent mutation
-    return {
-      ...created,
-      emailTemplatesSent: [...(created.emailTemplatesSent || [])]
-    };
-  }
-
-  async getSubscriptionTrialsByArtist(artistId: string): Promise<SubscriptionTrial[]> {
-    return Array.from(this.subscriptionTrials.values())
-      .filter((t: SubscriptionTrial) => t.artistId === artistId)
-      .sort((a, b) => new Date(b.trialStartedAt).getTime() - new Date(a.trialStartedAt).getTime())
-      .map((t: SubscriptionTrial) => ({ 
-        ...t, 
-        emailTemplatesSent: [...(t.emailTemplatesSent || [])]
-      }));
-  }
-
-  async updateSubscriptionTrial(id: string, updates: Partial<SubscriptionTrial>): Promise<SubscriptionTrial> {
-    const trial = this.subscriptionTrials.get(id);
-    if (!trial) throw new Error("Subscription trial not found");
-    const updated = { ...trial, ...updates };
-    this.subscriptionTrials.set(id, updated);
-    // Return deep copy to prevent mutation
-    return { 
-      ...updated, 
-      emailTemplatesSent: [...(updated.emailTemplatesSent || [])]
-    };
-  }
 
   // ===================================
   // AI UPSCALING METHODS (Stubs)

@@ -56,11 +56,22 @@ import { stripeConnectService } from "./lib/stripe-connect";
 import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from "./lib/payout-service";
 import { emailService } from "./lib/email-service";
 import { generateReferralCode } from "./lib/referral-code-generator";
-import { subscriptionService } from "./lib/subscription-service";
 import Stripe from "stripe";
 
 
 const uploadDir = path.join(process.cwd(), 'uploads'); // legacy dev fallback only
+
+// Catalog cap, applied to every artist. This was a free-tier paywall; with the
+// artist subscription product removed it just bounds how much any one artist
+// can push into the Printify pipeline.
+const ARTWORK_UPLOAD_LIMIT = 20;
+
+// upscale_usage.tier is a historical snapshot column. Tiers no longer exist,
+// so new rows record a single flat value.
+const UPSCALE_TIER_SNAPSHOT = 'standard';
+
+// Upscale jobs were prioritised by subscription tier; the queue is now FIFO.
+const UPSCALE_JOB_PRIORITY = 3;
 
 // Configure multer for file uploads (using memory storage for object storage)
 const upload = multer({
@@ -730,12 +741,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Parse tier selection
-      const selectedTier = req.body.tier as "free" | "pro" | "elite";
-      if (!["free", "pro", "elite"].includes(selectedTier)) {
-        return res.status(400).json({ message: "Invalid subscription tier" });
-      }
-
       // Prepare referral data
       const referrerCode = req.body.referralCode as string | undefined;
       const utmMedium = req.body.utmMedium as string | undefined;
@@ -914,7 +919,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           res.status(201).json({
             ...artistData,
             portfolioCount: portfolioSubmissions.length,
-            tier: selectedTier,
           });
         });
       });
@@ -1014,120 +1018,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Artist login error:", error);
       res.status(400).json({ message: error.message || "Login failed" });
-    }
-  });
-
-  // ===== SUBSCRIPTION ROUTES (must come before :id routes) =====
-
-  // Get current subscription details
-  app.get("/api/artists/subscription", subscriptionReadLimiter, requireArtist, async (req, res) => {
-    try {
-      const artist = req.user!;
-      const details = await subscriptionService.getSubscriptionDetails(artist.id);
-      res.json(details);
-    } catch (error: any) {
-      console.error(`[ERROR][SUBSCRIPTION_GET_FAILED] artistId=${req.user?.id}`, error);
-      res.status(500).json({ message: "Failed to get subscription details" });
-    }
-  });
-
-  // Create new subscription (Pro or Elite)
-  app.post("/api/artists/subscription/create", subscriptionMutationLimiter, requireArtist, async (req, res) => {
-    const startTime = Date.now();
-    const artist = req.user!;
-    const { tier, idempotencyKey } = req.body;
-    
-    try {
-      if (tier !== 'pro' && tier !== 'elite') {
-        return res.status(400).json({ message: "Invalid tier. Must be 'pro' or 'elite'" });
-      }
-
-      if (!idempotencyKey || typeof idempotencyKey !== 'string') {
-        return res.status(400).json({ message: "Idempotency key is required" });
-      }
-
-      const result = await subscriptionService.createSubscription(
-        artist.id,
-        tier,
-        artist.email,
-        artist.name,
-        idempotencyKey
-      );
-
-      const duration = Date.now() - startTime;
-      console.log(`[SUCCESS][SUBSCRIPTION_CREATE_SUCCESS] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`);
-
-      res.json(result);
-    } catch (error: any) {
-      const duration = Date.now() - startTime;
-      console.error(`[ERROR][SUBSCRIPTION_CREATE_FAILED] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`, error);
-      res.status(500).json({ message: error.message || "Failed to create subscription" });
-    }
-  });
-
-  // Upgrade subscription to higher tier
-  app.post("/api/artists/subscription/upgrade", subscriptionMutationLimiter, requireArtist, async (req, res) => {
-    const startTime = Date.now();
-    const artist = req.user!;
-    const { tier, idempotencyKey } = req.body;
-    
-    try {
-      if (tier !== 'pro' && tier !== 'elite') {
-        return res.status(400).json({ message: "Invalid tier. Must be 'pro' or 'elite'" });
-      }
-
-      if (!idempotencyKey || typeof idempotencyKey !== 'string') {
-        return res.status(400).json({ message: "Idempotency key is required" });
-      }
-
-      await subscriptionService.upgradeSubscription(artist.id, tier, idempotencyKey);
-      
-      const duration = Date.now() - startTime;
-      console.log(`[SUCCESS][SUBSCRIPTION_UPGRADE_SUCCESS] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`);
-      
-      res.json({ message: "Subscription upgraded successfully" });
-    } catch (error: any) {
-      const duration = Date.now() - startTime;
-      console.error(`[ERROR][SUBSCRIPTION_UPGRADE_FAILED] artistId=${artist.id} email=${artist.email} tier=${tier} duration=${duration}ms`, error);
-      res.status(500).json({ message: error.message || "Failed to upgrade subscription" });
-    }
-  });
-
-  // Cancel subscription (at end of billing period)
-  app.post("/api/artists/subscription/cancel", subscriptionMutationLimiter, requireArtist, async (req, res) => {
-    const startTime = Date.now();
-    const artist = req.user!;
-    
-    try {
-      await subscriptionService.cancelSubscription(artist.id);
-      
-      const duration = Date.now() - startTime;
-      console.log(`[SUCCESS][SUBSCRIPTION_CANCEL_SUCCESS] artistId=${artist.id} email=${artist.email} duration=${duration}ms`);
-      
-      res.json({ message: "Subscription will be canceled at the end of the billing period" });
-    } catch (error: any) {
-      const duration = Date.now() - startTime;
-      console.error(`[ERROR][SUBSCRIPTION_CANCEL_FAILED] artistId=${artist.id} email=${artist.email} duration=${duration}ms`, error);
-      res.status(500).json({ message: error.message || "Failed to cancel subscription" });
-    }
-  });
-
-  // Reactivate canceled subscription
-  app.post("/api/artists/subscription/reactivate", subscriptionMutationLimiter, requireArtist, async (req, res) => {
-    const startTime = Date.now();
-    const artist = req.user!;
-    
-    try {
-      await subscriptionService.reactivateSubscription(artist.id);
-      
-      const duration = Date.now() - startTime;
-      console.log(`[SUCCESS][SUBSCRIPTION_REACTIVATE_SUCCESS] artistId=${artist.id} email=${artist.email} duration=${duration}ms`);
-      
-      res.json({ message: "Subscription reactivated successfully" });
-    } catch (error: any) {
-      const duration = Date.now() - startTime;
-      console.error(`[ERROR][SUBSCRIPTION_REACTIVATE_FAILED] artistId=${artist.id} email=${artist.email} duration=${duration}ms`, error);
-      res.status(500).json({ message: "Failed to reactivate subscription" });
     }
   });
 
@@ -1977,36 +1867,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stripe subscription webhook
-  app.post("/api/webhooks/stripe/subscription", async (req, res) => {
-    try {
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-      const sig = req.headers['stripe-signature'];
-      if (!sig) {
-        return res.status(400).send('Missing Stripe signature');
-      }
-
-      const webhookSecret = process.env.STRIPE_SUBSCRIPTION_WEBHOOK_SECRET;
-      if (!webhookSecret) {
-        console.error('STRIPE_SUBSCRIPTION_WEBHOOK_SECRET not configured');
-        return res.status(500).send('Webhook secret not configured');
-      }
-
-      const event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        webhookSecret
-      );
-
-      await subscriptionService.handleWebhookEvent(event);
-      res.json({ received: true });
-    } catch (error: any) {
-      console.error("Subscription webhook error:", error);
-      res.status(400).send(`Webhook Error: ${error.message}`);
-    }
-  });
-
   // ===== ADMIN ROUTES =====
 
   // Admin profile update
@@ -2068,64 +1928,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Admin change password error:", error);
       res.status(400).json({ message: error.message || "Failed to change password" });
-    }
-  });
-
-  // Admin: Email template preview endpoints (for QA testing)
-  app.get("/api/admin/email-preview/:templateName", requireAdmin, async (req, res) => {
-    try {
-      const templateName = req.params.templateName as string;
-      const { trialDay3Email, trialEndingSoonEmail, trialLastChanceEmail, reEngagementEmail, templateMetadata, replaceEmailPlaceholders } = await import('./email-templates');
-      
-      const metadata = templateMetadata[templateName];
-      if (!metadata) {
-        return res.status(404).json({ 
-          message: "Template not found",
-          available: Object.keys(templateMetadata)
-        });
-      }
-
-      const params = req.query as Record<string, string>;
-      const data = { ...metadata.sampleData, ...params };
-      const domain = req.get('host') || new URL(process.env.PUBLIC_APP_URL || 'http://localhost:5000').host;
-      
-      let html: string;
-      switch (templateName) {
-        case 'trial-day-3':
-          html = trialDay3Email({ ...data, domain } as any);
-          break;
-        case 'trial-ending-soon':
-          html = trialEndingSoonEmail({ ...data, domain } as any);
-          break;
-        case 'trial-last-chance':
-          html = trialLastChanceEmail({ ...data, domain } as any);
-          break;
-        case 're-engagement':
-          html = reEngagementEmail({ ...data, domain } as any);
-          break;
-        default:
-          return res.status(404).json({ message: "Unknown template" });
-      }
-
-      html = replaceEmailPlaceholders(html, {
-        unsubscribeUrl: `https://${domain}/unsubscribe`,
-        domain
-      });
-
-      res.type('html').send(html);
-    } catch (error: any) {
-      console.error("Email preview error:", error);
-      res.status(500).json({ message: "Failed to generate preview" });
-    }
-  });
-
-  app.get("/api/admin/email-templates", requireAdmin, async (_req, res) => {
-    try {
-      const { templateMetadata } = await import('./email-templates');
-      res.json(templateMetadata);
-    } catch (error: any) {
-      console.error("Get email templates error:", error);
-      res.status(500).json({ message: "Failed to fetch templates" });
     }
   });
 
@@ -2430,20 +2232,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Artist not found" });
       }
 
-      const subscriptionTier = artist.subscriptionTier || "free";
-      if (subscriptionTier === "free") {
-        const artworks = await storage.getArtworksByArtist(req.user!.id);
-        const FREE_TIER_LIMIT = 20;
-        
-        if (artworks.length >= FREE_TIER_LIMIT) {
-          return res.status(403).json({ 
-            error: `Upload limit reached. Free tier allows ${FREE_TIER_LIMIT} artworks. Upgrade to Pro or Elite for unlimited uploads.`,
-            upgradeRequired: true,
-            requiredTier: "pro",
-            currentCount: artworks.length,
-            limit: FREE_TIER_LIMIT
-          });
-        }
+      const artworks = await storage.getArtworksByArtist(req.user!.id);
+      if (artworks.length >= ARTWORK_UPLOAD_LIMIT) {
+        return res.status(403).json({
+          error: `Upload limit reached. Each artist may have up to ${ARTWORK_UPLOAD_LIMIT} artworks.`,
+          currentCount: artworks.length,
+          limit: ARTWORK_UPLOAD_LIMIT
+        });
       }
       
       // Validate image quality for Printify requirements (using buffer)
@@ -2652,9 +2447,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Capture IP declaration text snapshot for legal evidence
       const ipDeclarationText = "I confirm that I own the rights to this artwork and it does not violate any trademarks, copyrights, or other intellectual property rights. I understand that uploading artwork containing brand logos, copyrighted characters, or other protected content will result in immediate removal and forfeiture of any pending earnings.";
 
-      const subscriptionTier = artist.subscriptionTier || "free";
-      const FREE_TIER_LIMIT = 20;
-
       try {
         // Use transactional method that enforces limit atomically
         const artwork = await storage.createArtworkWithLimitCheck(
@@ -2663,8 +2455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             seoSlug,
             ipDeclarationText,
           } as any,
-          subscriptionTier,
-          FREE_TIER_LIMIT
+          ARTWORK_UPLOAD_LIMIT
         );
         
         res.status(201).json(normalizeArtwork(artwork, req));
@@ -2674,10 +2465,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const artworks = await storage.getArtworksByArtist(req.user!.id);
           return res.status(403).json({ 
             message: limitError.message,
-            upgradeRequired: true,
-            requiredTier: "pro",
             currentCount: artworks.length,
-            limit: FREE_TIER_LIMIT
+            limit: ARTWORK_UPLOAD_LIMIT
           });
         }
         // Re-throw other errors to outer catch
@@ -4238,43 +4027,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calculate artist break-even analysis
-  app.get("/api/admin/financial/artist-breakeven", requireAdmin, async (req, res) => {
-    try {
-      const { calculateArtistBreakEven } = await import('./lib/financial-service');
-      const { tier, averageOrderValue } = req.query;
-
-      const subscriptionTier = (tier as 'free' | 'pro' | 'elite') || 'pro';
-      const avgOrderValue = averageOrderValue ? parseFloat(averageOrderValue as string) : 89.99;
-
-      const breakeven = calculateArtistBreakEven(subscriptionTier, avgOrderValue);
-      res.json(breakeven);
-    } catch (error: any) {
-      console.error("Break-even calculation error:", error);
-      res.status(500).json({ message: "Failed to calculate break-even" });
-    }
-  });
-
-  // Get all artist break-even scenarios (all tiers)
-  app.get("/api/admin/financial/all-breakeven", requireAdmin, async (req, res) => {
-    try {
-      const { calculateArtistBreakEven } = await import('./lib/financial-service');
-      const { averageOrderValue } = req.query;
-      const avgOrderValue = averageOrderValue ? parseFloat(averageOrderValue as string) : 89.99;
-
-      const breakevens = {
-        free: calculateArtistBreakEven('free', avgOrderValue),
-        pro: calculateArtistBreakEven('pro', avgOrderValue),
-        elite: calculateArtistBreakEven('elite', avgOrderValue),
-      };
-
-      res.json(breakevens);
-    } catch (error: any) {
-      console.error("All break-even calculation error:", error);
-      res.status(500).json({ message: "Failed to calculate break-even scenarios" });
-    }
-  });
-
   // Get Printify product costs (live or estimated)
   app.get("/api/admin/financial/printify-costs", requireAdmin, async (req, res) => {
     try {
@@ -4303,46 +4055,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Printify costs error:", error);
       res.status(500).json({ message: "Failed to fetch Printify costs" });
-    }
-  });
-
-  // Get trial analytics (trial conversion metrics and revenue impact)
-  app.get("/api/admin/analytics/trials", requireAdmin, async (req, res) => {
-    try {
-      const { calculateTrialAnalytics } = await import('./lib/trial-analytics-service');
-      const { range, tier } = req.query;
-      
-      // Validate range parameter
-      const validRanges = ['7d', '30d', '90d', 'all'];
-      const selectedRange = validRanges.includes(range as string) 
-        ? (range as '7d' | '30d' | '90d' | 'all')
-        : 'all';
-      
-      // Validate tier parameter
-      const selectedTier = (tier === 'pro' || tier === 'elite') 
-        ? tier 
-        : undefined;
-      
-      const analytics = await calculateTrialAnalytics(selectedRange, selectedTier);
-      res.json(analytics);
-    } catch (error: any) {
-      console.error("Trial analytics error:", error);
-      res.status(500).json({ message: "Failed to calculate trial analytics" });
-    }
-  });
-
-  // Process trial emails (Day 3, Ending Soon, Last Chance)
-  app.post("/api/admin/trial-emails/process", requireAdmin, async (_req, res) => {
-    try {
-      const { processTrialEmails } = await import('./lib/trial-email-orchestrator');
-      const results = await processTrialEmails();
-      res.json({
-        message: "Trial email processing complete",
-        ...results
-      });
-    } catch (error: any) {
-      console.error("Trial email processing error:", error);
-      res.status(500).json({ message: "Failed to process trial emails" });
     }
   });
 
@@ -4379,7 +4091,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetId: artist.id,
         targetEmail: artist.email,
         details: {
-          tier: artist.subscriptionTier,
           previousUsed: artist.monthlyUpscalesUsed,
           resetTo: 0,
         },
@@ -4394,119 +4105,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: artist.id,
           name: artist.name,
           email: artist.email,
-          tier: artist.subscriptionTier,
           previousUsed: artist.monthlyUpscalesUsed,
-          newQuota: artist.subscriptionTier === 'elite' ? 'unlimited' : 
-                    artist.subscriptionTier === 'pro' ? 25 : 5,
+          newQuota: (await import('./lib/upscale-quota-service')).UpscaleQuotaService.QUOTAS.monthly,
         },
       });
     } catch (error: any) {
       console.error("Reset credits error:", error);
       res.status(500).json({ message: error.message || "Failed to reset credits" });
-    }
-  });
-
-  // Admin: Grant complimentary tier to artist (Pro or Elite without Stripe)
-  app.post("/api/admin/grant-comp-tier", requireAdmin, async (req, res) => {
-    try {
-      const { email, tier, notes } = req.body;
-      
-      if (!email || !tier) {
-        return res.status(400).json({ message: "Artist email and tier are required" });
-      }
-
-      if (tier !== 'pro' && tier !== 'elite' && tier !== 'free') {
-        return res.status(400).json({ message: "Tier must be 'free', 'pro', or 'elite'" });
-      }
-
-      // Find artist by email
-      const artist = await storage.getArtistByEmail(email);
-      if (!artist) {
-        return res.status(404).json({ message: "Artist not found with that email" });
-      }
-
-      const previousTier = artist.subscriptionTier;
-
-      // Update artist tier (comp subscription = no Stripe subscription)
-      await storage.updateArtist(artist.id, {
-        subscriptionTier: tier,
-        subscriptionStatus: tier === 'free' ? null : 'comp',
-        // Clear Stripe fields since this is a comp subscription
-        stripeCustomerId: tier === 'free' ? artist.stripeCustomerId : null,
-        stripeSubscriptionId: tier === 'free' ? artist.stripeSubscriptionId : null,
-      });
-
-      // Log the admin action
-      const admin = req.user!;
-      await db.insert(adminActions).values({
-        adminId: admin.id,
-        adminEmail: admin.email,
-        actionType: "grant_comp_tier",
-        targetType: "artist",
-        targetId: artist.id,
-        targetEmail: artist.email,
-        details: {
-          previousTier,
-          newTier: tier,
-          subscriptionStatus: tier === 'free' ? null : 'comp',
-        },
-        notes: notes || `Admin granted ${tier} tier (complimentary)`,
-        ipAddress: req.ip,
-      });
-
-      // Send notification email to artist
-      const tierName = tier.charAt(0).toUpperCase() + tier.slice(1);
-      emailService.sendEmail({
-        recipientEmail: artist.email,
-        recipientType: 'artist',
-        recipientId: artist.id,
-        emailType: 'tier_upgrade',
-        subject: `Welcome to ${tierName} Tier!`,
-        htmlBody: `
-          <p>Hi ${artist.name},</p>
-          <p>Great news! Your account has been upgraded to <strong>${tierName} tier</strong>.</p>
-          <p><strong>Your new benefits:</strong></p>
-          <ul>
-            ${tier === 'pro' ? `
-              <li>35% minimum royalty on all sales</li>
-              <li>Unlimited artwork uploads</li>
-              <li>25 AI upscales per month</li>
-              <li>Homepage featured rotation</li>
-            ` : tier === 'elite' ? `
-              <li>45% royalty guarantee</li>
-              <li>Unlimited artwork uploads</li>
-              <li>Unlimited AI upscales</li>
-              <li>Guaranteed homepage placement</li>
-              <li>Priority artwork review</li>
-            ` : `
-              <li>30% royalty on all sales</li>
-              <li>Up to 20 artworks</li>
-              <li>5 AI upscales per month</li>
-            `}
-          </ul>
-          <p>Log in to your dashboard to start using your new benefits!</p>
-          <p>Best regards,<br>369 Art Collective Team</p>
-        `,
-        textBody: `Hi ${artist.name},\n\nYour account has been upgraded to ${tierName} tier!\n\nBest regards,\n369 Art Collective Team`,
-      }).catch(err => {
-        console.error('Failed to send tier upgrade email:', err);
-      });
-
-      res.json({
-        success: true,
-        message: `${tierName} tier granted to ${artist.name} (${artist.email})`,
-        artist: {
-          id: artist.id,
-          name: artist.name,
-          email: artist.email,
-          previousTier,
-          newTier: tier,
-          subscriptionStatus: tier === 'free' ? null : 'comp',
-        },
-      });
-    } catch (error: any) {
-      console.error("Grant comp tier error:", error);
-      res.status(500).json({ message: error.message || "Failed to grant tier" });
     }
   });
 
@@ -4518,7 +4123,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Normalize data: ensure tier, quotaType, costCents have valid defaults
       const normalized = usage.map(u => ({
         ...u,
-        tier: u.tier || 'free',
         quotaType: u.quotaType || 'monthly',
         costCents: u.costCents || 0,
         status: u.status || 'queued',
@@ -4531,43 +4135,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalCostCents = normalized.reduce((sum, u) => sum + u.costCents, 0);
       const totalCostDollars = totalCostCents / 100;
       
-      // Breakdown by tier (with null guard)
-      const byTier = {
-        free: normalized.filter(u => u.tier === 'free').length,
-        pro: normalized.filter(u => u.tier === 'pro').length,
-        elite: normalized.filter(u => u.tier === 'elite').length,
-      };
-      
       // Breakdown by quota type (with null guard)
       const byQuotaType = {
         registration_bonus: normalized.filter(u => u.quotaType === 'registration_bonus').length,
         monthly: normalized.filter(u => u.quotaType === 'monthly').length,
-        elite_unlimited: normalized.filter(u => u.quotaType === 'elite_unlimited').length,
       };
-      
-      // Cost breakdown by tier (with null guard)
-      const costByTier = {
-        free: normalized.filter(u => u.tier === 'free').reduce((sum, u) => sum + u.costCents, 0) / 100,
-        pro: normalized.filter(u => u.tier === 'pro').reduce((sum, u) => sum + u.costCents, 0) / 100,
-        elite: normalized.filter(u => u.tier === 'elite').reduce((sum, u) => sum + u.costCents, 0) / 100,
-      };
-      
+
       // Cache hit analysis (upscales with no jobId means cache hit)
       const cacheHits = normalized.filter(u => !u.jobId && u.status === 'completed').length;
       const cacheHitRate = totalUpscales > 0 ? (cacheHits / totalUpscales * 100) : 0;
-      
+
       res.json({
         totalUpscales,
         completedUpscales,
         failedUpscales,
         totalCostDollars: parseFloat(totalCostDollars.toFixed(2)),
-        byTier,
         byQuotaType,
-        costByTier: {
-          free: parseFloat(costByTier.free.toFixed(2)),
-          pro: parseFloat(costByTier.pro.toFixed(2)),
-          elite: parseFloat(costByTier.elite.toFixed(2)),
-        },
         cacheHits,
         cacheHitRate: parseFloat(cacheHitRate.toFixed(1)),
       });
@@ -4684,12 +4267,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // DO NOT consume quota for cached results - deduplication should be free!
         // await UpscaleQuotaService.consumeQuota(artistId, quotaStatus.quotaType);
         
-        const tier = artist.subscriptionTier || 'free';
         await UpscaleDeduplicationService.saveToCache({
           fileHash,
           artistId,
           quotaType: quotaStatus.quotaType,
-          tier,
+          tier: UPSCALE_TIER_SNAPSHOT,
           ipAddress,
           originalUrl: imageUrl,
           upscaledUrl: cached.upscaledUrl!,
@@ -4730,8 +4312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const estimatedCost = ReplicateUpscaleService.estimateCost(scale);
         console.log(`Upscale job created with intelligent scale: ${scale}`);
 
-        const tier = artist.subscriptionTier || 'free';
-        const priority = tier === 'elite' ? 1 : tier === 'pro' ? 2 : 3;
+        const priority = UPSCALE_JOB_PRIORITY;
 
         const job = await storage.createUpscaleJob({
           artistId,
@@ -4748,7 +4329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fileHash,
           artistId,
           quotaType: quotaStatus.quotaType,
-          tier,
+          tier: UPSCALE_TIER_SNAPSHOT,
           ipAddress,
           jobId: job.id,
           replicateId: predictionId,
@@ -4784,7 +4365,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fileHash,
           artistId,
           quotaType: quotaStatus.quotaType,
-          tier: artist.subscriptionTier || 'free',
+          tier: UPSCALE_TIER_SNAPSHOT,
           ipAddress,
           originalUrl: imageUrl,
           errorMessage: devMessage

@@ -3,28 +3,20 @@ import { artists, upscaleUsage } from "@shared/schema";
 import { eq, and, gte, sql } from "drizzle-orm";
 
 export interface QuotaStatus {
-  tier: string;
   hasQuota: boolean;
   remaining: number;
   total: number;
-  quotaType: 'registration_bonus' | 'monthly' | 'elite_unlimited';
+  quotaType: 'registration_bonus' | 'monthly';
   resetDate?: Date;
-  upgradeRequired: boolean;
 }
 
 export class UpscaleQuotaService {
-  
+
+  // One allowance for every artist. Upscaling calls a paid third-party API
+  // (Replicate), so the cap exists to bound cost, not to sell an upgrade.
   static readonly QUOTAS = {
-    free: {
-      registrationBonus: 3,
-      monthly: 5,
-    },
-    pro: {
-      monthly: 25,
-    },
-    elite: {
-      unlimited: true,
-    }
+    registrationBonus: 3,
+    monthly: 5,
   };
 
   static async checkQuota(artistId: string): Promise<QuotaStatus> {
@@ -36,78 +28,33 @@ export class UpscaleQuotaService {
       throw new Error("Artist not found");
     }
 
-    const tier = artist.subscriptionTier || 'free';
+    const registrationUsed = artist.registrationUpscalesUsed || 0;
+    const registrationRemaining = this.QUOTAS.registrationBonus - registrationUsed;
 
-    if (tier === 'elite') {
+    if (registrationRemaining > 0) {
       return {
-        tier: 'elite',
         hasQuota: true,
-        remaining: 999999,
-        total: 999999,
-        quotaType: 'elite_unlimited',
-        upgradeRequired: false
+        remaining: registrationRemaining,
+        total: this.QUOTAS.registrationBonus,
+        quotaType: 'registration_bonus',
       };
     }
 
-    if (tier === 'free') {
-      const registrationUsed = artist.registrationUpscalesUsed || 0;
-      const registrationRemaining = this.QUOTAS.free.registrationBonus - registrationUsed;
-
-      if (registrationRemaining > 0) {
-        return {
-          tier: 'free',
-          hasQuota: true,
-          remaining: registrationRemaining,
-          total: this.QUOTAS.free.registrationBonus,
-          quotaType: 'registration_bonus',
-          upgradeRequired: false
-        };
-      }
-
-      const monthlyUsed = artist.monthlyUpscalesUsed || 0;
-      const monthlyRemaining = this.QUOTAS.free.monthly - monthlyUsed;
-      const resetDate = this.calculateResetDate(artist.lastUpscaleResetAt);
-
-      return {
-        tier: 'free',
-        hasQuota: monthlyRemaining > 0,
-        remaining: Math.max(0, monthlyRemaining),
-        total: this.QUOTAS.free.monthly,
-        quotaType: 'monthly',
-        resetDate,
-        upgradeRequired: monthlyRemaining <= 0
-      };
-    }
-
-    if (tier === 'pro') {
-      const monthlyUsed = artist.monthlyUpscalesUsed || 0;
-      const monthlyRemaining = this.QUOTAS.pro.monthly - monthlyUsed;
-      const resetDate = this.calculateResetDate(artist.lastUpscaleResetAt);
-
-      return {
-        tier: 'pro',
-        hasQuota: monthlyRemaining > 0,
-        remaining: Math.max(0, monthlyRemaining),
-        total: this.QUOTAS.pro.monthly,
-        quotaType: 'monthly',
-        resetDate,
-        upgradeRequired: monthlyRemaining <= 0
-      };
-    }
+    const monthlyUsed = artist.monthlyUpscalesUsed || 0;
+    const monthlyRemaining = this.QUOTAS.monthly - monthlyUsed;
 
     return {
-      tier,
-      hasQuota: false,
-      remaining: 0,
-      total: 0,
+      hasQuota: monthlyRemaining > 0,
+      remaining: Math.max(0, monthlyRemaining),
+      total: this.QUOTAS.monthly,
       quotaType: 'monthly',
-      upgradeRequired: true
+      resetDate: this.calculateResetDate(artist.lastUpscaleResetAt),
     };
   }
 
   static async consumeQuota(
     artistId: string,
-    quotaType: 'registration_bonus' | 'monthly' | 'elite_unlimited'
+    quotaType: 'registration_bonus' | 'monthly'
   ): Promise<void> {
     const artist = await db.query.artists.findFirst({
       where: eq(artists.id, artistId)

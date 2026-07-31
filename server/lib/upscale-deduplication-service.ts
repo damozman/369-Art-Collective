@@ -58,7 +58,7 @@ export class UpscaleDeduplicationService {
   static async createPendingRecord(params: {
     fileHash: string;
     artistId: string;
-    quotaType: 'registration_bonus' | 'monthly' | 'elite_unlimited';
+    quotaType: 'registration_bonus' | 'monthly';
     tier: string;
     ipAddress?: string;
     jobId?: string;
@@ -93,7 +93,7 @@ export class UpscaleDeduplicationService {
   static async saveToCache(params: {
     fileHash: string;
     artistId: string;
-    quotaType: 'registration_bonus' | 'monthly' | 'elite_unlimited';
+    quotaType: 'registration_bonus' | 'monthly';
     tier: string;
     ipAddress?: string;
     jobId?: string;
@@ -131,7 +131,7 @@ export class UpscaleDeduplicationService {
   static async recordFailedAttempt(params: {
     fileHash: string;
     artistId: string;
-    quotaType: 'registration_bonus' | 'monthly' | 'elite_unlimited';
+    quotaType: 'registration_bonus' | 'monthly';
     tier: string;
     ipAddress?: string;
     jobId?: string;

@@ -20,32 +20,13 @@ export function getPerformanceRoyaltyPercentage(monthlySalesAmount: number): num
 }
 
 /**
- * Subscription tier royalty minimums:
- * - Free: 30% (performance-based only)
- * - Pro: 35% guaranteed minimum
- * - Elite: 45% guaranteed (max tier immediately)
+ * Royalty percentage for an artist, from their performance tier alone.
+ * Subscription-tier minimums were removed with the artist subscription
+ * product; this whole function is replaced by the rules engine in Phase 0
+ * step 5.
  */
-export function getSubscriptionRoyaltyPercentage(subscriptionTier: string): number {
-  if (subscriptionTier === 'elite') return 45;
-  if (subscriptionTier === 'pro') return 35;
-  return 30; // free tier
-}
-
-/**
- * Calculate final royalty percentage using Math.max of performance and subscription tiers
- * This ensures artists always get the BEST rate between:
- * 1. Their performance-based tier (grows with sales)
- * 2. Their subscription tier minimum (guaranteed based on plan)
- */
-export function getRoyaltyTierPercentage(
-  monthlySalesAmount: number,
-  subscriptionTier: string = 'free'
-): number {
-  const performanceRate = getPerformanceRoyaltyPercentage(monthlySalesAmount);
-  const subscriptionRate = getSubscriptionRoyaltyPercentage(subscriptionTier);
-  
-  // Return whichever is higher
-  return Math.max(performanceRate, subscriptionRate);
+export function getRoyaltyTierPercentage(monthlySalesAmount: number): number {
+  return getPerformanceRoyaltyPercentage(monthlySalesAmount);
 }
 
 /**
@@ -62,17 +43,15 @@ export async function getArtistMonthlySales(artistId: string): Promise<number> {
  * Calculate royalty for a sale
  * @param profit - Net profit after Printify costs and shipping
  * @param monthlySalesAmount - Artist's current monthly sales amount (in dollars)
- * @param subscriptionTier - Artist's subscription tier (free, pro, elite)
  * @param hasReferralBonus - Whether the sale came from artist's referral link (+5%)
  * @returns Royalty breakdown
  */
 export function calculateRoyalty(
   profit: number,
   monthlySalesAmount: number,
-  subscriptionTier: string = 'free',
   hasReferralBonus: boolean = false
 ) {
-  const tierPercentage = getRoyaltyTierPercentage(monthlySalesAmount, subscriptionTier);
+  const tierPercentage = getRoyaltyTierPercentage(monthlySalesAmount);
   const baseRoyalty = profit * (tierPercentage / 100);
   
   // Referral bonus: +5% of profit if sale came from artist's referral link

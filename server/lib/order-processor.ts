@@ -171,11 +171,8 @@ export async function processShopifyOrder(shopifyOrder: ShopifyOrder) {
       // Get artist's current monthly sales for tier calculation
       const monthlySales = await getArtistMonthlySales(artist.id);
 
-      // Get artist's subscription tier (defaults to 'free')
-      const subscriptionTier = artist.subscriptionTier || 'free';
-
-      // Calculate royalties using Math.max(performance tier, subscription tier) + referral bonus
-      const royaltyData = calculateRoyalty(profit, monthlySales, subscriptionTier, hasReferralBonus);
+      // Calculate royalties from the performance tier + referral bonus
+      const royaltyData = calculateRoyalty(profit, monthlySales, hasReferralBonus);
       
       if (hasReferralBonus) {
         console.log(`Referral bonus applied: +5% for artist ${artist.name}`);

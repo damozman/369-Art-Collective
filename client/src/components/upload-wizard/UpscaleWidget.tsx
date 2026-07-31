@@ -50,10 +50,9 @@ interface DpiAnalysis {
 
 interface QuotaStatus {
   hasQuota: boolean;
-  quotaType: 'registration_bonus' | 'monthly' | 'elite_unlimited';
+  quotaType: 'registration_bonus' | 'monthly';
   remaining: number;
   total: number;
-  tier: string;
   message: string;
 }
 
@@ -684,7 +683,7 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
                     ) : !quota?.hasQuota ? (
                       <div className="p-3 bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-300 rounded-md">
                         <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                          You've used all your AI upscales. Upgrade to <strong>Pro</strong> (25/month) or <strong>Elite</strong> (unlimited) for more.
+                          You've used all your AI upscales for this cycle. Your quota resets monthly.
                         </p>
                       </div>
                     ) : null}
@@ -736,13 +735,9 @@ export function UpscaleWidget({ selectedFile, onUpscaledFile, onValidationChange
                     <Sparkles className="h-3 w-3 text-primary" />
                     AI Upscales
                   </span>
-                  {quota.quotaType === 'elite_unlimited' ? (
-                    <Badge variant="default" className="h-6">Unlimited</Badge>
-                  ) : (
-                    <Badge variant="outline" className="h-6">
-                      {quota.remaining} / {quota.total} left
-                    </Badge>
-                  )}
+                  <Badge variant="outline" className="h-6">
+                    {quota.remaining} / {quota.total} left
+                  </Badge>
                 </div>
               )}
             </div>

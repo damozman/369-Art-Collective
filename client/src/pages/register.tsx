@@ -34,11 +34,10 @@ export default function Register() {
   const { login } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<"account" | "portfolio" | "subscription">("account");
+  const [step, setStep] = useState<"account" | "portfolio">("account");
   const [portfolioFiles, setPortfolioFiles] = useState<File[]>([]);
   const [portfolioPreviews, setPortfolioPreviews] = useState<string[]>([]);
   const [portfolioDimensions, setPortfolioDimensions] = useState<{ width: number; height: number; valid: boolean }[]>([]);
-  const [selectedTier, setSelectedTier] = useState<"free" | "pro" | "elite">("free");
   const [accountData, setAccountData] = useState<RegistrationForm | null>(null);
   const [instagramUrl, setInstagramUrl] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
@@ -159,7 +158,7 @@ export default function Register() {
     }
   }
 
-  async function handleSubscriptionContinue() {
+  async function completeRegistration() {
     if (!accountData) {
       toast({
         title: "Error",
@@ -197,9 +196,6 @@ export default function Register() {
       if (instagramUrl.trim()) formData.append("instagramUrl", instagramUrl.trim());
       if (websiteUrl.trim()) formData.append("websiteUrl", websiteUrl.trim());
       
-      // Add tier selection
-      formData.append("tier", selectedTier);
-
       // Call atomic registration endpoint
       const response = await fetch("/api/artists/register-complete", {
         method: "POST",
@@ -269,14 +265,7 @@ export default function Register() {
       return;
     }
 
-    // Store portfolio files locally (no API call yet - atomic registration)
-    toast({
-      title: "Portfolio ready!",
-      description: "Choose your subscription tier to complete registration.",
-    });
-
-    // Move to subscription step
-    setStep("subscription");
+    await completeRegistration();
   }
 
   return (
@@ -301,197 +290,21 @@ export default function Register() {
         {/* Progress indicator */}
         <div className="mb-6 flex items-center justify-center gap-3 flex-wrap">
           <div className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === "account" ? "bg-primary text-primary-foreground" : (step === "portfolio" || step === "subscription") ? "bg-green-600 dark:bg-green-500 text-white" : "bg-muted text-muted-foreground"}`}>
-              {(step === "portfolio" || step === "subscription") ? <Check className="w-4 h-4" /> : "1"}
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === "account" ? "bg-primary text-primary-foreground" : "bg-green-600 dark:bg-green-500 text-white"}`}>
+              {step === "portfolio" ? <Check className="w-4 h-4" /> : "1"}
             </div>
             <span className="text-sm font-medium">Account</span>
           </div>
           <div className="h-px w-12 bg-border" />
           <div className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === "portfolio" ? "bg-primary text-primary-foreground" : step === "subscription" ? "bg-green-600 dark:bg-green-500 text-white" : "bg-muted text-muted-foreground"}`}>
-              {step === "subscription" ? <Check className="w-4 h-4" /> : "2"}
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === "portfolio" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+              2
             </div>
             <span className="text-sm font-medium">Portfolio</span>
           </div>
-          <div className="h-px w-12 bg-border" />
-          <div className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === "subscription" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-              3
-            </div>
-            <span className="text-sm font-medium">Plan</span>
-          </div>
         </div>
 
-        {step === "subscription" ? (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Choose Your Plan</CardTitle>
-                <CardDescription>
-                  Select the plan that works best for you. You can upgrade or downgrade anytime.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            {/* Tier cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Free Tier */}
-              <Card 
-                className={`relative cursor-pointer transition-all ${selectedTier === "free" ? "border-primary ring-2 ring-primary" : "hover-elevate"}`}
-                onClick={() => setSelectedTier("free")}
-                data-testid="card-tier-free"
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <Zap className="w-8 h-8 text-muted-foreground" />
-                    {selectedTier === "free" && (
-                      <Badge variant="default" className="bg-primary">Selected</Badge>
-                    )}
-                  </div>
-                  <CardTitle className="text-xl">Free</CardTitle>
-                  <div className="text-3xl font-bold">$0<span className="text-base font-normal text-muted-foreground">/month</span></div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span>30% royalty rate</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span>Up to 20 artworks</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <X className="w-4 h-4 mt-0.5 text-muted-foreground" />
-                      <span className="text-muted-foreground">No AI Art Studio</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Pro Tier */}
-              <Card 
-                className={`relative cursor-pointer transition-all ${selectedTier === "pro" ? "border-primary ring-2 ring-primary" : "hover-elevate"}`}
-                onClick={() => setSelectedTier("pro")}
-                data-testid="card-tier-pro"
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <Sparkles className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                    {selectedTier === "pro" && (
-                      <Badge variant="default" className="bg-primary">Selected</Badge>
-                    )}
-                  </div>
-                  <CardTitle className="text-xl">Pro</CardTitle>
-                  <div className="text-3xl font-bold">$15<span className="text-base font-normal text-muted-foreground">/month</span></div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span><strong>35% minimum</strong> royalty</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span><strong>Unlimited</strong> artworks</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span>AI Art Studio access</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span>Priority support</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Elite Tier */}
-              <Card 
-                className={`relative cursor-pointer transition-all ${selectedTier === "elite" ? "border-primary ring-2 ring-primary" : "hover-elevate"}`}
-                onClick={() => setSelectedTier("elite")}
-                data-testid="card-tier-elite"
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <Crown className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
-                    {selectedTier === "elite" && (
-                      <Badge variant="default" className="bg-primary">Selected</Badge>
-                    )}
-                  </div>
-                  <CardTitle className="text-xl">Elite</CardTitle>
-                  <div className="text-3xl font-bold">$40<span className="text-base font-normal text-muted-foreground">/month</span></div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span><strong>45% guaranteed</strong> royalty</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span><strong>Unlimited</strong> artworks</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span>Full AI Art Studio</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span>Profile customization</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 mt-0.5 text-green-600 dark:text-green-500" />
-                      <span>Featured placement</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Action buttons */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setStep("portfolio")}
-                    disabled={isLoading}
-                    className="flex-1"
-                    data-testid="button-back-to-portfolio"
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleSubscriptionContinue}
-                    disabled={isLoading}
-                    className="flex-1"
-                    data-testid="button-continue-subscription"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : selectedTier === "free" ? (
-                      "Continue with Free"
-                    ) : (
-                      `Continue with ${selectedTier === "pro" ? "Pro" : "Elite"} ($${selectedTier === "pro" ? "15" : "40"}/mo)`
-                    )}
-                  </Button>
-                </div>
-                {selectedTier !== "free" && (
-                  <p className="text-xs text-muted-foreground text-center mt-3">
-                    You'll be redirected to Stripe to complete payment setup
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        ) : step === "account" ? (
+        {step === "account" ? (
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Create artist account</CardTitle>

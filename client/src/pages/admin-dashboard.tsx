@@ -115,9 +115,7 @@ export default function AdminDashboard() {
     completedUpscales: number;
     failedUpscales: number;
     totalCostDollars: number;
-    byTier: { free: number; pro: number; elite: number };
-    byQuotaType: { registration_bonus: number; monthly: number; elite_unlimited: number };
-    costByTier: { free: number; pro: number; elite: number };
+    byQuotaType: { registration_bonus: number; monthly: number };
     cacheHits: number;
     cacheHitRate: number;
   }>({
@@ -489,31 +487,7 @@ export default function AdminDashboard() {
                   </CardHeader>
                 </Card>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader className="p-4">
-                    <CardDescription className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Usage by Tier
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Free:</span>
-                        <span className="font-medium">{upscaleAnalytics.byTier.free} upscales (${upscaleAnalytics.costByTier.free.toFixed(2)})</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Pro:</span>
-                        <span className="font-medium">{upscaleAnalytics.byTier.pro} upscales (${upscaleAnalytics.costByTier.pro.toFixed(2)})</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Elite:</span>
-                        <span className="font-medium">{upscaleAnalytics.byTier.elite} upscales (${upscaleAnalytics.costByTier.elite.toFixed(2)})</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="grid grid-cols-1 gap-4">
                 <Card>
                   <CardHeader className="p-4">
                     <CardDescription className="flex items-center gap-2">
@@ -530,10 +504,6 @@ export default function AdminDashboard() {
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Monthly:</span>
                         <span className="font-medium">{upscaleAnalytics.byQuotaType.monthly}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Elite Unlimited:</span>
-                        <span className="font-medium">{upscaleAnalytics.byQuotaType.elite_unlimited}</span>
                       </div>
                     </div>
                   </CardContent>

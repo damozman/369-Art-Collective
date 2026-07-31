@@ -15,7 +15,7 @@
 import { db } from "../lib/db";
 import { 
   artists, artworks, admins, portfolioSubmissions, upscaleJobs, upscaleUsage,
-  subscriptionTrials, adminActions, orders, passwordResetTokens, violationReports,
+  adminActions, orders, passwordResetTokens, violationReports,
   sales, referrals, artistReferrals, payouts, stripeWebhookEvents,
   emailLogs, affiliateClicks, affiliateConversions,
   influencers, artworkApprovalLog,
@@ -205,7 +205,6 @@ async function cleanup() {
   await deleteFromTable(payouts, "payouts");
   await deleteFromTable(artistReferrals, "artist_referrals");
   await deleteFromTable(referrals, "referrals");
-  await deleteFromTable(subscriptionTrials, "subscription_trials");
   await deleteFromTable(portfolioSubmissions, "portfolio_submissions");
   await deleteFromTable(upscaleUsage, "upscale_usage");
   await deleteFromTable(upscaleJobs, "upscale_jobs");

@@ -25,7 +25,6 @@ import ArtistPayouts from "@/pages/artist-payouts";
 import ArtistPending from "@/pages/artist-pending";
 import ArtistSettings from "@/pages/artist-settings";
 import ArtistAnalytics from "@/pages/artist-analytics";
-import SubscriptionConfirm from "@/pages/subscription-confirm";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminArtists from "@/pages/admin-artists";
 import AdminArtistDetail from "@/pages/admin-artist-detail";

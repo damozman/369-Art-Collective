@@ -3,10 +3,8 @@ import { pgTable, text, varchar, timestamp, boolean, integer, decimal, jsonb, un
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Trial status enum - enforces valid status values at database level
-export const trialStatusEnum = pgEnum('trial_status', ['active', 'canceled', 'converted', 'expired']);
-
 // Upscale quota type enum - tracks which quota bucket was used
+// 'elite_unlimited' is retained only so historical rows stay readable; nothing writes it.
 export const upscaleQuotaTypeEnum = pgEnum('upscale_quota_type', ['registration_bonus', 'monthly', 'elite_unlimited']);
 
 // Upscale job status enum - tracks job lifecycle
@@ -20,13 +18,7 @@ export const artists = pgTable("artists", {
   name: text("name").notNull(),
   artistShort: text("artist_short").notNull(), // Initials for SKU generation (e.g., "JH")
   approved: boolean("approved").notNull().default(false),
-  monthlySales: decimal("monthly_sales", { precision: 10, scale: 2 }).notNull().default('0'), // Current month sales for tier calculation
-  subscriptionTier: text("subscription_tier").notNull().default('free'), // free, pro, elite
-  stripeCustomerId: text("stripe_customer_id"), // Stripe Customer ID for subscription billing
-  stripeSubscriptionId: text("stripe_subscription_id"), // Active Stripe subscription ID
-  subscriptionStatus: text("subscription_status"), // active, canceled, past_due, trialing, incomplete
-  subscriptionPeriodEnd: timestamp("subscription_period_end"), // When current billing period ends
-  trialEndsAt: timestamp("trial_ends_at"), // When free trial ends (computed from Stripe, null if not trialing)
+  monthlySales: decimal("monthly_sales", { precision: 10, scale: 2 }).notNull().default('0'), // Current month sales for royalty tier calculation
   stripeAccountId: text("stripe_account_id"), // Stripe Connect account ID for payouts
   stripeAccountStatus: text("stripe_account_status"), // pending, active, restricted, complete
   stripeOnboardingComplete: boolean("stripe_onboarding_complete").notNull().default(false), // Has completed Stripe onboarding
@@ -54,42 +46,7 @@ export const artists = pgTable("artists", {
   totalUpscaleCostCents: integer("total_upscale_cost_cents").notNull().default(0), // Cumulative cost tracking in cents
   deletedAt: timestamp("deleted_at"), // Soft delete timestamp
   createdAt: timestamp("created_at").notNull().defaultNow(),
-}, (table) => ({
-  // Performance indexes for high-volume subscription operations
-  // Unique indexes for Stripe IDs (one customer/subscription per artist, allows NULL)
-  stripeCustomerIdx: uniqueIndex("artists_stripe_customer_id_idx").on(table.stripeCustomerId),
-  stripeSubscriptionIdx: uniqueIndex("artists_stripe_subscription_id_idx").on(table.stripeSubscriptionId),
-  // Regular indexes for filtering (many artists share same tier/status)
-  subscriptionTierIdx: index("artists_subscription_tier_idx").on(table.subscriptionTier),
-  subscriptionStatusIdx: index("artists_subscription_status_idx").on(table.subscriptionStatus),
-}));
-
-// Subscription Trials - Analytics for trial conversion tracking
-export const subscriptionTrials = pgTable("subscription_trials", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  artistId: varchar("artist_id").notNull().references(() => artists.id),
-  stripeCustomerId: text("stripe_customer_id"), // For cross-table joins with Stripe data
-  stripeSubscriptionId: text("stripe_subscription_id"), // Associated Stripe subscription
-  tier: text("tier").notNull(), // pro, elite
-  status: trialStatusEnum("status").notNull().default("active"), // active, canceled, converted, expired
-  trialSource: text("trial_source"), // How trial was activated (homepage_cta, dashboard_upgrade, admin_grant)
-  trialStartedAt: timestamp("trial_started_at").notNull(),
-  scheduledTrialEnd: timestamp("scheduled_trial_end").notNull(), // When trial was supposed to end (14 or 7 days)
-  convertedAt: timestamp("converted_at"), // When they converted to paid subscription
-  canceledAt: timestamp("canceled_at"), // When they explicitly canceled trial
-  expiredAt: timestamp("expired_at"), // When trial expired without conversion
-  downgradedAt: timestamp("downgraded_at"), // Post-trial churn (converted then downgraded)
-  cancellationReason: text("cancellation_reason"), // Why they didn't convert (user-provided or inferred)
-  emailsSent: integer("emails_sent").notNull().default(0), // How many trial emails we sent
-  emailTemplatesSent: text("email_templates_sent").array().default(sql`ARRAY[]::text[]`), // Which templates sent (for A/B testing)
-  lastEmailSentAt: timestamp("last_email_sent_at"), // Last reminder email sent
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-}, (table) => ({
-  artistIdx: index("subscription_trials_artist_id_idx").on(table.artistId),
-  statusIdx: index("subscription_trials_status_idx").on(table.status),
-  tierConvertedIdx: index("subscription_trials_tier_converted_idx").on(table.tier, table.status), // Composite for analytics
-  trialStartedIdx: index("subscription_trials_started_at_idx").on(table.trialStartedAt), // Time-series queries
-}));
+});
 
 // Upscale Jobs - Priority queue for async upscaling (MUST be defined before upscale_usage due to FK reference)
 export const upscaleJobs = pgTable("upscale_jobs", {
@@ -99,7 +56,7 @@ export const upscaleJobs = pgTable("upscale_jobs", {
   originalUrl: text("original_url").notNull(),
   upscaledUrl: text("upscaled_url"),
   status: upscaleStatusEnum("status").notNull().default("queued"),
-  priority: integer("priority").notNull().default(3), // 1=Elite, 2=Pro, 3=Free
+  priority: integer("priority").notNull().default(3), // Lower runs first; the queue is FIFO now that tiers are gone
   replicateId: text("replicate_id").unique(), // Unique Replicate prediction ID for webhook lookups
   errorMessage: text("error_message"),
   retryCount: integer("retry_count").notNull().default(0), // Track retry attempts (max 3)
@@ -117,8 +74,8 @@ export const upscaleUsage = pgTable("upscale_usage", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   artistId: varchar("artist_id").notNull().references(() => artists.id),
   fileHash: text("file_hash").notNull(), // SHA-256 hash for deduplication
-  quotaType: upscaleQuotaTypeEnum("quota_type").notNull(), // registration_bonus, monthly, elite_unlimited
-  tier: text("tier").notNull(), // Snapshot of artist tier when upscale occurred
+  quotaType: upscaleQuotaTypeEnum("quota_type").notNull(), // registration_bonus, monthly
+  tier: text("tier").notNull(), // Historical tier snapshot; new rows record a flat value
   ipAddress: text("ip_address"), // For abuse detection
   jobId: varchar("job_id").references(() => upscaleJobs.id), // Link to job that processed this (nullable for cached results)
   replicateId: text("replicate_id"), // Replicate prediction ID (nullable for cached results)
@@ -249,19 +206,6 @@ export const insertArtistSchema = createInsertSchema(artists).omit({
   artistShort: z.string().min(1).max(10).regex(/^[A-Z0-9]+$/, "Must be uppercase letters/numbers only"),
 });
 
-export const insertSubscriptionTrialSchema = createInsertSchema(subscriptionTrials).omit({
-  id: true,
-  createdAt: true,
-}).extend({
-  artistId: z.string().min(1),
-  tier: z.enum(['pro', 'elite']),
-  status: z.enum(['active', 'canceled', 'converted', 'expired']).default('active'),
-  trialStartedAt: z.date(),
-  scheduledTrialEnd: z.date(),
-  stripeSubscriptionId: z.string().optional(),
-  trialSource: z.string().optional(),
-});
-
 export const insertAdminSchema = createInsertSchema(admins).omit({
   id: true,
   createdAt: true,
@@ -315,9 +259,6 @@ export const updateArtworkSchema = z.object({
 // Types
 export type InsertArtist = z.infer<typeof insertArtistSchema>;
 export type Artist = typeof artists.$inferSelect;
-
-export type InsertSubscriptionTrial = z.infer<typeof insertSubscriptionTrialSchema>;
-export type SubscriptionTrial = typeof subscriptionTrials.$inferSelect;
 
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
 export type Admin = typeof admins.$inferSelect;

@@ -346,9 +346,10 @@ lump sum allocated by negotiation → it doesn't.
 
 ## §8. Refunds, reversals and clawbacks — the thing everyone gets wrong
 
-**Current state: there is no refund handling in the payout path at all.** The only
-refund logic in the repo is for AI credits (`routes.ts:4573`). If an order refunds
-after a contributor is paid, nothing happens today.
+**Current state: there is no refund handling in the payout path at all.** If an order
+refunds after a contributor is paid, nothing happens today. (This section once noted
+that the only refund logic in the repo was for AI credits at `routes.ts:4573`; Phase 0
+step 2 removed the AI credit system, so there is now no refund logic anywhere.)
 
 This is the #1 killer of payout systems in production and the most expensive thing on
 this list to retrofit, because fixing it changes the ledger model itself.

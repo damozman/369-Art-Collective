@@ -49,8 +49,11 @@ explicitly and wait for the user rather than quietly building around it.
 
 ## Known defects — real, documented, do not "discover" and panic
 
-These are known and scheduled for Phase 0. Do not fix them ad hoc or treat them as
-new findings.
+All four are known. Do not fix them ad hoc or treat them as new findings — **and note
+which phase each belongs to.** Two are Phase 0; two are Phase 1 and must not be
+attempted early, because both change the ledger model that Phase 1 exists to build.
+
+**Phase 0 — fix in cut-list step 5:**
 
 1. **`server/lib/order-processor.ts:163-164`** — royalties are computed from
    **hardcoded placeholder costs** (`printifyCost = 15.00`, `shippingCost = 5.00`)
@@ -60,15 +63,39 @@ new findings.
    percentage to net profit; `shared/financial-utils.ts` applies it to retail price;
    and the former's "profit" is derived from the fake costs above. Neither subtracts
    Stripe processing fees.
+
+**Phase 1 — engine core, *not* Phase 0:**
+
 3. **No refund, chargeback, or clawback handling anywhere in the payout path.** If an
-   order refunds after a contributor is paid, nothing happens. (Design: blueprint §8.)
+   order refunds after a contributor is paid, nothing happens. Blueprint §8 specifies
+   this as **"required from Phase 1"**, and §9 lists reversal handling under Phase 1.
+   Retrofitting it changes the ledger model itself, so it lands with the ledger, not
+   before it.
 4. **`artists.monthlySales` is a stored column** driving royalty tiers — a drift risk.
-   Note the `influencers` table already does this correctly, with a comment explaining
-   why: calculate by query, never store.
+   This is **§5 decision #4** (immutable ledger; never store balances, derive by
+   query), and Phase 1 is defined as honoring all fourteen §5 decisions. The
+   `influencers` table already does it correctly, with a comment explaining why.
+
+A third inconsistency surfaced during step 4 and also belongs to step 5: see
+"Two live inconsistencies" below.
 
 ## Current status
 
 - **Phase:** Phase 0 in progress — cut list 4 of 5 done.
+- **Careful reading that:** the cut list is only **one of Phase 0's four bullets** in
+  blueprint §9. The other three (real Printify costs, one royalty basis, subtract
+  processing fees) are all bundled into cut-list step 5, so step 5 closes Phase 0
+  entirely. "4 of 5" therefore overstates progress — steps 1–4 deleted code no money
+  ever flowed through; step 5 is the only one that changes what a contributor is paid,
+  and it needs live credentials to verify.
+- **Phase 0 is the smallest phase.** Phases 1–5 follow, and Phase 1 (engine core) is
+  where the actual product gets built. Do not read "Phase 0 nearly done" as "nearly
+  done."
+- **Track A is the real critical path** (§9, §15) and is invisible from this repo:
+  Shopify Partner account, Stripe Connect platform application, App Store competitive
+  research, design-partner outreach, and getting 369 selling again for real refund
+  data. All marked Day 1; none has any status recorded here. If you are picking this
+  up, ask before assuming they are underway.
 - **Branch:** `claude/business-idea-feedback-7uwumw`
 - **Archive:** `archive/pre-repositioning` holds the complete pre-cut codebase.
 - **Resolved:** no money has ever flowed through the payout path and no artist has been

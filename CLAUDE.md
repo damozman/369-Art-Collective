@@ -404,8 +404,9 @@ pages** — do not extend `client/src/pages/artist-*`, and do not reach for
   See the warning section above. This is the one thing blocking real payouts.
 - **Track A had not started as of 2026-07-31** and is the real critical path. The user
   expects to begin within ~24 hours of that date. Ask for status; do not assume.
-- **Task #8 is an outstanding user request:** a full plain-language SOP explaining the
-  system end to end, aimed at the business owner rather than a developer.
+- **`docs/SOP.md` is the owner's guide** — plain-language, no jargon, written for the
+  business owner. Keep it current when behaviour changes; it is the document the user
+  actually reads. Technical depth stays here and in code comments.
 
 ## How to communicate with the user — IMPORTANT
 

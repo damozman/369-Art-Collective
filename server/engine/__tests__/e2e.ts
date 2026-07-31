@@ -26,6 +26,12 @@ import {
   type EngineDb,
 } from "../ingest";
 import { formatMoney } from "../money";
+import {
+  FixtureTransferExecutor,
+  runPayoutBatch,
+  selectPayoutCandidates,
+  retryPayout,
+} from "../payout";
 import type { RevenueEvent } from "../revenue-event";
 
 const results: string[] = [];
@@ -266,6 +272,96 @@ async function main() {
   );
   check("nothing was allocated for it", () => assert.equal(orphan.allocationIds.length, 0));
   check("but the revenue is still recorded", () => assert.ok(orphan.eventId));
+
+  // ---- 9. Payout batch execution ----
+  console.log("\n9. Payout batches");
+
+  // Alice's balance recouped to exactly zero in step 6, so give her a fresh
+  // sale to be paid for. Bob is still carrying earnings from the earlier orders.
+  await ingestEvent(db, {
+    ...saleEvent,
+    sourceEventId: "order-5:line-1",
+    occurredAt: new Date("2026-09-15T00:00:00Z"),
+  });
+
+  // Give Alice a payout account; leave Bob without one on purpose.
+  await db.insert(schema.contributorIdentities).values({
+    tenantId: "t-369", contributorId: "c-alice",
+    stripeAccountId: "acct_alice", stripePayoutsEnabled: true,
+  });
+
+  const payoutAsOf = new Date("2026-10-15T00:00:00Z");
+  const candidates = await selectPayoutCandidates(db, "t-369", payoutAsOf);
+  const aliceCandidate = candidates.find((c) => c.contributorId === "c-alice")!;
+  const bobCandidate = candidates.find((c) => c.contributorId === "c-bob")!;
+
+  check("Alice is payable", () => assert.equal(aliceCandidate.skipReason, undefined));
+  check("Bob is skipped — no payout account connected", () =>
+    assert.match(bobCandidate.skipReason!, /No payout account/)
+  );
+
+  const executor = new FixtureTransferExecutor();
+  const batch = await runPayoutBatch(db, {
+    tenantId: "t-369", asOf: payoutAsOf, executor,
+  });
+
+  check("the batch completed", () => assert.equal(batch.status, "completed"));
+  check("exactly one payout was made", () => assert.equal(batch.paid, 1));
+  check("the transfer carried the payout's idempotency key", () =>
+    assert.match(executor.requests[0].idempotencyKey, /^payout_/)
+  );
+
+  const aliceAfterPayout = await deriveContributorBalance(db, "t-369", "c-alice");
+  check("Alice's balance is debited by exactly what was sent", () =>
+    assert.equal(aliceAfterPayout, 0n)
+  );
+
+  const paidRows = await db.select().from(schema.payouts).where(eq(schema.payouts.status, "paid"));
+  check("the payout row records the provider transfer id", () =>
+    assert.ok(paidRows[0].stripeTransferId)
+  );
+
+  const rerun = await runPayoutBatch(db, { tenantId: "t-369", asOf: payoutAsOf, executor });
+  check("re-running the batch pays nothing — the balance is already debited", () =>
+    assert.equal(rerun.paid, 0)
+  );
+
+  // ---- 10. Partial batch failure and retry ----
+  console.log("\n10. Failure and retry");
+  await db.insert(schema.contributorIdentities).values({
+    tenantId: "t-369", contributorId: "c-bob",
+    stripeAccountId: "acct_bob", stripePayoutsEnabled: true,
+  });
+  await db.update(schema.tenants).set({ minimumPayoutMinor: 1n }).where(eq(schema.tenants.id, "t-369"));
+
+  const failing = new FixtureTransferExecutor(new Set(["c-bob"]));
+  const partialBatch = await runPayoutBatch(db, {
+    tenantId: "t-369", asOf: payoutAsOf, executor: failing,
+  });
+
+  check("a batch with a failure says so in its own status", () =>
+    assert.equal(partialBatch.status, "completed_with_failures")
+  );
+  check("the failed payout is recorded as failed", () => assert.equal(partialBatch.failed, 1));
+
+  const bobBalanceAfterFailure = await deriveContributorBalance(db, "t-369", "c-bob");
+  check("a failed transfer does NOT debit the ledger", () =>
+    assert.ok(bobBalanceAfterFailure > 0n)
+  );
+
+  const [failedPayout] = await db
+    .select().from(schema.payouts).where(eq(schema.payouts.status, "failed"));
+  const retried = await retryPayout(db, failedPayout.id, new FixtureTransferExecutor());
+  check("a retry succeeds and marks the payout paid", () => assert.equal(retried.status, "paid"));
+
+  const bobAfterRetry = await deriveContributorBalance(db, "t-369", "c-bob");
+  check("the retry debits the ledger exactly once", () => assert.equal(bobAfterRetry, 0n));
+
+  const [retriedRow] = await db
+    .select().from(schema.payouts).where(eq(schema.payouts.id, failedPayout.id));
+  check("the attempt count records that a retry happened", () =>
+    assert.equal(retriedRow.attemptCount, 2)
+  );
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

@@ -109,12 +109,12 @@ Both were resolved in step 5.)
   not yet wired to anything user-facing.**
 - **What exists now:** the engine schema (15 `engine_*` tables), the canonical
   `RevenueEvent`, the §6 rules engine, the immutable ledger, §8 reversals and
-  clawbacks, and the ingestion path that ties them together in one transaction.
-  125 unit tests plus 30 end-to-end checks against real Postgres.
-- **What Phase 1 still needs:** payout batch execution against the state machine,
-  contributor login (ratified decision #2), and statement rendering from the stored
-  explanation trace. Then Phase 2 — Shopify adapter, Stripe Connect payouts, and 369
-  migrated on as tenant #1.
+  clawbacks, the ingestion path that ties them together in one transaction, and
+  payout batch execution against the state machine.
+  138 unit tests plus 44 end-to-end checks against real Postgres.
+- **What Phase 1 still needs:** contributor login (ratified decision #2) and statement
+  rendering from the stored explanation trace. Then Phase 2 — Shopify adapter, a real
+  `TransferExecutor` against Stripe Connect, and 369 migrated on as tenant #1.
 - **Money has still never flowed through any payout path.** All fixes remain
   **forward-only — no recalculation migration needed.**
 - **Track A: not started as of 2026-07-31.** Confirmed by the user, who intends to
@@ -140,6 +140,7 @@ Both were resolved in step 5.)
 | `server/engine/ledger.ts` | append-only entries, balance derivation, hold logic |
 | `server/engine/reversal.ts` | §8 reversals + recoup/absorb/reserve policies |
 | `server/engine/ingest.ts` | the DB-facing path: resolve → evaluate → allocate → ledger |
+| `server/engine/payout.ts` | batch selection, the payout state machine, `TransferExecutor` seam |
 
 ```bash
 npm test              # 125 unit tests, no network, no database

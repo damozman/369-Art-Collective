@@ -441,9 +441,15 @@ path. Verified by 125 unit tests and 30 end-to-end checks against real Postgres.
 Per ratified decision #9 the engine is a **new schema alongside** the marketplace
 tables, not a retrofit of them — 369 migrates onto it in Phase 2 as tenant #1.
 
-Still outstanding in Phase 1: payout batch execution against the state machine,
-contributor login (ratified decision #2), and statement rendering from the stored
-trace.
+Payout execution is built too: batch selection respecting holds, minimums and
+reserves; the explicit `pending → processing → paid | failed → retrying` state
+machine; and transfer execution behind a `TransferExecutor` seam with a fixture
+implementation, so the money path is provable without Stripe credentials. A failed
+transfer never debits the ledger, and the provider idempotency key is derived from
+the payout row so a retry after an ambiguous failure cannot pay twice.
+
+Still outstanding in Phase 1: contributor login (ratified decision #2) and statement
+rendering from the stored trace.
 
 **Phase 2 — First adapter + payouts + portal.** Shopify ingestion, Stripe Connect
 payouts, contributor login, statements with the explanation trace. **369 Art Collective
@@ -516,6 +522,64 @@ a synthetic refund/chargeback injector so development never blocks on waiting.
   import to be re-runnable and idempotent, or onboarding becomes a support nightmare.
 - Someone will need to pay a contributor who has no Stripe account and won't make one.
   Model a `manual` payout method that records the obligation without executing it.
+
+---
+
+## §10a. Open question — whose Stripe Connect platform?
+
+**Unresolved as of 2026-07-31. Flagged rather than assumed, because getting it wrong
+is the difference between needing a compliance budget and not.**
+
+§1.1 says tenants connect their own Stripe and we never custody funds. §11 says we
+"inherit responsibility for platform-level ToS". Those point at two different
+architectures:
+
+**A. Tenant-as-platform.** Each tenant enables Connect on their own Stripe.
+Contributors are Express accounts under *the tenant*. We connect via Connect OAuth and
+call Stripe on the tenant's behalf. Funds never touch us, and each tenant carries their
+own platform obligations. Strongest fit with §1.1; the tenant does the Connect
+application, not us.
+
+**B. Us-as-platform.** We are the Connect platform; tenants and contributors are
+accounts beneath us. Simpler onboarding, but it puts us far closer to the flow of funds
+and therefore to money transmission — the exact risk §1.1 exists to eliminate.
+
+**What is NOT ambiguous, and is actionable now:** 369 Art Collective pays its own
+artists, so 369 needs Connect enabled on its own Stripe **under either architecture**.
+That application can start immediately without settling this.
+
+The platform-level question only becomes binding at Phase 3 (self-serve tenant
+onboarding). Settle it before then, ideally with a payments-literate lawyer, and record
+the answer here.
+
+---
+
+## §10b. Known gap in the §6 rule shape — recoupment
+
+**Surfaced 2026-07-31 while building the engine. Not a bug; a limit worth naming.**
+
+Ratified decision #10 committed to building the §6 rule shape as written, on the basis
+that a wrong guess about *which* structures matter is a config change. That holds for
+the near verticals — POD, courses, stock licensing — where every structure in §6 is
+expressible as rows.
+
+It does **not** hold for **recoupment**, which §7's coverage matrix already lists as
+"new work beyond core" for both music and book publishing. An advance paid up front and
+recovered from future royalties before any cash flows is not a percentage, a flat
+amount, or a tier. It needs a *recoupable balance* that sits between the allocation and
+the payout — a concept the current shape has no room for.
+
+This is precisely the signal decision #10 said to surface rather than bend the rule
+table around. Consequences:
+
+- It is **not** a reason to change anything now. No design partner has asked for it.
+- It **is** a reason not to promise music or publishing before it exists.
+- When it is built, it is a new table plus a payout-time step, not a rewrite of the
+  rules engine. The ledger already permits the negative balances it depends on.
+
+Related structures in the same family, unbuilt for the same reason: commission **caps**
+(real estate — agent keeps 100% after a threshold) and **publishing vs master** splits
+(music — two rights streams on one event, possibly expressible via `role`).
 
 ---
 

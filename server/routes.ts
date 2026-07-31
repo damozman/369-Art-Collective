@@ -963,9 +963,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      console.log("Artist Login - Entered Password:", password);
-            console.log("Artist Login - Stored Hash:", artist.password);
-            const validPassword = await bcrypt.compare(password, artist.password);
+      // SECURITY: never log a password or a stored hash. Both were being
+      // printed here in plaintext, which puts live credentials into terminal
+      // scrollback, CI output, and any log aggregator the app is pointed at.
+      const validPassword = await bcrypt.compare(password, artist.password);
       if (!validPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -1946,9 +1947,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      console.log("Admin Login - Entered Password:", password);
-            console.log("Admin Login - Stored Hash:", admin.password);
-            const validPassword = await bcrypt.compare(password, admin.password);
+      // SECURITY: see the note on the artist login above. Never log credentials.
+      const validPassword = await bcrypt.compare(password, admin.password);
       if (!validPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }

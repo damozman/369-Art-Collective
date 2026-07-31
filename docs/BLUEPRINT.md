@@ -33,20 +33,70 @@ parts that can't be compressed.
 
 ---
 
-## §1. Open decisions — my recommendation, your call
+## §1. Foundational decisions — AGREED
 
-React to these rather than answering from scratch. Each has a default I'd ship.
+All eight ratified. These are settled; changing any of them later is a redesign, not
+a tweak.
 
-| # | Decision | My recommendation | Why |
+| # | Decision | Ruling | Why |
 |---|---|---|---|
-| ⬜ 1 | Does the platform hold funds? | **No. Orchestrate only.** Each tenant connects their own Stripe; we instruct their account to pay their contributors. We never custody money. | Holding funds = money transmission = state licensing, bonding, audits. Not a solo path. This single choice is the difference between shipping this year and needing a compliance budget. |
-| ⬜ 2 | Do contributors get a login? | **Yes, Phase 1.** | It's the trust problem that makes merchants switch, it's the thing incumbents don't do, and you already built it (`artist-earnings.tsx`, `artist-payouts.tsx`). Adding a second user class to a live multi-tenant schema later is a genuine retrofit. |
-| ⬜ 3 | First revenue source adapter | **Shopify.** | You have it working, and the App Store is the only distribution channel in reach that doesn't cost money. |
-| ⬜ 4 | Fate of 369 Art Collective | **Keep live as tenant #1.** | You cannot credibly sell payout software having never made a payout. It's also your only source of real transaction data and your first case study. |
-| ⬜ 5 | Free tier? | **No. Paid from day one, 14-day trial.** | B2B payout software with a free tier attracts the highest-support, lowest-value users. People with this pain have budget. |
-| ⬜ 6 | Multi-currency at launch? | **Store currency on every amount; support USD only in Phase 1.** | The schema cost is near-zero now and brutal later. The feature can wait. |
-| ⬜ 7 | Custom formula scripting for tenants? | **Never. Structured rules only.** | Arbitrary tenant-authored code is a security and support catastrophe. See §10. |
-| ⬜ 8 | Name / brand | **Decide before the App Store listing, not before the build.** | Don't let naming block engineering. |
+| ✅ 1 | Does the platform hold funds? | **No. Orchestrate only.** Each tenant connects their own Stripe; we instruct their account to pay their contributors. We never custody money. | Holding funds = money transmission = state licensing, bonding, audits. This single choice is the difference between shipping this year and needing a compliance budget. |
+| ✅ 2 | Do contributors get a login? | **Yes, Phase 1.** | It's the trust problem that makes merchants switch, it's what incumbents don't do, and you already built it (`artist-earnings.tsx`, `artist-payouts.tsx`). Adding a second user class to a live multi-tenant schema later is a genuine retrofit. |
+| ✅ 3 | First revenue source adapter | **Shopify.** | Only candidate with attribution data, built-in distribution, *and* existing working code. See §1a. |
+| ✅ 4 | Fate of 369 Art Collective | **Keep live as tenant #1, radically scoped down.** | It is the test tenant, not the MVP. See §1b for the spec. |
+| ✅ 5 | Free tier? | **No. Paid from day one, 14-day trial.** | B2B payout software with a free tier attracts the highest-support, lowest-value users. People with this pain have budget. |
+| ✅ 6 | Multi-currency at launch? | **Store currency on every amount; support USD only in Phase 1.** | Schema cost is near-zero now and brutal later. The feature can wait. |
+| ✅ 7 | Custom formula scripting for tenants? | **Never. Structured rules only.** | Arbitrary tenant-authored code is a security and support catastrophe. See §10. |
+| ✅ 8 | Name / brand | **Decide before the App Store listing, not before the build.** | Don't let naming block engineering. |
+
+### §1a. Why Shopify first — the alternatives considered
+
+| Candidate | Case for | Why not first |
+|---|---|---|
+| **Stripe direct** | Broadest reach — any business taking payments | **Attribution is absent.** A charge knows the amount but not which contributor is owed; the merchant would tag every charge by hand, destroying the automation pitch. Strong as adapter #3. |
+| **CSV / statement import** | Universal, no platform dependency, unlocks music + publishing + stock simultaneously | Zero distribution — nobody discovers a CSV importer. Purely manual, so "it just runs" evaporates. Correctly adapter #2. |
+| **WooCommerce** | Large install base, no app-review gatekeeper | Ship a PHP plugin *and* a hosted service — double the surface area. Weaker attribution data, far less marketplace discovery. |
+| **Printify / Printful as source** | Already integrated | They know what the *merchant* paid them, not what the *customer* paid the merchant. Wrong side of the transaction — a cost source, not a revenue source. |
+| **Etsy** | Multi-artist shops exist | Most sellers are solo; wrong buyer shape, restrictive API. |
+| **Gumroad / Lemon Squeezy** | Clean APIs | Multi-contributor splits are rare there, and both have some native splitting. |
+
+Shopify is the only candidate holding all three of: **attribution data already present**
+(vendor, tags, metafields, SKU patterns — four ways to solve the hard part),
+**distribution built in** (intent-driven App Store search you don't pay for), and
+**existing working code**.
+
+Accepted tradeoff: platform dependency and app-review gatekeeping. Mitigated by making
+adapter #2 a CSV importer, which proves the seam and gets you off single-platform risk
+early.
+
+### §1b. 369 Art Collective as tenant #1 — scoped spec
+
+**369 is not the MVP. The engine is the MVP. 369 is the test tenant.** Conflating them
+is how attention leaks back into the business this repositioning exists to leave behind.
+
+**Must have:**
+- Live storefront genuinely taking orders, fulfilling through Printify so **COGS is real**
+- **3–5 contributors on deliberately different deal structures** — one % of net, one
+  flat-per-unit, one tiered, one with a work-specific override
+- Enough catalog to plausibly sell, and no more
+
+**Must not have:** recruitment or growth mechanics, marketing spend, anything on the
+§14 cut list, or any ambition to be big.
+
+The mismatched contract terms are the point. They are not good business — they are a
+**live fixture that exercises every branch of the §6 rules engine against real money.**
+One artist on one flat rate proves nothing; five artists on five deals proves the spec.
+You can be contributor #1 yourself: fewer humans to coordinate.
+
+**Known limit — do not over-rely on this tenant.** A small storefront produces too few
+refunds and chargebacks to be statistically meaningful (a handful a year). 369 proves
+the **happy path end-to-end with real money**. The adversarial path (§8) is properly
+exercised only by tenant #2–3 with real volume. Two consequences:
+
+1. Get a design partner onto the platform **earlier than §9 implies**.
+2. Build a **test harness that injects synthetic refunds and chargebacks** so
+   development is never blocked waiting on reality. Synthetic for coverage, real for
+   confidence — you need both.
 
 ---
 
@@ -381,11 +431,12 @@ that lands after a payout has cleared is the exact scenario §8 exists to handle
 you cannot manufacture it — you can only wait for it in a live system with real
 customers and real money.
 
-This is the strongest practical argument for keeping 369 Art Collective **actually
-selling** rather than treating it as a test fixture. It is your only source of real
-adversarial events, and every serious defect in a payout system lives in that path.
-Synthetic tests will not find them. Start it now so the clock is running while you
-build everything else.
+This argues for keeping 369 Art Collective **actually selling** rather than treating it
+as an inert fixture — start it now so the clock is running while you build everything
+else. But see §1b: a small storefront yields too few disputes to be sufficient on its
+own. Real confidence in the §8 reversal path requires a **design-partner tenant with
+volume**, which is why that outreach belongs in Track A rather than later. Pair it with
+a synthetic refund/chargeback injector so development never blocks on waiting.
 
 ---
 

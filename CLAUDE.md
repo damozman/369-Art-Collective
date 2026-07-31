@@ -115,35 +115,39 @@ Both were resolved in step 5.)
 
 ## Current status
 
-- **Phase:** Phase 0 ✅ complete. **Phase 1 ✅ complete — engine, HTTP API, and the
-  contributor portal UI are all built and verified.**
-- **What exists now:** the engine schema (15 `engine_*` tables), the canonical
-  `RevenueEvent`, the §6 rules engine, the immutable ledger, §8 reversals and
-  clawbacks, the ingestion path that ties them together in one transaction,
-  payout batch execution against the state machine, contributor login,
-  statements assembled from the stored explanation trace, the contributor
-  portal HTTP API, **and the React portal over it at `/portal/:tenantSlug`**.
-  175 unit tests plus 62 end-to-end checks against real Postgres, and the HTTP
-  endpoints exercised with real requests including cross-tenant rejection.
-- **Phase 1 is done.** The portal was driven with a real browser against real
-  Postgres — sign in, wrong password, statement, derivation traces expanded,
-  held lines, reversal line, payout history, unknown tenant, mobile viewport.
-  Next is Phase 2 — Shopify adapter, a real `TransferExecutor` against Stripe
-  Connect, and 369 migrated on as tenant #1.
-- **Money has still never flowed through any payout path.** All fixes remain
-  **forward-only — no recalculation migration needed.**
-- **Track A: not started as of 2026-07-31.** Re-confirmed by the user on 2026-07-31,
-  who intends to begin **within about 24 hours** and considers the build comfortably
-  ahead of schedule. This covers the Shopify Partner account, the Stripe
-  Connect platform application, App Store competitive research, design-partner
-  outreach, and getting 369 selling again for real refund data.
-  **This is the real critical path** (§9, §15) and none of it goes faster by building
-  faster — each item waits on other people. Two consequences worth stating plainly:
-  Phase 2 payouts cannot ship without a verified Connect platform, and the §8 reversal
-  path cannot be validated against reality until real refunds exist. Re-ask for
-  status rather than assuming progress; update this line when it changes.
+- **Phase 0 ✅ · Phase 1 ✅ · the owner-facing product is built.**
+- **What exists:** the engine (15 `engine_*` tables, canonical `RevenueEvent`, §6
+  rules, immutable ledger, §8 reversals, transactional ingestion, payout batches
+  with the state machine), the **contributor portal** at `/portal/:tenantSlug`, and
+  the **owner console** at `/manage/:tenantSlug` — dashboard, people, review queue,
+  rates, payout preview and run, plus rate editing with versioning and resolving
+  stuck items.
+- **175 unit tests · 109 end-to-end checks against real Postgres.** Every screen has
+  been driven in a real browser, not just type-checked.
+- **Money has still never moved.** No Stripe, no Shopify. The transfer seam is
+  behind `TransferExecutor` with a fixture; pressing "Pay" without a provider fails
+  honestly rather than pretending.
+- **Cost fixtures are still invented** — see below. The first real capture happened
+  on 2026-07-31 and is recorded in `docs/SOP.md` §6b, but the fixture file has not
+  been replaced (one product, one variant; the user is changing supplier first).
+- **Track A: not started as of 2026-07-31.** Shopify Partner, Stripe Connect
+  application, App Store research, design-partner outreach, 369 selling again.
+  Still the real critical path; none of it goes faster by building faster.
 - **Branch:** `claude/business-idea-feedback-7uwumw`
-- **Archive:** `archive/pre-repositioning` holds the complete pre-cut codebase.
+
+### What to build next, in the user's stated order
+
+1. **Connect Shopify** — real sales flow into the engine automatically. The last
+   big piece of the out-of-the-box product.
+2. **Connect Stripe** — a real `TransferExecutor`. Blocked on the user's Connect
+   application.
+3. **Migrate 369 on as tenant #1** — explicitly deferred by ratified decision #11
+   until the generic product has been evaluated cleanly.
+
+Offered and declined for now: a credential-leak audit of the whole codebase. The
+user fixed the one known instance (plaintext password logging at login, removed in
+`a1b2c3d`-era commit "security: stop logging plaintext passwords"). **Worth
+offering again before anything runs against real money.**
 
 ### The engine — where things live
 
@@ -161,6 +165,12 @@ Both were resolved in step 5.)
 | `server/engine/statement.ts` | statement assembly — pure, reads stored rows, never recomputes |
 | `server/engine/statement-query.ts` | the DB reads a statement is assembled from |
 | `server/engine/routes.ts` | contributor portal HTTP API, mounted at `/api/engine` |
+| `server/engine/admin-auth.ts` | tenant-user login; a THIRD session namespace, `engineAdmin` |
+| `server/engine/admin-query.ts` | read-only queries behind the owner console |
+| `server/engine/admin-mutations.ts` | rule versioning, people and works |
+| `server/engine/admin-routes.ts` | the owner console HTTP API |
+| `server/engine/review.ts` | resolving stuck items: assign, dismiss, write off |
+| `server/engine/seed-demo.ts` | realistic demo data (`npm run seed:demo`) |
 | `server/engine/db.ts` | the engine's own Drizzle client (lazy; separate from `lib/db.ts`) |
 
 The portal UI, which is the engine's surface rather than the marketplace's:
@@ -177,9 +187,16 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 
 ```bash
 npm test              # 175 unit tests, no network, no database
-npm run test:e2e      # 62 checks against a real Postgres (needs DATABASE_URL)
+npm run test:e2e      # 109 checks against a real Postgres (needs DATABASE_URL)
+npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
+npm run printify:costs -- --fixture   # local only, needs real credentials
 ```
+
+**Three surfaces, three separate sessions.** `session.user` is the marketplace's,
+`session.engineContributor` is an artist's, `session.engineAdmin` is an owner's.
+They are deliberately different keys over different tables — collapsing them is how
+an artist login ends up able to trigger a payout run.
 
 **The engine and the marketplace are deliberately unlinked.** Separate schemas,
 separate drizzle configs (`drizzle.engine.config.ts`, `migrations/engine/`), no

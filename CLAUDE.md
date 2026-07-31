@@ -147,3 +147,25 @@ and 650 files are images.** Searching blind is slow and, worse, returns stale re
 
 Prefer `Grep` with a `glob` filter (e.g. `--glob '*.ts'`) over broad searches, and
 read large files by line range.
+
+## Looking at the running app
+
+Do not ask the user to screenshot the UI — take the screenshot and read it back.
+
+```bash
+node scripts/screenshot.mjs http://localhost:5000 /tmp/home.png
+node scripts/screenshot.mjs http://localhost:5000/artist/dashboard /tmp/d.png --full
+node scripts/screenshot.mjs http://localhost:5000 /tmp/m.png --width=390 --height=844
+```
+
+Then `Read` the PNG. The script also reports console errors. Requires
+`npm i -D playwright && npx playwright install chromium` (skip the install in the
+cloud sandbox — Chromium is preinstalled at `PLAYWRIGHT_BROWSERS_PATH`).
+
+`.mcp.json` also registers the Playwright MCP server for multi-step interaction
+(clicking through flows, filling forms). Use the script for "what does it look like,"
+the MCP server for "walk through this flow."
+
+**Network note:** cloud sandbox sessions are restricted to an allowlist — general web
+access and `WebFetch` against arbitrary domains will fail there. Local sessions have
+normal network access.

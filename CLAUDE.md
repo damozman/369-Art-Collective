@@ -135,14 +135,31 @@ Both were resolved in step 5.)
   Still the real critical path; none of it goes faster by building faster.
 - **Branch:** `claude/business-idea-feedback-7uwumw`
 
-### What to build next, in the user's stated order
+### What to build next
 
-1. **Connect Shopify** — real sales flow into the engine automatically. The last
-   big piece of the out-of-the-box product.
-2. **Connect Stripe** — a real `TransferExecutor`. Blocked on the user's Connect
-   application.
-3. **Migrate 369 on as tenant #1** — explicitly deferred by ratified decision #11
-   until the generic product has been evaluated cleanly.
+**`docs/WHATS-LEFT.md` is the authoritative gap list** — what is built, what is not,
+and the order agreed with the user on 2026-07-31. Read it before planning work.
+Keep it current: if it claims something is missing and it is not, fix the file.
+
+Summary of that order:
+
+1. **Shopify and Stripe against fixtures** — both writable now without credentials,
+   exactly as `CostResolver` and `TransferExecutor` already are. The approvals then
+   wait on themselves rather than on us.
+2. **Artist bank onboarding** — nobody can be paid without it, even with Stripe live.
+3. **Artwork and settings screens** — finishes "operable without a developer".
+4. **Customer billing and signup** — turns it into a business. **There is currently
+   no way to charge anyone**, which is easy to leave until last and then discover is
+   the thing standing between working software and revenue.
+5. Email, 1099, audit viewer.
+6. CSV import, then advances (§10b) — advances only once a real publishing or music
+   deal can be seen, so the shape is drawn rather than guessed.
+
+**Migrating 369 on as tenant #1 stays deferred** by ratified decision #11 until the
+user has evaluated the generic product cleanly.
+
+**The user is not on a timeline** (stated 2026-07-31) and prefers correctness over
+speed. Do not compress work to seem fast.
 
 Offered and declined for now: a credential-leak audit of the whole codebase. The
 user fixed the one known instance (plaintext password logging at login, removed in

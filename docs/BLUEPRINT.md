@@ -19,10 +19,11 @@ the cost of art supply, and the codebase invested entirely in supply-side acquis
 with nothing on demand. But the payout pipeline underneath it is genuinely hard
 software that thousands of businesses currently do in spreadsheets.
 
-**The constraint that shapes everything below:** the builder is full-time available
-but needs income soon. A 9-month zero-revenue build is not survivable. Therefore the
-sequencing in §9 deliberately front-loads cash and treats the platform as something
-that emerges from paid work, not something built on spec before the first dollar.
+**The constraint that shapes everything below:** the builder is full-time available,
+is not under cash pressure, and ships substantially faster than conventional estimates
+assume. Therefore the sequencing in §9 is **platform-first** — build the real thing,
+properly, and start the externally-gated items on day one because those are the only
+parts that can't be compressed.
 
 **The one-line architectural thesis:**
 
@@ -321,14 +322,33 @@ this list to retrofit, because fixing it changes the ledger model itself.
 
 ---
 
-## §9. Phasing — revised for the income constraint
+## §9. Phasing — platform-first, two parallel tracks
 
-You need money before a SaaS can plausibly pay. So the plan is **sell the work, then
-productize what you're already doing** — the lowest-risk path from unemployed to
-software revenue, and it doubles as customer development.
+The critical planning insight is that **the build is effort-bound and compresses
+enormously with modern tooling, while the feedback loops are wall-clock-bound and do
+not compress at all.** Conventional month-based estimates conflate the two and are
+therefore wrong in both directions. Plan them separately.
 
-### Phase 0 — Fix what's broken (weeks 1–2)
-Necessary under every scenario, and it's what makes the system honest.
+### Track A — Long-lead items. Start day one; these wait on other people.
+
+These are the actual critical path. Nothing about them gets faster by coding faster.
+
+| Item | Wall-clock | Start |
+|---|---|---|
+| Shopify Partner account + app scaffold + review | 1–3 weeks per review cycle, usually iterates | Day 1 |
+| Stripe Connect platform application & verification | days–weeks | Day 1 |
+| App Store competitive research (§15.2) | one afternoon | Day 1 |
+| Design-partner conversations — 5–10 POD brands | weeks of human response time | Day 1 |
+| **Real refund/chargeback data** | **30–120 days, irreducible** | Day 1, via tenant #1 |
+
+Design-partner outreach here is **not** a services business — you're not selling
+reconciliation work. You're asking 5–10 brands to show you their actual deal
+structures and their current spreadsheet. That's the input to the rules engine (§6),
+and guessing at it is the most likely way to build the wrong abstraction.
+
+### Track B — Build. Effort-bound; goes as fast as you go.
+
+**Phase 0 — Fix what's broken.**
 - Fix the **hardcoded cost placeholders** (`order-processor.ts:163-164`) — real
   Printify costs via API. *Today every royalty is computed from invented numbers.*
 - Collapse the **three conflicting royalty definitions** into one canonical basis.
@@ -336,37 +356,36 @@ Necessary under every scenario, and it's what makes the system honest.
 - Archive the cut list (influencer gamification, AI studio, recruitment residuals,
   featured rotation) to a dormant branch.
 
-### Phase 1 — Cash now, in parallel with build (weeks 2–10)
-Pick the fastest path to a paid invoice. My ranking:
+**Phase 1 — Engine core.** The middle box in §4, with all fourteen §5 decisions
+honored. Multi-tenant from the first migration — never single-tenant "for now."
+Canonical `RevenueEvent`, rules engine, immutable ledger, reversal handling.
 
-1. **Reconciliation-as-a-service.** Find 3–5 POD brands paying multiple designers.
-   Offer to run their monthly artist payouts *for* them — $300–800/month each. You do it
-   semi-manually using your own tooling. This is the best option by a distance: it pays
-   now, it *is* customer development, those clients become tenants #2–6, and every
-   manual step you hate becomes a prioritized feature.
-2. **Trade/commercial art sourcing** — outbound to STR operators and interior
-   designers, using the storefront that already exists. Higher AOV, longer cycle.
-3. **Contract dev work** — unglamorous, protects runway, zero strategic value.
+**Phase 2 — First adapter + payouts + portal.** Shopify ingestion, Stripe Connect
+payouts, contributor login, statements with the explanation trace. **369 Art Collective
+goes live on it as tenant #1.**
 
-Target: **$2–4k/month recurring by week 10.**
+**Phase 3 — Self-serve.** Shopify OAuth/embedded app, tenant onboarding, Stripe
+Billing, split-rule builder UI, 1099 export, App Store listing.
 
-### Phase 2 — Engine core, single tenant (weeks 6–16, overlapping)
-Build the middle box in §4 with all fourteen §5 decisions honored. Ingest Shopify.
-Pay via Connect. Contributor login. **369 Art Collective runs on it as tenant #1**, and
-your service clients get migrated onto it one at a time — replacing your manual labor
-with software you're already being paid for.
+**Phase 4 — Second adapter.** CSV statement import — the highest-leverage choice,
+because it unlocks music, publishing, and stock licensing simultaneously and is the
+format every non-Shopify vertical already lives in. Its real purpose is to **prove the
+seam holds** before you bet a vertical on it.
 
-### Phase 3 — Multi-tenant + self-serve (months 4–7)
-Shopify OAuth and embedded app, tenant onboarding, Stripe Billing for subscriptions,
-the split-rule builder UI, statements, 1099 export. App Store listing.
+**Phase 5 — Vertical expansion.** Driven by inbound demand, not speculation.
 
-### Phase 4 — Second adapter (months 7–9)
-Ship **one** additional adapter to prove the seam. CSV statement import is the highest-
-leverage choice: it unlocks music, publishing, and stock licensing simultaneously, and
-it's the format every non-Shopify vertical already lives in.
+### The one thing that genuinely cannot be compressed
 
-### Phase 5 — Vertical expansion
-Driven by inbound demand, not speculation. Landing page + rule templates + adapter.
+**Adversarial financial events.** A chargeback takes 30–120 days to arrive. A refund
+that lands after a payout has cleared is the exact scenario §8 exists to handle, and
+you cannot manufacture it — you can only wait for it in a live system with real
+customers and real money.
+
+This is the strongest practical argument for keeping 369 Art Collective **actually
+selling** rather than treating it as a test fixture. It is your only source of real
+adversarial events, and every serious defect in a payout system lives in that path.
+Synthetic tests will not find them. Start it now so the clock is running while you
+build everything else.
 
 ---
 
@@ -381,8 +400,9 @@ Driven by inbound demand, not speculation. Landing page + rule templates + adapt
    surface* is what kills solo products.
 3. **Rebuilding the marketplace inside the SaaS.** The temptation to let merchants
    "discover contributors" will return. It is the original mistake wearing a new hat.
-4. **Perfecting the engine while runway burns.** Your constraint is income, and the
-   §5 list is calibrated to be the *minimum* worth doing up front — resist extending it.
+4. **Gold-plating because there's no deadline.** With time and no cash pressure, the
+   §5 list will feel like a floor rather than a ceiling. It is a ceiling. Everything
+   past it should be pulled by a paying customer, not pushed by enthusiasm — see §13.
 5. **Letting tenants write formula code.** Sandboxing arbitrary code is a security
    problem you cannot afford. Structured rules cover ~95% of real deals; the rest get a
    manual `adjustment`.
@@ -451,17 +471,28 @@ regulators. Flat SaaS pricing keeps the §11 posture clean.
 
 ## §13. Kill criteria — decide these now, while you're unbiased
 
-Write these down before you're emotionally invested:
+Without cash pressure, the risk shifts from *running out of money* to *building
+something excellent that nobody wanted, and not noticing for a year.* These criteria
+are learning-gated rather than revenue-gated, and they exist to make that failure mode
+visible early. Write them down before you're emotionally invested.
 
-- **Week 10:** if reconciliation-as-a-service has produced $0 despite 50+ real
-  conversations → the pain isn't acute enough to pay for. Stop and reassess.
-- **Month 7:** if the App Store listing produces <10 installs in 60 days → distribution
-  assumption is wrong; pivot to direct outbound or a different vertical.
-- **Month 12:** if MRR < $2k → this is a services business, not a software business.
-  That's a legitimate outcome, not a failure — but stop investing in the platform.
-- **Any time:** if a well-funded incumbent ships this natively in Shopify → stop
-  building horizontally, go deep on one vertical they won't serve (music recoupment,
-  for instance).
+- **After the App Store research (this week):** if two or more well-funded incumbents
+  already do splits *and* execute payouts well → stop building horizontally. Go deep on
+  one vertical they won't serve (music recoupment is the obvious candidate).
+- **After 10 design-partner conversations:** if they don't immediately recognize the
+  pain, or they describe it as "annoying but fine" → wrong buyer. The pain must be
+  described unprompted, with feeling.
+- **60 days after App Store listing:** <10 installs → the distribution assumption is
+  wrong. Pivot to direct outbound before building more features.
+- **90 days after listing:** trials that don't convert to paid → the value or the
+  pricing is wrong. Talk to every churned trial before writing more code.
+- **Any time:** Shopify or a major POD provider ships this natively → same response as
+  criterion one, go vertical-deep.
+
+**The failure mode to watch for in yourself:** with time and no financial pressure, the
+temptation is to keep building because building is the fun part. The §5 list is
+deliberately the *minimum* worth doing up front. Everything beyond it should be pulled
+by a customer, not pushed by enthusiasm.
 
 ---
 
@@ -485,12 +516,22 @@ it costs nothing and it's reversible.
 
 ## §15. Immediate next actions
 
-1. **You:** react to the ⬜ decisions in §1.
-2. **You, this week, before any code:** an afternoon in the Shopify App Store searching
-   "royalty," "artist payouts," "commission split," "creator payouts." Find out who's
-   already there and whether they actually move money or only track affiliate
-   commissions. This is the single fact most likely to kill or confirm the whole plan.
-3. **You, weeks 1–2:** start the reconciliation-as-a-service outreach. It's the income
-   and the customer development at once, and it does not depend on any code being ready.
-4. **Me, on your go-ahead:** Phase 0 — fix the cost placeholders, unify the royalty
-   definition, subtract processing fees, archive the cut list.
+**Everything in Track A starts now, because it's the real critical path.**
+
+1. **You:** react to the ⬜ decisions in §1. Decision 1 (never hold funds) gates the
+   most downstream design.
+2. **You, this week:** an afternoon in the Shopify App Store searching "royalty,"
+   "artist payouts," "commission split," "creator payouts." Find out who's there and
+   whether they actually move money or only track affiliate commissions. Single fact
+   most likely to kill or confirm the plan — and it's kill criterion #1.
+3. **You, this week:** open the Shopify Partner account and start the Stripe Connect
+   platform application. Both have review queues you don't control; the clock should be
+   running while Track B is built.
+4. **You, ongoing:** line up 5–10 design partners. Not to sell them anything — to see
+   their real deal structures and their current spreadsheets, which are the input to §6.
+5. **You:** get 369 Art Collective actually selling again, however modestly. It is the
+   only source of the adversarial financial events described at the end of §9, and
+   that clock is the longest one in the plan.
+6. **Me, on your go-ahead:** Phase 0 — fix the cost placeholders, unify the royalty
+   definition, subtract processing fees, archive the cut list. Then straight into the
+   Phase 1 engine core.

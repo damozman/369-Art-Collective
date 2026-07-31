@@ -47,10 +47,6 @@ export const artists = pgTable("artists", {
   tosAcceptedAt: timestamp("tos_accepted_at"), // Terms of Service acceptance timestamp for legal compliance
   tosIpAddress: text("tos_ip_address"), // IP address when TOS was accepted for audit trail
   tosVersion: text("tos_version"), // Version/hash of TOS accepted (e.g., "v1.0-2025-11" or hash)
-  isFeaturedEligible: boolean("is_featured_eligible").notNull().default(false), // Can be featured on homepage (auto-true for Elite, perf-based for Pro, manual for Free)
-  featuredPriority: integer("featured_priority").notNull().default(0), // Higher = more likely to be featured (Elite=100, Pro=50, Free=0, +manual boost)
-  featuredPinnedUntil: timestamp("featured_pinned_until"), // If set, artist is guaranteed featured until this date (for campaigns/promotions)
-  lastFeaturedAt: timestamp("last_featured_at"), // Last time artist appeared in featured rotation (for fair rotation)
   registrationUpscalesUsed: integer("registration_upscales_used").notNull().default(0), // One-time registration bonus (3 max)
   monthlyUpscalesUsed: integer("monthly_upscales_used").notNull().default(0), // Monthly quota usage (resets on billing cycle)
   lastUpscaleResetAt: timestamp("last_upscale_reset_at"), // Last time monthly quota was reset
@@ -577,56 +573,6 @@ export type InsertStripeWebhookEvent = typeof stripeWebhookEvents.$inferInsert;
 
 export type Testimonial = typeof testimonials.$inferSelect;
 export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
-
-// Featured tier enum for type safety
-export type FeaturedTier = "admin_override" | "premium" | "merit";
-
-// Featured Subscriptions - Track premium featured placement subscriptions
-export const featuredSubscriptions = pgTable("featured_subscriptions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  artistId: varchar("artist_id").notNull().references(() => artists.id),
-  testimonialId: varchar("testimonial_id").notNull().references(() => testimonials.id),
-  featuredTier: text("featured_tier").notNull().$type<FeaturedTier>(), // "admin_override", "premium", "merit"
-  tierPriority: integer("tier_priority").notNull().default(50), // Lower = higher priority. admin_override=10, premium=20, merit=30-100
-  stripeSubscriptionId: text("stripe_subscription_id"), // Null for merit/admin, populated for premium
-  subscriptionStatus: text("subscription_status"), // active, cancelled, past_due, unpaid (for premium tier)
-  currentPeriodEnd: timestamp("current_period_end"), // When current subscription period ends (from Stripe)
-  startDate: timestamp("start_date").notNull(),
-  endDate: timestamp("end_date"), // Null = ongoing, set when subscription ends
-  expiresAt: timestamp("expires_at"), // When this featured placement expires (for merit rotation)
-  endReason: text("end_reason"), // Why subscription ended: "cancelled", "expired", "testimonial_deleted", "rotation", "admin_action"
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
-// Featured Rotation Log - Audit trail for monthly rotation changes
-export const featuredRotationLog = pgTable("featured_rotation_log", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  rotationDate: timestamp("rotation_date").notNull(), // When this rotation was executed
-  testimonialId: varchar("testimonial_id").notNull().references(() => testimonials.id),
-  artistId: varchar("artist_id").notNull().references(() => artists.id),
-  featuredTier: text("featured_tier").notNull(), // "merit", "premium", "admin_override"
-  artistEarnings: decimal("artist_earnings", { precision: 10, scale: 2 }).notNull(), // Earnings at time of rotation
-  rank: integer("rank"), // Rank within merit tier (1-5 for top 5)
-  action: text("action").notNull(), // "added", "removed", "kept"
-  reason: text("reason"), // Why this change happened
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-// Insert schemas
-export const insertFeaturedSubscriptionSchema = createInsertSchema(featuredSubscriptions).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  featuredTier: z.enum(['admin_override','premium','merit'])
-});
-
-// Types for featured subscriptions
-export type FeaturedSubscription = typeof featuredSubscriptions.$inferSelect;
-export type InsertFeaturedSubscription = z.infer<typeof insertFeaturedSubscriptionSchema>;
-
-export type FeaturedRotationLog = typeof featuredRotationLog.$inferSelect;
 
 // Email Logs - Track all outbound email communications
 export const emailLogs = pgTable("email_logs", {

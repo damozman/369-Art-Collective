@@ -4,7 +4,6 @@ import { emailService } from './email-service';
 import { db } from './db';
 import { emailLogs, subscriptionTrials } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
-import { updateFeaturedStatusForTier } from './featured-artists-service';
 import { sendReEngagementEmail } from './trial-email-orchestrator';
 
 // Lazy initialization to ensure runtime environment variable is used
@@ -546,10 +545,7 @@ export class SubscriptionService {
         // This preserves linkage for scheduled cancellations (cancel_at_period_end)
 
         await storage.updateArtist(artistId, updates);
-        
-        // Auto-update featured artist status based on final tier
-        await updateFeaturedStatusForTier(artistId, finalTier);
-        
+
         break;
       }
 
@@ -568,10 +564,7 @@ export class SubscriptionService {
           subscriptionTier: 'free',
           stripeSubscriptionId: null // Clear to allow re-subscription
         });
-        
-        // Reset featured status to free tier (not eligible)
-        await updateFeaturedStatusForTier(artistId, 'free');
-        
+
         break;
       }
 

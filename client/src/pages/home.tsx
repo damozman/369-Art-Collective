@@ -23,9 +23,8 @@ import {
 } from "lucide-react";
 import type { Testimonial } from "@shared/schema";
 
-type FeaturedTestimonial = Omit<Testimonial, 'featured'> & {
+type FeaturedTestimonial = Testimonial & {
   artistName: string;
-  featured: "admin_override" | "premium" | "merit";
 };
 
 export default function Home() {
@@ -375,11 +374,7 @@ export default function Home() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
                         </svg>
                       </div>
-                      {testimonial.featured === "premium" ? (
-                        <Badge variant="default" className="absolute top-3 right-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0" data-testid="badge-sponsored">
-                          Sponsored
-                        </Badge>
-                      ) : testimonial.featured === "admin_override" ? (
+                      {testimonial.featured ? (
                         <Badge variant="default" className="absolute top-3 right-3" data-testid="badge-featured">
                           Featured
                         </Badge>

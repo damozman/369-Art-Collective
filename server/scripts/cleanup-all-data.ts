@@ -19,7 +19,7 @@ import {
   sales, referrals, artistReferrals, payouts, stripeWebhookEvents,
   emailLogs, affiliateClicks, affiliateConversions,
   influencers, artworkApprovalLog,
-  waitlist, featuredSubscriptions, featuredRotationLog, testimonials
+  waitlist, testimonials
 } from "../../shared/schema";
 import { ObjectStorageService } from "../objectStorage";
 import * as bcrypt from "bcryptjs";
@@ -205,8 +205,6 @@ async function cleanup() {
   await deleteFromTable(payouts, "payouts");
   await deleteFromTable(artistReferrals, "artist_referrals");
   await deleteFromTable(referrals, "referrals");
-  await deleteFromTable(featuredRotationLog, "featured_rotation_log");
-  await deleteFromTable(featuredSubscriptions, "featured_subscriptions");
   await deleteFromTable(subscriptionTrials, "subscription_trials");
   await deleteFromTable(portfolioSubmissions, "portfolio_submissions");
   await deleteFromTable(upscaleUsage, "upscale_usage");

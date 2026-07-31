@@ -68,7 +68,7 @@ new findings.
 
 ## Current status
 
-- **Phase:** Phase 0 in progress — cut list 3 of 5 done.
+- **Phase:** Phase 0 in progress — cut list 4 of 5 done.
 - **Branch:** `claude/business-idea-feedback-7uwumw`
 - **Archive:** `archive/pre-repositioning` holds the complete pre-cut codebase.
 - **Resolved:** no money has ever flowed through the payout path and no artist has been
@@ -80,14 +80,32 @@ new findings.
 1. ✅ CreatorStack subsystem — 4 tables, buyer auth, webhook processor, 3 pages
 2. ✅ AI art studio + credits — 3 tables, 6 routes, `ai-service.ts`, studio page
 3. ✅ Influencer gamification — 5 tables, leaderboard/challenges/badges, achievement service
+4. ✅ Featured placement + artist subscription tiers — see below
 
-Since the cut began: `routes.ts` 6189→5443, `storage.ts` 3507→2650,
-`schema.ts` 1225→832. Production build passes.
+Since the cut began: `routes.ts` 6189→4663, `storage.ts` 3507→1981,
+`schema.ts` 1225→720, `email-service.ts` 2503→1447. Production build passes.
 
-**Remaining, in this order** (ordering matters — these are coupled):
-4. ⬜ **Featured rotation + artist subscription tiers, together.** `subscription-service.ts`
-   calls `updateFeaturedStatusForTier()` and featured placement is sold as a tier perk;
-   removing them separately means editing the same file twice.
+**What step 4 removed.** There turned out to be *two* featured products, both cut:
+the homepage featured-artist rotation (`featured-artists-service.ts` + four artist
+columns), and the $99/mo paid featured-**testimonial** placement with merit top-5
+rotation (`featured_subscriptions`, `featured_rotation_log`, Stripe checkout).
+Testimonials survive as plain admin-curated content on the `featured` boolean.
+Subscription tiers took `subscription-service.ts`, the trial services and the whole
+`server/email-templates/` directory (all four templates were trial emails) with them.
+
+Three decisions made during step 4, all reversible:
+
+- **Upscaling was kept, its quota flattened.** Every artist now gets the same
+  allowance (3 registration + 5/month, the old free-tier numbers); the job queue is
+  FIFO. Upscaling is now the only AI feature left and the only paid third-party
+  dependency (Replicate) outside the payout path — **its fate is still an open
+  question**, deliberately deferred rather than decided.
+- **The 20-artwork cap now applies to everyone** rather than gating a paid upgrade.
+- **Royalties come from the performance tier alone.** `getRoyaltyTierPercentage()`
+  lost its subscription-minimum arm. The three conflicting definitions are still
+  unreconciled — that is step 5, unchanged.
+
+**Remaining:**
 5. ⬜ **Recruitment residuals + royalty unification, together.** `calculateRecruitmentBonus()`
    lives in `royalty-calculator.ts`, which the royalty rewrite replaces anyway.
    - Replace hardcoded costs with real Printify costs, **snapshotted at event time**
@@ -101,8 +119,21 @@ Since the cut began: `routes.ts` 6189→5443, `storage.ts` 3507→2650,
 **Known deferred cleanup:** `financial-service.ts` and `AdminFinancialDashboard.tsx`
 still carry hardcoded CreatorStack and AI-credit revenue projections. They type-check
 because the figures are placeholders, not queries. Clear them during step 5, when
-`financial-service.ts` is rewritten anyway. `email-service.ts` trial emails also still
-reference the AI studio — fix during step 4 with the subscription work.
+`financial-service.ts` is rewritten anyway. (The artist-subscription MRR stream and
+the tier break-even calculator are already gone — step 4 removed those.)
+
+**Two live inconsistencies to fix in step 5, both now visible:**
+
+1. `shared/financial-utils.ts` hard-validates royalty as exactly **30/35/45** and
+   throws otherwise, while the performance ladder in `royalty-calculator.ts` also has
+   a **40%** rung. Any code path that computes a margin at 40% throws today. The admin
+   pricing tool is restricted to the three validated rates so it cannot hit this.
+2. `ROYALTY_TIERS` in `shared/financial-utils.ts` still names its constants
+   `FREE/PRO/ELITE` after subscription tiers that no longer exist.
+
+**Vestigial, intentionally left:** `upscale_usage.tier` and the `elite_unlimited`
+value in `upscaleQuotaTypeEnum` are kept so historical rows stay readable. Nothing
+writes them; new rows record a flat `'standard'`.
 
 ## Working agreements
 
@@ -188,3 +219,37 @@ the MCP server for "walk through this flow."
 **Network note:** cloud sandbox sessions are restricted to an allowlist — general web
 access and `WebFetch` against arbitrary domains will fail there. Local sessions have
 normal network access.
+
+### Running the app in a cloud sandbox
+
+You can do this, and you should — a type-check and a build will not tell you the app
+still works. Postgres 16 is installed. `initdb` refuses to run as root, so run it as
+the `postgres` user and keep the data directory somewhere that user can reach:
+
+```bash
+export PGDATA=/var/lib/postgresql/tmpdata
+mkdir -p "$PGDATA" && chown postgres:postgres "$PGDATA"
+su postgres -c "/usr/lib/postgresql/16/bin/initdb -D $PGDATA -A trust"
+su postgres -c "/usr/lib/postgresql/16/bin/pg_ctl -D $PGDATA -o '-p 55432' -l $PGDATA/server.log start"
+psql -h 127.0.0.1 -p 55432 -U postgres -c "create database art369;"
+```
+
+Then write a `.env.local` with `DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369`
+and a `SESSION_SECRET`, run `npx drizzle-kit push --force`, and `npm run dev`. Startup
+seeds an artist and an admin (`admin@369artcollective.com` / `Admin369AC`). The
+Printify/Shopify/Stripe paths still cannot run — only the UI and the DB-backed routes.
+
+**Two traps when doing this:**
+
+- `server/vite.ts:36` calls `process.exit(1)` from the vite logger's `error` handler,
+  and vite forwards *client-side* console errors to it. A benign React warning from
+  the shadcn sidebar therefore kills the dev server the moment the artist dashboard
+  renders. Comment out that `process.exit(1)` while you work; don't commit it.
+- Start the server with the Bash tool's `run_in_background`, not a shell `&` — a
+  backgrounded shell job is killed when the tool call returns.
+
+**Lesson from step 3.** `bf1ca38` deleted 19 unrelated routes from `client/src/App.tsx`
+as collateral while removing two. Nothing caught it: every page component was still
+imported, so `tsc` and `vite build` both passed while every `/artist/*` and `/admin/*`
+URL served the 404 page. Restored in `f298354`. **Green type-check and build are not
+evidence the app works — load the pages.**

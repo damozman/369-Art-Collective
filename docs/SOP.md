@@ -252,6 +252,52 @@ money when no payment provider is connected yet. Nobody's balance is touched.
 
 ---
 
+## 6b. ⚠️ A live pricing problem found on 2026-07-31
+
+The first real capture of Printify costs turned up something important, and it is
+a **business** problem rather than a software one.
+
+Your one live product — *Divine Blessing of Sophia's Light*, 12″×16″ canvas —
+**loses money on every US sale**:
+
+| | |
+|---|---|
+| Sells for | $59.99 |
+| Printing | −$36.60 |
+| Shipping to a US customer | −$32.39 |
+| Card fee | −$2.04 |
+| **Result** | **−$11.04 per sale** |
+
+### Why
+
+Print provider **69** appears to print in Europe. Shipping to Greece or Moldova
+costs $13.49; to the US it costs $32.39. If your customers are mostly American,
+you are paying trans-Atlantic freight on every order. The $36.60 print cost is
+also roughly 50% above typical for that size.
+
+### The options
+
+1. **Switch to a US print provider** — likely the biggest win. Production around
+   $25 and US shipping around $8 would turn a $11 loss into roughly $23 profit at
+   the same $59.99 price.
+2. **Raise the price** — to pay an artist 30% and keep about $15 yourself with the
+   current provider, this canvas needs to sell for **$93–108**.
+3. **Charge shipping separately** rather than absorbing it.
+4. **Drop the product.**
+
+### What the system did about it
+
+Exactly what it should. It records the real loss, and the artist's share **floors
+at zero** rather than paying them a percentage of money you never made. Nobody is
+overpaid and the loss stays visible.
+
+This is why the system refuses to pay from unverified costs. The invented numbers
+it shipped with said this canvas cost $12.00 to print and $7.50 to ship. Reality
+is $36.60 and $32.39 — off by 3x and 4x. Paying artists on those guesses would
+have quietly drained the business.
+
+---
+
 ## 7. The things waiting on you
 
 None of these go faster by building faster. They all wait on other people.

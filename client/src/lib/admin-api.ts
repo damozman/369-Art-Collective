@@ -201,6 +201,106 @@ export function runPayouts(tenantSlug: string): Promise<RunResult> {
   return request<RunResult>(`${base(tenantSlug)}/payouts/run`, { method: "POST" });
 }
 
+export interface AdminWork {
+  id: string;
+  title: string;
+  externalRef: string | null;
+  productType: string | null;
+  contributors: Array<{ id: string; name: string; role: string | null }>;
+}
+
+export interface RuleDraft {
+  ruleKey: string;
+  scope: "tenant" | "contributor" | "work" | "product_type";
+  scopeRef?: string | null;
+  contributorId?: string | null;
+  basis: "gross" | "net" | "unit";
+  method: "percent" | "flat_per_unit" | "flat_per_event";
+  percent?: number | null;
+  flatMinor?: string | null;
+  costDeductions?: string[];
+  priority?: number;
+  effectiveFrom?: string;
+}
+
+export function getWorks(tenantSlug: string): Promise<{ works: AdminWork[] }> {
+  return request(`${base(tenantSlug)}/works`);
+}
+
+export function createRule(tenantSlug: string, draft: RuleDraft): Promise<{ id: string }> {
+  return request(`${base(tenantSlug)}/rules`, {
+    method: "POST",
+    body: JSON.stringify(draft),
+  });
+}
+
+/** Changing a rate creates a NEW VERSION. It never edits the old one. */
+export function changeRule(
+  tenantSlug: string,
+  ruleKey: string,
+  draft: RuleDraft
+): Promise<{ id: string; version: number }> {
+  return request(`${base(tenantSlug)}/rules/${encodeURIComponent(ruleKey)}`, {
+    method: "PUT",
+    body: JSON.stringify(draft),
+  });
+}
+
+export function deactivateRule(tenantSlug: string, ruleKey: string): Promise<{ ok: boolean }> {
+  return request(`${base(tenantSlug)}/rules/${encodeURIComponent(ruleKey)}/deactivate`, {
+    method: "POST",
+  });
+}
+
+export function createContributor(
+  tenantSlug: string,
+  input: { name: string; email?: string; externalRef?: string; password?: string }
+): Promise<{ id: string }> {
+  return request(`${base(tenantSlug)}/contributors`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateContributor(
+  tenantSlug: string,
+  contributorId: string,
+  input: {
+    name?: string;
+    email?: string;
+    externalRef?: string;
+    password?: string;
+    active?: boolean;
+  }
+): Promise<{ ok: boolean }> {
+  return request(`${base(tenantSlug)}/contributors/${encodeURIComponent(contributorId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export function createWork(
+  tenantSlug: string,
+  input: { title: string; externalRef?: string; productType?: string }
+): Promise<{ id: string }> {
+  return request(`${base(tenantSlug)}/works`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function linkWorkContributor(
+  tenantSlug: string,
+  workId: string,
+  contributorId: string,
+  role?: string
+): Promise<{ ok: boolean }> {
+  return request(`${base(tenantSlug)}/works/${encodeURIComponent(workId)}/contributors`, {
+    method: "POST",
+    body: JSON.stringify({ contributorId, role }),
+  });
+}
+
 export function retryPayout(
   tenantSlug: string,
   payoutId: string

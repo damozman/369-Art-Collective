@@ -390,6 +390,52 @@ function describeRule(rule: typeof schema.splitRules.$inferSelect): string {
     .slice(0, 10)}${until}.`;
 }
 
+export interface AdminWorkRow {
+  id: string;
+  title: string;
+  externalRef: string | null;
+  productType: string | null;
+  contributors: Array<{ id: string; name: string; role: string | null }>;
+}
+
+/** Works and who is attached to each — the attribution map, in effect. */
+export async function listWorks(
+  db: EngineDb,
+  tenantId: string
+): Promise<AdminWorkRow[]> {
+  const works = await db
+    .select()
+    .from(schema.works)
+    .where(eq(schema.works.tenantId, tenantId))
+    .orderBy(schema.works.title);
+
+  if (works.length === 0) return [];
+
+  const links = await db
+    .select({
+      workId: schema.workContributors.workId,
+      contributorId: schema.workContributors.contributorId,
+      role: schema.workContributors.role,
+      name: schema.contributors.name,
+    })
+    .from(schema.workContributors)
+    .innerJoin(
+      schema.contributors,
+      eq(schema.workContributors.contributorId, schema.contributors.id)
+    )
+    .where(eq(schema.workContributors.tenantId, tenantId));
+
+  return works.map((work) => ({
+    id: work.id,
+    title: work.title,
+    externalRef: work.externalRef,
+    productType: work.productType,
+    contributors: links
+      .filter((l) => l.workId === work.id)
+      .map((l) => ({ id: l.contributorId, name: l.name, role: l.role })),
+  }));
+}
+
 export interface AdminBatchRow {
   id: string;
   status: string;

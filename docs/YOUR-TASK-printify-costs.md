@@ -27,10 +27,26 @@ is a leaked key, permanently.
 
 ### 1. Get the project on your computer
 
-If you already have it, skip to step 2. Otherwise, in a terminal:
+**You need Node.js first.** If you don't have it, get the LTS version from
+[nodejs.org](https://nodejs.org). You'll know it's missing if `npm` says
+"command not found" later.
+
+**IMPORTANT: the work is on a branch, not `main`.** Opening `main` shows the old
+code and none of this will be there.
+
+#### In VS Code
+
+1. `Ctrl+Shift+P` (Mac: `Cmd+Shift+P`) → **Git: Clone**
+2. Paste `https://github.com/damozman/369ACP26.git`
+3. Choose a folder, then **Open** when prompted
+4. Look at the **bottom-left corner** — it shows the branch, probably `main`.
+   Click it and choose **`claude/business-idea-feedback-7uwumw`**
+5. Open a terminal (**Terminal → New Terminal**) and run `npm install`
+
+#### Or from a terminal
 
 ```bash
-git clone <your repo URL>
+git clone https://github.com/damozman/369ACP26.git
 cd 369ACP26
 git checkout claude/business-idea-feedback-7uwumw
 npm install
@@ -38,8 +54,8 @@ npm install
 
 ### 2. Put your Printify key in the settings file
 
-Create a file called **`.env.local`** in the project folder if it isn't there
-already, and add this line:
+In VS Code, right-click in the file list → **New File** → name it exactly
+**`.env.local`** (the leading dot matters). Add this line:
 
 ```
 PRINTIFY_API_TOKEN=your_actual_token_here

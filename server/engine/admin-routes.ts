@@ -35,7 +35,18 @@ import {
   listNeedsReview,
   listPayoutBatches,
   listRules,
+  listWorks,
 } from "./admin-query";
+import {
+  AdminValidationError,
+  createContributor,
+  createRule,
+  createWork,
+  deactivateRule,
+  linkWorkContributor,
+  supersedeRule,
+  updateContributor,
+} from "./admin-mutations";
 import { AuthError } from "./auth";
 import type { EngineDb } from "./ingest";
 import { formatMinor } from "./money";
@@ -417,6 +428,204 @@ export function createAdminRouter(
       const result = await retryPayout(db, payoutId, executor);
       res.json(result);
     }
+  );
+
+  /**
+   * Shared wrapper for every write endpoint.
+   *
+   * Centralises the role check and the validation-error translation so a new
+   * write route cannot forget either — forgetting the role check is how a
+   * read-only bookkeeper ends up able to change what people are paid.
+   */
+  function write(
+    handler: (req: TenantRequest, res: Response, session: AdminSession) => Promise<void>
+  ) {
+    return async (req: TenantRequest, res: Response) => {
+      const session = (req as TenantRequest & { adminSession?: AdminSession }).adminSession!;
+
+      try {
+        assertCanWrite(session);
+      } catch (error) {
+        if (error instanceof AuthError) {
+          return res.status(403).json({ message: error.message });
+        }
+        throw error;
+      }
+
+      try {
+        await handler(req, res, session);
+      } catch (error) {
+        // Validation failures are the owner's mistake, not a server fault, and
+        // their messages are written to be read by them.
+        if (error instanceof AdminValidationError) {
+          return res.status(400).json({ message: error.message });
+        }
+        throw error;
+      }
+    };
+  }
+
+  // ---- Rates: create and change ----
+
+  router.post(
+    "/t/:tenantSlug/admin/rules",
+    requireAdmin,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      const id = await createRule(
+        db,
+        tenant.id,
+        {
+          ruleKey: String(body.ruleKey ?? ""),
+          scope: body.scope,
+          scopeRef: body.scopeRef ?? null,
+          contributorId: body.contributorId ?? null,
+          role: body.role ?? null,
+          basis: body.basis,
+          method: body.method,
+          percent: body.percent ?? null,
+          flatMinor: body.flatMinor === undefined || body.flatMinor === null
+            ? null
+            : BigInt(body.flatMinor),
+          tierTable: body.tierTable ?? null,
+          costDeductions: body.costDeductions ?? [],
+          priority: body.priority ?? 0,
+          effectiveFrom: body.effectiveFrom ? new Date(body.effectiveFrom) : undefined,
+        },
+        session.tenantUserId
+      );
+
+      res.status(201).json({ id });
+    })
+  );
+
+  router.put(
+    "/t/:tenantSlug/admin/rules/:ruleKey",
+    requireAdmin,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      const result = await supersedeRule(
+        db,
+        tenant.id,
+        {
+          ruleKey: String(req.params.ruleKey),
+          scope: body.scope,
+          scopeRef: body.scopeRef ?? null,
+          contributorId: body.contributorId ?? null,
+          role: body.role ?? null,
+          basis: body.basis,
+          method: body.method,
+          percent: body.percent ?? null,
+          flatMinor: body.flatMinor === undefined || body.flatMinor === null
+            ? null
+            : BigInt(body.flatMinor),
+          tierTable: body.tierTable ?? null,
+          costDeductions: body.costDeductions ?? [],
+          priority: body.priority ?? 0,
+          effectiveFrom: body.effectiveFrom ? new Date(body.effectiveFrom) : undefined,
+        },
+        session.tenantUserId
+      );
+
+      res.json(result);
+    })
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/rules/:ruleKey/deactivate",
+    requireAdmin,
+    write(async (req, res) => {
+      const tenant = req.engineTenant!;
+      await deactivateRule(db, tenant.id, String(req.params.ruleKey));
+      res.json({ ok: true });
+    })
+  );
+
+  // ---- People ----
+
+  router.post(
+    "/t/:tenantSlug/admin/contributors",
+    requireAdmin,
+    write(async (req, res) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      const id = await createContributor(db, tenant.id, {
+        name: String(body.name ?? ""),
+        email: body.email ?? null,
+        externalRef: body.externalRef ?? null,
+        password: body.password ?? null,
+      });
+
+      res.status(201).json({ id });
+    })
+  );
+
+  router.patch(
+    "/t/:tenantSlug/admin/contributors/:contributorId",
+    requireAdmin,
+    write(async (req, res) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      await updateContributor(db, tenant.id, String(req.params.contributorId), {
+        name: body.name,
+        email: body.email,
+        externalRef: body.externalRef,
+        password: body.password,
+        active: body.active,
+      });
+
+      res.json({ ok: true });
+    })
+  );
+
+  // ---- Works ----
+
+  router.get("/t/:tenantSlug/admin/works", requireAdmin, async (req: TenantRequest, res) => {
+    const tenant = req.engineTenant!;
+    const works = await listWorks(db, tenant.id);
+    res.json({ works });
+  });
+
+  router.post(
+    "/t/:tenantSlug/admin/works",
+    requireAdmin,
+    write(async (req, res) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      const id = await createWork(db, tenant.id, {
+        title: String(body.title ?? ""),
+        externalRef: body.externalRef ?? null,
+        productType: body.productType ?? null,
+      });
+
+      res.status(201).json({ id });
+    })
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/works/:workId/contributors",
+    requireAdmin,
+    write(async (req, res) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      await linkWorkContributor(
+        db,
+        tenant.id,
+        String(req.params.workId),
+        String(body.contributorId ?? ""),
+        body.role ?? null
+      );
+
+      res.status(201).json({ ok: true });
+    })
   );
 
   return router;

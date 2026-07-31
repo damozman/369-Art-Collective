@@ -35,14 +35,12 @@ import AdminEmpire from "@/pages/admin-empire";
 import AdminSettings from "@/pages/admin-settings";
 import AdminTools from "@/pages/admin-tools";
 import AdminInfluencers from "@/pages/admin-influencers";
-import AdminChallenges from "@/pages/admin-challenges";
 import AdminArchivedArtworks from "@/pages/admin-archived-artworks";
 import AdminFinancialDashboard from "@/pages/AdminFinancialDashboard";
 import InfluencerApply from "@/pages/influencer-apply";
 import InfluencerLogin from "@/pages/influencer-login";
 import InfluencerPending from "@/pages/influencer-pending";
 import InfluencerDashboard from "@/pages/influencer-dashboard";
-import PublicLeaderboard from "@/pages/public-leaderboard";
 import SuccessStory from "@/pages/success-story";
 import ArtistProfile from "@/pages/artist-profile";
 import Creators from "@/pages/creators";
@@ -56,7 +54,6 @@ function Router() {
       <Route path="/coming-soon" component={ComingSoon} />
       <Route path="/join" component={JoinCreatorverse} />
       <Route path="/creators" component={Creators} />
-      <Route path="/leaderboard" component={PublicLeaderboard} />
       <Route path="/success-stories/:slug" component={SuccessStory} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminLogin} />
@@ -69,160 +66,6 @@ function Router() {
       <Route path="/artist/login" component={Login} />
       <Route path="/artist" component={Login} />
       
-      <Route path="/artist/pending">
-        <ProtectedRoute requiredType="artist">
-          <ArtistLayout>
-            <ArtistPending />
-          </ArtistLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/artist/dashboard">
-        <ProtectedRoute requiredType="artist">
-          <ArtistDashboard />
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/artist/upload">
-        <ProtectedRoute requiredType="artist">
-          <ArtistLayout>
-            <UploadArtwork />
-          </ArtistLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      
-      <Route path="/artist/earnings">
-        <ProtectedRoute requiredType="artist">
-          <ArtistLayout>
-            <ArtistEarnings />
-          </ArtistLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/artist/referrals">
-        <ProtectedRoute requiredType="artist">
-          <ArtistLayout>
-            <ArtistReferrals />
-          </ArtistLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/artist/payouts">
-        <ProtectedRoute requiredType="artist">
-          <ArtistLayout>
-            <ArtistPayouts />
-          </ArtistLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/artist/settings">
-        <ProtectedRoute requiredType="artist">
-          <ArtistLayout>
-            <ArtistSettings />
-          </ArtistLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/artist/subscription/confirm">
-        <ProtectedRoute requiredType="artist">
-          <SubscriptionConfirm />
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/artist/analytics">
-        <ProtectedRoute requiredType="artist">
-          <ArtistLayout>
-            <ArtistAnalytics />
-          </ArtistLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/dashboard">
-        <ProtectedRoute requiredType="admin">
-          <AdminDashboard />
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/artists">
-        <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminArtists />
-          </AdminLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/artists/:id">
-        <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminArtistDetail />
-          </AdminLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/archived">
-        <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminArchivedArtworks />
-          </AdminLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/payouts">
-        <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminPayouts />
-          </AdminLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/testimonials">
-        <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminTestimonials />
-          </AdminLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/empire">
-        <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminEmpire />
-          </AdminLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/settings">
-        <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminSettings />
-          </AdminLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/tools">
-        <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminTools />
-          </AdminLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/influencers">
-        <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminInfluencers />
-          </AdminLayout>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/admin/challenges">
-        <ProtectedRoute requiredType="admin">
-          <AdminLayout>
-            <AdminChallenges />
-          </AdminLayout>
-        </ProtectedRoute>
-      </Route>
       
       <Route path="/admin/financial">
         <ProtectedRoute requiredType="admin">

@@ -56,12 +56,9 @@ import { stripeConnectService } from "./lib/stripe-connect";
 import { executeArtistPayout, processAllPayouts, calculateArtistPayout } from "./lib/payout-service";
 import { emailService } from "./lib/email-service";
 import { generateReferralCode } from "./lib/referral-code-generator";
-import { AchievementService } from "./achievement-service";
 import { subscriptionService } from "./lib/subscription-service";
 import Stripe from "stripe";
 
-// Initialize achievement service
-const achievementService = new AchievementService(storage);
 
 const uploadDir = path.join(process.cwd(), 'uploads'); // legacy dev fallback only
 
@@ -738,13 +735,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               commissionRate: null,
               commissionEarned: null,
               tierBonus: "0",
-              challengeBonus: "0",
               totalPayout: null,
             });
             console.log(`Affiliate conversion tracked: Artist ${artist.id} via influencer ${influencer.id}`);
             
-            // Check for achievement unlocks
-            await achievementService.onConversionCreated(influencer.id);
           }
         } catch (err) {
           // Don't fail registration if conversion tracking fails
@@ -1028,11 +1022,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               commissionRate: null,
               commissionEarned: null,
               tierBonus: "0",
-              challengeBonus: "0",
               totalPayout: null,
             });
             console.log(`Affiliate conversion tracked: Artist ${artist.id} via influencer ${influencer.id}`);
-            await achievementService.onConversionCreated(influencer.id);
           }
         } catch (err) {
           console.error('Failed to track affiliate conversion:', err);
@@ -2491,157 +2483,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ====================
-  // ADMIN CHALLENGE MANAGEMENT
-  // ====================
-
-  // Admin: Get all challenges
-  app.get("/api/admin/challenges", requireAdmin, async (req, res) => {
-    try {
-      const challenges = await storage.getActiveChallenges();
-      res.json(challenges);
-    } catch (error: any) {
-      console.error("Error fetching challenges:", error);
-      res.status(500).json({ message: "Failed to fetch challenges" });
-    }
-  });
-
-  // Admin: Create new challenge
-  app.post("/api/admin/challenges", requireAdmin, async (req, res) => {
-    try {
-      const challengeData = req.body;
-      
-      // Create challenge in database
-      const challenge = await storage.createChallenge({
-        name: challengeData.name,
-        description: challengeData.description,
-        challengeType: challengeData.challengeType,
-        metric: challengeData.metric,
-        goal: challengeData.goal || null,
-        startDate: new Date(challengeData.startDate),
-        endDate: new Date(challengeData.endDate),
-        firstPlacePrize: challengeData.firstPlacePrize,
-        secondPlacePrize: challengeData.secondPlacePrize || null,
-        thirdPlacePrize: challengeData.thirdPlacePrize || null,
-        prizeDescription: challengeData.prizeDescription || null,
-        status: new Date(challengeData.startDate) > new Date() ? "upcoming" : "active",
-      });
-
-      res.status(201).json(challenge);
-    } catch (error: any) {
-      console.error("Error creating challenge:", error);
-      res.status(500).json({ message: error.message || "Failed to create challenge" });
-    }
-  });
-
-  // Admin: Update challenge status
-  app.patch("/api/admin/challenges/:id/status", requireAdmin, async (req, res) => {
-    try {
-      const id = req.params.id as string;
-      const { status } = req.body;
-
-      await storage.updateChallengeStatus(id, status);
-      res.json({ message: "Challenge status updated" });
-    } catch (error: any) {
-      console.error("Error updating challenge:", error);
-      res.status(500).json({ message: "Failed to update challenge" });
-    }
-  });
-
-  // ====================
-  // GAMIFICATION ENDPOINTS
-  // ====================
-
-  // Public: Get activity feed (recent achievements and events)
-  app.get("/api/activity-feed", async (req, res) => {
-    try {
-      const limit = parseInt(req.query.limit as string) || 20;
-      const feed = await storage.getActivityFeed(limit);
-      res.json(feed);
-    } catch (error: any) {
-      console.error("Error fetching activity feed:", error);
-      res.status(500).json({ message: "Failed to fetch activity feed" });
-    }
-  });
-
-  // Public: Get leaderboard (top influencers)
-  app.get("/api/leaderboard", async (req, res) => {
-    try {
-      const { metric = 'conversions', period = 'all_time' } = req.query as { metric?: string; period?: string };
-      const leaderboard = await storage.getLeaderboard(metric, period);
-      res.json(leaderboard);
-    } catch (error: any) {
-      console.error("Get leaderboard error:", error);
-      res.status(500).json({ message: "Failed to fetch leaderboard" });
-    }
-  });
-
-  // Protected: Get influencer's badges/achievements
-  app.get("/api/influencers/badges", requireInfluencer, async (req, res) => {
-    try {
-      const badges = await storage.getInfluencerBadges(req.user!.id);
-      res.json(badges);
-    } catch (error: any) {
-      console.error("Get influencer badges error:", error);
-      res.status(500).json({ message: "Failed to fetch badges" });
-    }
-  });
-
-  // Protected: Get all achievements (catalog)
-  app.get("/api/achievements", requireInfluencer, async (req, res) => {
-    try {
-      const achievements = await storage.getAllAchievements();
-      res.json(achievements);
-    } catch (error: any) {
-      console.error("Get achievements error:", error);
-      res.status(500).json({ message: "Failed to fetch achievements" });
-    }
-  });
-
-  // Protected: Get active challenges
-  app.get("/api/challenges", requireInfluencer, async (req, res) => {
-    try {
-      const challenges = await storage.getActiveChallenges();
-      res.json(challenges);
-    } catch (error: any) {
-      console.error("Get challenges error:", error);
-      res.status(500).json({ message: "Failed to fetch challenges" });
-    }
-  });
-
-  // Protected: Join a challenge
-  app.post("/api/challenges/:id/join", requireInfluencer, async (req, res) => {
-    try {
-      const participation = await storage.joinChallenge((req.params.id as string), req.user!.id);
-      res.json(participation);
-    } catch (error: any) {
-      console.error("Join challenge error:", error);
-      res.status(400).json({ message: error.message || "Failed to join challenge" });
-    }
-  });
-
-  // Protected: Get challenge leaderboard
-  app.get("/api/challenges/:id/leaderboard", requireInfluencer, async (req, res) => {
-    try {
-      const leaderboard = await storage.getChallengeLeaderboard(req.params.id as string);
-      res.json(leaderboard);
-    } catch (error: any) {
-      console.error("Get challenge leaderboard error:", error);
-      res.status(500).json({ message: "Failed to fetch challenge leaderboard" });
-    }
-  });
-
-  // Protected: Get activity feed
-  app.get("/api/activity-feed", requireInfluencer, async (req, res) => {
-    try {
-      const { limit = 20 } = req.query as { limit?: string };
-      const feed = await storage.getActivityFeed(parseInt(limit as string));
-      res.json(feed);
-    } catch (error: any) {
-      console.error("Get activity feed error:", error);
-      res.status(500).json({ message: "Failed to fetch activity feed" });
-    }
-  });
-
   // Admin: Get all influencers
   app.get("/api/admin/influencers", requireAdmin, async (req, res) => {
     try {

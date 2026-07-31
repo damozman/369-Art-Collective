@@ -16,9 +16,9 @@ import { db } from "../lib/db";
 import { 
   artists, artworks, admins, portfolioSubmissions, upscaleJobs, upscaleUsage,
   subscriptionTrials, adminActions, orders, passwordResetTokens, violationReports,
-  achievements, sales, referrals, artistReferrals, payouts, stripeWebhookEvents,
+  sales, referrals, artistReferrals, payouts, stripeWebhookEvents,
   emailLogs, affiliateClicks, affiliateConversions,
-  influencers, artworkApprovalLog, activityFeedEvents,
+  influencers, artworkApprovalLog,
   waitlist, featuredSubscriptions, featuredRotationLog, testimonials
 } from "../../shared/schema";
 import { ObjectStorageService } from "../objectStorage";
@@ -200,9 +200,7 @@ async function cleanup() {
   // Delete in FK-safe topological order (from architect analysis)
   await deleteFromTable(violationReports, "violation_reports");
   await deleteFromTable(artworkApprovalLog, "artwork_approval_log");
-  await deleteFromTable(activityFeedEvents, "activity_feed_events");
   await deleteFromTable(testimonials, "testimonials");
-  await deleteFromTable(achievements, "achievements");
   await deleteFromTable(sales, "sales");
   await deleteFromTable(payouts, "payouts");
   await deleteFromTable(artistReferrals, "artist_referrals");

@@ -192,6 +192,25 @@ npm run db:push   # drizzle-kit push
 `PRINTIFY_API_TOKEN`, `SHOPIFY_ACCESS_TOKEN`, `STRIPE_SECRET_KEY`. Not present in
 cloud sandboxes — verification of money-affecting changes must happen where they are.
 
+### Handling credentials — standing rule
+
+**Never ask the user to paste a secret into chat, and never accept one there.** A key
+in a transcript persists indefinitely and is effectively leaked. Secrets belong in
+`.env.local` on the user's machine (gitignored) or in the cloud environment's secret
+configuration. If a task appears to need a key in conversation, the task is wrong.
+
+**Money-affecting work therefore splits in two:**
+
+1. **In the sandbox (me):** build it and prove it against fixtures. This is why
+   blueprint §9 requires cost resolution behind an interface with a fixture-backed
+   test implementation — cloud sessions are network-allowlisted and cannot reach
+   `api.printify.com` no matter what credentials exist.
+2. **Locally (the user):** run the same code with real credentials already in
+   `.env.local` and compare against the fixture expectations.
+
+When something disagrees, **the user pastes the output, never the keys.** Ask for the
+computed numbers, the log lines, or the diff — all of which are safe to share.
+
 ## Navigating this repo — read before searching
 
 Only ~240 of 1,131 tracked files are source. **71% of the repo is `attached_assets/`,

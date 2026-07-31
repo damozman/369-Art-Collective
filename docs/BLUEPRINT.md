@@ -427,7 +427,7 @@ Two further live defects surfaced in the same pass and were fixed:
   second line. Uniqueness is now on `(shopify_order_id, shopify_line_item_id)`,
   which doubles as the webhook idempotency key.
 
-**Phase 1 — Engine core. 🔨 Core built and verified; payouts/portal outstanding.**
+**Phase 1 — Engine core. ✅ COMPLETE — engine, HTTP API, and contributor portal UI.**
 The middle box in §4, with all fourteen §5 decisions honored. Multi-tenant from the
 first migration — never single-tenant "for now." Canonical `RevenueEvent`, rules
 engine, immutable ledger, reversal handling.
@@ -455,12 +455,17 @@ Statements are **assembled from stored rows, never recomputed**: a statement ans
 "what did this contributor actually earn", which diverges from "what would this earn
 under today's rules" the moment a rate changes.
 
-Phase 1 is functionally complete. What remains before it is *usable* is HTTP routes and
-a UI over the engine.
+The HTTP API and the contributor portal UI are built too, closing Phase 1. The portal
+lives at `/portal/:tenantSlug` and renders the stored derivation rather than
+recalculating it — the trace, the rule key and version, and the hold date sit on the
+line itself. It was verified by driving a real browser against real Postgres, not by
+type-checking. Money crosses the wire as strings and is parsed with `BigInt`; nothing
+in the client calls `Number()` on an amount.
 
-**Phase 2 — First adapter + payouts + portal.** Shopify ingestion, Stripe Connect
-payouts, contributor login, statements with the explanation trace. **369 Art Collective
-goes live on it as tenant #1.**
+**Phase 2 — First adapter + payouts live.** Shopify ingestion, a real `TransferExecutor`
+against Stripe Connect, and **369 Art Collective goes live on it as tenant #1.** (The
+portal and contributor statements listed here originally were pulled forward into
+Phase 1 and are done.)
 
 **Phase 3 — Self-serve.** Shopify OAuth/embedded app, tenant onboarding, Stripe
 Billing, split-rule builder UI, 1099 export, App Store listing.

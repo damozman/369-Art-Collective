@@ -105,25 +105,26 @@ Both were resolved in step 5.)
 
 ## Current status
 
-- **Phase:** Phase 0 ✅ complete. **Phase 1 — engine and HTTP API done, verified;
-  no contributor UI yet.**
+- **Phase:** Phase 0 ✅ complete. **Phase 1 ✅ complete — engine, HTTP API, and the
+  contributor portal UI are all built and verified.**
 - **What exists now:** the engine schema (15 `engine_*` tables), the canonical
   `RevenueEvent`, the §6 rules engine, the immutable ledger, §8 reversals and
   clawbacks, the ingestion path that ties them together in one transaction,
   payout batch execution against the state machine, contributor login,
-  statements assembled from the stored explanation trace, and the contributor
-  portal HTTP API.
-  161 unit tests plus 62 end-to-end checks against real Postgres, and the HTTP
+  statements assembled from the stored explanation trace, the contributor
+  portal HTTP API, **and the React portal over it at `/portal/:tenantSlug`**.
+  175 unit tests plus 62 end-to-end checks against real Postgres, and the HTTP
   endpoints exercised with real requests including cross-tenant rejection.
-- **Phase 1 engine + HTTP are done. The contributor UI is not.** The engine does
-  everything §9 lists and is reachable over HTTP at `/api/engine/t/:tenantSlug/*`,
-  verified with real requests. There is **no React page over it yet** — that is the
-  next task. Then Phase 2 — Shopify adapter, a real `TransferExecutor` against Stripe
+- **Phase 1 is done.** The portal was driven with a real browser against real
+  Postgres — sign in, wrong password, statement, derivation traces expanded,
+  held lines, reversal line, payout history, unknown tenant, mobile viewport.
+  Next is Phase 2 — Shopify adapter, a real `TransferExecutor` against Stripe
   Connect, and 369 migrated on as tenant #1.
 - **Money has still never flowed through any payout path.** All fixes remain
   **forward-only — no recalculation migration needed.**
-- **Track A: not started as of 2026-07-31.** Confirmed by the user, who intends to
-  begin within a day or two. This covers the Shopify Partner account, the Stripe
+- **Track A: not started as of 2026-07-31.** Re-confirmed by the user on 2026-07-31,
+  who intends to begin **within about 24 hours** and considers the build comfortably
+  ahead of schedule. This covers the Shopify Partner account, the Stripe
   Connect platform application, App Store competitive research, design-partner
   outreach, and getting 369 selling again for real refund data.
   **This is the real critical path** (§9, §15) and none of it goes faster by building
@@ -152,9 +153,21 @@ Both were resolved in step 5.)
 | `server/engine/routes.ts` | contributor portal HTTP API, mounted at `/api/engine` |
 | `server/engine/db.ts` | the engine's own Drizzle client (lazy; separate from `lib/db.ts`) |
 
+The portal UI, which is the engine's surface rather than the marketplace's:
+
+| Path | What |
+|---|---|
+| `client/src/pages/portal/index.tsx` | the shell — resolves the tenant, gates on the session |
+| `client/src/pages/portal/portal-login.tsx` | sign-in; tenant fixed by the URL |
+| `client/src/pages/portal/portal-dashboard.tsx` | balances, statement, payout history |
+| `client/src/pages/portal/statement-line.tsx` | one line plus its stored derivation trace |
+| `client/src/lib/portal-api.ts` | typed client; every amount a string |
+| `client/src/lib/portal-money.ts` | bigint-backed money formatting, mirrors the server |
+| `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
+
 ```bash
-npm test              # 125 unit tests, no network, no database
-npm run test:e2e      # 30 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 175 unit tests, no network, no database
+npm run test:e2e      # 62 checks against a real Postgres (needs DATABASE_URL)
 npm run db:push:engine
 ```
 
@@ -298,7 +311,7 @@ Sessions do not share memory. Everything below is the state as of the last commi
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 161 unit tests — no network, no database
+npm test          # 175 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
@@ -312,10 +325,43 @@ The e2e **truncates and reseeds** the engine tables, so it doubles as the way to
 demo data. It seeds two tenants (`369`, `press`), contributors Alice/Bob/Eve, and a
 login: `shared@example.com` / `correct horse battery` on tenant `369`.
 
-### The immediate next task — contributor portal UI
+### The contributor portal — BUILT. How it works
 
-The API is built and verified; the screen is not. Endpoints, all under
-`/api/engine/t/:tenantSlug`:
+Routed at **`/portal/:tenantSlug`** (e.g. `/portal/369`), outside `ProtectedRoute`
+and the marketplace `AuthProvider`. It carries its own tenant-scoped session and
+shares nothing with `pages/artist-*` except the shadcn component library, so Phase 2
+can delete the marketplace client without touching it.
+
+The three things it had to get right, and how each landed:
+
+1. **Money is never a number.** `client/src/lib/portal-money.ts` parses minor-unit
+   strings with `BigInt` and formats by integer division — no float anywhere. A test
+   asserts `9007199254740993` survives, and asserts that `Number()` on it does *not*,
+   so the reason the rule exists survives future readers.
+2. **The derivation is rendered, never recomputed.** `statement-line.tsx` shows the
+   stored `explanation` inline and expands `trace` into labelled steps with the rule
+   key and version. Nothing on the client does arithmetic on a rate.
+3. **Held lines are visibly distinct.** Amber row, a `Held` badge, and the sentence
+   "becomes available on <date>" on the line itself, plus a banner above the
+   statement.
+
+**One scope subtlety worth knowing before touching the held UI.** `/me` reports
+`heldMinor` as `balance − payable` — the non-withdrawable slice of the *all-time
+balance* — while a statement reports the sum of held *lines in the selected period*.
+Normally they agree. They diverge when payouts or reversals have pulled the balance
+below the held-line total: `derivePayableBalance` floors at zero, so the `/me` figure
+under-reports and can read `$0.00` while held lines are on screen. The banner is
+therefore driven by the statement's total and worded "of the earnings shown below";
+the balance card keeps the `/me` figure so that *Available + Held = Total balance*
+stays true. Both numbers are correct — they answer different questions. This is a
+presentation decision, not an engine defect; the engine was not changed.
+
+**Dates are formatted in UTC from the ISO string**, never via `new Date()` and a
+locale. A sale stamped `02:00Z` otherwise renders a day earlier in California, and a
+statement that disagrees with the emailed one by a day looks exactly like a
+discrepancy worth disputing.
+
+Endpoints behind it, all under `/api/engine/t/:tenantSlug`:
 
 | Method | Path | Returns |
 |---|---|---|
@@ -326,23 +372,12 @@ The API is built and verified; the screen is not. Endpoints, all under
 | GET | `/statement?from=&to=` | lines with the stored derivation + totals + summary |
 | GET | `/payouts` | payout history |
 
-**Three things the UI must get right:**
-
-1. **Money arrives as STRINGS, never JSON numbers.** `{minor: "2186", formatted:
-   "21.86"}`. `JSON.stringify` cannot serialise a bigint, and coercing to `number`
-   silently rounds above 2^53 — the exact failure the bigint columns exist to prevent.
-   Never `Number(...)` a money field.
-2. **Show the derivation, do not recompute it.** Every allocation line carries
-   `explanation` (a sentence) and `trace` (structured steps). Render those. The whole
-   product thesis is that a contributor can answer "why is it this number?" without
-   emailing anyone.
-3. **Held lines must be visibly distinct.** `held: true` means earned but inside the
-   refund window. A contributor seeing a balance they cannot yet withdraw needs the
-   reason on the same screen.
-
-Route it at something like `/portal/:tenantSlug`. It is a **separate surface from the
-marketplace's artist pages** — do not extend `client/src/pages/artist-*`; those belong
-to the system being retired.
+**These invariants still bind any new screen over the engine:** money arrives as
+strings and is never passed through `Number(...)`; derivations are rendered from
+`explanation`/`trace`, never recomputed; held lines carry their reason on the same
+screen. And the portal stays a **separate surface from the marketplace's artist
+pages** — do not extend `client/src/pages/artist-*`, and do not reach for
+`auth-context` or `ProtectedRoute`; those belong to the system being retired.
 
 ### Traps that have already bitten, in this repo
 
@@ -367,8 +402,8 @@ to the system being retired.
 - **No money has ever moved through any payout path.** All fixes are forward-only.
 - **The Printify cost fixtures are invented numbers** with placeholder catalog IDs.
   See the warning section above. This is the one thing blocking real payouts.
-- **Track A had not started as of 2026-07-31** and is the real critical path. Ask for
-  status; do not assume.
+- **Track A had not started as of 2026-07-31** and is the real critical path. The user
+  expects to begin within ~24 hours of that date. Ask for status; do not assume.
 - **Task #8 is an outstanding user request:** a full plain-language SOP explaining the
   system end to end, aimed at the business owner rather than a developer.
 

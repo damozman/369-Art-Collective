@@ -44,6 +44,7 @@ import SuccessStory from "@/pages/success-story";
 import ArtistProfile from "@/pages/artist-profile";
 import Creators from "@/pages/creators";
 import JoinCreatorverse from "@/pages/join-creatorverse";
+import Portal from "@/pages/portal";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -230,6 +231,14 @@ function Router() {
         </ProtectedRoute>
       </Route>
       
+      {/*
+        The contributor portal — the engine's surface, not the marketplace's.
+        Deliberately outside ProtectedRoute and the marketplace AuthProvider:
+        it carries its own tenant-scoped session and must survive Phase 2,
+        when everything else in this file is deleted.
+      */}
+      <Route path="/portal/:tenantSlug" component={Portal} />
+
       {/* Parameterized routes must come last to avoid catching specific routes */}
       <Route path="/artists/:id" component={ArtistProfile} />
       

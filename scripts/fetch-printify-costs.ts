@@ -155,13 +155,39 @@ function printSummary(products: ProductSummary[], shipping: Map<string, any>) {
       );
     }
 
+    // Shipping profiles are per-variant. Printing every profile for the
+    // blueprint/provider pair — as this did originally — shows rates for sizes
+    // the product does not sell, which makes the economics look wrong in both
+    // directions. Filter to the variants actually on this product.
     const profiles = shipping.get(key)?.profiles ?? [];
-    for (const profile of profiles) {
-      const countries = (profile.countries ?? []).slice(0, 4).join(", ");
-      console.log(
-        `  shipping [${countries}] first ${money(profile.first_item?.cost ?? 0)}, ` +
-          `additional ${money(profile.additional_items?.cost ?? 0)}`
+    for (const variant of product.variants) {
+      const forVariant = profiles.filter((p: any) =>
+        (p.variant_ids ?? []).includes(variant.variantId)
       );
+
+      for (const profile of forVariant) {
+        const countries = (profile.countries ?? []).slice(0, 4).join(", ");
+        console.log(
+          `  shipping for ${variant.variantId} [${countries}] ` +
+            `first ${money(profile.first_item?.cost ?? 0)}, ` +
+            `additional ${money(profile.additional_items?.cost ?? 0)}`
+        );
+      }
+
+      // The number that decides whether a sale is profitable.
+      const us = forVariant.find((p: any) => (p.countries ?? []).includes("US"));
+      if (us) {
+        const production = variant.costMinor;
+        const shippingUs = us.first_item?.cost ?? 0;
+        const fee = Math.round(variant.priceMinor * 0.029) + 30;
+        const net = variant.priceMinor - production - shippingUs - fee;
+        console.log(
+          `  >> US economics for ${variant.variantId}: ` +
+            `sells ${money(variant.priceMinor)} − production ${money(production)} ` +
+            `− shipping ${money(shippingUs)} − fee ${money(fee)} = ` +
+            `${net < 0 ? "LOSS " : "profit "}${money(net)}`
+        );
+      }
     }
     console.log("");
   }

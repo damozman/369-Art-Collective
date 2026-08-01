@@ -188,6 +188,39 @@ whether they can sign in and see their own earnings.
 They connect their own bank details through Stripe. **You never see or store their
 bank information.**
 
+### How an artist connects their bank
+
+They do this themselves, from their own portal — you are not involved, and there is
+nothing for you to type in.
+
+1. They sign in at your portal address and see a **Set up payments** button.
+2. That takes them to Stripe, where they enter their name, address, tax details and
+   bank account. **This happens on Stripe's site, not yours.** You never see it, and
+   it is never stored in your database.
+3. They come back and the card shows where they stand.
+
+There are three things it can say, and the difference matters:
+
+- **Not set up** — they haven't started. Nothing will be paid to them.
+- **In progress** — Stripe still wants something, and the card says what. Usually an
+  ID document or a missing tax number. **They cannot be paid yet**, even though from
+  their side it may feel finished.
+- **Ready** — Stripe has cleared them. Payouts will include them.
+
+**Why "in progress" exists rather than just done-or-not.** Finishing the form and
+being cleared to receive money are two different events. Stripe's checks can take
+days, can ask for more, and can be reversed later if something changes. So the system
+asks Stripe rather than assuming. The alternative — treating a finished form as
+"ready" — means a payout run fails partway through, which is much worse than a
+payment that hasn't started.
+
+The same applies in reverse: if Stripe later suspends someone, that shows up without
+them needing to sign in. You are never paying against a stale answer.
+
+**What you do about it:** essentially nothing. If someone is stuck, tell them to sign
+in and read the card — it names what Stripe is waiting for. You cannot fix it for
+them, and that is deliberate.
+
 ### Changing someone's rate
 
 In your console, **Rates → Change**. It saves as a new version.
@@ -246,7 +279,7 @@ Be honest with yourself about this list.
 | **Printing costs are placeholders** | The cost numbers are educated guesses, not real Printify prices. **Must be fixed before any real payout.** Needs your Printify account — about 10 minutes on your own computer. |
 | **Shopify: built, not switched on** | The whole path is written and tested — a sale arrives, gets split, lands in your books. It is running against practice data because a live store needs a Partner account. When that comes through it is a settings change, not a build. |
 | **Stripe: built, not switched on** | Same story. The system can send a payment, refuses honestly when it can't, and never double-pays. It needs your Connect approval before it points at a real bank. |
-| **Artists can't connect a bank yet** | Even with Stripe live, there's no screen for an artist to add their bank details. That's the next piece. |
+| **Bank connection: built, not switched on** | An artist can connect their bank from their own portal, and the system checks with Stripe whether they're actually cleared to be paid. Like everything else on this list, it needs your Connect approval before it points at real banks. |
 | **Advances not supported** | Paying someone up front and earning it back isn't built. Needed for music and book publishing. Don't sell to those industries yet. |
 
 ---

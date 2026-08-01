@@ -5,7 +5,7 @@ An honest map of the distance between here and a product someone pays for.
 Written for the owner. Kept current as things land — if this file says something is
 missing and it isn't, fix the file.
 
-Last updated: 2026-07-31 (step 1 of the build order below is done).
+Last updated: 2026-08-01 (steps 1 and 2 of the build order below are done).
 
 ---
 
@@ -46,8 +46,11 @@ working software and a business.
   language. Refuses to move money when nothing is configured.
 - **Store credentials encrypted at rest**, so a database backup is not a set of
   live keys to somebody's shop.
+- **Artist bank onboarding** — a contributor connects their own bank through
+  Stripe from their portal. You never see or store their details, and "ready to be
+  paid" is read back from Stripe rather than assumed from a finished form.
 
-266 unit tests, 141 end-to-end checks against a real database, every screen driven
+275 unit tests, 156 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
@@ -61,7 +64,7 @@ in a real browser, and the webhook endpoint exercised over real HTTP.
 | ~~Shopify connection~~ | **Built.** Sales arrive, split and land in the ledger. Pointing it at a real store needs the Partner account — a settings change, not a build. | Partner approval only |
 | ~~Stripe transfers~~ | **Built.** The real provider exists and refuses honestly when unconfigured. Pointing it at real money needs Connect. | Connect verification only |
 | **Connect-a-store screen** | The connection is stored and used correctly, but there's no screen to create one — it's inserted by hand today. Small, and only worth doing once the Partner account exists. | Partner approval |
-| **Artist bank onboarding** | No way for a contributor to connect their account. Currently set by hand in the database. | Connect verification |
+| ~~Artist bank onboarding~~ | **Built.** An artist connects their own bank from their portal; readiness is read back from Stripe. Needs Connect before it points at real banks. | Connect verification only |
 | **Customer billing** | **No way to charge a business for using this.** | Nothing — buildable now |
 | **Customer signup** | No way for a business to create an account. You'd add them yourself. | Nothing — buildable now |
 
@@ -113,9 +116,17 @@ which happens with PayPal and most non-Shopify payment methods. Hold the sale
 (default) or carry on without it. Fees that *can* be read are always recorded, so
 margin reporting stays honest either way. Nothing is ever guessed.
 
-**2. Artist bank onboarding.**
-Without it, nobody can be paid even once Stripe is connected. Naturally follows
-Stripe.
+**2. Artist bank onboarding. ✅ DONE.**
+An artist signs in to their portal and connects their own bank through Stripe. You
+never see or store their bank details — Stripe holds them, which is the whole point
+of using Connect.
+
+One decision inside it is worth knowing about: **"ready to be paid" is read back
+from Stripe, never inferred from the artist finishing the form.** Finishing the form
+and being cleared to receive money are different events — verification can take days
+and can be revoked later. Assuming they are the same is how a payout run fails
+halfway through, which is the expensive kind of failure. The status is re-checked, so
+a later suspension shows up without anyone having to sign in again.
 
 **3. Artwork and settings screens.**
 Finishes the job of making the system operable by you rather than by a developer.

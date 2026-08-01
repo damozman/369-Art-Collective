@@ -116,7 +116,8 @@ Both were resolved in step 5.)
 ## Current status
 
 - **Phase 0 ✅ · Phase 1 ✅ · the owner-facing product is built ✅ · WHATS-LEFT
-  step 1 (Shopify + Stripe against fixtures) ✅.**
+  step 1 (Shopify + Stripe against fixtures) ✅ · step 2 (artist bank
+  onboarding) ✅.**
 - **What exists:** the engine (16 `engine_*` tables, canonical `RevenueEvent`, §6
   rules, immutable ledger, §8 reversals, transactional ingestion, payout batches
   with the state machine), the **contributor portal** at `/portal/:tenantSlug`, the
@@ -124,8 +125,9 @@ Both were resolved in step 5.)
   rates, payout preview and run, plus rate editing with versioning and resolving
   stuck items — and now **both provider adapters**: the Shopify ingestion path
   (signed webhooks → per-line events → ledger, plus refunds and cancellations) and
-  the Stripe `TransferExecutor`.
-- **266 unit tests · 141 end-to-end checks against real Postgres.** Every screen has
+  the Stripe `TransferExecutor` — plus **artist payout-account onboarding**
+  (`server/engine/payout-account.ts`, Account Links + status read back from Stripe).
+- **275 unit tests · 156 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -150,9 +152,7 @@ Summary of that order:
 
 1. ~~**Shopify and Stripe against fixtures**~~ — **done.** See "The adapters" below.
    The approvals now wait on themselves rather than on us.
-2. **Artist bank onboarding** — nobody can be paid without it, even with Stripe live.
-   `StripeClient.getAccountStatus` already exists for the status half; what is
-   missing is Account Links, the onboarding return/refresh routes, and the screen.
+2. ~~**Artist bank onboarding**~~ — **done.** See "Payout accounts" below.
 3. **Artwork and settings screens** — finishes "operable without a developer".
 4. **Customer billing and signup** — turns it into a business. **There is currently
    no way to charge anyone**, which is easy to leave until last and then discover is
@@ -197,6 +197,7 @@ offering again before anything runs against real money.**
 | `server/engine/db.ts` | the engine's own Drizzle client (lazy; separate from `lib/db.ts`) |
 | `server/engine/secrets.ts` | AES-256-GCM seal/open for provider credentials + `safeEqual` |
 | `server/engine/connections.ts` | `engine_source_connections` CRUD; the ONLY module that touches sealed columns |
+| `server/engine/payout-account.ts` | contributor bank onboarding — Account Links, status read back from Stripe |
 
 ### The adapters — §4's two seams, filled in
 
@@ -263,6 +264,36 @@ Neither adapter needs a code change to go live.
   (`openssl rand -hex 32`, or any passphrase locally). Without it, sealing throws
   rather than storing plaintext.
 
+### Payout accounts — how a contributor gets bankable
+
+`selectPayoutCandidates` skips anyone without `stripeAccountId` or with
+`stripePayoutsEnabled` false. Those two columns used to be set by hand;
+`server/engine/payout-account.ts` is what replaced the hand. Four rules are
+load-bearing, and the file header argues each at length:
+
+1. **One Stripe account per contributor, ever.** A stored id is reused. Minting a
+   second on a repeat visit orphans the first — and if the first was the verified
+   one, money goes somewhere the person cannot withdraw from.
+2. **`payoutsEnabled` only ever comes from Stripe.** Never from reaching the return
+   URL. Finishing onboarding and being able to receive money are different events;
+   Stripe asks for documents afterwards and can disable an account months later.
+   An e2e check asserts that finishing the form does *not* make an account ready,
+   and another that a later suspension is reflected without anyone signing in.
+3. **Account links are minted fresh, never stored.** They expire in minutes and are
+   single-use. A cached link is a support ticket.
+4. **Country is fixed at creation** — Stripe requires recreating the account to
+   change it, so it is asked for rather than assumed.
+
+⚠️ **One assumption in here is unverified and is a real onboarding requirement, not
+a detail.** Connected accounts are created **under the tenant's own Stripe account**
+via the `Stripe-Account` header — the same `onBehalfOfAccount` the transfer executor
+uses — because decision #1 says funds never pass through an account we control. That
+requires *the tenant* to have Connect enabled on their own Stripe. Sandboxes cannot
+reach `api.stripe.com`, so this has never run live. **Confirm it during the Connect
+application before promising a customer it works.** If Stripe refuses, the fallback
+is that we are the platform and each tenant is a connected account with `transfers`
+capability — which changes decision #1's shape and is a conversation, not a patch.
+
 The portal UI, which is the engine's surface rather than the marketplace's:
 
 | Path | What |
@@ -276,8 +307,8 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 266 unit tests, no network, no database
-npm run test:e2e      # 141 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 275 unit tests, no network, no database
+npm run test:e2e      # 156 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -428,12 +459,12 @@ Sessions do not share memory. Everything below is the state as of the last commi
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 266 unit tests — no network, no database
+npm test          # 275 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (141 checks against real Postgres) start the local database
+For the end-to-end run (156 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e

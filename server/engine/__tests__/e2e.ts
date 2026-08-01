@@ -90,6 +90,16 @@ import {
 import { createShopifyWebhookRouter } from "../adapters/shopify/routes";
 import { signWebhookBody } from "../adapters/shopify/webhook-auth";
 import { FixtureStripeClient } from "../adapters/stripe/client";
+import { signUp } from "../billing/signup";
+import {
+  changePlan,
+  countPeoplePaid,
+  entitlement,
+  getSubscription,
+  getUsage,
+  recordUsageOverage,
+  startTrial,
+} from "../billing/subscription";
 import {
   getPayoutAccount,
   handleAccountUpdated,
@@ -1806,6 +1816,200 @@ async function main() {
     /already been dealt with/
   );
   check("costs cannot be changed once the sale has been paid out", async () => {});
+
+  // ============================================================
+  // Billing — signup, trials, and usage that does not become a bill
+  // ============================================================
+
+  console.log("\n-- billing --");
+
+  const signupNow = new Date("2026-08-01T00:00:00Z");
+  const signup = await signUp(
+    db,
+    {
+      businessName: "Harbour Press",
+      name: "Sam Reed",
+      email: "sam@harbour.example",
+      password: "a good long passphrase",
+    },
+    { now: signupNow }
+  );
+
+  check("signing up creates a business with a usable web address", () =>
+    assert.equal(signup.tenantSlug, "harbour-press")
+  );
+
+  const signupLogin = await authenticateTenantUser(
+    db, signup.tenantId, signup.tenantSlug, "sam@harbour.example", "a good long passphrase"
+  );
+  check("the person who signed up can sign in immediately", () =>
+    assert.equal(signupLogin?.tenantUserId, signup.tenantUserId)
+  );
+
+  const newSub = await getSubscription(db, signup.tenantId);
+  check("they land on a trial without giving a card", () => {
+    assert.equal(newSub!.status, "trialing");
+    assert.equal(newSub!.trialEndsAt?.toISOString(), "2026-08-15T00:00:00.000Z");
+  });
+
+  check("the trial works", () =>
+    assert.equal(entitlement(newSub, new Date("2026-08-10T00:00:00Z")).active, true)
+  );
+  check("and stops when it expires", () =>
+    assert.equal(entitlement(newSub, new Date("2026-08-20T00:00:00Z")).active, false)
+  );
+
+  // A second business with the same name must not collide.
+  const twin = await signUp(db, {
+    businessName: "Harbour Press",
+    name: "Other Sam",
+    email: "other@harbour.example",
+    password: "a good long passphrase",
+  });
+  check("a second business of the same name gets its own address", () =>
+    assert.equal(twin.tenantSlug, "harbour-press-2")
+  );
+
+  await assert.rejects(
+    () =>
+      signUp(db, {
+        businessName: "Admin",
+        name: "Impostor",
+        email: "nope@example.com",
+        password: "a good long passphrase",
+      }),
+    /not available/
+  );
+  check("a business cannot claim a reserved address", async () => {});
+
+  /**
+   * Signing up must be all-or-nothing. A tenant with no user is unreachable; a
+   * tenant with a user but no subscription looks cut off. Both need a human to
+   * repair and neither is repairable by the person who just signed up.
+   */
+  const beforeFailedSignup = await db.select({ id: schema.tenants.id }).from(schema.tenants);
+  await assert.rejects(
+    () =>
+      signUp(db, {
+        businessName: "Broken Co",
+        name: "Nobody",
+        email: "sam@harbour.example", // already taken on a different tenant? no —
+        password: "short",            // refused before anything is written
+      }),
+    /at least 12 characters/
+  );
+  const afterFailedSignup = await db.select({ id: schema.tenants.id }).from(schema.tenants);
+  check("a refused signup leaves no half-built business behind", () =>
+    assert.equal(afterFailedSignup.length, beforeFailedSignup.length)
+  );
+
+  // ---- Usage counting ----
+
+  await startTrial(db, "t-press", { now: signupNow }).catch(() => {
+    // t-press may already have one from an earlier run of this section.
+  });
+
+  const pressUsage = await getUsage(db, "t-press", new Date("2026-08-05T00:00:00Z"));
+  check("usage reads against the chosen plan", () => {
+    assert.ok(pressUsage);
+    assert.equal(pressUsage!.planKey, "starter");
+  });
+
+  /**
+   * ⚠️ THE CENTRAL CLAIM OF THE WHOLE BILLING MODEL (blueprint §12 rule 2):
+   * going over the plan records a NOTICE and leaves `planKey` exactly where the
+   * customer put it. If this ever fails, the bill has started floating with our
+   * own count — which is both the unpredictability that killed per-payout
+   * pricing and the "your number is wrong" dispute flat pricing exists to avoid.
+   */
+  const subBefore = await getSubscription(db, "t-369");
+  const planBefore = subBefore?.planKey ?? (await startTrial(db, "t-369")).planKey;
+
+  await recordUsageOverage(db, "t-369", 47, new Date("2026-08-10T00:00:00Z"));
+  const subAfterOverage = await getSubscription(db, "t-369");
+
+  check("going over the plan does NOT change the plan", () =>
+    assert.equal(subAfterOverage!.planKey, planBefore)
+  );
+  check("going over the plan records that they were told", () => {
+    assert.equal(subAfterOverage!.overagePeopleCount, 47);
+    assert.ok(subAfterOverage!.overageNoticedAt);
+  });
+
+  // Idempotent: a later crossing keeps the original notice date, so the notice
+  // period does not restart every time somebody is paid.
+  const firstNotice = subAfterOverage!.overageNoticedAt!;
+  await recordUsageOverage(db, "t-369", 52, new Date("2026-08-12T00:00:00Z"));
+  const subAfterSecond = await getSubscription(db, "t-369");
+  check("a later crossing keeps the original notice date", () =>
+    assert.equal(subAfterSecond!.overageNoticedAt?.getTime(), firstNotice.getTime())
+  );
+  check("but tracks the peak", () =>
+    assert.equal(subAfterSecond!.overagePeopleCount, 52)
+  );
+
+  // Only an explicit change moves the plan, and it clears the notice.
+  await changePlan(db, "t-369", "growth", { actorId: "u-owner" });
+  const subAfterChange = await getSubscription(db, "t-369");
+  check("only an explicit choice changes the plan", () =>
+    assert.equal(subAfterChange!.planKey, "growth")
+  );
+  check("changing plan clears the notice rather than nagging on", () => {
+    assert.equal(subAfterChange!.overageNoticedAt, null);
+    assert.equal(subAfterChange!.overagePeopleCount, null);
+  });
+
+  await assert.rejects(
+    () => changePlan(db, "t-369", "unlimited-free"),
+    /does not exist/
+  );
+  check("an unknown plan cannot be selected", async () => {});
+
+  /**
+   * Counting is by DISTINCT PEOPLE PAID, and failed payouts do not count.
+   * Billing somebody for a payment that never arrived would be indefensible.
+   */
+  const countWindowFrom = new Date("2020-01-01T00:00:00Z");
+  const countWindowTo = new Date("2030-01-01T00:00:00Z");
+  const paidCount = await countPeoplePaid(db, "t-369", countWindowFrom, countWindowTo);
+
+  const distinctPaid = await db
+    .selectDistinct({ contributorId: schema.payouts.contributorId })
+    .from(schema.payouts)
+    .where(
+      and(eq(schema.payouts.tenantId, "t-369"), eq(schema.payouts.status, "paid"))
+    );
+
+  check("people paid counts distinct contributors, not payouts", () =>
+    assert.equal(paidCount, distinctPaid.length)
+  );
+
+  /**
+   * A failed payout must not be billed for. Asserted directly by creating one
+   * rather than relying on whatever the earlier sections happened to leave
+   * behind — the retry section turns its failed payout back into `paid`, so
+   * depending on incidental data made this pass or fail for reasons unrelated
+   * to the claim.
+   */
+  await db.insert(schema.contributors).values({
+    id: "c-unpaid", tenantId: "t-369", name: "Never Paid", externalRef: "unpaid",
+  });
+  await db.insert(schema.payouts).values({
+    tenantId: "t-369",
+    contributorId: "c-unpaid",
+    status: "failed",
+    amountMinor: 5000n,
+    currency: "USD",
+    failureReason: "Bank rejected the transfer",
+    completedAt: new Date("2026-08-05T00:00:00Z"),
+  });
+
+  const countWithFailed = await countPeoplePaid(
+    db, "t-369", countWindowFrom, countWindowTo
+  );
+  check("a failed payout is not billed for", () =>
+    assert.equal(countWithFailed, paidCount)
+  );
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

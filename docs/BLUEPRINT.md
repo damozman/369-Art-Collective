@@ -667,22 +667,70 @@ An add-on to a product with no billing is an add-on to nothing.
 
 ---
 
-## §12. Pricing (Phase 3 onward)
+## §12. Pricing — SETTLED 2026-08-01
 
-| Tier | Price | Bounds |
+Ratified by the user after working through the alternatives. The **model** is
+settled; the **numbers** are placeholders until design-partner conversations happen,
+and were agreed as such.
+
+| Tier | Price | Bound |
 |---|---|---|
-| Starter | $49/mo | up to 5 contributors, 500 events/mo |
-| Growth | $99/mo | up to 25 contributors, 5k events/mo |
-| Scale | $199/mo | up to 100 contributors, 25k events/mo |
+| Starter | $49/mo | up to 10 people paid per month |
+| Growth | $99/mo | up to 50 people paid per month |
+| Scale | $199/mo | up to 200 people paid per month |
 | Custom | talk | above that, or multi-store |
 
-14-day trial, no free tier. **200 customers at $99 ≈ $238k ARR** — hold that against
-what the marketplace needed (hundreds of thousands of art buyers, bought against
-Society6's ad budget). Two hundred is a number you can picture reaching.
+14-day trial, no free tier (decision #5). **200 customers at $99 ≈ $238k ARR** — hold
+that against what the marketplace needed (hundreds of thousands of art buyers, bought
+against Society6's ad budget). Two hundred is a number you can picture reaching.
 
-Do **not** price on percentage-of-payout-volume. It looks attractive, it aligns
-incentives nicely, and it makes you look like a payments company to Stripe and to
-regulators. Flat SaaS pricing keeps the §11 posture clean.
+### The four rules that make this shape work
+
+Each was argued and chosen; changing any one changes the model rather than tuning it.
+
+1. **Billed on people PAID in the period, not people on the books.** A gallery with
+   60 contributors who paid 8 this month is an 8-person month. Fairer, and it means a
+   quiet month costs less without building variable pricing to achieve it.
+
+2. **⚠️ THE PLAN IS CHOSEN, NOT METERED.** The customer picks a tier and that is
+   their bill. The count is a guide rail shown on screen, never a meter that moves
+   them. This is load-bearing: a bill that floats with *our* count reintroduces
+   exactly the unpredictability that killed the per-payout model, and it manufactures
+   the dispute — "I didn't pay 60 people, your number is wrong" — that flat pricing
+   exists to avoid. **Never silently increase a bill from a usage count.**
+
+3. **⚠️ BILLING NEVER BLOCKS A PAYOUT, AND NEVER BLOCKS ADDING PEOPLE.** Going over
+   the tier mid-cycle pays everyone anyway and notifies. Three reasons, in order of
+   weight: the people harmed by a block are the *contributors*, who are not the
+   customer and cannot fix it; the failure would land on payout day, the one day the
+   product must not fail; and it punishes a customer for growing. Capping *adding*
+   people is equally out — their records would go wrong and sales would pile into
+   review, corrupting data to protect $50. The plan moves up at RENEWAL, after notice
+   already given, which keeps rule 2 intact.
+
+4. **No percentage-of-payout-volume, ever.** It looks attractive and aligns
+   incentives nicely, and it makes you look like a payments company to Stripe and to
+   regulators. It also scales in the wrong direction — a publisher moving $200k/mo
+   will never accept 1%, and that is exactly the customer worth having. Flat SaaS
+   pricing keeps the §11 posture clean.
+
+**Deliberately no $29 sub-5 tier at launch**, considered and deferred. Under ~5
+contributors the manual process is a twenty-minute job, not a five-hour one — not
+enough pain to sustain a purchase, and the cheapest tier reliably carries the highest
+support load and churn. The genuine counter, specific to this product: the
+contributor portal sells *legitimacy* as much as time saved, which a three-artist
+operation may want regardless. Left open because the asymmetry favours waiting —
+**adding a cheaper tier later reads as generous; removing one reads as a price rise.**
+
+**No event caps.** A second limit makes "am I over?" unanswerable without support.
+One number the customer can hold in their head.
+
+### Not a contradiction of ratified decision #1
+
+Decision #1 (never hold funds) governs **tenant → contributor** money, which is what
+would make this money transmission. Charging a subscription is ordinary SaaS revenue
+through our own Stripe account and is a completely separate surface from Connect. A
+future session should not "discover" billing and think it breaches decision #1.
 
 ---
 

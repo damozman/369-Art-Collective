@@ -62,6 +62,14 @@ explicitly and wait for the user rather than quietly building around it.
     judge. 369 can keep selling on the old marketplace meanwhile — the two are
     unlinked, which is exactly what decision #9 bought.
 
+12. **Pricing: flat monthly tiers by people PAID per month. Settled 2026-08-01.**
+    $49/$99/$199 for 10/50/200, 14-day trial, no free tier. Full reasoning and the
+    four rules that make it work are in blueprint §12. The two that get broken by
+    accident: **the plan is chosen by the customer, never metered up by our count**,
+    and **billing never blocks a payout or blocks adding people** — it notifies and
+    moves the plan at renewal. Numbers are placeholders pending design-partner
+    conversations; the *model* is not. No percentage-of-volume pricing, ever.
+
 10. **The §6 rule shape is built as specified, without waiting for design-partner
     data.** §6 warns that guessing at deal structures is the likeliest way to build
     the wrong abstraction. Accepted with eyes open: rules are stored as **data**, so a

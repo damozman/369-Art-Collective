@@ -977,6 +977,96 @@ export const auditLog = pgTable(
 );
 
 // ============================================================
+// Subscriptions — us charging the tenant
+// ============================================================
+//
+// ⚠️ THIS IS A DIFFERENT SURFACE FROM CONNECT, AND CONFUSING THEM IS EXPENSIVE.
+//
+//   Connect  = the TENANT's money going to THEIR contributors. Never touches an
+//              account we control. That is ratified decision #1, and it is what
+//              keeps this out of money transmission.
+//   Billing  = the tenant paying US a subscription, through OUR Stripe account.
+//              Ordinary SaaS revenue.
+//
+// A future session should not read `stripeCustomerId` here, compare it to
+// `stripeAccountId` on `engine_tenants`, and conclude one of them is wrong. They
+// are unrelated identifiers on unrelated Stripe surfaces. See blueprint §12.
+
+/**
+ * Where a tenant stands with us.
+ *
+ * `trialing` and `active` both mean "the product works". `past_due` means a
+ * payment failed and we are retrying — the product KEEPS WORKING, because
+ * cutting off payouts over a failed card would strand contributors who are not
+ * our customer and cannot fix it. `canceled` is the end state.
+ */
+export const subscriptionStatusEnum = pgEnum("engine_subscription_status", [
+  "trialing",
+  "active",
+  "past_due",
+  "canceled",
+]);
+
+/**
+ * A tenant's subscription. One row per tenant.
+ *
+ * ⚠️ `planKey` IS CHOSEN BY THE CUSTOMER AND IS THE BILL. It is never written by
+ * a usage count. Blueprint §12 rule 2: a plan that floats with our own count
+ * reintroduces the unpredictable bill that killed per-payout pricing, and
+ * manufactures the "your count is wrong" dispute that flat pricing exists to
+ * avoid. Usage is compared against the plan and SHOWN; it never sets it.
+ */
+export const subscriptions = pgTable(
+  "engine_subscriptions",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    tenantId: varchar("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+
+    /** Matches a key in `server/engine/billing/plans.ts`. Not a foreign key: plan
+     *  definitions are code, so they can be changed without a migration, and a
+     *  retired plan must still describe an existing subscription. */
+    planKey: text("plan_key").notNull(),
+
+    status: subscriptionStatusEnum("status").notNull().default("trialing"),
+
+    /** The window usage is counted over, and what the next invoice covers. */
+    periodStart: timestamp("period_start").notNull(),
+    periodEnd: timestamp("period_end").notNull(),
+
+    trialEndsAt: timestamp("trial_ends_at"),
+
+    /**
+     * Set when usage exceeded the plan. Blueprint §12 rule 3: this NEVER blocks
+     * anything and never changes the bill on its own. It records that notice was
+     * given, so the move to a larger plan at renewal is something the customer
+     * was told about rather than a surprise charge.
+     */
+    overageNoticedAt: timestamp("overage_noticed_at"),
+    overagePeopleCount: integer("overage_people_count"),
+
+    /** OUR Stripe customer — not the tenant's connected account. See the header. */
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+
+    /** Why the last charge failed, in language the owner can act on. */
+    lastPaymentError: text("last_payment_error"),
+    canceledAt: timestamp("canceled_at"),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    tenantUnique: uniqueIndex("engine_subscriptions_tenant_unique").on(table.tenantId),
+    stripeSubscriptionUnique: uniqueIndex("engine_subscriptions_stripe_sub_unique").on(
+      table.stripeSubscriptionId
+    ),
+    statusIdx: index("engine_subscriptions_status_idx").on(table.status),
+  })
+);
+
+// ============================================================
 // Inferred types
 // ============================================================
 
@@ -995,3 +1085,4 @@ export type Adjustment = typeof adjustments.$inferSelect;
 export type PayoutBatch = typeof payoutBatches.$inferSelect;
 export type Payout = typeof payouts.$inferSelect;
 export type SourceConnection = typeof sourceConnections.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;

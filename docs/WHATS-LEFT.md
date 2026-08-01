@@ -74,7 +74,7 @@ Note the pattern: the first four wait on other people, the last two don't.
 
 | Missing | What it means |
 |---|---|
-| **Artwork screen** | The API exists; there's no tab. You can add people but not their works. |
+| **Works screen** | The API exists; there's no tab. You can add people but not their works. |
 | **Business settings screen** | Refund window, minimum payout and clawback policy live in the database only. |
 | **Password reset** | For both the portal and the console. |
 | **Audit log viewer** | Every change is recorded; nothing displays it. |
@@ -128,9 +128,16 @@ and can be revoked later. Assuming they are the same is how a payout run fails
 halfway through, which is the expensive kind of failure. The status is re-checked, so
 a later suspension shows up without anyone having to sign in again.
 
-**3. Artwork and settings screens.**
+**3. Works and settings screens.**
 Finishes the job of making the system operable by you rather than by a developer.
 Small, and each is independently useful.
+
+Called "works", not "artwork", and that is not pedantry. A *work* is whatever a
+sale gets attributed to — a painting, a track, a book, a course, a design. The
+engine's table is `works` and its rows carry no medium, so the same screen serves
+a record label and a print shop without a fork. Wherever these notes have said
+"artwork" they were describing the first vertical, not the product; the shipped
+code has never used the term outside example comments.
 
 **4. Customer billing and signup.**
 Turns working software into a business. Deliberately after the above, because there

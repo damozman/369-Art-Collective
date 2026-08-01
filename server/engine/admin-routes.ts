@@ -71,6 +71,19 @@ import {
   type TransferExecutor,
 } from "./payout";
 
+/**
+ * Where links in emails point.
+ *
+ * Prefers the configured public URL. A `Host` header is client-controlled, so
+ * building an emailed link from it unconditionally would let somebody craft a
+ * request that mails a customer a link to a site they own.
+ */
+function publicBaseUrl(req: Request): string {
+  const configured = process.env.PUBLIC_APP_URL;
+  if (configured) return configured.replace(/\/+$/, "");
+  return `${req.protocol}://${req.get("host") ?? "localhost:5000"}`;
+}
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -421,6 +434,19 @@ export function createAdminRouter(
         asOf: new Date(),
         executor: await executorForTenant(tenant.id),
         createdBy: session.tenantUserId,
+      });
+
+      // AFTER the money has moved and committed, and deliberately not inside
+      // `runPayoutBatch`. Every one of these swallows its own failures: a mail
+      // server being unreachable must never turn a completed payout into an
+      // error, and must never be able to roll one back.
+      const { notifyPayoutsPaid } = await import("./email/notifications");
+      const { getEmailSender } = await import("./email/sender");
+      await notifyPayoutsPaid(db, {
+        tenantId: tenant.id,
+        batchId: result.batchId,
+        sender: getEmailSender(),
+        baseUrl: publicBaseUrl(req),
       });
 
       res.json({

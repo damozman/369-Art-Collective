@@ -1084,6 +1084,62 @@ export const subscriptions = pgTable(
 );
 
 // ============================================================
+// Email
+// ============================================================
+
+/**
+ * Every message we tried to send, and what happened.
+ *
+ * ⚠️ THIS TABLE EXISTS TO STOP DUPLICATE SENDS, not for reporting. `dedupeKey`
+ * is unique per tenant, so "Alice was paid in batch X" can only ever be sent
+ * once however many times a payout run is retried or a job replayed. Telling
+ * somebody twice that they have been paid reads as being paid twice, and that
+ * is a support call about money — the most expensive kind.
+ *
+ * It also gives a failed send somewhere to live. A payout must never be rolled
+ * back because an email bounced (see `notify.ts`), so the failure has to be
+ * recorded rather than thrown.
+ */
+export const emailLog = pgTable(
+  "engine_email_log",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    tenantId: varchar("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+
+    /** e.g. payout_paid | trial_ending | payment_failed | review_waiting */
+    type: text("type").notNull(),
+
+    /**
+     * What makes this message unique. Built from the thing being reported —
+     * `payout_paid:<payoutId>`, not a timestamp — so a replay collides.
+     */
+    dedupeKey: text("dedupe_key").notNull(),
+
+    toEmail: text("to_email").notNull(),
+    subject: text("subject").notNull(),
+
+    /** sent | failed */
+    status: text("status").notNull().default("sent"),
+    error: text("error"),
+    providerId: text("provider_id"),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    tenantDedupeUnique: uniqueIndex("engine_email_log_tenant_dedupe_unique").on(
+      table.tenantId,
+      table.dedupeKey
+    ),
+    tenantCreatedIdx: index("engine_email_log_tenant_created_idx").on(
+      table.tenantId,
+      table.createdAt
+    ),
+  })
+);
+
+// ============================================================
 // Inferred types
 // ============================================================
 

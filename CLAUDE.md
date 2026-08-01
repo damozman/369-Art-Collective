@@ -136,7 +136,7 @@ Both were resolved in step 5.)
   (signed webhooks → per-line events → ledger, plus refunds and cancellations) and
   the Stripe `TransferExecutor` — plus **artist payout-account onboarding**
   (`server/engine/payout-account.ts`, Account Links + status read back from Stripe).
-- **334 unit tests · 206 end-to-end checks against real Postgres.** Every screen has
+- **350 unit tests · 216 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -164,7 +164,7 @@ Summary of that order:
 2. ~~**Artist bank onboarding**~~ — **done.** See "Payout accounts" below.
 3. ~~**Works and settings screens**~~ — **done.** See "Step 3" below.
 4. ~~**Customer billing and signup**~~ — **done.** See "Billing" below.
-5. Email, 1099, audit viewer.
+5. ~~Email~~ — **done, see below.** 1099 and the audit viewer remain.
 6. CSV import, then advances (§10b) — advances only once a real publishing or music
    deal can be seen, so the shape is drawn rather than guessed.
 
@@ -260,6 +260,10 @@ third-party log sinks, the client bundle, and the ~70 obsolete
 | `server/engine/billing/checkout.ts` | Stripe checkout → subscription, read back from Stripe |
 | `server/engine/billing/billing-client.ts` | OUR Stripe account — read its header before touching |
 | `server/engine/billing/routes.ts` | `/api/engine/plans`, `/signup`, and the billing screen |
+| `server/engine/email/sender.ts` | `EmailSender` seam + Resend + fixture + unconfigured |
+| `server/engine/email/templates.ts` | pure; every word the customer reads |
+| `server/engine/email/notify.ts` | `sendOnce` — the at-most-once guarantee |
+| `server/engine/email/notifications.ts` | who gets told what, all failure-swallowing |
 | `server/engine/review.ts` | + `recordEventCost` — typing in a cost the channel never sent, guarded on 'nothing allocated yet' |
 
 ### The adapters — §4's two seams, filled in
@@ -439,6 +443,37 @@ for more than they use. It is what makes the overage notice believable.
 dangerous than `ALLOW_FIXTURE_TRANSFERS` but still opt-in: a deployment that thinks
 it is charging and is not takes months to notice.
 
+### Email — three rules, all easy to break
+
+1. **A send failure must never fail the thing being reported.** Nothing in
+   `email/` throws. `notifyPayoutsPaid` is called from `admin-routes` AFTER the
+   payout run has committed, deliberately NOT from inside `payout.ts` — putting
+   it there would place a mail failure in the same call stack as a transfer, and
+   the next refactor would have to re-derive why it must not throw.
+2. **At most once.** `engine_email_log.dedupe_key` is unique per tenant and the
+   row is claimed BEFORE the provider is called, so a replayed run collides on
+   the index. Keys come from stable ids (`payout_paid:<payoutId>`), never
+   timestamps. Being told twice that you were paid reads as being paid twice.
+   The claim-then-send order can lose a message if the process dies mid-flight;
+   that trade is argued in the file header and is deliberate.
+3. **Emails must agree with the screens character for character.** Same
+   `formatMoney`, same UTC date handling. An email that differs by a day or a
+   comma looks like a discrepancy worth disputing.
+
+Two sentences in `templates.ts` are load-bearing and have tests naming them:
+the trial email promises **nothing is deleted** (an expired trial is read-only),
+and the payment-failed email says **nothing has been switched off** (`past_due`
+grants full access). Both are true; copy that implies otherwise would cause a
+panic about something that is not happening.
+
+**Not yet scheduled:** `notifyTrialEnding` and `notifyReviewWaiting` are written
+and tested but nothing calls them on a timer — they need a daily job. Signup and
+payout notifications fire from their request paths already.
+
+**Config:** `RESEND_API_KEY` + `EMAIL_FROM` to send at all, `PUBLIC_APP_URL` so
+emailed links do not come from a client-controlled `Host` header, and
+`PLATFORM_NOTIFY_EMAIL` to be told about new signups.
+
 The portal UI, which is the engine's surface rather than the marketplace's:
 
 | Path | What |
@@ -454,8 +489,8 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 334 unit tests, no network, no database
-npm run test:e2e      # 206 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 350 unit tests, no network, no database
+npm run test:e2e      # 216 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -622,12 +657,12 @@ Sessions do not share memory. Everything below is the state as of the last commi
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 334 unit tests — no network, no database
+npm test          # 350 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (206 checks against real Postgres) start the local database
+For the end-to-end run (216 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e

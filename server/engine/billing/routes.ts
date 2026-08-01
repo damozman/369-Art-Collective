@@ -125,6 +125,21 @@ export function createSignupRouter(db: EngineDb): Router {
         }
       }
 
+      // Told to us, not to them — this is what replaces gating signup behind
+      // approval. Swallows its own failures; a mail problem must not fail a
+      // signup that already created the account.
+      const { notifyNewSignup } = await import("../email/notifications");
+      const { getEmailSender } = await import("../email/sender");
+      await notifyNewSignup(db, {
+        tenantId: result.tenantId,
+        tenantSlug: result.tenantSlug,
+        businessName: String(body.businessName ?? ""),
+        ownerEmail: String(body.email ?? ""),
+        planKey: body.planKey ? String(body.planKey) : "starter",
+        sender: getEmailSender(),
+        baseUrl: originOf(req),
+      });
+
       res.status(201).json({
         tenantSlug: result.tenantSlug,
         trialEndsAt: result.trialEndsAt,

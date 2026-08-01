@@ -92,6 +92,9 @@ import { signWebhookBody } from "../adapters/shopify/webhook-auth";
 import { FixtureStripeClient } from "../adapters/stripe/client";
 import { signUp } from "../billing/signup";
 import { FixtureBillingClient } from "../billing/billing-client";
+import { FixtureEmailSender } from "../email/sender";
+import { sendOnce } from "../email/notify";
+import { notifyPayoutsPaid, notifyTrialEnding } from "../email/notifications";
 import {
   completeCheckout,
   recordPaymentFailure,
@@ -2136,6 +2139,144 @@ async function main() {
     assert.equal(declinedAccess.canRunPayouts, true);
     assert.ok(declinedAccess.message);
   });
+
+  // ============================================================
+  // Email — sent once, and never at the cost of the payout
+  // ============================================================
+
+  console.log("\n-- email --");
+
+  const mail = new FixtureEmailSender();
+  const mailOptions = { sender: mail, baseUrl: "https://app.example" };
+
+  // Alice was paid earlier in this run; tell her about it.
+  const paidBatch = await db
+    .select({ batchId: schema.payouts.batchId })
+    .from(schema.payouts)
+    .where(
+      and(eq(schema.payouts.tenantId, "t-369"), eq(schema.payouts.status, "paid"))
+    )
+    .limit(1);
+
+  const batchId = paidBatch[0]?.batchId;
+  check("there is a completed payout batch to notify about", () => assert.ok(batchId));
+
+  // Alice needs an address to receive anything.
+  await db
+    .update(schema.contributors)
+    .set({ email: "alice@example.com" })
+    .where(eq(schema.contributors.id, "c-alice"));
+
+  const firstMailRun = await notifyPayoutsPaid(db, {
+    ...mailOptions,
+    tenantId: "t-369",
+    batchId: batchId!,
+  });
+  check("the person who was paid is told", () => assert.ok(firstMailRun.sent >= 1));
+
+  const sentMail = mail.lastTo("alice@example.com");
+  check("the email names the business and the amount", () => {
+    assert.match(sentMail!.subject, /369/);
+    assert.match(sentMail!.subject, /\$/);
+  });
+
+  /**
+   * ⚠️ THE CENTRAL GUARANTEE. A replayed run must not tell somebody a second
+   * time that they have been paid — being told twice reads as being paid
+   * twice, which is a support call about money.
+   */
+  const mailCountBefore = mail.sent.length;
+  const secondMailRun = await notifyPayoutsPaid(db, {
+    ...mailOptions,
+    tenantId: "t-369",
+    batchId: batchId!,
+  });
+  check("running it again sends nothing", () => {
+    assert.equal(mail.sent.length, mailCountBefore);
+    assert.equal(secondMailRun.sent, 0);
+  });
+
+  /**
+   * ⚠️ THE OTHER GUARANTEE. A provider failure must be recorded, never thrown —
+   * the callers have just moved money and cannot be allowed to fail afterwards.
+   */
+  const failingMail = new FixtureEmailSender();
+  failingMail.failNext = 5;
+
+  const failedResult = await notifyPayoutsPaid(db, {
+    sender: failingMail,
+    baseUrl: "https://app.example",
+    tenantId: "t-press",
+    batchId: batchId!,
+  });
+  check("a send failure does not throw", () => assert.ok(failedResult));
+
+  // Directly, on a tenant that definitely has an addressable owner.
+  await db.insert(schema.contributors).values({
+    id: "c-mailfail", tenantId: "t-369", name: "Mail Fail",
+    email: "fail@example.com", externalRef: "mailfail",
+  });
+
+  const failedSend = await sendOnce(db, {
+    tenantId: "t-369",
+    type: "test_failure",
+    dedupeKey: "test_failure:1",
+    to: "fail@example.com",
+    email: { subject: "s", text: "t" },
+    sender: failingMail,
+  });
+  check("a failed send reports failure rather than throwing", () =>
+    assert.equal(failedSend.status, "failed")
+  );
+
+  const failedRow = await db
+    .select()
+    .from(schema.emailLog)
+    .where(
+      and(
+        eq(schema.emailLog.tenantId, "t-369"),
+        eq(schema.emailLog.dedupeKey, "test_failure:1")
+      )
+    );
+  check("the failure is recorded with its reason", () => {
+    assert.equal(failedRow[0].status, "failed");
+    assert.ok(failedRow[0].error);
+  });
+
+  // Somebody with no address is a normal state, not an error.
+  const noAddress = await sendOnce(db, {
+    tenantId: "t-369",
+    type: "test_none",
+    dedupeKey: "test_none:1",
+    to: null,
+    email: { subject: "s", text: "t" },
+    sender: mail,
+  });
+  check("no email address is a normal outcome, not a failure", () =>
+    assert.equal(noAddress.status, "no_recipient")
+  );
+
+  // Trial reminder, on the business that signed up earlier.
+  const trialMail = new FixtureEmailSender();
+  const trialResult = await notifyTrialEnding(db, {
+    sender: trialMail,
+    baseUrl: "https://app.example",
+    tenantId: twin.tenantId,
+    now: new Date("2026-08-12T00:00:00Z"),
+  });
+  check("the owner is warned before the trial ends", () =>
+    assert.equal(trialResult.status, "sent")
+  );
+
+  const trialAgain = await notifyTrialEnding(db, {
+    sender: trialMail,
+    baseUrl: "https://app.example",
+    tenantId: twin.tenantId,
+    now: new Date("2026-08-13T00:00:00Z"),
+  });
+  check("the trial warning is not repeated the next day", () =>
+    assert.equal(trialAgain.status, "duplicate")
+  );
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

@@ -481,6 +481,40 @@ If most of your sales go through Shopify Payments, holds will be rare either way
 
 ---
 
+## 6d. Emails the system sends
+
+Nobody has to check a screen to find out they have been paid.
+
+**To your artists**
+
+- **"You have been paid."** Sent when a payment actually goes out — never when
+  one fails. It names your business (so it does not look like spam from a
+  stranger), says the amount, and links to their full breakdown.
+
+**To you**
+
+- **Your trial is ending**, a few days before.
+- **A subscription payment failed** — which does *not* switch anything off.
+- **Sales are waiting for you**, as one daily summary rather than one email per
+  stuck sale.
+- **Somebody signed up**, if you have set an address for it.
+
+**Three things worth knowing:**
+
+1. **An email problem can never stop a payment.** Emails go out after the money
+   has moved. If the mail service is down, everyone still gets paid.
+2. **Nobody is ever told twice.** Being told twice that you have been paid reads
+   like being paid twice — so the system records every message it sends and will
+   not repeat one, however many times a payout run is retried.
+3. **The numbers in an email match the screen exactly.** Same formatting, same
+   dates, down to the comma.
+
+**Not switched on yet.** Sending needs an email account connected (Resend), the
+same way payouts need Stripe. Until then the system simply records that it would
+have sent something.
+
+---
+
 ## 7. The things waiting on you
 
 None of these go faster by building faster. They all wait on other people.

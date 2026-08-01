@@ -59,7 +59,7 @@ Stripe key, which is a settings change rather than a build.
 - **Pricing, signup and billing** — a business creates its own account at
   `/pricing`, runs a 14-day trial with no card, and subscribes monthly or yearly.
 
-334 unit tests, 206 end-to-end checks against a real database, every screen driven
+350 unit tests, 216 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
@@ -92,7 +92,7 @@ Everything left in this group waits on somebody else.
 
 | Missing | What it means |
 |---|---|
-| **Email** | Nobody is told they've been paid, or that something needs review. |
+| ~~Email~~ | **Built.** Artists are told when they are paid; you are told about trials, failed payments and stuck sales. Needs a Resend key to send. |
 | **1099 export** | US tax reporting for contributors. Stripe issues the forms; we supply the data. |
 | **Multi-currency** | USD only by decision. Fine until a non-US customer appears. |
 
@@ -194,8 +194,32 @@ mechanics:
 It also tells a customer when they are paying for *more* than they use. That costs
 money, and it is the reason the rest of it is believable.
 
-**5. Email, 1099, audit viewer.**
-Polish that real customers will expect and a demo won't miss.
+**5. Email ✅ DONE. 1099 and the audit viewer remain.**
+
+An artist gets an email when they are paid, naming the business and linking to
+the full breakdown. You get told when a trial is about to end, when a payment
+fails, when sales are stuck waiting for you, and when somebody signs up.
+
+Three things it does deliberately:
+
+- **A mail problem can never break a payout.** Emails go out after the money has
+  moved, and a failure is recorded rather than raised. Nobody's payment fails
+  because a mail server was briefly unreachable.
+- **Nobody is ever told twice.** Being told twice that you have been paid reads
+  as being paid twice, which is the worst kind of support call.
+- **The numbers in an email match the screen exactly.** Same formatting, same
+  dates. A statement that disagrees with an email looks like a discrepancy worth
+  disputing.
+
+Two of the emails needed care rather than code. The trial-ending one says
+plainly that **nothing is deleted** — the account goes read-only, and a customer
+who assumes their records are gone does not come back. The failed-payment one
+says **nothing has been switched off**, because that is true, and an owner who
+panics that their artists have stopped being paid is panicking about something
+that is not happening.
+
+**Still to wire:** the trial and stuck-sales emails are written and tested but
+need a daily job to fire them. The rest send by themselves.
 
 **6. CSV import, then advances.**
 New markets. Only worth doing when there's demand pointing at them — and advances

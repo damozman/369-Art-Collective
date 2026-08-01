@@ -267,6 +267,21 @@ Every uncertainty results in a hold, never a guess.
 Everything is whole cents internally. Decimals lose fractions of a penny in ways
 that quietly compound across thousands of transactions.
 
+**7. Nothing that identifies a signed-in person gets written to the logs.**
+When someone signs in, the system hands their browser a pass. Anyone holding a
+copy of that pass *is* that person — no password needed. The system used to write
+those passes into its own activity log on every single page load, which meant
+anyone who could read the log could walk in as any artist, or as you. That was
+found and removed on 1 Aug 2026, along with a built-in administrator password
+that was written into the source code and printed at every startup. Both are
+closed. The rule going forward: the log records *that* something happened, never
+the keys involved.
+
+One practical consequence: when this is deployed for real, the first
+administrator password has to be supplied as a setting at deploy time. The system
+will refuse to create an administrator account without one rather than fall back
+to a default that everybody knows.
+
 ---
 
 ## 6. What is NOT done yet

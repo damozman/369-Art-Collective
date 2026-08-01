@@ -167,10 +167,49 @@ user has evaluated the generic product cleanly.
 **The user is not on a timeline** (stated 2026-07-31) and prefers correctness over
 speed. Do not compress work to seem fast.
 
-Offered and declined for now: a credential-leak audit of the whole codebase. The
-user fixed the one known instance (plaintext password logging at login, removed in
-`a1b2c3d`-era commit "security: stop logging plaintext passwords"). **Worth
-offering again before anything runs against real money.**
+### Credential-leak sweep — DONE (2026-08-01). Do not redo; do not regress
+
+Ran before the Stripe Connect application, as agreed. The earlier fix (plaintext
+password logging at login) had removed *the password* and left the **session
+credentials** behind. Five leaks found and closed, all in the marketplace's
+auth path — the engine was clean:
+
+1. **`server/index.ts`** — a debug middleware logged `req.headers.cookie`,
+   `req.cookies` and `req.sessionID` on **every `/api/` request**. The raw
+   `Cookie` header *is* the signed session; log access was account takeover.
+2. **`server/index.ts`** — the request logger appended the JSON response body,
+   truncated to 79 chars. Truncation caps how much leaks, not what. The Stripe
+   Connect onboarding link is single-use and sits in the first 40 characters of
+   its response.
+3. **`server/routes.ts`** artist login — logged `res.getHeader('set-cookie')`
+   and `res.getHeaders()` on every success: the freshly minted session cookie,
+   ready to replay.
+4. **`server/middleware/auth.ts`** — `sessionID` + raw `Cookie` on every
+   artist-gated request. A redacted `safeContext` was already computed three
+   lines below and unused for this.
+5. **`server/bootstrap.ts`** — a **hardcoded admin password in a tracked file**,
+   echoed to stdout at every cold start. Also: the test-artist seed was
+   commented "development/test only" with **no guard**, so production got a
+   second known-password sign-in.
+
+**Rules this leaves behind.** Session identifiers and cookie values are never
+loggable — log presence, never the value. Response bodies are never logged by
+default; trace inside a handler through `secureLog`, which redacts. And
+`server/lib/secure-logger.ts` already existed and already listed `sessionID`,
+`cookie` and `token` as redacted — every one of these leaks was a raw
+`console.log` **routed around it**. Prefer `secureLog` over `console.log`
+anywhere near auth.
+
+**Deployment consequence:** production now requires `BOOTSTRAP_ADMIN_PASSWORD`
+to seed an initial admin, and creates no account without it. Local development
+is unchanged.
+
+Verified beyond type-check: signed in against a real server and confirmed the
+logs now contain method, path, status and duration and nothing else.
+
+**Not covered by this sweep** (scope named honestly): secrets reaching
+third-party log sinks, the client bundle, and the ~70 obsolete
+`server/scripts/**` one-offs, which are not on any request path.
 
 ### The engine — where things live
 
@@ -608,6 +647,12 @@ is read or written — it is the AES key that seals provider credentials. Genera
 `openssl rand -hex 32`; a passphrase also works locally. It is *not* interchangeable
 with `SESSION_SECRET`, and losing it makes every stored store token unreadable (the
 fix is reconnecting the stores, not a data-recovery exercise).
+
+**`BOOTSTRAP_ADMIN_PASSWORD` is required in production** to seed the first admin
+account. Without it `bootstrapAdmin()` creates nothing and warns — deliberately, since
+the alternative it replaced was a password hardcoded in this repository. Optional
+`BOOTSTRAP_ADMIN_EMAIL` overrides the address. Development keeps its existing default
+(`admin@369artcollective.com` / `Admin369AC`) and is unaffected.
 
 ### Handling credentials — standing rule
 

@@ -57,46 +57,35 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// Debug: Log incoming cookies to diagnose session cookie transmission
-app.use((req, _res, next) => {
-  if (req.path.startsWith('/api/')) {
-    console.log('[DEBUG][COOKIES] Request to', req.path, {
-      cookieHeader: req.headers.cookie,
-      parsedCookies: req.cookies,
-      sessionID: req.sessionID,
-      hasSessionUser: !!req.session?.user
-    });
-  }
-  next();
-});
+// NOTE: a debug middleware used to log `req.headers.cookie`, `req.cookies` and
+// `req.sessionID` for every /api/ request. A session cookie is a bearer
+// credential: anyone holding it *is* that user until it expires. Writing one to
+// stdout means log access — a hosting dashboard, a shipped log drain, a support
+// screenshare — is account takeover, with no password involved. Session
+// identifiers are never loggable. If cookie transmission needs diagnosing again,
+// log presence (`!!req.headers.cookie`), never the value.
 
 // Affiliate tracking middleware - captures ?ref= parameter and sets cookies
 app.use(affiliateTrackingMiddleware);
 
+// Request logging: method, path, status and duration only.
+//
+// This used to append the serialised JSON response body, truncated to 79
+// characters. Truncation is not redaction — it caps how much leaks, not what.
+// Several responses carry credentials in their first few characters: the Stripe
+// Connect onboarding link (`{"url":"https://connect.stripe.com/setup/e/..."}`)
+// is single-use and grants access to a contributor's payout onboarding, and any
+// future token-bearing response would be captured the same way. A body is never
+// worth logging by default; when a specific endpoint needs tracing, log inside
+// that handler through `secureLog`, which redacts known-sensitive fields.
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
 
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
+      log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
     }
   });
 

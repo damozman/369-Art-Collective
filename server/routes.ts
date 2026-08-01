@@ -987,11 +987,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           approved: artist.approved,
         };
 
-        console.log("[DEBUG][LOGIN] Session user set:", {
-          sessionID: req.sessionID,
-          user: req.session.user,
-          cookie: req.session.cookie
-        });
+        // Three debug blocks used to sit in this handler, logging `sessionID`,
+        // the session object, and — worst — `res.getHeader('set-cookie')` plus
+        // `res.getHeaders()` once the response flushed. That last one wrote the
+        // freshly minted, signed session cookie to stdout on every successful
+        // login: a ready-to-replay credential for the account that just signed
+        // in. Login handlers must stay silent about session identifiers; log the
+        // outcome (`secureLog` + `safeUserContext`) if anything, never the token.
 
         // Explicitly save session before sending response to prevent race condition
         req.session.save((saveErr) => {
@@ -999,22 +1001,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error("Session save error:", saveErr);
             return res.status(500).json({ message: "Login failed" });
           }
-
-          console.log("[DEBUG][LOGIN] Session saved successfully:", {
-            sessionID: req.sessionID,
-            userInSession: req.session.user,
-            cookieSecure: req.session.cookie.secure,
-            cookieSameSite: req.session.cookie.sameSite
-          });
-
-          // Log response headers to debug cookie delivery
-          res.once('finish', () => {
-            console.log("[DEBUG][LOGIN] Response headers sent:", {
-              sessionID: req.sessionID,
-              setCookie: res.getHeader('set-cookie'),
-              allHeaders: res.getHeaders()
-            });
-          });
 
           const { password: _, ...artistData} = artist;
           res.json(artistData);

@@ -26,15 +26,11 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 export async function requireArtist(req: Request, res: Response, next: NextFunction) {
-  console.log("[DEBUG][AUTH] requireArtist middleware:", {
-    path: req.path,
-    sessionID: req.sessionID,
-    hasSession: !!req.session,
-    sessionUser: req.session?.user,
-    sessionKeys: req.session ? Object.keys(req.session) : [],
-    cookie: req.headers.cookie
-  });
-
+  // A debug block here logged `req.sessionID` and the raw `Cookie` header on
+  // every artist-gated request — a replayable credential per call. `safeContext`
+  // below already carries everything that block was actually diagnosing
+  // (is there a session, is there a user, what type, approved) without the
+  // identifiers. Use it; do not reintroduce the raw values.
   const safeContext = {
     path: req.path,
     hasSession: !!req.session,

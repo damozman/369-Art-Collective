@@ -117,7 +117,8 @@ Both were resolved in step 5.)
 
 - **Phase 0 ✅ · Phase 1 ✅ · the owner-facing product is built ✅ · WHATS-LEFT
   step 1 (Shopify + Stripe against fixtures) ✅ · step 2 (artist bank
-  onboarding) ✅.**
+  onboarding) ✅ · step 3 (works + settings screens, and recording a missing
+  cost) ✅.**
 - **What exists:** the engine (16 `engine_*` tables, canonical `RevenueEvent`, §6
   rules, immutable ledger, §8 reversals, transactional ingestion, payout batches
   with the state machine), the **contributor portal** at `/portal/:tenantSlug`, the
@@ -127,7 +128,7 @@ Both were resolved in step 5.)
   (signed webhooks → per-line events → ledger, plus refunds and cancellations) and
   the Stripe `TransferExecutor` — plus **artist payout-account onboarding**
   (`server/engine/payout-account.ts`, Account Links + status read back from Stripe).
-- **275 unit tests · 156 end-to-end checks against real Postgres.** Every screen has
+- **288 unit tests · 177 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -153,7 +154,7 @@ Summary of that order:
 1. ~~**Shopify and Stripe against fixtures**~~ — **done.** See "The adapters" below.
    The approvals now wait on themselves rather than on us.
 2. ~~**Artist bank onboarding**~~ — **done.** See "Payout accounts" below.
-3. **Artwork and settings screens** — finishes "operable without a developer".
+3. ~~**Works and settings screens**~~ — **done.** See "Step 3" below.
 4. **Customer billing and signup** — turns it into a business. **There is currently
    no way to charge anyone**, which is easy to leave until last and then discover is
    the thing standing between working software and revenue.
@@ -166,6 +167,16 @@ user has evaluated the generic product cleanly.
 
 **The user is not on a timeline** (stated 2026-07-31) and prefers correctness over
 speed. Do not compress work to seem fast.
+
+**Do not use time-to-revenue as an argument for sequencing work.** The user pushed
+back on this directly (2026-08-01): *"you keep mentioning if I want revenue sooner.
+Apparently, that's changing your decision making… it's kind of negligent at this
+point. I have plenty of time to get this finished, do full testing, reviews,
+modifications if necessary before I need to worry about making a first dollar."*
+Billing still has to be built — that fact is unchanged and stays in the list — but
+"this gets you paid sooner" is not a reason to move it, and framing it that way
+imports an urgency the user does not have. Sequence on what makes the product
+correct and operable, and say so in those terms.
 
 ### Credential-leak sweep — DONE (2026-08-01). Do not redo; do not regress
 
@@ -237,6 +248,7 @@ third-party log sinks, the client bundle, and the ~70 obsolete
 | `server/engine/secrets.ts` | AES-256-GCM seal/open for provider credentials + `safeEqual` |
 | `server/engine/connections.ts` | `engine_source_connections` CRUD; the ONLY module that touches sealed columns |
 | `server/engine/payout-account.ts` | contributor bank onboarding — Account Links, status read back from Stripe |
+| `server/engine/review.ts` | + `recordEventCost` — typing in a cost the channel never sent, guarded on 'nothing allocated yet' |
 
 ### The adapters — §4's two seams, filled in
 
@@ -277,15 +289,27 @@ third-party log sinks, the client bundle, and the ~70 obsolete
    engine cannot (a missing fee). Held events record the revenue and their costs,
    allocate nothing, and land in the existing review queue.
 
-**One known gap, named rather than hidden.** A line held because its payment fee
-could not be read can still be resolved through `resolveEventContributor`, and doing
-so allocates with **no** `processing_fee` cost — i.e. the tenant absorbs the fee for
-that line, which is exactly what `onUnknownFee: "proceed"` does deliberately. The
-hold reason is shown on the item, so it is a visible choice rather than a hidden
-one, and blocking resolution instead would leave an item with no way out. **The
-proper fix is a "record the missing cost" action on the review screen**, which
-belongs with the settings/artwork screens in `WHATS-LEFT.md` step 3. Do not fix it
-by adding an estimated-fee fallback.
+**The known gap here is now CLOSED — `recordEventCost` in `review.ts`.** It used to
+read: a line held for an unreadable payment fee could only be resolved through
+`resolveEventContributor`, which allocated with **no** `processing_fee` cost, so the
+tenant silently absorbed it. The owner can now type the real figure in from the
+provider's statement before assigning. Two guards make it safe, and both are asserted
+end-to-end:
+
+- **Nothing may be allocated yet.** Allocations snapshot their own inputs (§5 #6);
+  adding a cost afterwards would leave the event and the payment disagreeing with no
+  way to tell which is right. Once money is worked out, the way to change it is a
+  reversal, not an edit.
+- **The cost type comes from a closed list** (`RECORDABLE_COST_TYPES`). Rules select
+  costs by exact string match against `costDeductions`, so a free-text
+  "proccessing_fee" would be stored, appear in margin reporting, and reduce nobody's
+  share — an overpayment that looks perfectly correct on every screen.
+
+Correcting an already-recorded cost is deliberately allowed, since both guards still
+hold. **Still do not add an estimated-fee fallback** — that would recreate the
+invented-cost bug Phase 0 existed to remove. Skipping the entry and assigning anyway
+remains legal and means the tenant absorbs the fee, which is what
+`onUnknownFee: "proceed"` does on purpose.
 
 ### Switching the adapters on
 
@@ -333,6 +357,45 @@ application before promising a customer it works.** If Stripe refuses, the fallb
 is that we are the platform and each tenant is a connected account with `transfers`
 capability — which changes decision #1's shape and is a conversation, not a patch.
 
+### Step 3 — works, settings, and recording a missing cost
+
+Three things landed together, plus one real bug found on the way.
+
+**Works screen** (`client/src/pages/engine-admin/works-editor.tsx`). Called *works*,
+never *artwork* — decision #11 requires tenant-neutral surfaces, and `works` rows
+carry no medium, so the same screen serves a label and a print shop. Archiving only,
+never delete: deleting cascades to `work_contributors` and orphans the attribution
+behind allocations already paid. No rate field either — rates live in Rates,
+effective-dated and versioned, and a second place to set what people are paid is the
+exact defect this system exists to remove.
+
+**Settings screen** (`settings-editor.tsx`, `updateTenantSettings`). ⚠️ **The
+settings are not uniformly retroactive, and the asymmetry is load-bearing.**
+`minimumPayoutMinor` and `clawbackPolicy` are read at payout/reversal time, so they
+bite on the next run. `payoutHoldDays` is consumed by `holdUntil(occurredAt, days)`
+at allocation time and written to `available_at`, so changing it does nothing to
+money already earned. An e2e check asserts every existing `available_at` is byte-for-
+byte unchanged across a settings update. **Do not "fix" this by recomputing
+`available_at`** — it rewrites a release date a contributor has already been shown.
+The form warns on the field as you change it.
+
+Reserve at 0% is rejected rather than stored: `reversal.ts:249` returns a zero
+reserve when the rate is not positive, so it would silently behave as `recoup` while
+the screen said otherwise.
+
+**`recordEventCost`** — see "the known gap here is now CLOSED" above.
+
+**⚠️ A cross-tenant bug was found and fixed in `linkWorkContributor`.** It inserted
+`{tenantId, workId, contributorId}` without checking that the work or the contributor
+belonged to that tenant. The FKs point at `works.id` and `contributors.id`
+*globally*, so a request naming another tenant's contributor id satisfied every
+database constraint and inserted happily — attaching a stranger to your work and
+putting them in line to be paid from your sales. Reachable only by hand-crafting a
+request (no screen offers another tenant's ids) and nothing had been paid. Two e2e
+checks now hold it shut, in both directions. **The lesson generalises: a `tenantId`
+column on the row being inserted proves nothing about the ids inside it.** Any new
+mutation that accepts an id from an HTTP body must verify tenancy explicitly.
+
 The portal UI, which is the engine's surface rather than the marketplace's:
 
 | Path | What |
@@ -346,8 +409,8 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 275 unit tests, no network, no database
-npm run test:e2e      # 156 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 288 unit tests, no network, no database
+npm run test:e2e      # 177 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -372,23 +435,39 @@ of a no-op. Unit tests could not have caught it; the real-Postgres run did on it
 first attempt. This is the step-3 lesson recurring: **green type-check and green
 tests are not evidence that the database path works.**
 
-### ⚠️ The one thing blocking real money
+### ⚠️ The invented cost fixtures — scope corrected
 
 **The cost fixtures are invented numbers.** `server/lib/__fixtures__/printify-costs.ts`
 is interpolated from an undated table, and its variant and print-provider IDs are
 placeholders, not live catalog IDs. Sandbox sessions cannot reach `api.printify.com`,
 so they could not be verified here.
 
-The calculation is proven; the *inputs* are not. Before anyone is paid:
+**What this actually blocks — read this before flagging it again.** Earlier notes in
+this file called it "the one thing blocking real money," which over-stated it. It
+blocks **the marketplace order path**, which is being retired in Phase 2. It does
+**not** block the engine:
+
+- The engine's supplier-cost seam is `LineCostSource`, and the default returns
+  none. Nothing in the engine reads the Printify fixture.
+- The Shopify adapter reads the **actual** payment fee off the order rather than
+  looking a cost up, by deliberate design (`map.ts` — no "assume 2.9% + 30¢" arm).
+- The tests encode arithmetic, not prices, so substituting real numbers verifies
+  nothing the fixtures do not already verify.
+
+It becomes load-bearing at exactly one moment: **when 369 moves onto the engine as
+tenant #1 and its supplier costs have to plug into `LineCostSource`.** That is
+deferred by decision #11. The user scheduled the capture alongside the Stripe
+Connect application (2026-08-01) — do not raise it as a blocker before then.
+
+When it is time:
 
 1. Run `PrintifyCostResolver` locally with real credentials already in `.env.local`.
 2. Replace the fixture values and the placeholder IDs with what comes back.
-3. Re-run `npm test` — the assertions encode the arithmetic, not the prices, so they
-   should still pass with real numbers substituted.
+3. Re-run `npm test` — the assertions should still pass with real numbers substituted.
 
-Until then the resolver factory refuses to invent costs: without `PRINTIFY_API_TOKEN`
-and without `ALLOW_FIXTURE_COSTS=true`, **every line item is held for review and
-nothing is paid.** That is deliberate. No royalty is better than a wrong one.
+Meanwhile the resolver factory refuses to invent costs: without `PRINTIFY_API_TOKEN`
+and without `ALLOW_FIXTURE_COSTS=true`, **every marketplace line item is held for
+review and nothing is paid.** That is deliberate. No royalty is better than a wrong one.
 
 ### Phase 0 progress
 
@@ -498,12 +577,12 @@ Sessions do not share memory. Everything below is the state as of the last commi
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 275 unit tests — no network, no database
+npm test          # 288 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (156 checks against real Postgres) start the local database
+For the end-to-end run (177 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e

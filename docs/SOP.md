@@ -221,6 +221,60 @@ them needing to sign in. You are never paying against a stale answer.
 in and read the card — it names what Stripe is waiting for. You cannot fix it for
 them, and that is deliberate.
 
+### Adding a work
+
+**Works → Add work.** A "work" is whatever a sale gets attributed to — a print, a
+track, a book, a design. Same field that matters most: the **reference**, which is
+how an incoming sale finds it.
+
+Then say who earns from it. Somebody with no work attached to them earns nothing;
+a work with nobody on it sends every sale of it to "Needs attention". The screen
+flags both cases in amber so you can see them at a glance.
+
+**You can archive a work but not delete one.** Deleting would break the link behind
+payments already made — the history would still show the payment but could no longer
+say what it was for. Archiving hides it from the list and keeps everything
+explicable.
+
+### Changing your settings
+
+**Settings.** Three things live here:
+
+- **How long to wait before money can be paid out.** Covers the window where a
+  customer can still refund.
+- **The minimum someone must have earned** before a payment is worth sending.
+  Anyone under it rolls over to the next run — nothing is lost.
+- **What happens when a customer refunds after you've already paid.**
+
+⚠️ **The hold period is not retroactive, and this surprises people.** Money that has
+already been earned keeps the release date it was given. If you shorten the wait from
+30 days to 7, money already sitting in the window does *not* become available — only
+new sales get the shorter wait. The same in reverse: lengthening it cannot pull back
+money already released.
+
+That is deliberate. An artist has already been shown a date; moving it under them is
+exactly the kind of thing that makes people stop trusting a payment system. The
+screen warns you as you change it.
+
+The minimum payout and the refund policy *do* apply on the very next payout run.
+
+### When a sale is held because a fee is missing
+
+Some payment methods — PayPal especially — never tell the system what their
+transaction fee was. Rather than guess, the system stops the sale and asks.
+
+On **Needs attention**, open the item and use **Record a cost**. Take the number from
+your payment provider's statement, type it in, then assign the sale as normal.
+
+**Record the cost before assigning, not after.** The fee is deducted before anyone's
+share is worked out, so recording it afterwards is too late — once someone has been
+paid, the numbers behind that payment are frozen and the system will refuse to change
+them. You can correct a cost as many times as you like before that point.
+
+If you skip this and just assign the sale, nothing breaks — but *your business*
+absorbs the fee rather than it coming off the top. That is a legitimate choice, just
+make it deliberately.
+
 ### Changing someone's rate
 
 In your console, **Rates → Change**. It saves as a new version.

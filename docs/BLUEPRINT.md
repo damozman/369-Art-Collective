@@ -595,6 +595,61 @@ Related structures in the same family, unbuilt for the same reason: commission *
 
 ---
 
+## §10c. Open idea — an AI analyst over the tenant's own numbers
+
+**Raised by the user 2026-08-01, explicitly as "we don't need to do this at this
+moment." Recorded so it is not lost, not scheduled.**
+
+The idea: a paid add-on that reads a tenant's real numbers — margins, payouts, fees,
+refund rates — and tells them whether anything looks wrong. Explicitly scoped by the
+user as **read-only**: *"I did not want them to be able to change anything in the
+architecture."*
+
+**The observation underneath it is the valuable part**, and it came from the user
+noticing their own behaviour: *"I'm probably going to wander myself and then take
+screenshots and paste them into some outside AI and ask if it looks right."* A user
+screenshotting your dashboard into someone else's model is a feature request with a
+receipt. It also says what the job is — not "chat with my data", but **"is this
+right?"**, asked by someone who cannot tell by looking.
+
+### Why this system is unusually well suited to it
+
+Most products that bolt on an AI analyst have to feed it raw rows and hope. This one
+already stores, for every single allocation, the **explanation and the derivation
+trace** — what the rule was, which version, what was deducted, in what order. That was
+built for contributor trust (§5 #6), but it happens to be far better model input than
+any table of numbers: the model can check *reasoning*, not just spot outliers. Nothing
+needs to be built to produce it.
+
+### The three things that would have to be true
+
+1. **It must never recommend a payment.** "This margin is unusual, look at it" is a
+   flag. "Pay this person less" is advice about someone's money, given by a system
+   whose entire value proposition is that its numbers are defensible. The first is a
+   feature; the second undermines the product it is attached to. This is the boundary,
+   and it is firmer than the read-only/write boundary the user named — a read-only
+   feature can still cause a wrong payout by being believed.
+2. **Deterministic checks come first, and may be most of the value.** "Margin below
+   X", "fee above Y% of gross", "this contributor's effective rate moved", "refund rate
+   doubled this month" are rules, not inference. They are cheap, explainable, testable,
+   and cannot hallucinate. The honest sequencing is: build the anomaly checks, see what
+   they miss, and let AI explain and prioritise rather than detect. Selling AI that
+   wraps a `WHERE` clause is a thing this project should not do.
+3. **Tenant financial data leaving for a third-party model is a contract question**,
+   not a technical one — it needs to be disclosed, probably opt-in per tenant, and
+   settled before it is sold. Note §11's posture: not holding funds is what keeps this
+   out of money transmission, but sending a tenant's revenue data to a model vendor is
+   a separate promise to get right.
+
+**Pricing instinct is sound** — this is a natural upsell, and it is the kind that does
+not cannibalise the core product because it is genuinely additive rather than a
+capability withheld from the base tier.
+
+**Do not start this before the product can charge anybody** (`WHATS-LEFT.md` step 4).
+An add-on to a product with no billing is an add-on to nothing.
+
+---
+
 ## §11. Legal and compliance posture
 
 - **Not a money transmitter** — tenants' own Stripe accounts, funds never in our

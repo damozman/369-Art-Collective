@@ -250,6 +250,173 @@ export async function dismissReview(
 }
 
 /**
+ * The cost types the engine understands.
+ *
+ * ⚠️ THIS IS A CLOSED LIST ON PURPOSE, and it is not cosmetic validation. Rules
+ * decide whose share a cost reduces by matching `costDeductions` against this
+ * string EXACTLY (`revenue-event.ts:245` — a `Set.has` on the type). A cost
+ * recorded as "proccessing_fee" is stored, shows up in margin reporting, and
+ * silently reduces nobody's share, because no rule lists that spelling. The
+ * result is an overpayment that looks completely correct on every screen.
+ *
+ * Free-text entry here would make that a typo away at all times. Adding a type
+ * means adding it here *and* to the rules that should deduct it.
+ */
+export const RECORDABLE_COST_TYPES = [
+  "production",
+  "shipping",
+  "processing_fee",
+] as const;
+
+export type RecordableCostType = (typeof RECORDABLE_COST_TYPES)[number];
+
+/**
+ * Record a cost that the sales channel could not tell us.
+ *
+ * WHY THIS EXISTS. The Shopify adapter refuses to guess a payment fee: if the
+ * gateway does not report one, the line is held rather than allocated against an
+ * invented number (see `adapters/shopify/map.ts`). That was the right call, but
+ * it left a gap — the only way out of such a hold was to resolve it, which
+ * allocated with *no* fee at all and quietly made the business absorb it. The
+ * hold reason said so, so it was a visible choice rather than a hidden one, but
+ * "visible" is not the same as "fixable". This is the fix: type in what the fee
+ * actually was, from the statement, and then resolve normally.
+ *
+ * THE TWO GUARDS, both load-bearing:
+ *
+ * 1. **Nothing may be allocated yet.** An allocation snapshots the numbers it
+ *    was computed from (§5 #6). Adding a cost afterwards would leave the event
+ *    saying one thing and the payment saying another, with no way to tell which
+ *    was right. Once money has been worked out, the way to change it is a
+ *    reversal, not an edit.
+ * 2. **The item must still be held.** Same reason — a resolved item has been
+ *    through the allocator.
+ *
+ * Correcting a cost that is already recorded IS allowed, because both guards
+ * still apply: nothing has been paid from it yet. A mistyped fee that cannot be
+ * corrected before allocation would be worse than one that can.
+ */
+export async function recordEventCost(
+  db: EngineDb,
+  options: {
+    tenantId: string;
+    eventId: string;
+    type: RecordableCostType;
+    amountMinor: bigint;
+    note?: string | null;
+    actorId?: string;
+  }
+): Promise<void> {
+  if (!RECORDABLE_COST_TYPES.includes(options.type)) {
+    throw new AdminValidationError("That is not a cost the system recognises");
+  }
+
+  // Negative would be revenue wearing a cost's clothing, and would inflate what
+  // everyone is paid. Zero is meaningless — "no fee" is the absence of a row.
+  if (options.amountMinor <= 0n) {
+    throw new AdminValidationError("A cost has to be a positive amount");
+  }
+
+  const [row] = await db
+    .select()
+    .from(schema.revenueEvents)
+    .where(
+      and(
+        eq(schema.revenueEvents.id, options.eventId),
+        eq(schema.revenueEvents.tenantId, options.tenantId)
+      )
+    )
+    .limit(1);
+
+  if (!row) throw new AdminValidationError("That item is not in this business");
+
+  if (!row.needsReview) {
+    throw new AdminValidationError(
+      "That sale has already been dealt with. Costs can only be added while it is still held."
+    );
+  }
+
+  const allocated = await db
+    .select({ id: schema.allocations.id })
+    .from(schema.allocations)
+    .where(eq(schema.allocations.revenueEventId, options.eventId))
+    .limit(1);
+
+  if (allocated.length > 0) {
+    throw new AdminValidationError(
+      "That sale has already been paid out, so its costs can no longer be changed."
+    );
+  }
+
+  if (options.amountMinor > BigInt(row.grossAmountMinor)) {
+    // Not forbidden by the engine — a loss-making line is real, and allocations
+    // floor at zero rather than going negative. But it is much more often a
+    // decimal point in the wrong place, so it is worth stopping.
+    throw new AdminValidationError(
+      `That is more than the sale itself (${formatMoney(
+        BigInt(row.grossAmountMinor),
+        row.currency
+      )}). Check the amount.`
+    );
+  }
+
+  const [existing] = await db
+    .select()
+    .from(schema.costComponents)
+    .where(
+      and(
+        eq(schema.costComponents.revenueEventId, options.eventId),
+        eq(schema.costComponents.type, options.type)
+      )
+    )
+    .limit(1);
+
+  const source = options.note?.trim()
+    ? `manual: ${options.note.trim()}`
+    : "manual";
+
+  await db.transaction(async (tx) => {
+    if (existing) {
+      await tx
+        .update(schema.costComponents)
+        .set({
+          amountMinor: options.amountMinor,
+          source,
+          resolvedAt: new Date(),
+        })
+        .where(eq(schema.costComponents.id, existing.id));
+    } else {
+      await tx.insert(schema.costComponents).values({
+        tenantId: options.tenantId,
+        revenueEventId: options.eventId,
+        type: options.type,
+        amountMinor: options.amountMinor,
+        currency: row.currency,
+        source,
+        resolvedAt: new Date(),
+      });
+    }
+
+    await tx.insert(schema.auditLog).values({
+      tenantId: options.tenantId,
+      actorType: "tenant_user",
+      actorId: options.actorId ?? null,
+      action: "record_cost",
+      entityType: "revenue_event",
+      entityId: options.eventId,
+      before: existing
+        ? { type: existing.type, amountMinor: existing.amountMinor.toString() }
+        : null,
+      after: {
+        type: options.type,
+        amountMinor: options.amountMinor.toString(),
+        note: options.note?.trim() ?? null,
+      },
+    });
+  });
+}
+
+/**
  * Clear a contributor's negative balance by absorbing it.
  *
  * Used when a chargeback left somebody in deficit and the tenant decides not to

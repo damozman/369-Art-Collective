@@ -66,6 +66,7 @@ export interface AdminReviewItem {
   gross: Money;
   reason: string | null;
   workRef: string | null;
+  costs: Array<{ type: string; amount: Money; source: string | null }>;
 }
 
 export interface AdminRule {
@@ -206,7 +207,31 @@ export interface AdminWork {
   title: string;
   externalRef: string | null;
   productType: string | null;
+  archivedAt: string | null;
   contributors: Array<{ id: string; name: string; role: string | null }>;
+}
+
+export interface AdminSettings {
+  payoutHoldDays: number;
+  minimumPayout: Money;
+  clawbackPolicy: "recoup" | "absorb" | "reserve";
+  reservePercent: number;
+  reserveReleaseDays: number;
+  currency: string;
+  stripeConnected: boolean;
+}
+
+/**
+ * Note `minimumPayout` goes UP as a decimal string, not as minor units, and not
+ * as a number. The server parses it with the same exact reader the engine uses.
+ * Sending `Number(input)` from here would round before the server ever saw it.
+ */
+export interface SettingsDraft {
+  payoutHoldDays: number;
+  minimumPayout: string;
+  clawbackPolicy: "recoup" | "absorb" | "reserve";
+  reservePercent?: number | null;
+  reserveReleaseDays?: number | null;
 }
 
 export interface RuleDraft {
@@ -225,6 +250,71 @@ export interface RuleDraft {
 
 export function getWorks(tenantSlug: string): Promise<{ works: AdminWork[] }> {
   return request(`${base(tenantSlug)}/works`);
+}
+
+export function getSettings(tenantSlug: string): Promise<AdminSettings> {
+  return request(`${base(tenantSlug)}/settings`);
+}
+
+export function updateSettings(
+  tenantSlug: string,
+  input: SettingsDraft
+): Promise<{ ok: boolean }> {
+  return request(`${base(tenantSlug)}/settings`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export function updateWork(
+  tenantSlug: string,
+  workId: string,
+  input: { title?: string; externalRef?: string; productType?: string }
+): Promise<{ ok: boolean }> {
+  return request(`${base(tenantSlug)}/works/${encodeURIComponent(workId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export function setWorkArchived(
+  tenantSlug: string,
+  workId: string,
+  archived: boolean
+): Promise<{ ok: boolean }> {
+  return request(`${base(tenantSlug)}/works/${encodeURIComponent(workId)}/archive`, {
+    method: "POST",
+    body: JSON.stringify({ archived }),
+  });
+}
+
+export function unlinkWorkContributor(
+  tenantSlug: string,
+  workId: string,
+  contributorId: string
+): Promise<{ ok: boolean }> {
+  return request(
+    `${base(tenantSlug)}/works/${encodeURIComponent(workId)}/contributors/${encodeURIComponent(
+      contributorId
+    )}`,
+    { method: "DELETE" }
+  );
+}
+
+/**
+ * Record a cost the sales channel could not report — most often a PayPal fee.
+ * `amount` is a decimal string typed by a human ("2.04"); it is parsed exactly
+ * on the server. Do not convert it to a number on the way out.
+ */
+export function recordEventCost(
+  tenantSlug: string,
+  eventId: string,
+  input: { type: string; amount: string; note?: string }
+): Promise<{ ok: boolean }> {
+  return request(`${base(tenantSlug)}/review/${encodeURIComponent(eventId)}/cost`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export function createRule(tenantSlug: string, draft: RuleDraft): Promise<{ id: string }> {

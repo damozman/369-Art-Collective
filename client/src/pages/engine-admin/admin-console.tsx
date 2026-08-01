@@ -57,14 +57,18 @@ import {
   dismissReviewItem,
   logout,
   previewPayouts,
+  recordEventCost,
   runPayouts,
   type AdminContributor,
   type AdminMe,
+  type AdminReviewItem,
   type AdminRule,
   type RunResult,
 } from "@/lib/admin-api";
 import { RateEditor } from "./rate-editor";
 import { PeopleEditor } from "./people-editor";
+import { WorksTab } from "./works-editor";
+import { SettingsTab } from "./settings-editor";
 import { formatMoney, isPositive, signOf } from "@/lib/portal-money";
 import { formatDate } from "@/lib/portal-date";
 
@@ -161,8 +165,10 @@ export function AdminConsole({
                 </Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="works" data-testid="tab-works">Works</TabsTrigger>
             <TabsTrigger value="rules" data-testid="tab-rules">Rates</TabsTrigger>
             <TabsTrigger value="history" data-testid="tab-history">History</TabsTrigger>
+            <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pay" className="mt-4">
@@ -185,8 +191,16 @@ export function AdminConsole({
             <RulesTab slug={slug} canWrite={me.role === "admin"} />
           </TabsContent>
 
+          <TabsContent value="works" className="mt-4">
+            <WorksTab slug={slug} canWrite={me.role === "admin"} />
+          </TabsContent>
+
           <TabsContent value="history" className="mt-4">
             <HistoryTab slug={slug} currency={currency} />
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-4">
+            <SettingsTab slug={slug} canWrite={me.role === "admin"} />
           </TabsContent>
         </Tabs>
       </main>
@@ -650,6 +664,18 @@ function AttentionTab({ slug, currency }: { slug: string; currency: string }) {
                 {open && (
                   <div className="mt-4 space-y-3 border-t pt-3">
                     {!isRefund && (
+                      <MissingCostBlock
+                        slug={slug}
+                        item={item}
+                        currency={currency}
+                        onRecorded={(what) => {
+                          setMessage(what);
+                          refresh();
+                        }}
+                      />
+                    )}
+
+                    {!isRefund && (
                       <div className="space-y-2">
                         <Label>Who should be paid for this?</Label>
                         <div className="flex flex-wrap gap-2">
@@ -737,6 +763,153 @@ function AttentionTab({ slug, currency }: { slug: string; currency: string }) {
     </Card>
   );
 }
+
+/**
+ * Typing in a cost the sales channel could not report.
+ *
+ * WHY THIS IS ON THIS SCREEN. Some payment methods — PayPal especially — never
+ * tell us what the transaction fee was. The system refuses to guess, so those
+ * sales stop here. Before this existed, the only way out was "Assign and pay",
+ * which allocated with no fee at all: the business silently swallowed it, and
+ * every number on screen still looked right.
+ *
+ * The costs already known are shown alongside, because "is a fee already
+ * recorded?" is the first question anybody typing one in needs answered.
+ */
+function MissingCostBlock({
+  slug,
+  item,
+  currency,
+  onRecorded,
+}: {
+  slug: string;
+  item: AdminReviewItem;
+  currency: string;
+  onRecorded: (message: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [type, setType] = useState("processing_fee");
+  const [amount, setAmount] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const record = useMutation({
+    mutationFn: () => recordEventCost(slug, item.id, { type, amount: amount.trim() }),
+    onSuccess: () => {
+      setOpen(false);
+      setAmount("");
+      onRecorded(
+        "Cost recorded. Assign it now and the split will take the cost into account."
+      );
+    },
+    onError: (err) => setError((err as Error).message),
+  });
+
+  const known = item.costs ?? [];
+
+  return (
+    <div className="space-y-2 rounded-md bg-muted/40 p-3">
+      <Label>Costs on this sale</Label>
+
+      {known.length === 0 ? (
+        <p className="text-xs text-muted-foreground" data-testid={`text-no-costs-${item.id}`}>
+          None recorded.
+        </p>
+      ) : (
+        <ul className="space-y-0.5 text-xs text-muted-foreground" data-testid={`list-costs-${item.id}`}>
+          {known.map((cost) => (
+            <li key={cost.type}>
+              {COST_LABELS[cost.type] ?? cost.type}:{" "}
+              {formatMoney(cost.amount.minor, currency)}
+              {cost.source?.startsWith("manual") && " · entered by hand"}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {!open && (
+        <button
+          type="button"
+          onClick={() => {
+            setError(null);
+            setOpen(true);
+          }}
+          className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+          data-testid={`button-open-cost-${item.id}`}
+        >
+          Record a cost
+        </button>
+      )}
+
+      {open && (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger className="h-8 w-44" data-testid={`select-cost-type-${item.id}`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(COST_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <span className="text-sm text-muted-foreground">{currency}</span>
+            <Input
+              className="h-8 w-28"
+              inputMode="decimal"
+              placeholder="2.04"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              data-testid={`input-cost-amount-${item.id}`}
+            />
+
+            <Button
+              size="sm"
+              className="h-8"
+              disabled={!amount.trim() || record.isPending}
+              onClick={() => {
+                setError(null);
+                record.mutate();
+              }}
+              data-testid={`button-save-cost-${item.id}`}
+            >
+              {record.isPending ? "Saving…" : "Record"}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Take this from your payment provider's statement. It is deducted before
+            anyone's share is worked out — so record it before assigning, not after.
+          </p>
+
+          {error && (
+            <p className="text-xs text-destructive" data-testid={`text-cost-error-${item.id}`}>
+              {error}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Must match the server's closed list — see `RECORDABLE_COST_TYPES`. */
+const COST_LABELS: Record<string, string> = {
+  processing_fee: "Card / payment fee",
+  production: "Production cost",
+  shipping: "Shipping cost",
+};
 
 // ---- Rules ----
 

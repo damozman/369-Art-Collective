@@ -31,6 +31,7 @@ import {
 } from "./admin-auth";
 import {
   getOverview,
+  getSettings,
   listContributors,
   listNeedsReview,
   listPayoutBatches,
@@ -44,13 +45,24 @@ import {
   createWork,
   deactivateRule,
   linkWorkContributor,
+  setWorkArchived,
   supersedeRule,
+  unlinkWorkContributor,
   updateContributor,
+  updateTenantSettings,
+  updateWork,
 } from "./admin-mutations";
-import { dismissReview, resolveEventContributor, writeOffDeficit } from "./review";
+import {
+  dismissReview,
+  recordEventCost,
+  resolveEventContributor,
+  writeOffDeficit,
+  RECORDABLE_COST_TYPES,
+  type RecordableCostType,
+} from "./review";
 import { AuthError } from "./auth";
 import type { EngineDb } from "./ingest";
-import { formatMinor } from "./money";
+import { formatMinor, parseDecimalToMinor } from "./money";
 import {
   retryPayout,
   runPayoutBatch,
@@ -294,6 +306,11 @@ export function createAdminRouter(
         gross: money(row.grossMinor),
         reason: row.reviewReason,
         workRef: row.workRef,
+        costs: row.costs.map((cost) => ({
+          type: cost.type,
+          amount: money(cost.amountMinor),
+          source: cost.source,
+        })),
       })),
     });
   });
@@ -649,6 +666,44 @@ export function createAdminRouter(
     })
   );
 
+  /**
+   * Record a cost the sales channel could not report — a PayPal fee, most
+   * often. The amount arrives as a decimal STRING from the form and is parsed
+   * with the engine's exact reader; `Number()` on a money field is the one
+   * conversion this codebase never makes.
+   */
+  router.post(
+    "/t/:tenantSlug/admin/review/:eventId/cost",
+    requireAdmin,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      const type = String(body.type ?? "");
+      if (!(RECORDABLE_COST_TYPES as readonly string[]).includes(type)) {
+        throw new AdminValidationError("That is not a cost the system recognises");
+      }
+
+      let amountMinor: bigint;
+      try {
+        amountMinor = parseDecimalToMinor(String(body.amount ?? ""));
+      } catch {
+        throw new AdminValidationError("Enter the cost as an amount, like 2.04");
+      }
+
+      await recordEventCost(db, {
+        tenantId: tenant.id,
+        eventId: String(req.params.eventId),
+        type: type as RecordableCostType,
+        amountMinor,
+        note: body.note ?? null,
+        actorId: session.tenantUserId,
+      });
+
+      res.json({ ok: true });
+    })
+  );
+
   router.post(
     "/t/:tenantSlug/admin/contributors/:contributorId/write-off",
     requireAdmin,
@@ -693,6 +748,35 @@ export function createAdminRouter(
     })
   );
 
+  router.patch(
+    "/t/:tenantSlug/admin/works/:workId",
+    requireAdmin,
+    write(async (req, res) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      await updateWork(db, tenant.id, String(req.params.workId), {
+        title: body.title,
+        externalRef: body.externalRef,
+        productType: body.productType,
+      });
+
+      res.json({ ok: true });
+    })
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/works/:workId/archive",
+    requireAdmin,
+    write(async (req, res) => {
+      const tenant = req.engineTenant!;
+      const archived = (req.body ?? {}).archived !== false;
+
+      await setWorkArchived(db, tenant.id, String(req.params.workId), archived);
+      res.json({ ok: true });
+    })
+  );
+
   router.post(
     "/t/:tenantSlug/admin/works/:workId/contributors",
     requireAdmin,
@@ -709,6 +793,67 @@ export function createAdminRouter(
       );
 
       res.status(201).json({ ok: true });
+    })
+  );
+
+  router.delete(
+    "/t/:tenantSlug/admin/works/:workId/contributors/:contributorId",
+    requireAdmin,
+    write(async (req, res) => {
+      const tenant = req.engineTenant!;
+
+      await unlinkWorkContributor(
+        db,
+        tenant.id,
+        String(req.params.workId),
+        String(req.params.contributorId)
+      );
+
+      res.json({ ok: true });
+    })
+  );
+
+  // ---- Settings ----
+
+  router.get("/t/:tenantSlug/admin/settings", requireAdmin, async (req: TenantRequest, res) => {
+    const tenant = req.engineTenant!;
+    const settings = await getSettings(db, tenant.id);
+
+    res.json({
+      ...settings,
+      minimumPayout: money(BigInt(settings.minimumPayoutMinor)),
+    });
+  });
+
+  router.put(
+    "/t/:tenantSlug/admin/settings",
+    requireAdmin,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+      const body = req.body ?? {};
+
+      await updateTenantSettings(
+        db,
+        tenant.id,
+        {
+          // Days are counts, not money — `Number` is correct here and nowhere
+          // near the amount below.
+          payoutHoldDays: Number(body.payoutHoldDays),
+          minimumPayout: String(body.minimumPayout ?? ""),
+          clawbackPolicy: body.clawbackPolicy,
+          reservePercent:
+            body.reservePercent === null || body.reservePercent === undefined
+              ? null
+              : Number(body.reservePercent),
+          reserveReleaseDays:
+            body.reserveReleaseDays === null || body.reserveReleaseDays === undefined
+              ? null
+              : Number(body.reserveReleaseDays),
+        },
+        session.tenantUserId
+      );
+
+      res.json({ ok: true });
     })
   );
 

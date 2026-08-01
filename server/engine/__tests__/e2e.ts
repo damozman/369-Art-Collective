@@ -16,7 +16,7 @@ import assert from "node:assert/strict";
 import express from "express";
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 
 import * as schema from "@shared/engine-schema";
 import {
@@ -43,18 +43,35 @@ import {
 } from "../auth";
 import { getPayoutHistory, getStatement } from "../statement-query";
 import { authenticateTenantUser, createTenantUser } from "../admin-auth";
-import { getOverview, listContributors, listNeedsReview, listRules } from "../admin-query";
+import {
+  getOverview,
+  getSettings,
+  listContributors,
+  listNeedsReview,
+  listRules,
+  listWorks,
+} from "../admin-query";
 import {
   AdminValidationError,
   createContributor,
   createRule,
   createWork,
   deactivateRule,
+  linkWorkContributor,
+  setWorkArchived,
   supersedeRule,
+  unlinkWorkContributor,
   updateContributor,
+  updateTenantSettings,
+  updateWork,
 } from "../admin-mutations";
 import { isEffectiveAt } from "../rules";
-import { dismissReview, resolveEventContributor, writeOffDeficit } from "../review";
+import {
+  dismissReview,
+  recordEventCost,
+  resolveEventContributor,
+  writeOffDeficit,
+} from "../review";
 import { renderStatementText } from "../statement";
 import {
   ConnectionError,
@@ -1504,6 +1521,291 @@ async function main() {
     assert.equal(afterDisconnect!.credentialSealed, null);
     assert.equal(afterDisconnect!.webhookSecretSealed, null);
   });
+
+  // ============================================================
+  // Settings, artwork, and recording a cost the channel never sent
+  // ============================================================
+
+  console.log("\n-- settings, artwork and missing costs --");
+
+  // ---- Settings ----
+
+  const settingsBefore = await getSettings(db, "t-369");
+  check("settings read back what the tenant was seeded with", () => {
+    assert.equal(settingsBefore.payoutHoldDays, 14);
+    assert.equal(settingsBefore.clawbackPolicy, "recoup");
+  });
+
+  /**
+   * THE CLAIM THIS SECTION EXISTS TO PROVE. Hold days are stamped onto the
+   * ledger entry when the money is worked out. Changing the setting must not
+   * reach backwards and move a release date somebody has already been shown.
+   * Only a real database can answer this — the value lives in a stored column.
+   */
+  const heldBefore = await db
+    .select({ id: schema.ledgerEntries.id, availableAt: schema.ledgerEntries.availableAt })
+    .from(schema.ledgerEntries)
+    .where(
+      and(
+        eq(schema.ledgerEntries.tenantId, "t-369"),
+        isNotNull(schema.ledgerEntries.availableAt)
+      )
+    )
+    .orderBy(schema.ledgerEntries.id);
+
+  check("there is held money to test against", () => assert.ok(heldBefore.length > 0));
+
+  await updateTenantSettings(
+    db,
+    "t-369",
+    {
+      payoutHoldDays: 1,
+      minimumPayout: "25.00",
+      clawbackPolicy: "recoup",
+    },
+    "u-owner"
+  );
+
+  const heldAfter = await db
+    .select({ id: schema.ledgerEntries.id, availableAt: schema.ledgerEntries.availableAt })
+    .from(schema.ledgerEntries)
+    .where(
+      and(
+        eq(schema.ledgerEntries.tenantId, "t-369"),
+        isNotNull(schema.ledgerEntries.availableAt)
+      )
+    )
+    .orderBy(schema.ledgerEntries.id);
+
+  check("shortening the hold period does NOT release money already earned", () => {
+    assert.equal(heldAfter.length, heldBefore.length);
+    for (let i = 0; i < heldBefore.length; i++) {
+      assert.equal(
+        heldAfter[i].availableAt?.getTime(),
+        heldBefore[i].availableAt?.getTime()
+      );
+    }
+  });
+
+  const settingsAfter = await getSettings(db, "t-369");
+  check("the minimum payout survives as exact minor units", () =>
+    assert.equal(settingsAfter.minimumPayoutMinor, "2500")
+  );
+
+  const settingsAudit = await db
+    .select()
+    .from(schema.auditLog)
+    .where(
+      and(
+        eq(schema.auditLog.tenantId, "t-369"),
+        eq(schema.auditLog.action, "update_settings")
+      )
+    );
+  check("changing settings is written to the audit log with the previous values", () => {
+    assert.equal(settingsAudit.length, 1);
+    assert.equal(
+      (settingsAudit[0].before as Record<string, unknown>).payoutHoldDays,
+      14
+    );
+  });
+
+  // A minimum typed as "25.005" must not silently round into a different figure.
+  await assert.rejects(
+    () =>
+      updateTenantSettings(db, "t-369", {
+        payoutHoldDays: 1,
+        minimumPayout: "not a number",
+        clawbackPolicy: "recoup",
+      }),
+    /must be an amount/
+  );
+  check("a minimum payout that is not an amount is refused", async () => {});
+
+  await updateTenantSettings(db, "t-369", {
+    payoutHoldDays: 14,
+    minimumPayout: "10.00",
+    clawbackPolicy: "recoup",
+  });
+  check("settings can be put back", async () => {});
+
+  // ---- Artwork ----
+
+  const artWorkId = await createWork(db, "t-369", {
+    title: "Harbour Lights",
+    externalRef: "art-harbour",
+    productType: "print",
+  });
+
+  await linkWorkContributor(db, "t-369", artWorkId, "c-alice", "artist");
+  const withAlice = (await listWorks(db, "t-369")).find((w) => w.id === artWorkId)!;
+  check("someone can be attached to a work", () =>
+    assert.equal(withAlice.contributors[0]?.name, "Alice")
+  );
+
+  /**
+   * ⚠️ THE CROSS-TENANT CHECK. The foreign keys on `work_contributors` point at
+   * `contributors.id` globally, so before `linkWorkContributor` verified the
+   * tenant, naming another business's contributor id satisfied every database
+   * constraint and inserted happily — putting a stranger in line to be paid out
+   * of your sales. This is the check that would have caught it.
+   */
+  await assert.rejects(
+    () => linkWorkContributor(db, "t-369", artWorkId, "c-eve"),
+    /not in this business/
+  );
+  check("a work cannot be attached to another business's person", async () => {});
+
+  await assert.rejects(
+    () => linkWorkContributor(db, "t-press", artWorkId, "c-eve"),
+    /not in this business/
+  );
+  check("nor can another business attach anyone to this work", async () => {});
+
+  await updateWork(db, "t-369", artWorkId, { title: "Harbour Lights (revised)" });
+  const renamed = (await listWorks(db, "t-369")).find((w) => w.id === artWorkId)!;
+  check("a work can be renamed", () =>
+    assert.equal(renamed.title, "Harbour Lights (revised)")
+  );
+
+  await setWorkArchived(db, "t-369", artWorkId, true);
+  const archived = (await listWorks(db, "t-369")).find((w) => w.id === artWorkId)!;
+  check("archiving marks it without deleting it or its attribution", () => {
+    assert.ok(archived.archivedAt);
+    assert.equal(archived.contributors.length, 1);
+  });
+
+  await setWorkArchived(db, "t-369", artWorkId, false);
+  await unlinkWorkContributor(db, "t-369", artWorkId, "c-alice");
+  const unlinked = (await listWorks(db, "t-369")).find((w) => w.id === artWorkId)!;
+  check("someone can be taken off a work", () =>
+    assert.equal(unlinked.contributors.length, 0)
+  );
+
+  await assert.rejects(
+    () => unlinkWorkContributor(db, "t-369", artWorkId, "c-alice"),
+    /not on this work/
+  );
+  check("removing someone twice is refused rather than silently succeeding", async () => {});
+
+  // ---- Recording a cost the sales channel could not report ----
+  //
+  // The gap this closes: a line held because its payment fee was unreadable
+  // could previously only be resolved with NO fee recorded, which silently made
+  // the business absorb it while every screen still looked right.
+
+  const feeEventId = "ev-missing-fee";
+  await db.insert(schema.revenueEvents).values({
+    id: feeEventId,
+    tenantId: "t-369",
+    source: "shopify",
+    sourceEventId: "order-fee-1:line-1",
+    direction: "sale",
+    occurredAt: new Date("2026-06-15T12:00:00Z"),
+    grossAmountMinor: 10000n,
+    currency: "USD",
+    quantity: 1,
+    workRef: "alice",
+    needsReview: true,
+    reviewReason: "Payment fee could not be read from the order",
+  });
+
+  await assert.rejects(
+    () =>
+      recordEventCost(db, {
+        tenantId: "t-369",
+        eventId: feeEventId,
+        type: "processing_fee",
+        amountMinor: 0n,
+      }),
+    /positive amount/
+  );
+  check("a zero cost is refused — 'no fee' is the absence of a row", async () => {});
+
+  await assert.rejects(
+    () =>
+      recordEventCost(db, {
+        tenantId: "t-369",
+        eventId: feeEventId,
+        type: "processing_fee",
+        amountMinor: 20000n,
+      }),
+    /more than the sale itself/
+  );
+  check("a cost larger than the sale is refused as a likely typo", async () => {});
+
+  await assert.rejects(
+    () =>
+      recordEventCost(db, {
+        tenantId: "t-press",
+        eventId: feeEventId,
+        type: "processing_fee",
+        amountMinor: 320n,
+      }),
+    /not in this business/
+  );
+  check("one business cannot record a cost against another's sale", async () => {});
+
+  await recordEventCost(db, {
+    tenantId: "t-369",
+    eventId: feeEventId,
+    type: "processing_fee",
+    amountMinor: 320n,
+    note: "PayPal statement",
+    actorId: "u-owner",
+  });
+
+  const recordedCost = await db
+    .select()
+    .from(schema.costComponents)
+    .where(eq(schema.costComponents.revenueEventId, feeEventId));
+  check("the cost is stored against the sale", () => {
+    assert.equal(recordedCost.length, 1);
+    assert.equal(recordedCost[0].amountMinor, 320n);
+    assert.match(recordedCost[0].source ?? "", /^manual/);
+  });
+
+  // Correcting it before anything is paid must be allowed — a mistyped fee that
+  // could not be fixed would be worse than one that can.
+  await recordEventCost(db, {
+    tenantId: "t-369",
+    eventId: feeEventId,
+    type: "processing_fee",
+    amountMinor: 340n,
+  });
+  const correctedCost = await db
+    .select()
+    .from(schema.costComponents)
+    .where(eq(schema.costComponents.revenueEventId, feeEventId));
+  check("a cost can be corrected while the sale is still held", () => {
+    assert.equal(correctedCost.length, 1);
+    assert.equal(correctedCost[0].amountMinor, 340n);
+  });
+
+  /**
+   * The whole point: the recorded fee must actually reach the calculation.
+   * Alice's rule is net-basis and deducts `processing_fee`, so resolving now
+   * should pay 30% of (10000 − 340) = 2898, NOT 30% of 10000 = 3000.
+   */
+  const feeResolved = await resolveEventContributor(db, {
+    tenantId: "t-369",
+    eventId: feeEventId,
+    contributorId: "c-alice",
+  });
+  check("the recorded fee is deducted before the split is worked out", () =>
+    assert.equal(feeResolved.totalAllocatedMinor, 2898n)
+  );
+
+  await assert.rejects(
+    () =>
+      recordEventCost(db, {
+        tenantId: "t-369",
+        eventId: feeEventId,
+        type: "processing_fee",
+        amountMinor: 500n,
+      }),
+    /already been dealt with/
+  );
+  check("costs cannot be changed once the sale has been paid out", async () => {});
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

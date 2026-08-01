@@ -248,6 +248,13 @@ export interface AdminReviewRow {
   currency: string;
   reviewReason: string | null;
   workRef: string | null;
+  /**
+   * What the sale's costs currently are. Carried so the review screen can show
+   * an item held for a missing fee alongside the costs that *were* read — an
+   * owner about to type in a fee needs to see whether one is already there, and
+   * what the rest of the line looks like.
+   */
+  costs: Array<{ type: string; amountMinor: bigint; source: string | null }>;
 }
 
 /** Sales the engine refused to pay on. The owner's action queue. */
@@ -267,6 +274,22 @@ export async function listNeedsReview(
     .orderBy(desc(schema.revenueEvents.occurredAt))
     .limit(200);
 
+  if (rows.length === 0) return [];
+
+  // One query for every item's costs rather than one per item.
+  const costs = await db
+    .select()
+    .from(schema.costComponents)
+    .where(
+      and(
+        eq(schema.costComponents.tenantId, tenantId),
+        inArray(
+          schema.costComponents.revenueEventId,
+          rows.map((row) => row.id)
+        )
+      )
+    );
+
   return rows.map((row) => ({
     id: row.id,
     source: row.source,
@@ -276,6 +299,13 @@ export async function listNeedsReview(
     currency: row.currency,
     reviewReason: row.reviewReason,
     workRef: row.workRef,
+    costs: costs
+      .filter((cost) => cost.revenueEventId === row.id)
+      .map((cost) => ({
+        type: cost.type,
+        amountMinor: BigInt(cost.amountMinor),
+        source: cost.source,
+      })),
   }));
 }
 
@@ -395,6 +425,7 @@ export interface AdminWorkRow {
   title: string;
   externalRef: string | null;
   productType: string | null;
+  archivedAt: Date | null;
   contributors: Array<{ id: string; name: string; role: string | null }>;
 }
 
@@ -430,10 +461,50 @@ export async function listWorks(
     title: work.title,
     externalRef: work.externalRef,
     productType: work.productType,
+    archivedAt: work.archivedAt,
     contributors: links
       .filter((l) => l.workId === work.id)
       .map((l) => ({ id: l.contributorId, name: l.name, role: l.role })),
   }));
+}
+
+export interface AdminSettings {
+  payoutHoldDays: number;
+  minimumPayoutMinor: string;
+  clawbackPolicy: string;
+  /** Whole percent, converted back from basis points for display. */
+  reservePercent: number;
+  reserveReleaseDays: number;
+  currency: string;
+  /**
+   * Whether payouts can actually be instructed. Read from the tenant row rather
+   * than from the environment, because it is per-tenant: the platform can have
+   * Stripe configured while this particular business has not connected theirs.
+   */
+  stripeConnected: boolean;
+}
+
+export async function getSettings(
+  db: EngineDb,
+  tenantId: string
+): Promise<AdminSettings> {
+  const [row] = await db
+    .select()
+    .from(schema.tenants)
+    .where(eq(schema.tenants.id, tenantId))
+    .limit(1);
+
+  if (!row) throw new Error("Tenant not found");
+
+  return {
+    payoutHoldDays: row.payoutHoldDays,
+    minimumPayoutMinor: row.minimumPayoutMinor.toString(),
+    clawbackPolicy: row.clawbackPolicy,
+    reservePercent: row.reserveBasisPoints / 100,
+    reserveReleaseDays: row.reserveReleaseDays,
+    currency: row.defaultCurrency,
+    stripeConnected: Boolean(row.stripeAccountId),
+  };
 }
 
 export interface AdminBatchRow {

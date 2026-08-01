@@ -5,7 +5,7 @@ An honest map of the distance between here and a product someone pays for.
 Written for the owner. Kept current as things land — if this file says something is
 missing and it isn't, fix the file.
 
-Last updated: 2026-08-01 (steps 1 and 2 of the build order below are done).
+Last updated: 2026-08-01 (steps 1, 2 and 3 of the build order below are done).
 
 ---
 
@@ -49,8 +49,15 @@ working software and a business.
 - **Artist bank onboarding** — a contributor connects their own bank through
   Stripe from their portal. You never see or store their details, and "ready to be
   paid" is read back from Stripe rather than assumed from a finished form.
+- **The works screen** — what you sell, and who earns from each. Archiving rather
+  than deleting, so past payments stay explicable.
+- **The settings screen** — hold period, minimum payout, and what happens when a
+  customer refunds after you've paid.
+- **Recording a cost the sales channel never sent** — a payment fee that PayPal
+  didn't report can be typed in from the statement before the sale is assigned,
+  instead of the business silently swallowing it.
 
-275 unit tests, 156 end-to-end checks against a real database, every screen driven
+288 unit tests, 177 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
@@ -74,8 +81,8 @@ Note the pattern: the first four wait on other people, the last two don't.
 
 | Missing | What it means |
 |---|---|
-| **Works screen** | The API exists; there's no tab. You can add people but not their works. |
-| **Business settings screen** | Refund window, minimum payout and clawback policy live in the database only. |
+| ~~Works screen~~ | **Built.** Add, edit and archive pieces, and say who earns from each. |
+| ~~Business settings screen~~ | **Built.** Hold period, minimum payout and refund policy, all editable. |
 | **Password reset** | For both the portal and the console. |
 | **Audit log viewer** | Every change is recorded; nothing displays it. |
 
@@ -128,9 +135,9 @@ and can be revoked later. Assuming they are the same is how a payout run fails
 halfway through, which is the expensive kind of failure. The status is re-checked, so
 a later suspension shows up without anyone having to sign in again.
 
-**3. Works and settings screens.**
+**3. Works and settings screens. ✅ DONE.**
 Finishes the job of making the system operable by you rather than by a developer.
-Small, and each is independently useful.
+Both are now tabs in the console, and a third thing came with them.
 
 Called "works", not "artwork", and that is not pedantry. A *work* is whatever a
 sale gets attributed to — a painting, a track, a book, a course, a design. The
@@ -138,6 +145,33 @@ engine's table is `works` and its rows carry no medium, so the same screen serve
 a record label and a print shop without a fork. Wherever these notes have said
 "artwork" they were describing the first vertical, not the product; the shipped
 code has never used the term outside example comments.
+
+The **works screen** is the attribution map — where "a sale arrived" becomes "and
+these people are owed something for it". Works can be archived but never deleted, so
+a payment made two years ago can still say what it was for.
+
+The **settings screen** covers the hold period, the minimum payout, and what happens
+when a customer refunds after you have already paid. One thing it says on screen
+rather than burying: **changing the hold period is not retroactive.** Money already
+earned keeps the release date it was given, so shortening the window does not free it
+up early. That is deliberate — a date somebody has already been shown should not move
+under them — but it surprises people, so the screen warns as you change it.
+
+The third thing: **you can now type in a cost the sales channel never reported.**
+Some payment methods, PayPal especially, never say what their fee was. The system
+refuses to guess, so those sales stop for review. Until now the only way past that
+was to pay the artist with no fee deducted at all — the business quietly swallowed
+it, and every screen still looked correct. Now the fee is entered from the provider's
+statement before the sale is assigned. It can be corrected freely right up until
+somebody is paid from it, and not afterwards.
+
+**A cross-tenant bug was found and fixed while building this.** Attaching a person to
+a work never checked that the person belonged to your business — the database's own
+constraints were satisfied either way. Naming another business's person would have
+put a stranger in line to be paid out of your sales. It was reachable only by
+hand-crafting a request rather than through any screen, and nothing had been paid,
+but it is exactly the class of bug a multi-tenant system must not have. There are now
+two end-to-end checks holding it shut.
 
 **4. Customer billing and signup.**
 Turns working software into a business. Deliberately after the above, because there

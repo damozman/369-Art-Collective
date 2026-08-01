@@ -21,6 +21,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import * as schema from "@shared/engine-schema";
 import { hashPassword } from "./auth";
 import type { EngineDb } from "./ingest";
+import { parseDecimalToMinor } from "./money";
 
 export class AdminValidationError extends Error {}
 
@@ -370,6 +371,173 @@ export async function updateContributor(
 }
 
 // ============================================================
+// Business settings
+// ============================================================
+
+/**
+ * The four settings that change how money is held, paid and clawed back.
+ *
+ * ⚠️ THESE ARE NOT ALL RETROACTIVE, AND THE DIFFERENCE MATTERS. Two of them are
+ * read when a payout runs; the other is stamped onto each allocation as it is
+ * created. That means:
+ *
+ * - **Minimum payout** and **clawback policy** take effect on the NEXT payout
+ *   run, because `selectPayoutCandidates` and the reversal path read the tenant
+ *   row at the time they run.
+ * - **Hold days** is applied by `holdUntil(occurredAt, payoutHoldDays)` at
+ *   allocation time and written to `available_at` on the ledger entry. Money
+ *   already earned keeps the release date it was given. Shortening the window
+ *   does NOT release held money early, and lengthening it does not claw back
+ *   money already released.
+ *
+ * That asymmetry is deliberate — a release date somebody has already been shown
+ * should not move under them — but it is surprising enough that the settings
+ * screen says so on the field itself. Do not "fix" it by recomputing
+ * `available_at` across existing entries; that rewrites what contributors were
+ * already told.
+ */
+export interface TenantSettingsInput {
+  /** Days between a sale and the money becoming withdrawable. */
+  payoutHoldDays: number;
+  /** Decimal string, e.g. "25.00". Parsed exactly — never through a float. */
+  minimumPayout: string;
+  clawbackPolicy: "recoup" | "absorb" | "reserve";
+  /** Only meaningful under `reserve`. Whole percent, e.g. 10 for 10%. */
+  reservePercent?: number | null;
+  reserveReleaseDays?: number | null;
+}
+
+/** A calendar year of hold is already absurd; beyond it this is a typo, not a policy. */
+const MAX_HOLD_DAYS = 365;
+
+/** Exported for unit testing — pure, no database, no clock. */
+export function validateSettingsInput(input: TenantSettingsInput): void {
+  if (!Number.isInteger(input.payoutHoldDays)) {
+    throw new AdminValidationError("The hold period must be a whole number of days");
+  }
+  if (input.payoutHoldDays < 0 || input.payoutHoldDays > MAX_HOLD_DAYS) {
+    throw new AdminValidationError(
+      `The hold period must be between 0 and ${MAX_HOLD_DAYS} days`
+    );
+  }
+
+  if (!["recoup", "absorb", "reserve"].includes(input.clawbackPolicy)) {
+    throw new AdminValidationError("That is not a recognised refund policy");
+  }
+
+  if (input.clawbackPolicy === "reserve") {
+    const percent = input.reservePercent;
+    if (percent === null || percent === undefined) {
+      throw new AdminValidationError(
+        "Holding a reserve needs a percentage to hold back"
+      );
+    }
+    // Zero would silently make `reserve` behave as `recoup` — see
+    // `reversal.ts:249`, which returns 0 when the rate is not positive. Reject
+    // it so the policy on screen matches the policy in force.
+    if (percent <= 0 || percent > 100) {
+      throw new AdminValidationError(
+        "The reserve percentage must be above 0 and no more than 100"
+      );
+    }
+    if (Math.abs(Math.round(percent * 100) - percent * 100) > 1e-9) {
+      throw new AdminValidationError(
+        "The reserve percentage can have at most two decimal places"
+      );
+    }
+
+    const releaseDays = input.reserveReleaseDays;
+    if (releaseDays === null || releaseDays === undefined) {
+      throw new AdminValidationError(
+        "Holding a reserve needs to say how long it is held for"
+      );
+    }
+    if (!Number.isInteger(releaseDays) || releaseDays < 0 || releaseDays > MAX_HOLD_DAYS) {
+      throw new AdminValidationError(
+        `The reserve period must be a whole number between 0 and ${MAX_HOLD_DAYS} days`
+      );
+    }
+  }
+}
+
+export async function updateTenantSettings(
+  db: EngineDb,
+  tenantId: string,
+  input: TenantSettingsInput,
+  actorId?: string
+): Promise<void> {
+  validateSettingsInput(input);
+
+  // Parsed with the engine's exact decimal reader, not `Number(...)`. This is a
+  // money value arriving as text from a form field, which is precisely where a
+  // float would round.
+  let minimumPayoutMinor: bigint;
+  try {
+    minimumPayoutMinor = parseDecimalToMinor(input.minimumPayout);
+  } catch {
+    throw new AdminValidationError("The minimum payout must be an amount, like 25.00");
+  }
+  if (minimumPayoutMinor < 0n) {
+    throw new AdminValidationError("The minimum payout cannot be negative");
+  }
+
+  const [before] = await db
+    .select()
+    .from(schema.tenants)
+    .where(eq(schema.tenants.id, tenantId))
+    .limit(1);
+
+  if (!before) throw new AdminValidationError("That business no longer exists");
+
+  // Reserve settings are left alone under the other policies rather than zeroed,
+  // so switching to `reserve` and back does not lose the configuration.
+  const values: Record<string, unknown> = {
+    payoutHoldDays: input.payoutHoldDays,
+    minimumPayoutMinor,
+    clawbackPolicy: input.clawbackPolicy,
+    updatedAt: new Date(),
+  };
+
+  if (input.clawbackPolicy === "reserve") {
+    values.reserveBasisPoints = toBasisPoints(input.reservePercent!);
+    values.reserveReleaseDays = input.reserveReleaseDays!;
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.update(schema.tenants).set(values).where(eq(schema.tenants.id, tenantId));
+
+    await tx.insert(schema.auditLog).values({
+      tenantId,
+      actorType: "tenant_user",
+      actorId: actorId ?? null,
+      action: "update_settings",
+      entityType: "tenant",
+      entityId: tenantId,
+      before: {
+        payoutHoldDays: before.payoutHoldDays,
+        minimumPayoutMinor: before.minimumPayoutMinor.toString(),
+        clawbackPolicy: before.clawbackPolicy,
+        reserveBasisPoints: before.reserveBasisPoints,
+        reserveReleaseDays: before.reserveReleaseDays,
+      },
+      after: {
+        payoutHoldDays: input.payoutHoldDays,
+        minimumPayoutMinor: minimumPayoutMinor.toString(),
+        clawbackPolicy: input.clawbackPolicy,
+        reserveBasisPoints:
+          input.clawbackPolicy === "reserve"
+            ? toBasisPoints(input.reservePercent!)
+            : before.reserveBasisPoints,
+        reserveReleaseDays:
+          input.clawbackPolicy === "reserve"
+            ? input.reserveReleaseDays!
+            : before.reserveReleaseDays,
+      },
+    });
+  });
+}
+
+// ============================================================
 // Works
 // ============================================================
 
@@ -405,7 +573,79 @@ export async function createWork(
   }
 }
 
-/** Attach a contributor to a work, so a sale of it can pay them. */
+export async function updateWork(
+  db: EngineDb,
+  tenantId: string,
+  workId: string,
+  input: Partial<WorkInput>
+): Promise<void> {
+  if (input.title !== undefined && input.title.trim().length === 0) {
+    throw new AdminValidationError("A title is required");
+  }
+
+  const values: Record<string, unknown> = {};
+  if (input.title !== undefined) values.title = input.title.trim();
+  if (input.externalRef !== undefined) values.externalRef = input.externalRef?.trim() || null;
+  if (input.productType !== undefined) values.productType = input.productType?.trim() || null;
+
+  if (Object.keys(values).length === 0) return;
+
+  try {
+    const updated = await db
+      .update(schema.works)
+      .set(values)
+      .where(and(eq(schema.works.id, workId), eq(schema.works.tenantId, tenantId)))
+      .returning({ id: schema.works.id });
+
+    if (updated.length === 0) {
+      throw new AdminValidationError("That work is not in this business");
+    }
+  } catch (error) {
+    if (error instanceof AdminValidationError) throw error;
+    throw translateUniqueViolation(error, input.externalRef ?? "");
+  }
+}
+
+/**
+ * Retire a work without deleting it.
+ *
+ * Deleting would cascade to `work_contributors` and orphan the attribution
+ * behind allocations that have already been paid — the history would still show
+ * the payment but no longer be able to say what it was for. Archiving hides it
+ * from the list and leaves every past sale explicable.
+ *
+ * Archiving does NOT stop a sale of it being attributed. A sale that arrives
+ * for an archived work still pays whoever is on it, because the alternative is
+ * silently dropping revenue that genuinely arrived.
+ */
+export async function setWorkArchived(
+  db: EngineDb,
+  tenantId: string,
+  workId: string,
+  archived: boolean
+): Promise<void> {
+  const updated = await db
+    .update(schema.works)
+    .set({ archivedAt: archived ? new Date() : null })
+    .where(and(eq(schema.works.id, workId), eq(schema.works.tenantId, tenantId)))
+    .returning({ id: schema.works.id });
+
+  if (updated.length === 0) {
+    throw new AdminValidationError("That work is not in this business");
+  }
+}
+
+/**
+ * Attach a contributor to a work, so a sale of it can pay them.
+ *
+ * ⚠️ BOTH IDS ARE CHECKED AGAINST THE TENANT, and that is not belt-and-braces.
+ * The foreign keys on this table point at `works.id` and `contributors.id`
+ * globally, so a request naming *another tenant's* contributor id satisfies
+ * every database constraint and inserts happily — attaching a stranger to your
+ * work, and putting them in line to be paid from your sales. The ids come
+ * straight off an HTTP body, so this is the only thing standing between a
+ * mistyped id and a cross-tenant payout.
+ */
 export async function linkWorkContributor(
   db: EngineDb,
   tenantId: string,
@@ -413,6 +653,29 @@ export async function linkWorkContributor(
   contributorId: string,
   role?: string | null
 ): Promise<void> {
+  const [work] = await db
+    .select({ id: schema.works.id })
+    .from(schema.works)
+    .where(and(eq(schema.works.id, workId), eq(schema.works.tenantId, tenantId)))
+    .limit(1);
+
+  if (!work) throw new AdminValidationError("That work is not in this business");
+
+  const [contributor] = await db
+    .select({ id: schema.contributors.id })
+    .from(schema.contributors)
+    .where(
+      and(
+        eq(schema.contributors.id, contributorId),
+        eq(schema.contributors.tenantId, tenantId)
+      )
+    )
+    .limit(1);
+
+  if (!contributor) {
+    throw new AdminValidationError("That person is not in this business");
+  }
+
   try {
     await db.insert(schema.workContributors).values({
       tenantId,
@@ -425,6 +688,35 @@ export async function linkWorkContributor(
       throw new AdminValidationError("That person is already on this work");
     }
     throw error;
+  }
+}
+
+/**
+ * Take someone off a work.
+ *
+ * Only affects sales from here on. Allocations already made snapshot their own
+ * inputs, so removing somebody does not unpay them — which is correct: they
+ * were owed that money under the arrangement that existed at the time.
+ */
+export async function unlinkWorkContributor(
+  db: EngineDb,
+  tenantId: string,
+  workId: string,
+  contributorId: string
+): Promise<void> {
+  const removed = await db
+    .delete(schema.workContributors)
+    .where(
+      and(
+        eq(schema.workContributors.tenantId, tenantId),
+        eq(schema.workContributors.workId, workId),
+        eq(schema.workContributors.contributorId, contributorId)
+      )
+    )
+    .returning({ id: schema.workContributors.id });
+
+  if (removed.length === 0) {
+    throw new AdminValidationError("That person is not on this work");
   }
 }
 

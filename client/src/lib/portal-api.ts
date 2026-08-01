@@ -180,3 +180,38 @@ export function getStatement(
 export function getPayouts(tenantSlug: string): Promise<{ payouts: PortalPayout[] }> {
   return request<{ payouts: PortalPayout[] }>(`${base(tenantSlug)}/payouts`);
 }
+
+/**
+ * Whether this contributor can actually be paid.
+ *
+ * `state` mirrors the server's, and `canReceivePayouts` is the only field that
+ * decides whether money can reach them. Note what is NOT here: the Stripe
+ * account id. It never leaves the server.
+ */
+export interface PortalPayoutAccount {
+  state: "not_started" | "pending" | "ready" | "restricted";
+  message: string;
+  canReceivePayouts: boolean;
+  outstanding: string[];
+  lastCheckedAt: string | null;
+}
+
+export function getPayoutAccount(tenantSlug: string): Promise<PortalPayoutAccount> {
+  return request<PortalPayoutAccount>(`${base(tenantSlug)}/payout-account`);
+}
+
+export function startPayoutOnboarding(
+  tenantSlug: string,
+  country?: string
+): Promise<{ url: string; expiresAt: string }> {
+  return request<{ url: string; expiresAt: string }>(
+    `${base(tenantSlug)}/payout-account/start`,
+    { method: "POST", body: JSON.stringify(country ? { country } : {}) }
+  );
+}
+
+export function refreshPayoutAccount(tenantSlug: string): Promise<PortalPayoutAccount> {
+  return request<PortalPayoutAccount>(`${base(tenantSlug)}/payout-account/refresh`, {
+    method: "POST",
+  });
+}

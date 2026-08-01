@@ -36,6 +36,48 @@ import { deriveContributorBalance, derivePayableBalance } from "./ingest";
 import { formatMinor } from "./money";
 import { getPayoutHistory, getStatement } from "./statement-query";
 import type { Statement } from "./statement";
+import {
+  getPayoutAccount,
+  PayoutAccountError,
+  refreshPayoutAccount,
+  startPayoutOnboarding,
+} from "./payout-account";
+import type { StripeClient } from "./adapters/stripe/client";
+
+/**
+ * The Stripe client for contributor-facing onboarding, or `null` when Stripe
+ * is not configured.
+ *
+ * Returning `null` rather than a fixture is deliberate. A fixture here would
+ * hand a contributor a fake onboarding link and then tell them they were ready
+ * to be paid — the payout-side equivalent of the invented-cost bug. The screen
+ * says "not available yet" instead, which is true.
+ */
+async function getStripeClient(): Promise<StripeClient | null> {
+  const { isStripeConfigured } = await import("./adapters/stripe/factory");
+  if (!isStripeConfigured()) {
+    if (process.env.ALLOW_FIXTURE_TRANSFERS === "true") {
+      const { FixtureStripeClient } = await import("./adapters/stripe/client");
+      console.warn(
+        "[payout-account] Stripe is not configured; using a FIXTURE client. " +
+          "Onboarding links go nowhere real."
+      );
+      return new FixtureStripeClient();
+    }
+    return null;
+  }
+
+  const { LiveStripeClient } = await import("./adapters/stripe/client");
+  const mod = await import("stripe");
+  const Stripe = (mod.default ?? mod) as unknown as new (
+    key: string,
+    config?: Record<string, unknown>
+  ) => import("./adapters/stripe/client").StripeSdkLike;
+
+  return new LiveStripeClient(
+    new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2025-02-24.acacia" })
+  );
+}
 
 /** Login is the one endpoint worth rate-limiting — it is the guessable one. */
 const loginLimiter = rateLimit({
@@ -44,6 +86,19 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Too many login attempts. Try again in 15 minutes." },
+});
+
+/**
+ * Onboarding endpoints call Stripe on every request, so they are limited too —
+ * not against guessing, but against a stuck client looping and burning through
+ * the tenant's Stripe rate limit for everyone else.
+ */
+const onboardingLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many attempts. Wait a minute and try again." },
 });
 
 interface TenantRequest extends Request {
@@ -272,7 +327,122 @@ export function createEngineRouter(db: EngineDb): Router {
     }
   );
 
+  // ---- Payout account (Stripe Connect onboarding) ----
+  //
+  // Every endpoint here acts on `session.contributorId`, never on an id from
+  // the request. There is deliberately no way to name whose payout account you
+  // are touching: an endpoint that took a contributor id would need a check
+  // that could be forgotten, and forgetting it would let one artist redirect
+  // another's money.
+
+  router.get(
+    "/t/:tenantSlug/payout-account",
+    requireContributor,
+    async (req: TenantRequest, res) => {
+      const tenant = req.engineTenant!;
+      const session = req.session.engineContributor!;
+      res.json(await getPayoutAccount(db, tenant.id, session.contributorId));
+    }
+  );
+
+  /**
+   * Begin or resume Stripe onboarding.
+   *
+   * Returns a URL rather than redirecting, so the client controls navigation
+   * and a failure is a readable message instead of a browser bounce to nowhere.
+   */
+  router.post(
+    "/t/:tenantSlug/payout-account/start",
+    onboardingLimiter,
+    requireContributor,
+    async (req: TenantRequest, res) => {
+      const tenant = req.engineTenant!;
+      const session = req.session.engineContributor!;
+
+      const client = await getStripeClient();
+      if (!client) {
+        return res.status(503).json({
+          message:
+            "Payment setup isn't available yet — the business hasn't finished connecting " +
+            "their payment provider. Nothing you need to do.",
+        });
+      }
+
+      // Built from the configured public origin, never from the Host header:
+      // an attacker-supplied Host would send the person to a lookalike site
+      // carrying a genuine Stripe onboarding link.
+      const base = `${publicOrigin()}/portal/${tenant.slug}`;
+
+      try {
+        const link = await startPayoutOnboarding(db, {
+          tenantId: tenant.id,
+          contributorId: session.contributorId,
+          client,
+          returnUrl: `${base}?payouts=returned`,
+          refreshUrl: `${base}?payouts=expired`,
+          country: typeof req.body?.country === "string" ? req.body.country : undefined,
+        });
+
+        res.json({ url: link.url, expiresAt: link.expiresAt });
+      } catch (error) {
+        if (error instanceof PayoutAccountError) {
+          return res.status(400).json({ message: error.message });
+        }
+        throw error;
+      }
+    }
+  );
+
+  /**
+   * Re-read the account from Stripe.
+   *
+   * Called when a contributor comes back from onboarding and when they press
+   * refresh. Finishing the flow does NOT mean Stripe has enabled payouts, so
+   * this is the only thing that decides whether they are ready.
+   */
+  router.post(
+    "/t/:tenantSlug/payout-account/refresh",
+    onboardingLimiter,
+    requireContributor,
+    async (req: TenantRequest, res) => {
+      const tenant = req.engineTenant!;
+      const session = req.session.engineContributor!;
+
+      const client = await getStripeClient();
+      if (!client) {
+        return res.json(await getPayoutAccount(db, tenant.id, session.contributorId));
+      }
+
+      try {
+        res.json(
+          await refreshPayoutAccount(db, {
+            tenantId: tenant.id,
+            contributorId: session.contributorId,
+            client,
+          })
+        );
+      } catch (error) {
+        if (error instanceof PayoutAccountError) {
+          return res.status(502).json({ message: error.message });
+        }
+        throw error;
+      }
+    }
+  );
+
   return router;
+}
+
+/**
+ * The origin links are built from.
+ *
+ * Explicit configuration rather than the request's Host header. Stripe sends
+ * the person wherever `return_url` says, so a Host-derived URL turns a spoofed
+ * header into a redirect to an attacker's page carrying a real onboarding
+ * session.
+ */
+function publicOrigin(): string {
+  return (process.env.PUBLIC_APP_URL ?? "http://localhost:5000").replace(/\/+$/, "");
 }
 
 /** Convert a statement's bigints to strings for JSON. */

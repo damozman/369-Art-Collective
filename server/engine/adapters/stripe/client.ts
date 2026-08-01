@@ -60,6 +60,36 @@ export interface StripeAccountStatus {
   disabledReason: string | null;
 }
 
+export interface CreateConnectedAccountParams {
+  /** Two-letter country. Stripe cannot change it later — see `payout-account.ts`. */
+  country: string;
+  email?: string;
+  /** Shown in Stripe's own onboarding so the person knows who they are joining. */
+  businessProfileName?: string;
+  metadata?: Record<string, string>;
+  /**
+   * The tenant's Stripe account, under which the contributor's account is
+   * created. Ratified decision #1: the contributor is the tenant's payee, not
+   * ours, and the money never passes through an account we control.
+   */
+  onBehalfOfAccount?: string;
+}
+
+export interface CreateAccountLinkParams {
+  accountId: string;
+  /** Where Stripe sends the person when they finish or abandon the flow. */
+  returnUrl: string;
+  /** Where Stripe sends them when the link has expired. */
+  refreshUrl: string;
+  onBehalfOfAccount?: string;
+}
+
+export interface AccountLink {
+  url: string;
+  /** Unix seconds. Stripe expires these in minutes — see `payout-account.ts`. */
+  expiresAt: number;
+}
+
 /**
  * A Stripe failure, normalized.
  *
@@ -81,7 +111,9 @@ export class StripeTransferError extends Error {
 
 export interface StripeClient {
   createTransfer(params: StripeTransferParams): Promise<StripeTransferResponse>;
-  getAccountStatus(accountId: string): Promise<StripeAccountStatus>;
+  getAccountStatus(accountId: string, onBehalfOfAccount?: string): Promise<StripeAccountStatus>;
+  createConnectedAccount(params: CreateConnectedAccountParams): Promise<{ id: string }>;
+  createAccountLink(params: CreateAccountLinkParams): Promise<AccountLink>;
 }
 
 // ============================================================
@@ -159,6 +191,16 @@ export interface StripeSdkLike {
       details_submitted?: boolean;
       requirements?: { currently_due?: string[] | null; disabled_reason?: string | null } | null;
     }>;
+    create(
+      params: Record<string, unknown>,
+      options?: Record<string, unknown>
+    ): Promise<{ id: string }>;
+  };
+  accountLinks: {
+    create(
+      params: Record<string, unknown>,
+      options?: Record<string, unknown>
+    ): Promise<{ url: string; expires_at: number }>;
   };
 }
 
@@ -196,9 +238,56 @@ export class LiveStripeClient implements StripeClient {
     }
   }
 
-  async getAccountStatus(accountId: string): Promise<StripeAccountStatus> {
+  async createConnectedAccount(params: CreateConnectedAccountParams): Promise<{ id: string }> {
     try {
-      const account = await this.sdk.accounts.retrieve(accountId);
+      // `express` — Stripe hosts the onboarding, the identity verification, and
+      // the payout settings. We never see a bank number or a tax id, which is
+      // the point: data we never hold cannot leak from here.
+      const account = await this.sdk.accounts.create(
+        {
+          type: "express",
+          country: params.country,
+          email: params.email,
+          business_profile: params.businessProfileName
+            ? { name: params.businessProfileName }
+            : undefined,
+          capabilities: { transfers: { requested: true } },
+          metadata: params.metadata,
+        },
+        params.onBehalfOfAccount ? { stripeAccount: params.onBehalfOfAccount } : undefined
+      );
+      return { id: account.id };
+    } catch (error) {
+      throw normalizeStripeError(error);
+    }
+  }
+
+  async createAccountLink(params: CreateAccountLinkParams): Promise<AccountLink> {
+    try {
+      const link = await this.sdk.accountLinks.create(
+        {
+          account: params.accountId,
+          refresh_url: params.refreshUrl,
+          return_url: params.returnUrl,
+          type: "account_onboarding",
+        },
+        params.onBehalfOfAccount ? { stripeAccount: params.onBehalfOfAccount } : undefined
+      );
+      return { url: link.url, expiresAt: link.expires_at };
+    } catch (error) {
+      throw normalizeStripeError(error);
+    }
+  }
+
+  async getAccountStatus(
+    accountId: string,
+    onBehalfOfAccount?: string
+  ): Promise<StripeAccountStatus> {
+    try {
+      const account = await this.sdk.accounts.retrieve(
+        accountId,
+        onBehalfOfAccount ? { stripeAccount: onBehalfOfAccount } : undefined
+      );
       return {
         id: account.id,
         payoutsEnabled: account.payouts_enabled ?? false,
@@ -227,17 +316,26 @@ export class LiveStripeClient implements StripeClient {
  */
 export class FixtureStripeClient implements StripeClient {
   readonly transfers: StripeTransferResponse[] = [];
+  readonly createdAccounts: CreateConnectedAccountParams[] = [];
+  readonly accountLinks: CreateAccountLinkParams[] = [];
   private readonly byIdempotencyKey = new Map<string, StripeTransferResponse>();
   private sequence = 0;
+  private accountSequence = 0;
 
   constructor(
     private readonly config: {
       /** Destination accounts whose transfers fail, with the failure. */
       failFor?: Map<string, StripeTransferError>;
-      /** Account status answers. Anything absent is fully enabled. */
+      /**
+       * Account status answers. Anything absent is fully enabled — but note
+       * that accounts *created* through this fixture are inserted here as
+       * not-yet-enabled, so onboarding has to be walked rather than assumed.
+       */
       accounts?: Map<string, StripeAccountStatus>;
     } = {}
-  ) {}
+  ) {
+    this.config.accounts ??= new Map();
+  }
 
   async createTransfer(params: StripeTransferParams): Promise<StripeTransferResponse> {
     const replayed = this.byIdempotencyKey.get(params.idempotencyKey);
@@ -281,5 +379,50 @@ export class FixtureStripeClient implements StripeClient {
         disabledReason: null,
       }
     );
+  }
+
+  async createConnectedAccount(
+    params: CreateConnectedAccountParams
+  ): Promise<{ id: string }> {
+    this.createdAccounts.push(params);
+    const id = `acct_fixture_${++this.accountSequence}`;
+
+    // A freshly created account has submitted nothing and can receive nothing.
+    // Defaulting it to enabled would let a test "connect a bank" and pass a
+    // payout run that would fail for real — the exact illusion the fixture
+    // exists to prevent.
+    this.config.accounts?.set?.(id, {
+      id,
+      payoutsEnabled: false,
+      chargesEnabled: false,
+      detailsSubmitted: false,
+      currentlyDue: ["external_account", "individual.verification.document"],
+      disabledReason: "requirements.past_due",
+    });
+
+    return { id };
+  }
+
+  async createAccountLink(params: CreateAccountLinkParams): Promise<AccountLink> {
+    this.accountLinks.push(params);
+    return {
+      url: `https://connect.stripe.com/setup/fixture/${params.accountId}`,
+      expiresAt: Math.floor(Date.now() / 1000) + 300,
+    };
+  }
+
+  /** Let a test move an account forward the way real onboarding would. */
+  setAccountStatus(accountId: string, status: Partial<StripeAccountStatus>): void {
+    const existing = this.config.accounts?.get(accountId);
+    this.config.accounts?.set?.(accountId, {
+      id: accountId,
+      payoutsEnabled: false,
+      chargesEnabled: false,
+      detailsSubmitted: false,
+      currentlyDue: [],
+      disabledReason: null,
+      ...existing,
+      ...status,
+    });
   }
 }

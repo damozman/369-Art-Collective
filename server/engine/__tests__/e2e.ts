@@ -72,6 +72,14 @@ import {
 } from "../adapters/shopify/ingest";
 import { createShopifyWebhookRouter } from "../adapters/shopify/routes";
 import { signWebhookBody } from "../adapters/shopify/webhook-auth";
+import { FixtureStripeClient } from "../adapters/stripe/client";
+import {
+  getPayoutAccount,
+  handleAccountUpdated,
+  PayoutAccountError,
+  refreshPayoutAccount,
+  startPayoutOnboarding,
+} from "../payout-account";
 import {
   discountedOrder,
   discountedOrderTransactions,
@@ -1287,6 +1295,206 @@ async function main() {
   });
 
   await new Promise<void>((resolve) => server.close(() => resolve()));
+
+  // ============================================================
+  // Connecting a contributor's bank account
+  // ============================================================
+  //
+  // The properties that decide whether somebody actually gets paid: exactly one
+  // Stripe account per person however many times they start the flow, and
+  // `payoutsEnabled` set from Stripe alone.
+
+  console.log("\n-- payout account onboarding --");
+
+  const stripe = new FixtureStripeClient();
+
+  // A contributor with earnings but no payout account — the state everyone is
+  // in on day one, and the reason this screen exists.
+  await db.insert(schema.contributors).values({
+    id: "c-carol", tenantId: "t-369", name: "Carol", email: "carol@example.com",
+    externalRef: "carol",
+  });
+  await db.insert(schema.ledgerEntries).values({
+    tenantId: "t-369", contributorId: "c-carol", entryType: "allocation",
+    amountMinor: 5000n, currency: "USD", availableAt: null, occurredAt: new Date(),
+  });
+
+  const carolBefore = await getPayoutAccount(db, "t-369", "c-carol");
+  check("a contributor with no payout account is 'not started'", () => {
+    assert.equal(carolBefore.state, "not_started");
+    assert.equal(carolBefore.canReceivePayouts, false);
+  });
+
+  const unpayable = await selectPayoutCandidates(db, "t-369", new Date());
+  check("they are owed money and a payout run cannot pay them", () => {
+    const carol = unpayable.find((c) => c.contributorId === "c-carol");
+    assert.equal(carol?.payableMinor, 5000n);
+    assert.equal(carol?.skipReason, "No payout account connected");
+  });
+
+  const firstLink = await startPayoutOnboarding(db, {
+    tenantId: "t-369",
+    contributorId: "c-carol",
+    client: stripe,
+    returnUrl: "https://app.example.com/portal/369?payouts=returned",
+    refreshUrl: "https://app.example.com/portal/369?payouts=expired",
+  });
+  check("starting onboarding creates an account and returns a link", () => {
+    assert.equal(firstLink.created, true);
+    assert.ok(firstLink.url.startsWith("https://connect.stripe.com/"));
+    assert.equal(stripe.createdAccounts.length, 1);
+  });
+
+  const secondLink = await startPayoutOnboarding(db, {
+    tenantId: "t-369",
+    contributorId: "c-carol",
+    client: stripe,
+    returnUrl: "https://app.example.com/portal/369?payouts=returned",
+    refreshUrl: "https://app.example.com/portal/369?payouts=expired",
+  });
+  check("starting again reuses the account and mints a fresh link", () => {
+    // Creating a second would orphan the first — and if the first was the one
+    // that got verified, payouts go somewhere the person cannot withdraw from.
+    assert.equal(secondLink.created, false);
+    assert.equal(stripe.createdAccounts.length, 1);
+    assert.equal(stripe.accountLinks.length, 2);
+  });
+
+  const identityRows = await db
+    .select()
+    .from(schema.contributorIdentities)
+    .where(eq(schema.contributorIdentities.contributorId, "c-carol"));
+  check("exactly one identity row exists, carrying the Stripe account", () => {
+    assert.equal(identityRows.length, 1);
+    assert.ok(identityRows[0].stripeAccountId?.startsWith("acct_fixture_"));
+    assert.equal(identityRows[0].stripePayoutsEnabled, false);
+  });
+
+  const carolAccountId = identityRows[0].stripeAccountId!;
+
+  const afterOnboarding = await refreshPayoutAccount(db, {
+    tenantId: "t-369",
+    contributorId: "c-carol",
+    client: stripe,
+  });
+  check("finishing the form does NOT make an account ready", () => {
+    assert.equal(afterOnboarding.state, "pending");
+    assert.equal(afterOnboarding.canReceivePayouts, false);
+    assert.ok(afterOnboarding.outstanding.length > 0);
+  });
+
+  const stillBlocked = await selectPayoutCandidates(db, "t-369", new Date());
+  check("a payout run still skips them while Stripe has not enabled payouts", () => {
+    const carol = stillBlocked.find((c) => c.contributorId === "c-carol");
+    assert.ok(carol?.skipReason, "carol must be skipped");
+    assert.match(carol!.skipReason!, /not enabled/);
+  });
+
+  // Stripe approves, the way it does after reviewing documents.
+  stripe.setAccountStatus(carolAccountId, {
+    payoutsEnabled: true,
+    chargesEnabled: true,
+    detailsSubmitted: true,
+    currentlyDue: [],
+    disabledReason: null,
+  });
+
+  const approved = await refreshPayoutAccount(db, {
+    tenantId: "t-369",
+    contributorId: "c-carol",
+    client: stripe,
+  });
+  check("once Stripe enables payouts the account reads as ready", () => {
+    assert.equal(approved.state, "ready");
+    assert.equal(approved.canReceivePayouts, true);
+    assert.deepEqual(approved.outstanding, []);
+  });
+
+  const nowEligible = await selectPayoutCandidates(db, "t-369", new Date());
+  check("the payout run now stops skipping them for a missing account", () => {
+    const carol = nowEligible.find((c) => c.contributorId === "c-carol");
+    assert.ok(carol);
+    assert.equal(carol!.skipReason, undefined);
+  });
+
+  // Stripe suspends the account later — the case a one-time flag would miss.
+  stripe.setAccountStatus(carolAccountId, {
+    payoutsEnabled: false,
+    detailsSubmitted: true,
+    currentlyDue: ["individual.verification.additional_document"],
+    disabledReason: "requirements.past_due",
+  });
+
+  const suspendedViaWebhook = await handleAccountUpdated(
+    db,
+    await stripe.getAccountStatus(carolAccountId)
+  );
+  check("an account.updated webhook finds the right contributor", () => {
+    assert.deepEqual(suspendedViaWebhook, { tenantId: "t-369", contributorId: "c-carol" });
+  });
+
+  const suspended = await getPayoutAccount(db, "t-369", "c-carol");
+  check("a later suspension is reflected without anyone signing in", () => {
+    assert.equal(suspended.state, "restricted");
+    assert.equal(suspended.canReceivePayouts, false);
+  });
+
+  const blockedAgain = await selectPayoutCandidates(db, "t-369", new Date());
+  check("the payout run skips them again", () => {
+    const carol = blockedAgain.find((c) => c.contributorId === "c-carol");
+    assert.match(carol?.skipReason ?? "", /not enabled/);
+  });
+
+  const unknownAccount = await handleAccountUpdated(db, {
+    id: "acct_someone_elses_platform",
+    payoutsEnabled: true,
+    chargesEnabled: true,
+    detailsSubmitted: true,
+    currentlyDue: [],
+    disabledReason: null,
+  });
+  check("an account.updated for an account that is not ours is ignored", () =>
+    assert.equal(unknownAccount, null)
+  );
+
+  let refusedUnknownContributor = false;
+  try {
+    await startPayoutOnboarding(db, {
+      tenantId: "t-369",
+      contributorId: "c-eve", // belongs to t-press
+      client: stripe,
+      returnUrl: "https://app.example.com/x",
+      refreshUrl: "https://app.example.com/y",
+    });
+  } catch (error) {
+    refusedUnknownContributor = error instanceof PayoutAccountError;
+  }
+  check("one business cannot start onboarding for another's contributor", () =>
+    assert.equal(refusedUnknownContributor, true)
+  );
+
+  // Needs someone with NO account yet — country is only read when creating one,
+  // because Stripe cannot change it afterwards.
+  await db.insert(schema.contributors).values({
+    id: "c-dan", tenantId: "t-369", name: "Dan", externalRef: "dan",
+  });
+
+  let refusedBadCountry = false;
+  try {
+    await startPayoutOnboarding(db, {
+      tenantId: "t-369",
+      contributorId: "c-dan",
+      client: stripe,
+      returnUrl: "https://app.example.com/x",
+      refreshUrl: "https://app.example.com/y",
+      country: "United States",
+    });
+  } catch (error) {
+    refusedBadCountry = error instanceof PayoutAccountError;
+  }
+  check("a malformed country is refused — Stripe cannot change it later", () =>
+    assert.equal(refusedBadCountry, true)
+  );
 
   // ---- Disconnection destroys the credential ----
   await disconnectConnection(db, connection.id, "revoked");

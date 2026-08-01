@@ -38,6 +38,7 @@ import {
   type PortalPayout,
 } from "@/lib/portal-api";
 import { StatementLineRow } from "./statement-line";
+import { PayoutAccountCard } from "./payout-account-card";
 
 export function PortalDashboard({ me, onSignedOut }: { me: PortalMe; onSignedOut: () => void }) {
   const [from, setFrom] = useState(startOfYearIso());
@@ -91,6 +92,12 @@ export function PortalDashboard({ me, onSignedOut }: { me: PortalMe; onSignedOut
       </header>
 
       <main className="mx-auto max-w-4xl space-y-6 px-4 py-6">
+        {/* ---- Can I be paid at all ---- */}
+        {/* Deliberately above the balance. A growing balance nobody can
+            withdraw is worse than no balance — the person only discovers it at
+            the moment they need the money. */}
+        <PayoutAccountCard tenantSlug={me.tenant.slug} />
+
         {/* ---- What am I owed ---- */}
         <section className="grid gap-4 sm:grid-cols-3">
           <BalanceCard

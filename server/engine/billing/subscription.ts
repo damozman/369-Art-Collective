@@ -35,7 +35,14 @@ import { and, eq, gte, lt, sql } from "drizzle-orm";
 
 import * as schema from "@shared/engine-schema";
 import type { EngineDb } from "../ingest";
-import { DEFAULT_PLAN_KEY, TRIAL_DAYS, findPlan, smallestPlanFor, type Plan } from "./plans";
+import {
+  DEFAULT_PLAN_KEY,
+  TRIAL_DAYS,
+  findPlan,
+  smallestPlanFor,
+  type BillingInterval,
+  type Plan,
+} from "./plans";
 
 export class SubscriptionError extends Error {}
 
@@ -44,6 +51,65 @@ export function addDays(from: Date, days: number): Date {
   const next = new Date(from);
   next.setUTCDate(next.getUTCDate() + days);
   return next;
+}
+
+/**
+ * Add whole months, clamping to the end of a short month.
+ *
+ * A subscription starting 31 January has no 31 February. Rolling over to 3
+ * March instead of clamping to 28 February would drift the anniversary forward
+ * every year and silently shorten one usage window.
+ */
+export function addMonths(from: Date, months: number): Date {
+  const day = from.getUTCDate();
+  const next = new Date(from);
+  next.setUTCDate(1);
+  next.setUTCMonth(next.getUTCMonth() + months);
+
+  const lastDayOfTarget = new Date(
+    Date.UTC(next.getUTCFullYear(), next.getUTCMonth() + 1, 0)
+  ).getUTCDate();
+
+  next.setUTCDate(Math.min(day, lastDayOfTarget));
+  return next;
+}
+
+/**
+ * The monthly window a plan's people-limit is measured over.
+ *
+ * ⚠️ THIS IS NOT THE BILLING PERIOD, and conflating them is the specific bug
+ * annual billing introduces. `peopleLimit` is per month (see `plans.ts`). An
+ * annual subscription's `periodEnd` is a year out, so counting people paid
+ * across it would compare twelve months of activity against a one-month
+ * allowance and report every annual customer as permanently over.
+ *
+ * Windows are anchored to the subscription's start day rather than the calendar
+ * month, so someone who signs up on the 20th is measured 20th-to-20th. Calendar
+ * months would give every new customer a short first window and a spurious
+ * "you're well under your limit" in their first month.
+ */
+export function currentUsageWindow(
+  subscription: schema.Subscription,
+  now = new Date()
+): { from: Date; to: Date } {
+  const anchor = subscription.periodStart;
+
+  if (now <= anchor) {
+    return { from: anchor, to: addMonths(anchor, 1) };
+  }
+
+  // Step forward a month at a time from the anchor. Bounded by the longest
+  // plausible subscription rather than looping on a clock we do not control.
+  let from = anchor;
+  for (let i = 0; i < 600; i++) {
+    const to = addMonths(anchor, i + 1);
+    if (now < to) {
+      from = addMonths(anchor, i);
+      return { from, to };
+    }
+  }
+
+  return { from, to: addMonths(from, 1) };
 }
 
 /**
@@ -136,8 +202,12 @@ export interface UsageSnapshot {
   suggestedPlan: Plan | null;
   /** True above the largest plan — a conversation, not an automatic anything. */
   needsCustomPlan: boolean;
+  /** The MONTHLY window the count covers. */
   periodStart: Date;
   periodEnd: Date;
+  /** When they are next invoiced — a year out on an annual plan. */
+  billingPeriodEnd: Date;
+  billingInterval: BillingInterval;
 }
 
 /**
@@ -155,11 +225,14 @@ export async function getUsage(
   if (!subscription) return null;
 
   const plan = findPlan(subscription.planKey);
+
+  // The MONTHLY window, not the billing period — see `currentUsageWindow`.
+  const window = currentUsageWindow(subscription, now);
   const people = await countPeoplePaid(
     db,
     tenantId,
-    subscription.periodStart,
-    subscription.periodEnd > now ? now : subscription.periodEnd
+    window.from,
+    window.to > now ? now : window.to
   );
 
   const limit = plan?.peopleLimit ?? null;
@@ -174,8 +247,12 @@ export async function getUsage(
     overLimit,
     suggestedPlan: suggested,
     needsCustomPlan: overLimit && suggested === null,
-    periodStart: subscription.periodStart,
-    periodEnd: subscription.periodEnd,
+    // The usage window, which is what the count above is measured over. On an
+    // annual plan this is NOT the billing period.
+    periodStart: window.from,
+    periodEnd: window.to,
+    billingPeriodEnd: subscription.periodEnd,
+    billingInterval: subscription.billingInterval as BillingInterval,
   };
 }
 
@@ -282,14 +359,53 @@ export async function suggestDowngrade(
   return smaller;
 }
 
+/**
+ * `full` — everything works.
+ * `read_only` — they can sign in and see everything, but cannot run a payout
+ *               or change anything. Chosen by the user (2026-08-01) over
+ *               locking people out: shutting somebody out of their own records
+ *               reads badly and destroys goodwill, while read-only still
+ *               creates the reason to pay. It also keeps §5 #14 possible —
+ *               offboarding is an export, and you cannot export from a wall.
+ * `none` — reserved. Nothing currently returns it; kept so a future hard
+ *          suspension has somewhere to land rather than being bolted onto
+ *          `read_only`.
+ */
+export type AccessLevel = "full" | "read_only" | "none";
+
 export interface Entitlement {
-  /** Whether the product works at all. */
-  active: boolean;
+  access: AccessLevel;
+  /**
+   * ⚠️ WHAT READ-ONLY ACTUALLY STOPS: running payouts, and admin writes.
+   *
+   * It must NEVER stop revenue being recorded. Webhooks keep ingesting, always.
+   * A blocked write is an inconvenience the customer can undo by paying; a
+   * dropped sale is a permanent hole in their ledger that no later payment
+   * repairs, and they would not know it happened. Recording costs us nothing.
+   */
+  canRunPayouts: boolean;
+  canWrite: boolean;
   /** Shown to the owner, in their language. Null when everything is fine. */
   message: string | null;
   /** Whether to nag about adding a card. */
   needsPaymentMethod: boolean;
 }
+
+const FULL_ACCESS = (message: string | null, needsPaymentMethod: boolean): Entitlement => ({
+  access: "full",
+  canRunPayouts: true,
+  canWrite: true,
+  message,
+  needsPaymentMethod,
+});
+
+const READ_ONLY = (message: string): Entitlement => ({
+  access: "read_only",
+  canRunPayouts: false,
+  canWrite: false,
+  message,
+  needsPaymentMethod: true,
+});
 
 /**
  * What an unpaid or lapsed subscription actually restricts.
@@ -310,45 +426,35 @@ export function entitlement(
   now = new Date()
 ): Entitlement {
   if (!subscription) {
-    return {
-      active: false,
-      message: "This account has no subscription.",
-      needsPaymentMethod: true,
-    };
+    return READ_ONLY("This account has no subscription.");
   }
 
   switch (subscription.status) {
     case "trialing": {
       const endsAt = subscription.trialEndsAt;
       if (endsAt && endsAt <= now) {
-        return {
-          active: false,
-          message: "Your trial has ended. Choose a plan to carry on.",
-          needsPaymentMethod: true,
-        };
+        return READ_ONLY(
+          "Your trial has ended. Choose a plan to start paying people again — everything you have set up is still here."
+        );
       }
-      return { active: true, message: null, needsPaymentMethod: true };
+      return FULL_ACCESS(null, true);
     }
 
     case "active":
-      return { active: true, message: null, needsPaymentMethod: false };
+      return FULL_ACCESS(null, false);
 
     case "past_due":
-      // Still active. See the comment above before changing this.
-      return {
-        active: true,
-        message:
-          subscription.lastPaymentError ??
+      // ⚠️ STILL FULL ACCESS. See the block comment above before changing this.
+      return FULL_ACCESS(
+        subscription.lastPaymentError ??
           "We could not take your last payment. Please update your card.",
-        needsPaymentMethod: true,
-      };
+        true
+      );
 
     case "canceled":
-      return {
-        active: false,
-        message: "This subscription has been cancelled.",
-        needsPaymentMethod: true,
-      };
+      return READ_ONLY(
+        "This subscription has been cancelled. Your records are still here and can be exported."
+      );
   }
 }
 
@@ -366,7 +472,7 @@ export async function changePlan(
   db: EngineDb,
   tenantId: string,
   planKey: string,
-  options: { actorId?: string; now?: Date } = {}
+  options: { actorId?: string; now?: Date; billingInterval?: BillingInterval } = {}
 ): Promise<void> {
   const now = options.now ?? new Date();
   const plan = findPlan(planKey);
@@ -380,6 +486,9 @@ export async function changePlan(
       .update(schema.subscriptions)
       .set({
         planKey,
+        ...(options.billingInterval
+          ? { billingInterval: options.billingInterval }
+          : {}),
         overageNoticedAt: null,
         overagePeopleCount: null,
         updatedAt: now,
@@ -393,8 +502,14 @@ export async function changePlan(
       action: "change_plan",
       entityType: "subscription",
       entityId: subscription.id,
-      before: { planKey: subscription.planKey },
-      after: { planKey },
+      before: {
+        planKey: subscription.planKey,
+        billingInterval: subscription.billingInterval,
+      },
+      after: {
+        planKey,
+        billingInterval: options.billingInterval ?? subscription.billingInterval,
+      },
     });
   });
 }

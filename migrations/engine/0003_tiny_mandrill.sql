@@ -1,0 +1,2 @@
+CREATE TYPE "public"."engine_billing_interval" AS ENUM('monthly', 'annual');--> statement-breakpoint
+ALTER TABLE "engine_subscriptions" ADD COLUMN "billing_interval" "engine_billing_interval" DEFAULT 'monthly' NOT NULL;

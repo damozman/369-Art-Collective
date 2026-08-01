@@ -49,6 +49,8 @@ export interface SignupInput {
   email: string;
   password: string;
   planKey?: string;
+  /** Monthly unless they picked annual on the pricing page. */
+  billingInterval?: "monthly" | "annual";
 }
 
 /**
@@ -155,6 +157,7 @@ export async function signUp(
       tenantId: tenant.id,
       planKey,
       status: "trialing",
+      billingInterval: input.billingInterval ?? "monthly",
       periodStart: now,
       periodEnd: trialEndsAt,
       trialEndsAt,
@@ -167,7 +170,12 @@ export async function signUp(
       action: "signup",
       entityType: "tenant",
       entityId: tenant.id,
-      after: { businessName: input.businessName.trim(), slug, planKey },
+      after: {
+        businessName: input.businessName.trim(),
+        slug,
+        planKey,
+        billingInterval: input.billingInterval ?? "monthly",
+      },
     });
 
     return {

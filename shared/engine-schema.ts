@@ -1007,6 +1007,12 @@ export const subscriptionStatusEnum = pgEnum("engine_subscription_status", [
   "canceled",
 ]);
 
+/** Monthly, or ten months' price for twelve. See `plans.ts`. */
+export const billingIntervalEnum = pgEnum("engine_billing_interval", [
+  "monthly",
+  "annual",
+]);
+
 /**
  * A tenant's subscription. One row per tenant.
  *
@@ -1031,7 +1037,18 @@ export const subscriptions = pgTable(
 
     status: subscriptionStatusEnum("status").notNull().default("trialing"),
 
-    /** The window usage is counted over, and what the next invoice covers. */
+    billingInterval: billingIntervalEnum("billing_interval")
+      .notNull()
+      .default("monthly"),
+
+    /**
+     * What the next invoice covers.
+     *
+     * ⚠️ NOT the window usage is counted over. On an annual plan this spans a
+     * year while the people-limit is monthly, so counting usage across it would
+     * put every annual customer permanently over. `currentUsageWindow()` derives
+     * the monthly window; use that for anything involving `peopleLimit`.
+     */
     periodStart: timestamp("period_start").notNull(),
     periodEnd: timestamp("period_end").notNull(),
 

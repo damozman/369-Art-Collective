@@ -25,9 +25,10 @@
  * WHAT `peopleLimit` IS, AND WHAT IT IS NOT
  * ────────────────────────────────────────────────────────────────────────
  *
- * It is the number of DISTINCT PEOPLE PAID within a billing period. Not people
- * on the books — a gallery with 60 contributors who paid 8 this month is an
- * 8-person month (§12 rule 1).
+ * It is the number of DISTINCT PEOPLE PAID within a MONTH. Not people on the
+ * books — a gallery with 60 contributors who paid 8 this month is an 8-person
+ * month (§12 rule 1). And not per billing period: an annual customer is still
+ * measured monthly, or every one of them would sit permanently over the limit.
  *
  * ⚠️ It is a GUIDE RAIL, NOT A METER, and not a gate:
  *
@@ -44,13 +45,24 @@
  * stops something happening, re-read §12 rule 3 first.
  */
 
+export type BillingInterval = "monthly" | "annual";
+
 export interface Plan {
   key: string;
   name: string;
   /** Minor units, in USD. Money is never a float, including prices. */
   priceMinor: bigint;
+  /** Paid once a year. See `ANNUAL_MONTHS_CHARGED`. */
+  annualPriceMinor: bigint;
   currency: string;
-  /** Distinct people paid per billing period before an upgrade is suggested. */
+  /**
+   * Distinct people paid **per month** before an upgrade is suggested.
+   *
+   * ⚠️ PER MONTH, NOT PER BILLING PERIOD, and the difference only shows up on
+   * annual plans. Counting a year's worth against a monthly allowance would put
+   * every annual customer permanently over their limit. `currentUsageWindow` in
+   * `subscription.ts` is what keeps the two apart.
+   */
   peopleLimit: number;
   /** Shown on the pricing screen, in the owner's language rather than ours. */
   blurb: string;
@@ -59,6 +71,35 @@ export interface Plan {
 }
 
 export const TRIAL_DAYS = 14;
+
+/**
+ * Pay for ten months, get twelve.
+ *
+ * Added before launch at the user's request (2026-08-01): *"I tend to look for
+ * the annual savings myself, and I think businesses who are doing enough
+ * already are interested in saving that money."* Two months free is the
+ * conventional shape and is legible without explanation — a customer can check
+ * the arithmetic in their head, which matters more here than optimising the
+ * discount.
+ *
+ * Derived rather than stored per plan so a price change cannot leave the
+ * monthly and annual figures disagreeing.
+ */
+export const ANNUAL_MONTHS_CHARGED = 10n;
+
+export function annualPrice(monthlyMinor: bigint): bigint {
+  return monthlyMinor * ANNUAL_MONTHS_CHARGED;
+}
+
+/** What this plan costs on the given interval. */
+export function priceFor(plan: Plan, interval: BillingInterval): bigint {
+  return interval === "annual" ? plan.annualPriceMinor : plan.priceMinor;
+}
+
+/** What they avoid paying by choosing annual. */
+export function annualSavingMinor(plan: Plan): bigint {
+  return plan.priceMinor * 12n - plan.annualPriceMinor;
+}
 
 /**
  * No free tier — ratified decision #5.
@@ -76,6 +117,7 @@ export const PLANS: Plan[] = [
     key: "starter",
     name: "Starter",
     priceMinor: 4900n,
+    annualPriceMinor: annualPrice(4900n),
     currency: "USD",
     peopleLimit: 10,
     blurb: "For a small roster. Up to 10 people paid each month.",
@@ -84,6 +126,7 @@ export const PLANS: Plan[] = [
     key: "growth",
     name: "Growth",
     priceMinor: 9900n,
+    annualPriceMinor: annualPrice(9900n),
     currency: "USD",
     peopleLimit: 50,
     blurb: "For a growing catalogue. Up to 50 people paid each month.",
@@ -92,6 +135,7 @@ export const PLANS: Plan[] = [
     key: "scale",
     name: "Scale",
     priceMinor: 19900n,
+    annualPriceMinor: annualPrice(19900n),
     currency: "USD",
     peopleLimit: 200,
     blurb: "For an established operation. Up to 200 people paid each month.",

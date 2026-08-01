@@ -91,6 +91,12 @@ import { createShopifyWebhookRouter } from "../adapters/shopify/routes";
 import { signWebhookBody } from "../adapters/shopify/webhook-auth";
 import { FixtureStripeClient } from "../adapters/stripe/client";
 import { signUp } from "../billing/signup";
+import { FixtureBillingClient } from "../billing/billing-client";
+import {
+  completeCheckout,
+  recordPaymentFailure,
+  startCheckout,
+} from "../billing/checkout";
 import {
   changePlan,
   countPeoplePaid,
@@ -1853,11 +1859,19 @@ async function main() {
   });
 
   check("the trial works", () =>
-    assert.equal(entitlement(newSub, new Date("2026-08-10T00:00:00Z")).active, true)
+    assert.equal(entitlement(newSub, new Date("2026-08-10T00:00:00Z")).access, "full")
   );
-  check("and stops when it expires", () =>
-    assert.equal(entitlement(newSub, new Date("2026-08-20T00:00:00Z")).active, false)
-  );
+
+  /**
+   * An expired trial goes READ-ONLY rather than locking them out (user's
+   * choice, 2026-08-01). They keep every record they built; they just cannot
+   * pay anyone until they choose a plan.
+   */
+  const expired = entitlement(newSub, new Date("2026-08-20T00:00:00Z"));
+  check("an expired trial goes read-only rather than locking them out", () => {
+    assert.equal(expired.access, "read_only");
+    assert.equal(expired.canRunPayouts, false);
+  });
 
   // A second business with the same name must not collide.
   const twin = await signUp(db, {
@@ -2010,6 +2024,118 @@ async function main() {
   check("a failed payout is not billed for", () =>
     assert.equal(countWithFailed, paidCount)
   );
+
+  // ---- Paying for it ----
+
+  const billing = new FixtureBillingClient();
+
+  const checkout = await startCheckout(db, {
+    tenantId: signup.tenantId,
+    planKey: "growth",
+    interval: "annual",
+    successUrl: "https://app.example/ok",
+    cancelUrl: "https://app.example/no",
+    client: billing,
+  });
+  check("starting checkout returns a link", () => assert.ok(checkout.url));
+
+  check("checkout is priced at ten months for annual", () => {
+    const sent = billing.checkouts.at(-1)!;
+    assert.equal(sent.amountMinor, 99000n);
+    assert.equal(sent.interval, "annual");
+  });
+
+  const afterCheckoutStart = await getSubscription(db, signup.tenantId);
+  check("the Stripe customer is stored so a repeat visit reuses it", () =>
+    assert.ok(afterCheckoutStart!.stripeCustomerId)
+  );
+
+  /**
+   * ⚠️ CLICKING SUBSCRIBE DOES NOT MAKE SOMEONE A PAYING CUSTOMER. Same lesson
+   * as `payoutsEnabled` on a contributor: reaching a URL is not evidence that
+   * money moved. Until Stripe reports the subscription, they are still trialing.
+   */
+  check("starting checkout alone does NOT make them active", () =>
+    assert.equal(afterCheckoutStart!.status, "trialing")
+  );
+
+  billing.completeCheckout({
+    tenantId: signup.tenantId,
+    planKey: "growth",
+    customerId: afterCheckoutStart!.stripeCustomerId!,
+    subscriptionId: "sub_fixture_1",
+    currentPeriodEnd: new Date("2027-08-01T00:00:00Z"),
+  });
+
+  await completeCheckout(db, {
+    tenantId: signup.tenantId,
+    stripeSubscriptionId: "sub_fixture_1",
+    client: billing,
+  });
+
+  const paid = await getSubscription(db, signup.tenantId);
+  check("once Stripe confirms it, they are active on the plan they chose", () => {
+    assert.equal(paid!.status, "active");
+    assert.equal(paid!.planKey, "growth");
+    assert.equal(paid!.stripeSubscriptionId, "sub_fixture_1");
+  });
+  check("paying clears the trial rather than leaving a stale date", () =>
+    assert.equal(paid!.trialEndsAt, null)
+  );
+  check("a paid subscription has full access", () =>
+    assert.equal(entitlement(paid).access, "full")
+  );
+
+  // Running it twice must be a no-op — the webhook and the return URL both call it.
+  await completeCheckout(db, {
+    tenantId: signup.tenantId,
+    stripeSubscriptionId: "sub_fixture_1",
+    client: billing,
+  });
+  const paidTwice = await getSubscription(db, signup.tenantId);
+  check("completing the same checkout twice changes nothing", () => {
+    assert.equal(paidTwice!.status, "active");
+    assert.equal(paidTwice!.stripeSubscriptionId, "sub_fixture_1");
+  });
+
+  /**
+   * The subscription id arrives from a redirect or a webhook body, so it is
+   * attacker-shaped input. One tenant must not be able to claim another's
+   * subscription by quoting its id.
+   */
+  await assert.rejects(
+    () =>
+      completeCheckout(db, {
+        tenantId: twin.tenantId,
+        stripeSubscriptionId: "sub_fixture_1",
+        client: billing,
+      }),
+    /belongs to a different business/
+  );
+  check("one business cannot claim another's subscription", async () => {});
+
+  // ---- A failed payment ----
+
+  await recordPaymentFailure(db, signup.tenantId, "Your card was declined");
+  const declined = await getSubscription(db, signup.tenantId);
+
+  check("a failed payment is recorded with a readable reason", () => {
+    assert.equal(declined!.status, "past_due");
+    assert.match(declined!.lastPaymentError ?? "", /declined/);
+  });
+
+  /**
+   * ⚠️ THE DECISION MOST LIKELY TO BE REVERSED BY A WELL-MEANING REFACTOR.
+   * A failed card leaves the product FULLY working, payouts included.
+   * Suspending would stop contributors — not our customer, no part in the
+   * failure, no way to fix it — from being paid, over $49 of ours.
+   */
+  const declinedAccess = entitlement(declined);
+  check("a declined card does NOT stop payouts", () => {
+    assert.equal(declinedAccess.access, "full");
+    assert.equal(declinedAccess.canRunPayouts, true);
+    assert.ok(declinedAccess.message);
+  });
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

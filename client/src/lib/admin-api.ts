@@ -434,3 +434,82 @@ export function retryPayout(
     method: "POST",
   });
 }
+
+// ============================================================
+// Billing
+// ============================================================
+
+export interface BillingPlan {
+  key: string;
+  name: string;
+  blurb: string;
+  peopleLimit: number;
+  currency: string;
+  monthly: Money;
+  annual: Money;
+  annualPerMonth: Money;
+  annualSaving: Money;
+  monthsChargedAnnually: number;
+}
+
+export interface BillingView {
+  plans: BillingPlan[];
+  subscription: {
+    planKey: string;
+    status: "trialing" | "active" | "past_due" | "canceled";
+    billingInterval: "monthly" | "annual";
+    trialEndsAt: string | null;
+    renewsAt: string;
+    hasPaymentMethod: boolean;
+    lastPaymentError: string | null;
+  } | null;
+  usage: {
+    peopleThisPeriod: number;
+    peopleLimit: number | null;
+    overLimit: boolean;
+    needsCustomPlan: boolean;
+    suggestedPlanKey: string | null;
+    periodStart: string;
+    periodEnd: string;
+  } | null;
+  access: {
+    access: "full" | "read_only" | "none";
+    canRunPayouts: boolean;
+    canWrite: boolean;
+    message: string | null;
+    needsPaymentMethod: boolean;
+  };
+  suggestedDowngradeKey: string | null;
+}
+
+export function getBilling(tenantSlug: string): Promise<BillingView> {
+  return request(`${base(tenantSlug)}/billing`);
+}
+
+/** Returns a short-lived Stripe link. Navigate to it; never store it. */
+export function startCheckout(
+  tenantSlug: string,
+  planKey: string,
+  interval: "monthly" | "annual"
+): Promise<{ url: string }> {
+  return request(`${base(tenantSlug)}/billing/checkout`, {
+    method: "POST",
+    body: JSON.stringify({ planKey, interval }),
+  });
+}
+
+export function openBillingPortal(tenantSlug: string): Promise<{ url: string }> {
+  return request(`${base(tenantSlug)}/billing/portal`, { method: "POST" });
+}
+
+/** Only valid while still trialing — see the server route for why. */
+export function changePlan(
+  tenantSlug: string,
+  planKey: string,
+  interval: "monthly" | "annual"
+): Promise<{ ok: boolean }> {
+  return request(`${base(tenantSlug)}/billing/plan`, {
+    method: "POST",
+    body: JSON.stringify({ planKey, interval }),
+  });
+}

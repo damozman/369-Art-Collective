@@ -7,6 +7,7 @@ import {
   assertSameCurrency,
   formatMinor,
   formatMoney,
+  groupDigits,
   parseDecimalToMinor,
   percentToBasisPoints,
   roundedDiv,
@@ -126,4 +127,48 @@ test("assertSameCurrency catches mixed currencies", () => {
   assert.equal(assertSameCurrency(["USD", "USD"], "ctx"), "USD");
   assert.throws(() => assertSameCurrency(["USD", "EUR"], "ctx"), /mixed currencies/);
   assert.throws(() => assertSameCurrency([], "ctx"), /no currency/);
+});
+
+// ============================================================
+// Thousands grouping
+// ============================================================
+
+test("thousands are grouped so large amounts can be scanned", () => {
+  assert.equal(formatMoney(6440000n), "$64,400.00");
+  assert.equal(formatMoney(199000n), "$1,990.00");
+  assert.equal(formatMoney(100000000n), "$1,000,000.00");
+});
+
+test("small amounts are unchanged by grouping", () => {
+  assert.equal(formatMoney(2186n), "$21.86");
+  assert.equal(formatMoney(0n), "$0.00");
+  assert.equal(formatMoney(99n), "$0.99");
+});
+
+test("the sign still sits outside the symbol", () => {
+  assert.equal(formatMoney(-6440000n), "-$64,400.00");
+});
+
+/**
+ * The grouping must not go anywhere near a float. A total beyond 2^53 is the
+ * exact case bigint columns exist for, and `toLocaleString()` at the final step
+ * would have silently corrupted it.
+ */
+test("grouping survives past the float limit", () => {
+  assert.equal(formatMoney(900719925474099300n), "$9,007,199,254,740,993.00");
+});
+
+test("formatMinor stays ungrouped — it is the machine-readable form", () => {
+  // It crosses the wire in JSON; a comma there would need stripping everywhere.
+  assert.equal(formatMinor(6440000n), "64400.00");
+});
+
+test("grouping boundaries are right at every length", () => {
+  assert.equal(groupDigits("1"), "1");
+  assert.equal(groupDigits("12"), "12");
+  assert.equal(groupDigits("123"), "123");
+  assert.equal(groupDigits("1234"), "1,234");
+  assert.equal(groupDigits("12345"), "12,345");
+  assert.equal(groupDigits("123456"), "123,456");
+  assert.equal(groupDigits("1234567"), "1,234,567");
 });

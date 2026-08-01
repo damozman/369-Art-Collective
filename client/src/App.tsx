@@ -46,6 +46,7 @@ import Creators from "@/pages/creators";
 import JoinCreatorverse from "@/pages/join-creatorverse";
 import Portal from "@/pages/portal";
 import EngineAdmin from "@/pages/engine-admin";
+import SignupPage from "@/pages/signup";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -245,6 +246,14 @@ function Router() {
         the portal above: its own session, its own API, survives Phase 2.
       */}
       <Route path="/manage/:tenantSlug" component={EngineAdmin} />
+
+      {/*
+        Pricing and signup — the only engine surface with no session at all.
+        Tenant-neutral by ratified decision #11: this is what a customer sees
+        before they are a customer.
+      */}
+      <Route path="/pricing" component={SignupPage} />
+      <Route path="/signup" component={SignupPage} />
 
       {/* Parameterized routes must come last to avoid catching specific routes */}
       <Route path="/artists/:id" component={ArtistProfile} />

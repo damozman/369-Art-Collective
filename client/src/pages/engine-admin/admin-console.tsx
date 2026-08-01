@@ -69,6 +69,7 @@ import { RateEditor } from "./rate-editor";
 import { PeopleEditor } from "./people-editor";
 import { WorksTab } from "./works-editor";
 import { SettingsTab } from "./settings-editor";
+import { BillingTab } from "./billing-tab";
 import { formatMoney, isPositive, signOf } from "@/lib/portal-money";
 import { formatDate } from "@/lib/portal-date";
 
@@ -169,6 +170,7 @@ export function AdminConsole({
             <TabsTrigger value="rules" data-testid="tab-rules">Rates</TabsTrigger>
             <TabsTrigger value="history" data-testid="tab-history">History</TabsTrigger>
             <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
+            <TabsTrigger value="billing" data-testid="tab-billing">Billing</TabsTrigger>
           </TabsList>
 
           <TabsContent value="pay" className="mt-4">
@@ -201,6 +203,10 @@ export function AdminConsole({
 
           <TabsContent value="settings" className="mt-4">
             <SettingsTab slug={slug} canWrite={me.role === "admin"} />
+          </TabsContent>
+
+          <TabsContent value="billing" className="mt-4">
+            <BillingTab slug={slug} canWrite={me.role === "admin"} />
           </TabsContent>
         </Tabs>
       </main>

@@ -91,12 +91,44 @@ export function formatMinor(amountMinor: bigint): string {
   return `${negative ? "-" : ""}${whole}.${cents.toString().padStart(2, "0")}`;
 }
 
-/** Format for display, e.g. `$21.86`. USD-only in Phase 1 (ratified decision #6). */
+/**
+ * Group a run of digits in threes: `64400` → `64,400`.
+ *
+ * Operates on the DIGIT STRING, never on a number — the whole point of bigint
+ * minor units is that a lifetime total can exceed what a float holds, and
+ * reaching for `toLocaleString()` here would undo that at the last step.
+ *
+ * Applied to display formatting only. `formatMinor` stays ungrouped because it
+ * is the machine-readable form — it goes into JSON payloads, and a comma there
+ * would have to be stripped by every consumer.
+ */
+export function groupDigits(digits: string): string {
+  let out = "";
+  for (let i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 === 0) out += ",";
+    out += digits[i];
+  }
+  return out;
+}
+
+/**
+ * Format for display, e.g. `$21.86`, `$64,400.00`. USD-only in Phase 1
+ * (ratified decision #6).
+ *
+ * Thousands are grouped because these amounts are read by humans deciding
+ * whether a number looks right — and `$64400.00` is genuinely hard to scan,
+ * which is the opposite of what a system selling verifiable numbers wants.
+ *
+ * ⚠️ MUST STAY IDENTICAL TO `client/src/lib/portal-money.ts`. A statement email
+ * and the screen showing the same payment have to agree character for
+ * character; a difference reads as a discrepancy worth disputing.
+ */
 export function formatMoney(amountMinor: bigint, currency = "USD"): string {
   const symbol = currency === "USD" ? "$" : "";
   const negative = amountMinor < 0n;
   const body = formatMinor(negative ? -amountMinor : amountMinor);
-  return `${negative ? "-" : ""}${symbol}${body}`;
+  const [whole, cents] = body.split(".");
+  return `${negative ? "-" : ""}${symbol}${groupDigits(whole)}.${cents}`;
 }
 
 /**

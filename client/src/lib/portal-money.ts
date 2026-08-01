@@ -63,7 +63,29 @@ export function formatMoney(minor: string | null | undefined, currency = "USD"):
   const negative = value < 0n;
   const symbol = currency === "USD" ? "$" : "";
   const body = formatMinor((negative ? -value : value).toString());
-  return `${negative ? "-" : ""}${symbol}${body}`;
+  const [whole, cents] = body.split(".");
+  return `${negative ? "-" : ""}${symbol}${groupDigits(whole)}.${cents}`;
+}
+
+/**
+ * Group a run of digits in threes: `64400` → `64,400`.
+ *
+ * On the DIGIT STRING, never via `Number` or `toLocaleString` — that would
+ * reintroduce the float this whole module exists to avoid, at the very last
+ * step, on the largest values.
+ *
+ * Display only. `formatMinor` stays ungrouped: it is the machine-readable form
+ * that crosses the wire, and a comma there would need stripping everywhere.
+ *
+ * ⚠️ Mirrors `groupDigits` in `server/engine/money.ts`. They must agree.
+ */
+export function groupDigits(digits: string): string {
+  let out = "";
+  for (let i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 === 0) out += ",";
+    out += digits[i];
+  }
+  return out;
 }
 
 /** Sign of an amount, without ever making it a number. */

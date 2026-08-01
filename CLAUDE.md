@@ -126,7 +126,7 @@ Both were resolved in step 5.)
 - **Phase 0 ✅ · Phase 1 ✅ · the owner-facing product is built ✅ · WHATS-LEFT
   step 1 (Shopify + Stripe against fixtures) ✅ · step 2 (artist bank
   onboarding) ✅ · step 3 (works + settings screens, and recording a missing
-  cost) ✅.**
+  cost) ✅ · step 4 (billing, signup and pricing) ✅.**
 - **What exists:** the engine (16 `engine_*` tables, canonical `RevenueEvent`, §6
   rules, immutable ledger, §8 reversals, transactional ingestion, payout batches
   with the state machine), the **contributor portal** at `/portal/:tenantSlug`, the
@@ -136,7 +136,7 @@ Both were resolved in step 5.)
   (signed webhooks → per-line events → ledger, plus refunds and cancellations) and
   the Stripe `TransferExecutor` — plus **artist payout-account onboarding**
   (`server/engine/payout-account.ts`, Account Links + status read back from Stripe).
-- **288 unit tests · 177 end-to-end checks against real Postgres.** Every screen has
+- **334 unit tests · 206 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -163,9 +163,7 @@ Summary of that order:
    The approvals now wait on themselves rather than on us.
 2. ~~**Artist bank onboarding**~~ — **done.** See "Payout accounts" below.
 3. ~~**Works and settings screens**~~ — **done.** See "Step 3" below.
-4. **Customer billing and signup** — turns it into a business. **There is currently
-   no way to charge anyone**, which is easy to leave until last and then discover is
-   the thing standing between working software and revenue.
+4. ~~**Customer billing and signup**~~ — **done.** See "Billing" below.
 5. Email, 1099, audit viewer.
 6. CSV import, then advances (§10b) — advances only once a real publishing or music
    deal can be seen, so the shape is drawn rather than guessed.
@@ -256,6 +254,12 @@ third-party log sinks, the client bundle, and the ~70 obsolete
 | `server/engine/secrets.ts` | AES-256-GCM seal/open for provider credentials + `safeEqual` |
 | `server/engine/connections.ts` | `engine_source_connections` CRUD; the ONLY module that touches sealed columns |
 | `server/engine/payout-account.ts` | contributor bank onboarding — Account Links, status read back from Stripe |
+| `server/engine/billing/plans.ts` | the plans, as CODE not rows. Annual = 10 months' price |
+| `server/engine/billing/subscription.ts` | trials, usage counting, `entitlement`, `currentUsageWindow` |
+| `server/engine/billing/signup.ts` | self-serve account creation, one transaction |
+| `server/engine/billing/checkout.ts` | Stripe checkout → subscription, read back from Stripe |
+| `server/engine/billing/billing-client.ts` | OUR Stripe account — read its header before touching |
+| `server/engine/billing/routes.ts` | `/api/engine/plans`, `/signup`, and the billing screen |
 | `server/engine/review.ts` | + `recordEventCost` — typing in a cost the channel never sent, guarded on 'nothing allocated yet' |
 
 ### The adapters — §4's two seams, filled in
@@ -404,6 +408,37 @@ checks now hold it shut, in both directions. **The lesson generalises: a `tenant
 column on the row being inserted proves nothing about the ids inside it.** Any new
 mutation that accepts an id from an HTTP body must verify tenancy explicitly.
 
+### Billing — charging the customer
+
+`/pricing` (public, no session) and a Billing tab in the console. Blueprint §12 has
+the model; four things about the CODE are load-bearing:
+
+1. **`billing-client.ts` is OUR Stripe account. `adapters/stripe/client.ts` is the
+   TENANT's.** Separate env vars (`BILLING_STRIPE_SECRET_KEY` vs `STRIPE_SECRET_KEY`),
+   separate files, headers on both. Crossing them either bills the wrong party or
+   takes our fee out of contributor funds. Charging a subscription does NOT touch
+   ratified decision #1 — that governs contributor money, not our own revenue.
+2. **`currentUsageWindow()` is monthly, always.** `peopleLimit` is per month but an
+   annual `periodEnd` is a year out; measuring usage across the billing period would
+   report every annual customer as permanently over their plan. Windows anchor to the
+   signup day, and `addMonths` clamps 31 Jan → 28 Feb rather than rolling to 3 March.
+3. **`entitlement()` has no ingestion permission, and that absence is deliberate.**
+   Read-only stops payout runs and admin writes; webhooks keep recording revenue
+   always. A blocked write is undone by paying, a dropped sale is a permanent hole
+   nobody notices. `past_due` grants FULL access — suspending over a failed card
+   withholds contributors' income over $49 of ours. A unit test says changing that
+   needs the user's agreement.
+4. **`completeCheckout` reads back from Stripe.** Reaching the success URL is not
+   evidence of payment, same lesson as `payoutsEnabled`. It is idempotent and refuses
+   a subscription whose metadata names another tenant.
+
+`suggestDowngrade` is deliberate lost revenue — telling a customer they are paying
+for more than they use. It is what makes the overage notice believable.
+
+`ALLOW_FIXTURE_BILLING=true` simulates subscriptions and charges nothing. Less
+dangerous than `ALLOW_FIXTURE_TRANSFERS` but still opt-in: a deployment that thinks
+it is charging and is not takes months to notice.
+
 The portal UI, which is the engine's surface rather than the marketplace's:
 
 | Path | What |
@@ -413,12 +448,14 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/pages/portal/portal-dashboard.tsx` | balances, statement, payout history |
 | `client/src/pages/portal/statement-line.tsx` | one line plus its stored derivation trace |
 | `client/src/lib/portal-api.ts` | typed client; every amount a string |
-| `client/src/lib/portal-money.ts` | bigint-backed money formatting, mirrors the server |
+| `client/src/lib/portal-money.ts` | bigint-backed money formatting, mirrors the server (incl. `groupDigits`) |
+| `client/src/pages/signup/index.tsx` | pricing + signup, one page, no session |
+| `client/src/pages/engine-admin/billing-tab.tsx` | plan, usage, and changing either |
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 288 unit tests, no network, no database
-npm run test:e2e      # 177 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 334 unit tests, no network, no database
+npm run test:e2e      # 206 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -585,12 +622,12 @@ Sessions do not share memory. Everything below is the state as of the last commi
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 288 unit tests — no network, no database
+npm test          # 334 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (177 checks against real Postgres) start the local database
+For the end-to-end run (206 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e

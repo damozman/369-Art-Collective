@@ -113,6 +113,14 @@ app.use((req, res, next) => {
     // a header — the tenant is resolved from that, not from the path.
     const { createShopifyWebhookRouter } = await import("./engine/adapters/shopify/routes");
     app.use("/api/engine", createShopifyWebhookRouter(engineDb));
+
+    // Signing up and paying. The signup half carries no session at all — it is
+    // how a business that does not yet exist creates itself.
+    const { createSignupRouter, createBillingRouter } = await import(
+      "./engine/billing/routes"
+    );
+    app.use("/api/engine", createSignupRouter(engineDb));
+    app.use("/api/engine", createBillingRouter(engineDb));
   }
 
   const server = await registerRoutes(app);

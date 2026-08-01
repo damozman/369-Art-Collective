@@ -5,7 +5,7 @@ An honest map of the distance between here and a product someone pays for.
 Written for the owner. Kept current as things land — if this file says something is
 missing and it isn't, fix the file.
 
-Last updated: 2026-08-01 (steps 1, 2 and 3 of the build order below are done).
+Last updated: 2026-08-01 (steps 1-4 of the build order below are done).
 
 ---
 
@@ -19,9 +19,9 @@ number. That is the hard part, and the part that is expensive to fix later.
 screens rather than new architecture. The decisions that were costly to get wrong
 have been made and tested.
 
-**One thing worth naming plainly:** there is currently no way to charge a customer.
-That's easy to leave until last and then discover is the thing standing between
-working software and a business.
+**There is now a way to charge a customer.** Signup, trials, plans and subscription
+billing are built and tested. What they are not is *switched on* — that needs our own
+Stripe key, which is a settings change rather than a build.
 
 ---
 
@@ -56,8 +56,10 @@ working software and a business.
 - **Recording a cost the sales channel never sent** — a payment fee that PayPal
   didn't report can be typed in from the statement before the sale is assigned,
   instead of the business silently swallowing it.
+- **Pricing, signup and billing** — a business creates its own account at
+  `/pricing`, runs a 14-day trial with no card, and subscribes monthly or yearly.
 
-288 unit tests, 177 end-to-end checks against a real database, every screen driven
+334 unit tests, 206 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
@@ -72,10 +74,10 @@ in a real browser, and the webhook endpoint exercised over real HTTP.
 | ~~Stripe transfers~~ | **Built.** The real provider exists and refuses honestly when unconfigured. Pointing it at real money needs Connect. | Connect verification only |
 | **Connect-a-store screen** | The connection is stored and used correctly, but there's no screen to create one — it's inserted by hand today. Small, and only worth doing once the Partner account exists. | Partner approval |
 | ~~Artist bank onboarding~~ | **Built.** An artist connects their own bank from their portal; readiness is read back from Stripe. Needs Connect before it points at real banks. | Connect verification only |
-| **Customer billing** | **No way to charge a business for using this.** | Nothing — buildable now |
-| **Customer signup** | No way for a business to create an account. You'd add them yourself. | Nothing — buildable now |
+| ~~Customer billing~~ | **Built.** Plans, trials, and a subscription charged through Stripe. Needs our own Stripe key to go live. | Nothing — a settings change |
+| ~~Customer signup~~ | **Built.** A business signs itself up at `/pricing` and lands on a 14-day trial. | Nothing |
 
-Note the pattern: the first four wait on other people, the last two don't.
+Everything left in this group waits on somebody else.
 
 ### Group 2 — Completes "run it without a developer"
 
@@ -173,10 +175,24 @@ hand-crafting a request rather than through any screen, and nothing had been pai
 but it is exactly the class of bug a multi-tenant system must not have. There are now
 two end-to-end checks holding it shut.
 
-**4. Customer billing and signup.**
-Turns working software into a business. Deliberately after the above, because there
-is no point charging for something not yet fully operable — but not left to the very
-end either.
+**4. Customer billing and signup. ✅ DONE.**
+A business signs itself up at `/pricing`, picks a plan, and gets 14 days free without
+a card. Monthly or yearly — yearly is ten months' price for twelve.
+
+Four things inside it are worth knowing, because they are decisions rather than
+mechanics:
+
+- **Plans are counted on people you actually pay in a month**, not people on your
+  books. A quiet month costs less.
+- **Going over your plan never blocks a payout.** Everyone gets paid, you get told,
+  and the plan moves up at renewal — after notice, never as a surprise charge.
+- **A failed card does not switch the product off.** Suspending a business over $49
+  would stop *artists* getting paid, and they had no part in it.
+- **When a trial ends without a card, the account goes read-only** rather than being
+  locked. Every record stays visible; payouts stop until they choose a plan.
+
+It also tells a customer when they are paying for *more* than they use. That costs
+money, and it is the reason the rest of it is believable.
 
 **5. Email, 1099, audit viewer.**
 Polish that real customers will expect and a demo won't miss.

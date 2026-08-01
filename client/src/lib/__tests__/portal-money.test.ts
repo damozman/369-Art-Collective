@@ -68,7 +68,8 @@ test("parses exactly at and beyond the float-safe integer range", () => {
   const beyondFloat = "9007199254740993";
   assert.equal(toMinor(beyondFloat), 9007199254740993n);
   assert.equal(formatMinor(beyondFloat), "90071992547409.93");
-  assert.equal(formatMoney(beyondFloat), "$90071992547409.93");
+  // Grouped for display; the digits are still exact, which is the claim.
+  assert.equal(formatMoney(beyondFloat), "$90,071,992,547,409.93");
 
   // Demonstrate the failure being guarded against, so the reason this test
   // exists survives future readers.
@@ -76,5 +77,5 @@ test("parses exactly at and beyond the float-safe integer range", () => {
 });
 
 test("very large negative amounts survive the round trip too", () => {
-  assert.equal(formatMoney("-9007199254740993"), "-$90071992547409.93");
+  assert.equal(formatMoney("-9007199254740993"), "-$90,071,992,547,409.93");
 });

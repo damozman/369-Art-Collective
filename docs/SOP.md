@@ -167,6 +167,14 @@ to zero and the original loss stays visible in the history. Nothing is ever dele
 - **Run a payout batch.** The machine picks who's eligible, respects the waiting
   period and your minimum, and pays them.
 - **Check for failed payments.** Usually a bank detail problem on the artist's end.
+- **Glance at the Tax tab.** Not for the totals — for the "missing paperwork"
+  number. Chasing one person in March is a conversation; chasing nine in January
+  is a scramble. See section 4a.
+
+### Once a year, in January
+
+Open the **Tax tab**, pick last year, and send the spreadsheet to your accountant.
+Section 4a explains what it is and — just as importantly — what it isn't.
 
 ### When adding a new artist
 
@@ -289,6 +297,74 @@ adjustment, not a rate change.
 
 ---
 
+## 4a. The Tax tab — what you paid people last year
+
+Once a year your accountant needs to know what you paid each artist. That is what
+this tab is for.
+
+**It shows what you PAID, not what people EARNED, and those are different
+numbers.** Every other screen in your console shows earnings. Tax reporting works
+on money that actually changed hands. So a sale earned on 20 December and paid on
+5 January counts in the *new* year, not the old one. If the figure here doesn't
+match what you expected, this is almost always why.
+
+**Pick a year, press Download CSV, send it to your accountant.** That's the whole
+job. The file opens in Excel or Google Sheets.
+
+### What it does NOT do
+
+**It does not file anything, and it never will.** Your artists are paid out of
+*your* Stripe account, so Stripe issues the tax forms, under your account. This
+tab gives you your own record of what you paid — the number your accountant files
+from, and the number you check Stripe's own figures against. If the two ever
+disagree, you now have something to disagree *with*, which is the point.
+
+**It doesn't hold anybody's social security number.** Stripe collects those when
+an artist connects their bank, and Stripe keeps them. This system deliberately has
+nowhere to put one. Storing them would make your database far more dangerous to
+lose, and would gain you nothing, because the people who actually file the forms
+already have them.
+
+### The number to actually look at
+
+Not the total. **"Missing paperwork."**
+
+That's how many people you paid whose tax details aren't on file. You cannot file
+for them as things stand. The fix is asking them to finish connecting their bank
+in their portal, which is where Stripe collects the details — so it's a message to
+send, not something you can fix from your side.
+
+Check it occasionally through the year rather than in January. Chasing one person
+in March is a conversation. Chasing nine in January is a scramble.
+
+### Three things that surprise people
+
+**Everyone is listed, including people under $600.** The federal threshold is
+$600, and people below it are marked "Under $600" rather than hidden. Several
+states have lower thresholds, the federal number has moved before, and which rows
+matter is your accountant's call, not the software's. It's easier to ignore a row
+than to discover a missing one in April.
+
+**A refund clawed back this year does not shrink last year's figure.** If you paid
+someone in November and a customer refunded in February, last year's number stays
+as it was — they genuinely received that money. The clawback reduces *this* year.
+Changing a year you've already filed against is a corrected form, which is a paper
+process and your accountant's decision, not something the software should do
+quietly behind you.
+
+**The year is counted in UTC.** A payout run late in the evening on 31 December
+US time falls into the next tax year. The exact window is printed at the bottom of
+the screen so the number can always be explained. If you want to avoid thinking
+about it at all, don't run a payout batch on New Year's Eve.
+
+### Non-US artists
+
+Somebody who has filed a W-8BEN shows as **"Not a US person"**. They're not a 1099
+at all — that's a different form — but they're still listed, with what you paid
+them, because your accountant needs to know. Ask them what to do with those.
+
+---
+
 ## 5. The safety rules built in, and why
 
 These are deliberate design choices. If someone proposes changing one, that's a
@@ -349,6 +425,7 @@ Be honest with yourself about this list.
 | **Shopify: built, not switched on** | The whole path is written and tested — a sale arrives, gets split, lands in your books. It is running against practice data because a live store needs a Partner account. When that comes through it is a settings change, not a build. |
 | **Stripe: built, not switched on** | Same story. The system can send a payment, refuses honestly when it can't, and never double-pays. It needs your Connect approval before it points at a real bank. |
 | **Bank connection: built, not switched on** | An artist can connect their bank from their own portal, and the system checks with Stripe whether they're actually cleared to be paid. Like everything else on this list, it needs your Connect approval before it points at real banks. |
+| **Tax paperwork is yours to file** | The Tax tab gives you the figures and the spreadsheet. It does not send anything to the IRS, and it doesn't hold anybody's social security number — Stripe does. See section 4a. |
 | **Advances not supported** | Paying someone up front and earning it back isn't built. Needed for music and book publishing. Don't sell to those industries yet. |
 
 ---

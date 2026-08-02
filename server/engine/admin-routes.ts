@@ -63,6 +63,7 @@ import {
 import { AuthError } from "./auth";
 import type { EngineDb } from "./ingest";
 import { formatMinor, parseDecimalToMinor } from "./money";
+import { REPORTING_THRESHOLD_MINOR } from "./tax/report-1099";
 import {
   retryPayout,
   runPayoutBatch,
@@ -881,6 +882,168 @@ export function createAdminRouter(
 
       res.json({ ok: true });
     })
+  );
+
+  // ---- Year-end payment reporting (1099) ----
+  //
+  // READ-ONLY, and deliberately NOT behind `write()`. A tenant whose trial has
+  // lapsed is read-only but still owes their contributors tax paperwork for
+  // money that already moved; withholding the figures they need to file would
+  // punish the contributors for the business's billing state, which is the same
+  // reasoning that keeps ingestion running in `entitlement()`.
+
+  /**
+   * Which year to report on.
+   *
+   * Defaults to the year that just ended once January arrives, because that is
+   * what somebody visiting this screen in filing season wants — but only from
+   * January to April. Outside that window the current year is the more useful
+   * default, since the owner is usually checking progress rather than filing.
+   */
+  function requestedYear(req: Request): number {
+    const raw = req.query.year;
+    if (raw !== undefined && raw !== "") {
+      const parsed = Number(raw);
+      if (!Number.isInteger(parsed)) throw new AdminValidationError("Year must be a number");
+      return parsed;
+    }
+    const now = new Date();
+    return now.getUTCMonth() <= 3 ? now.getUTCFullYear() - 1 : now.getUTCFullYear();
+  }
+
+  router.get("/t/:tenantSlug/admin/tax/years", requireAdmin, async (req: TenantRequest, res) => {
+    const tenant = req.engineTenant!;
+    const { listTaxYears } = await import("./tax/report-1099-query");
+    res.json({ years: await listTaxYears(db, tenant.id) });
+  });
+
+  router.get("/t/:tenantSlug/admin/tax/1099", requireAdmin, async (req: TenantRequest, res) => {
+    const tenant = req.engineTenant!;
+
+    let year: number;
+    try {
+      year = requestedYear(req);
+    } catch (error) {
+      if (error instanceof AdminValidationError) {
+        return res.status(400).json({ message: error.message });
+      }
+      throw error;
+    }
+
+    const { getTaxYearReport } = await import("./tax/report-1099-query");
+
+    let report;
+    try {
+      report = await getTaxYearReport(db, tenant.id, year);
+    } catch (error) {
+      // `taxYearWindow` refuses a year outside 2000–2200 rather than building a
+      // window nobody meant. That is the owner mistyping, not a server fault.
+      if (error instanceof RangeError) {
+        return res.status(400).json({ message: error.message });
+      }
+      throw error;
+    }
+
+    res.json({
+      year: report.year,
+      from: report.from.toISOString(),
+      until: report.until.toISOString(),
+      thresholdMinor: REPORTING_THRESHOLD_MINOR.toString(),
+      counts: {
+        rows: report.rows.length,
+        // Distinct people, which differs from `rows` as soon as anyone is paid
+        // in two currencies. The screen labels this one "people".
+        contributors: report.contributorCount,
+        reportable: report.reportableRowCount,
+        missingTaxForm: report.missingTaxFormCount,
+      },
+      totalsByCurrency: report.totalsByCurrency.map((total) => ({
+        currency: total.currency,
+        rowCount: total.rowCount,
+        total: money(total.totalMinor),
+      })),
+      rows: report.rows.map((row) => ({
+        contributorId: row.contributorId,
+        name: row.name,
+        email: row.email,
+        stripeAccountId: row.stripeAccountId,
+        taxFormType: row.taxFormType,
+        taxIdentityStatus: row.taxIdentityStatus,
+        currency: row.currency,
+        paid: money(row.paidMinor),
+        payoutCount: row.payoutCount,
+        firstPaidAt: row.firstPaidAt.toISOString(),
+        lastPaidAt: row.lastPaidAt.toISOString(),
+        flags: row.flags,
+      })),
+    });
+  });
+
+  /**
+   * The same figures as a download.
+   *
+   * ⚠️ THE EXPORT IS AUDIT-LOGGED, THE JSON READ IS NOT, and the asymmetry is
+   * the point. This file leaves the system: it lands in a downloads folder and
+   * is emailed to an accountant, and it names every contributor alongside what
+   * they were paid. Looking at a screen and taking a copy away are different
+   * acts, and only the second one is worth being able to answer questions about
+   * later. Logged AFTER the report is built, so a failed read never records an
+   * export that did not happen.
+   */
+  router.get(
+    "/t/:tenantSlug/admin/tax/1099.csv",
+    requireAdmin,
+    async (req: TenantRequest, res) => {
+      const tenant = req.engineTenant!;
+      const session = (req as TenantRequest & { adminSession?: AdminSession }).adminSession!;
+
+      let year: number;
+      try {
+        year = requestedYear(req);
+      } catch (error) {
+        if (error instanceof AdminValidationError) {
+          return res.status(400).json({ message: error.message });
+        }
+        throw error;
+      }
+
+      const { getTaxYearReport } = await import("./tax/report-1099-query");
+      const { csvFilename, toCsv } = await import("./tax/report-1099");
+
+      let report;
+      try {
+        report = await getTaxYearReport(db, tenant.id, year);
+      } catch (error) {
+        if (error instanceof RangeError) {
+          return res.status(400).json({ message: error.message });
+        }
+        throw error;
+      }
+
+      await db.insert(schema.auditLog).values({
+        tenantId: tenant.id,
+        actorType: "tenant_user",
+        actorId: session.tenantUserId,
+        action: "export_tax_report",
+        entityType: "tax_report",
+        entityId: String(year),
+        after: {
+          year,
+          rowCount: report.rows.length,
+          totalsByCurrency: report.totalsByCurrency.map((total) => ({
+            currency: total.currency,
+            totalMinor: total.totalMinor.toString(),
+          })),
+        },
+      });
+
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${csvFilename(tenant.slug, year)}"`
+      );
+      res.send(toCsv(report));
+    }
   );
 
   return router;

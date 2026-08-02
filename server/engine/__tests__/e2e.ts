@@ -42,6 +42,8 @@ import {
   setContributorPassword,
 } from "../auth";
 import { getPayoutHistory, getStatement } from "../statement-query";
+import { getTaxYearReport, listTaxYears } from "../tax/report-1099-query";
+import { toCsv } from "../tax/report-1099";
 import { authenticateTenantUser, createTenantUser } from "../admin-auth";
 import {
   getOverview,
@@ -2386,6 +2388,200 @@ async function main() {
     assert.ok(dueSweep.trialWarnings.sent >= 1);
     assert.ok(earlyMail.lastTo("eli@fresh.example"));
   });
+
+  // ---- Year-end payment reporting (1099) ----
+  //
+  // Proved against real Postgres because every claim here is a claim about what
+  // the QUERY selects, and that is where a wrong tax figure would actually come
+  // from. The pure rules — flags, thresholds, CSV escaping — are covered in
+  // `tax-1099.test.ts` and are not repeated.
+  //
+  // A dedicated tenant, populated with payout rows directly. Driving these
+  // through real payout runs would mean bending the clock and the ledger to
+  // produce a failed transfer in a specific December, and the resulting
+  // assertions would be about the fixtures rather than about the report.
+  console.log("\n21. Year-end payment reporting");
+
+  await db.insert(schema.tenants).values({
+    id: "t-tax", name: "Tax Test Co", slug: "taxco", clawbackPolicy: "recoup", payoutHoldDays: 0,
+  });
+
+  await db.insert(schema.contributors).values([
+    { id: "c-tax-w9", tenantId: "t-tax", name: "Wanda W9", email: "wanda@example.com" },
+    { id: "c-tax-none", tenantId: "t-tax", name: "Noah None", email: "noah@example.com" },
+    { id: "c-tax-w8", tenantId: "t-tax", name: "Farid Foreign", email: "farid@example.com" },
+    { id: "c-tax-small", tenantId: "t-tax", name: "Tina Tiny", email: "tina@example.com" },
+  ]);
+
+  await db.insert(schema.contributorIdentities).values([
+    {
+      tenantId: "t-tax", contributorId: "c-tax-w9", stripeAccountId: "acct_wanda",
+      stripePayoutsEnabled: true, taxFormType: "W-9", taxIdentityStatus: "collected",
+    },
+    {
+      tenantId: "t-tax", contributorId: "c-tax-w8", stripeAccountId: "acct_farid",
+      stripePayoutsEnabled: true, taxFormType: "W-8BEN", taxIdentityStatus: "collected",
+    },
+    {
+      tenantId: "t-tax", contributorId: "c-tax-small", stripeAccountId: "acct_tina",
+      stripePayoutsEnabled: true, taxFormType: "W-9", taxIdentityStatus: "collected",
+    },
+    // Noah deliberately has NO identity row at all — the LEFT JOIN case. He was
+    // paid, so he must appear; an inner join would hide precisely the person
+    // this report exists to surface.
+  ]);
+
+  const taxPayout = (
+    contributorId: string,
+    amountMinor: bigint,
+    completedAt: string,
+    overrides: Partial<typeof schema.payouts.$inferInsert> = {}
+  ) => ({
+    tenantId: "t-tax",
+    contributorId,
+    status: "paid" as const,
+    amountMinor,
+    currency: "USD",
+    completedAt: new Date(completedAt),
+    ...overrides,
+  });
+
+  await db.insert(schema.payouts).values([
+    // Wanda: three payments across 2026, one of them right on each boundary.
+    taxPayout("c-tax-w9", 50000n, "2026-01-01T00:00:00Z"), // first instant IN
+    taxPayout("c-tax-w9", 120000n, "2026-06-15T12:00:00Z"),
+    taxPayout("c-tax-w9", 30000n, "2026-12-31T23:59:59Z"), // last instant IN
+    // …and one a second later, which belongs to 2027, not 2026.
+    taxPayout("c-tax-w9", 999999n, "2027-01-01T00:00:00Z"),
+    // …and one just before the window opened.
+    taxPayout("c-tax-w9", 888888n, "2025-12-31T23:59:59Z"),
+
+    // Money that did not move. None of these may appear anywhere.
+    taxPayout("c-tax-w9", 700000n, "2026-05-01T00:00:00Z", { status: "failed", completedAt: null }),
+    taxPayout("c-tax-w9", 700001n, "2026-05-02T00:00:00Z", { status: "pending", completedAt: null }),
+    taxPayout("c-tax-w9", 700002n, "2026-05-03T00:00:00Z", { status: "cancelled", completedAt: null }),
+    taxPayout("c-tax-w9", 700003n, "2026-05-04T00:00:00Z", { status: "processing", completedAt: null }),
+
+    // A payment with a reserve withheld alongside it. Only `amountMinor` moved.
+    taxPayout("c-tax-none", 40000n, "2026-03-01T00:00:00Z", { reserveHeldMinor: 25000n }),
+
+    taxPayout("c-tax-w8", 250000n, "2026-04-01T00:00:00Z"),
+    taxPayout("c-tax-small", 59999n, "2026-07-01T00:00:00Z"), // one cent under $600
+    // Same person, another currency. Two rows, never one merged total.
+    taxPayout("c-tax-small", 10000n, "2026-08-01T00:00:00Z", { currency: "GBP" }),
+  ]);
+
+  const taxReport = await getTaxYearReport(db, "t-tax", 2026);
+  const taxRow = (id: string, currency = "USD") =>
+    taxReport.rows.find((r) => r.contributorId === id && r.currency === currency);
+
+  check("only payouts that actually moved money are counted", () => {
+    // 500 + 1200 + 300 = $2,000. The four non-paid rows total $28,000.06 and
+    // must contribute nothing.
+    assert.equal(taxRow("c-tax-w9")!.paidMinor, 200000n);
+    assert.equal(taxRow("c-tax-w9")!.payoutCount, 3);
+  });
+
+  check("the first instant of the year is inside the window", () =>
+    assert.equal(taxRow("c-tax-w9")!.firstPaidAt.toISOString(), "2026-01-01T00:00:00.000Z")
+  );
+
+  check("the last second of the year is inside the window", () =>
+    assert.equal(taxRow("c-tax-w9")!.lastPaidAt.toISOString(), "2026-12-31T23:59:59.000Z")
+  );
+
+  const taxReport2027 = await getTaxYearReport(db, "t-tax", 2027);
+  check("a payment at the stroke of midnight belongs to the NEW year", () => {
+    assert.equal(taxReport2027.rows.find((r) => r.contributorId === "c-tax-w9")!.paidMinor, 999999n);
+  });
+
+  const taxReport2025 = await getTaxYearReport(db, "t-tax", 2025);
+  check("and the year before keeps its own, with no overlap", () =>
+    assert.equal(taxReport2025.rows.find((r) => r.contributorId === "c-tax-w9")!.paidMinor, 888888n)
+  );
+
+  check("no payment is counted in two years", () => {
+    const total2025 = taxReport2025.totalsByCurrency.find((t) => t.currency === "USD")!.totalMinor;
+    const total2027 = taxReport2027.totalsByCurrency.find((t) => t.currency === "USD")!.totalMinor;
+    assert.equal(total2025, 888888n);
+    assert.equal(total2027, 999999n);
+  });
+
+  check("⚠️ a withheld reserve is NOT reported as paid", () => {
+    // The two columns sit next to each other and one day somebody will add
+    // them up. $400 moved; the $250 reserve stayed in Noah's balance.
+    assert.equal(taxRow("c-tax-none")!.paidMinor, 40000n);
+  });
+
+  check("someone paid with no identity row at all still appears", () => {
+    const noah = taxRow("c-tax-none")!;
+    assert.equal(noah.name, "Noah None");
+    assert.equal(noah.stripeAccountId, null);
+    assert.ok(noah.flags.includes("no_tax_form"));
+  });
+
+  check("a W-8BEN is reported as foreign, not as missing paperwork", () => {
+    const farid = taxRow("c-tax-w8")!;
+    assert.ok(farid.flags.includes("foreign_person"));
+    assert.ok(!farid.flags.includes("no_tax_form"));
+  });
+
+  check("only the genuinely unfileable are counted as missing paperwork", () =>
+    assert.equal(taxReport.missingTaxFormCount, 1)
+  );
+
+  check("a cent under $600 is listed but not counted as reportable", () => {
+    const tina = taxRow("c-tax-small")!;
+    assert.equal(tina.paidMinor, 59999n);
+    assert.ok(tina.flags.includes("below_threshold"));
+    // Wanda ($2,000), Noah ($400 — under), Farid ($2,500), Tina ($599.99).
+    assert.equal(taxReport.reportableRowCount, 2);
+  });
+
+  check("one person paid in two currencies is two rows", () => {
+    assert.ok(taxRow("c-tax-small", "GBP"));
+    assert.equal(taxRow("c-tax-small", "GBP")!.paidMinor, 10000n);
+    assert.equal(taxReport.totalsByCurrency.length, 2);
+  });
+
+  check("…and is still counted as one person, not two", () => {
+    assert.equal(taxReport.rows.length, 5);
+    assert.equal(taxReport.contributorCount, 4);
+  });
+
+  check("the dollar total never absorbs another currency", () => {
+    const usd = taxReport.totalsByCurrency.find((t) => t.currency === "USD")!;
+    // 2000 + 400 + 2500 + 599.99
+    assert.equal(usd.totalMinor, 200000n + 40000n + 250000n + 59999n);
+  });
+
+  check("the report is tenant-scoped — 369's payouts are not in Tax Test Co's", () => {
+    assert.ok(taxReport.rows.every((r) => r.contributorId.startsWith("c-tax-")));
+  });
+
+  const taxYears = await listTaxYears(db, "t-tax");
+  check("the year picker offers exactly the years money moved in", () =>
+    assert.deepEqual(taxYears, [2025, 2026, 2027])
+  );
+
+  check("a year with no payments reports empty rather than failing", async () => {
+    // 2024 is before this tenant existed. An empty report and a broken one look
+    // identical on screen, so it has to be genuinely empty, not an error.
+  });
+  const emptyYear = await getTaxYearReport(db, "t-tax", 2024);
+  check("…and that empty report has zero rows and no totals", () => {
+    assert.equal(emptyYear.rows.length, 0);
+    assert.equal(emptyYear.totalsByCurrency.length, 0);
+  });
+
+  // The CSV over real data, since that is the artefact that leaves the system.
+  const taxCsv = toCsv(taxReport);
+  check("the CSV has a header plus one line per row", () =>
+    assert.equal(taxCsv.trimEnd().split("\r\n").length, taxReport.rows.length + 1)
+  );
+  check("the CSV carries plain decimals a spreadsheet can sum", () =>
+    assert.ok(taxCsv.includes(",2000.00,"))
+  );
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

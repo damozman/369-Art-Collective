@@ -513,3 +513,69 @@ export function changePlan(
     body: JSON.stringify({ planKey, interval }),
   });
 }
+
+// ---- Year-end payment reporting (1099) ----
+
+/**
+ * Why a row needs looking at before it is filed. Mirrors `TaxRowFlag` on the
+ * server; the wording each one gets on screen lives in `tax-tab.tsx`, once.
+ */
+export type TaxRowFlag =
+  | "no_tax_form"
+  | "foreign_person"
+  | "invalid_tax_identity"
+  | "below_threshold"
+  | "non_usd";
+
+export interface TaxYearRow {
+  contributorId: string;
+  name: string;
+  email: string | null;
+  stripeAccountId: string | null;
+  taxFormType: string | null;
+  taxIdentityStatus: string;
+  currency: string;
+  paid: Money;
+  payoutCount: number;
+  firstPaidAt: string;
+  lastPaidAt: string;
+  flags: TaxRowFlag[];
+}
+
+export interface TaxYearReport {
+  year: number;
+  /** Inclusive start of the window, ISO/UTC. */
+  from: string;
+  /** EXCLUSIVE end. Printed on screen so the figure can always be explained. */
+  until: string;
+  thresholdMinor: string;
+  counts: {
+    rows: number;
+    /** Distinct people. Differs from `rows` when someone is paid in two currencies. */
+    contributors: number;
+    reportable: number;
+    missingTaxForm: number;
+  };
+  totalsByCurrency: { currency: string; rowCount: number; total: Money }[];
+  rows: TaxYearRow[];
+}
+
+export function getTaxYears(tenantSlug: string): Promise<{ years: number[] }> {
+  return request(`${base(tenantSlug)}/tax/years`);
+}
+
+export function getTaxReport(tenantSlug: string, year: number): Promise<TaxYearReport> {
+  return request(`${base(tenantSlug)}/tax/1099?year=${encodeURIComponent(String(year))}`);
+}
+
+/**
+ * Where the CSV download points.
+ *
+ * A plain link rather than a fetch: the browser's own download handling reads
+ * the `Content-Disposition` filename the server sets, and rebuilding that
+ * through a blob would mean naming the file twice, in two places, from two
+ * pieces of code that would eventually disagree.
+ */
+export function taxCsvUrl(tenantSlug: string, year: number): string {
+  return `${base(tenantSlug)}/tax/1099.csv?year=${encodeURIComponent(String(year))}`;
+}

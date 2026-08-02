@@ -5,8 +5,7 @@ An honest map of the distance between here and a product someone pays for.
 Written for the owner. Kept current as things land — if this file says something is
 missing and it isn't, fix the file.
 
-Last updated: 2026-08-02 (steps 1-4 done; step 5 done except 1099 and the audit
-viewer).
+Last updated: 2026-08-02 (steps 1-4 done; step 5 done except the audit viewer).
 
 ---
 
@@ -61,8 +60,11 @@ Stripe key, which is a settings change rather than a build.
   `/pricing`, runs a 14-day trial with no card, and subscribes monthly or yearly.
 - **The daily job** — the two reminders that are due because time passed rather
   than because somebody clicked something.
+- **Year-end payment reporting** — what you paid each person in a calendar year,
+  on screen and as a spreadsheet, with the people whose tax details are missing
+  called out.
 
-364 unit tests, 225 end-to-end checks against a real database, every screen driven
+394 unit tests, 245 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
@@ -96,7 +98,7 @@ Everything left in this group waits on somebody else.
 | Missing | What it means |
 |---|---|
 | ~~Email~~ | **Built.** Artists are told when they are paid; you are told about trials, failed payments and stuck sales. Needs a Resend key to send. |
-| **1099 export** | US tax reporting for contributors. Stripe issues the forms; we supply the data. |
+| ~~1099 export~~ | **Built.** What you paid each person in a year, on screen and as a spreadsheet. Stripe still issues the forms. |
 | **Multi-currency** | USD only by decision. Fine until a non-US customer appears. |
 
 ### Group 4 — Opens new markets
@@ -197,7 +199,8 @@ mechanics:
 It also tells a customer when they are paying for *more* than they use. That costs
 money, and it is the reason the rest of it is believable.
 
-**5. Email ✅ DONE. The daily job ✅ DONE. 1099 and the audit viewer remain.**
+**5. Email ✅ DONE. The daily job ✅ DONE. Year-end tax reporting ✅ DONE. The
+audit viewer remains.**
 
 An artist gets an email when they are paid, naming the business and linking to
 the full breakdown. You get told when a trial is about to end, when a payment
@@ -240,6 +243,33 @@ without sending it, and those reminders could never be recovered.
 
 `npm run job:daily` runs it by hand, and lets an external scheduler drive it
 instead if the app is ever hosted somewhere that sleeps between requests.
+
+**Year-end tax reporting ✅ DONE.** A Tax tab in the console showing what you
+actually paid each person during a calendar year, and a spreadsheet to send your
+accountant.
+
+Four things about it are decisions rather than mechanics:
+
+- **It shows what you PAID, not what people EARNED.** Every other screen in the
+  console shows earnings. Tax reporting works on money that actually changed
+  hands, so somebody who earned in December and was paid in January belongs to
+  the following year. The screen says so, because an owner who reads it as the
+  familiar number will think it is broken.
+- **It does not file anything, and never claims to.** The money moves through
+  your Stripe account, so Stripe issues the forms. What this gives you is your
+  own record — the number your accountant files from, and the number you check
+  Stripe's reporting against.
+- **Tax ID numbers are deliberately not stored anywhere in this system.** Stripe
+  collects and keeps them. Holding social security numbers would make this a far
+  more sensitive system to run, for no gain, because the people who file already
+  have them.
+- **Nobody is filtered out.** People under the $600 federal threshold are listed
+  and marked rather than hidden — several states are lower, the federal figure
+  has moved before, and it is your accountant's call, not the software's.
+
+What it leads with is the actionable part: **how many people you paid whose tax
+details aren't on file.** Those are the ones that cannot be filed for, and the
+fix is asking them to finish connecting their bank.
 
 **6. CSV import, then advances.**
 New markets. Only worth doing when there's demand pointing at them — and advances

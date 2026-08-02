@@ -127,7 +127,7 @@ Both were resolved in step 5.)
   step 1 (Shopify + Stripe against fixtures) ✅ · step 2 (artist bank
   onboarding) ✅ · step 3 (works + settings screens, and recording a missing
   cost) ✅ · step 4 (billing, signup and pricing) ✅ · step 5 email ✅ · the
-  daily job ✅ (1099 and the audit viewer remain).**
+  daily job ✅ · the 1099 export ✅ (the audit viewer remains).**
 - **What exists:** the engine (16 `engine_*` tables, canonical `RevenueEvent`, §6
   rules, immutable ledger, §8 reversals, transactional ingestion, payout batches
   with the state machine), the **contributor portal** at `/portal/:tenantSlug`, the
@@ -139,7 +139,7 @@ Both were resolved in step 5.)
   (`server/engine/payout-account.ts`, Account Links + status read back from Stripe),
   **billing** (plans, trials, usage counting, annual, the Stripe charging seam,
   self-serve signup at `/signup`) and **email** (`server/engine/email/`).
-- **364 unit tests · 225 end-to-end checks against real Postgres.** Every screen has
+- **394 unit tests · 245 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -176,8 +176,11 @@ Summary of that order:
 5. ~~Email~~ — **done, see below.** Two things remain from this step, and they
    are **the next work in the queue, in this order**:
    - ~~**The daily job.**~~ — **done.** See "The daily job" below.
-   - **1099 export.** US tax reporting. Stripe issues the forms; we supply data.
+   - ~~**1099 export.**~~ — **done.** See "The 1099 export" below.
    - **The audit-log viewer.** Every change is already recorded; nothing shows it.
+     **This is the next thing to build** — and the tax export just added a new
+     entry type to it (`export_tax_report`), so the viewer now has something to
+     show beyond rule edits.
 6. CSV import, then advances (§10b) — advances only once a real publishing or music
    deal can be seen, so the shape is drawn rather than guessed.
 
@@ -282,6 +285,8 @@ third-party log sinks, the client bundle, and the ~70 obsolete
 | `server/engine/email/notifications.ts` | who gets told what, all failure-swallowing |
 | `server/engine/jobs/daily.ts` | the sweep — trial threshold, who gets nagged. Idempotent by design |
 | `server/engine/jobs/scheduler.ts` | the hourly tick. REFUSES to start without a configured sender |
+| `server/engine/tax/report-1099.ts` | pure: the year window, flags, thresholds, CSV. Read its header before changing a rule |
+| `server/engine/tax/report-1099-query.ts` | the grouped read — paid payouts only, summed in Postgres |
 | `server/engine/review.ts` | + `recordEventCost` — typing in a cost the channel never sent, guarded on 'nothing allocated yet' |
 
 ### The adapters — §4's two seams, filled in
@@ -536,6 +541,67 @@ send-hour preference — a real feature, not a tweak to the interval.
 Signup, payout and payment-failure notifications still fire from their request
 paths and are not part of the sweep.
 
+### The 1099 export — BUILT. Five rules decide what lands in a year
+
+`server/engine/tax/` plus a **Tax tab** in the owner console. It does **not file
+anything** and the copy must never imply it does: by ratified decision #1 the money
+moves through the *tenant's* Stripe, so Stripe issues forms under their account. What
+we supply is their own record of what they paid whom — the figure their accountant
+files from and reconciles Stripe against.
+
+**⚠️ There is no TIN/SSN/EIN in the export, and there is no column for one.** Tax
+identity is collected by Stripe during Connect onboarding and stays there (§5 #14).
+Adding a TIN column would import the breach-notification and retention obligations
+attached to the most regulated identifier a US person has, for no gain — the party
+that files already has it. If a customer asks, the answer is "from Stripe's tax
+reporting", not "we'll add a field".
+
+The five rules, each argued at length in `report-1099.ts`'s header:
+
+1. **Cash basis.** Sums PAYOUTS, never ledger allocations. Earned in December, paid
+   in January ⇒ the *following* year. Reporting earnings instead is the single most
+   common way these come out wrong.
+2. **Only money that moved** — `status = 'paid'`, nothing else. A failed payout later
+   retried gets `completedAt` stamped at the retry, so it counts once, in the right
+   year.
+3. **The reserve is not paid.** `amountMinor` is already the transferred figure;
+   `reserveHeldMinor` sits in the next column and stays in the contributor's balance.
+   An e2e check pins this because one day somebody will add them up.
+4. **A closed year is never restated.** A 2027 clawback reduces 2027, not 2026. The
+   money was genuinely received; restating a filed year is a corrected 1099 and an
+   accountant's decision. Said on screen rather than buried.
+5. **The year boundary is UTC and is printed on the report.** A payout run at 19:00 US
+   Eastern on 31 December falls in the next tax year. Consistent with every other date
+   in the system; local-midnight boundaries would need a per-tenant timezone.
+
+**Thresholds are reported, never enforced.** `REPORTING_THRESHOLD_MINOR` ($600) marks
+rows; nothing is filtered out. State thresholds are lower, the federal figure moves,
+and a row an accountant ignores costs nothing while a row never shown cannot be
+recovered. Same reasoning as everywhere else here: flag, don't hide.
+
+**Three more things that are decisions rather than mechanics:**
+
+- **The read is not audit-logged; the CSV download is.** Looking at a screen and
+  taking a copy away are different acts, and only the second one leaves the system
+  carrying every contributor's name and what they were paid. Logged *after* the report
+  is built, so a failed read never records an export that did not happen.
+- **The routes are deliberately NOT behind `write()`.** A lapsed trial is read-only but
+  still owes contributors tax paperwork for money that already moved — same reasoning
+  that keeps ingestion running in `entitlement()`.
+- **⚠️ CSV formula injection is guarded in `csvField`.** A cell beginning `=`, `+`,
+  `-`, `@`, tab or CR is a FORMULA to every spreadsheet. Contributor names are
+  tenant-supplied or adapter-imported, and this file is opened by an accountant. Every
+  field is prefixed with an apostrophe when it leads with one of those, not just the
+  ones that look risky — "which columns are user-controlled" is exactly the fact that
+  changes quietly when a column is added.
+
+**A defect was found by loading the screen, again.** The summary card labelled the ROW
+count as "people paid", so a business paying one artist in two currencies was told it
+had paid two. The total beside it was right, which is worse — the wrong number is the
+one an owner checks against their own records first. `contributorCount` is now
+distinct people and is what the screen reads. **This is the fifth defect found by
+loading the app that a green `tsc`, a green build and a green suite all missed.**
+
 **⚠️ A live defect was found by BOOTING THE APP while building this, and it had
 nothing to do with the job.** `ResendEmailSender` loaded the provider through a
 bare `require`. This package is ESM, so `require` is not defined at runtime — but
@@ -580,8 +646,8 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 364 unit tests, no network, no database
-npm run test:e2e      # 225 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 394 unit tests, no network, no database
+npm run test:e2e      # 245 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -752,9 +818,11 @@ Sessions do not share memory. Everything below is the state as of the last commi
 The user asked for these to survive into the next session. None is blocked on code;
 two are waiting on them, one is the next thing to build.
 
-1. ~~**Next build: the daily job.**~~ — **done 2026-08-02.** See "The daily job"
-   above. **Next: 1099 export, then the audit-log viewer** — both `WHATS-LEFT.md`
-   step 5 leftovers.
+1. ~~**Next build: the daily job.**~~ — **done 2026-08-02.** ~~**Then the 1099
+   export.**~~ — **also done 2026-08-02.** See "The daily job" and "The 1099
+   export" above. **Next: the audit-log viewer**, the last `WHATS-LEFT.md` step 5
+   leftover. After that, step 6 (CSV import), plus password reset and the
+   connect-a-store screen, which sit outside the numbered order.
 2. **During the Stripe Connect application, confirm the one unverified assumption**
    — that contributor accounts can be created under the *tenant's* Stripe via the
    `Stripe-Account` header. See "Payout accounts" above. Sandboxes cannot reach
@@ -771,12 +839,12 @@ building faster.
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 364 unit tests — no network, no database
+npm test          # 394 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (225 checks against real Postgres) start the local database
+For the end-to-end run (245 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e

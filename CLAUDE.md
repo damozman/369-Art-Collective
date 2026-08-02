@@ -159,7 +159,9 @@ Both were resolved in step 5.)
   step 1 (Shopify + Stripe against fixtures) ✅ · step 2 (artist bank
   onboarding) ✅ · step 3 (works + settings screens, and recording a missing
   cost) ✅ · step 4 (billing, signup and pricing) ✅ · step 5 email ✅ · the
-  daily job ✅ · the 1099 export ✅ (the audit viewer remains).**
+  daily job ✅ · the 1099 export ✅ · password reset ✅ · the Changes tab ✅.**
+  **Steps 1-5 are complete. Only step 6 (CSV import, then advances) remains,
+  plus the connect-a-store screen which waits on the Shopify Partner account.**
 - **What exists:** the engine (16 `engine_*` tables, canonical `RevenueEvent`, §6
   rules, immutable ledger, §8 reversals, transactional ingestion, payout batches
   with the state machine), the **contributor portal** at `/portal/:tenantSlug`, the
@@ -915,34 +917,25 @@ Sessions do not share memory. Everything below is the state as of the last commi
 3. The engine table above. Every module opens with a comment explaining *why* it is
    shaped the way it is; those comments are load-bearing, not decoration.
 
-### ⚠️ CARRIED OVER — the open items as of 2026-08-02
+### ⚠️ CARRIED OVER — the open items as of 2026-08-02 (end of session)
 
-Written at the end of the session that built the daily job and the 1099 export.
-None is blocked on code; two are waiting on the user, one is the next thing to build.
+Written at the end of the session that built password reset and the Changes tab.
+Nothing here is blocked on code. Two items wait on the user; one is the next
+thing to build.
 
-**1. ~~Password reset~~ and ~~the audit-log viewer~~ — both done 2026-08-02.**
-The user said "both are important" when asked which came first. With those, the
-whole `WHATS-LEFT.md` numbered order is finished except step 6.
+**1. The whole `WHATS-LEFT.md` numbered order is now finished except step 6.**
+Steps 1-5 are done, including the daily job, the 1099 export, password reset and
+the audit-log viewer. The user was asked which of the last two came first and
+said *"both are important"*, so both were built.
 
-**Next: step 6 — CSV import, then advances.** Advances only once a real
-publishing or music deal can be seen, so the shape is drawn rather than guessed
-(blueprint §10b). The **connect-a-store screen** also remains, waiting on the
-Shopify Partner account. The last `WHATS-LEFT.md` step 5 leftover.
-Every change is already recorded in `engine_audit_log` — rule edits, review
-resolutions, settings changes, and now tax-report exports (`export_tax_report`,
-added by the 1099 work) — and **nothing displays any of it.** After that: step 6
-(CSV import, then advances), plus **password reset** for both portals and the
-**connect-a-store screen**, which sit outside the numbered order. The
-connect-a-store screen waits on the Shopify Partner account; the other two do not
-wait on anything.
+**Next: step 6 — CSV import, then advances.** The user's stated position at the
+end of the session was that CSV import is worth doing and **advances are not
+yet** — advances should wait until a real publishing or music deal can be seen,
+so the shape is drawn from a real structure rather than guessed (blueprint §10b).
+Confirm that is still their view before starting.
 
-⚠️ **Three questions were put to the user at the end of that session and had not
-been answered when it closed.** Ask rather than assuming:
-   - Track A status (below).
-   - Whether the audit viewer really is next, or password reset first.
-   - Whether anything about the new Tax tab should change before a real accountant
-     sees it — the judgement calls about what to show and what to warn about are
-     mine, not theirs.
+Also open and outside the numbered order: the **connect-a-store screen**, which
+waits on the Shopify Partner account.
 
 **2. During the Stripe Connect application, confirm the one unverified assumption**
 — that contributor accounts can be created under the *tenant's* Stripe via the
@@ -954,11 +947,18 @@ decision #1's shape. **Do not promise a customer it works before this is checked
 user's decision. Do not raise it as a blocker before then — see "The invented cost
 fixtures — scope corrected" for why it blocks the marketplace and not the engine.
 
-**Track A was still the critical path and still not started as of 2026-08-01**, and
-was asked about again on 2026-08-02 without an answer arriving before the session
-ended: Shopify Partner, Stripe Connect, App Store research, design-partner
-conversations, 369 selling again. **Ask for status rather than assuming**; none of
-it goes faster by building faster.
+**4. The Tax tab is unreviewed by an accountant.** Asked on 2026-08-02 whether
+anything should change before one sees it; the user said *"Not certain. I am not
+an accountant but I will check into it later."* The judgement calls in it — cash
+basis, what is flagged, what is warned about — are mine, not theirs, and have not
+been checked by anyone qualified. **Do not treat them as ratified.**
+
+**Track A: asked about on 2026-08-01 and again on 2026-08-02.** On the second
+occasion the user said they would *"work on that later tonight"*. It had not
+started as of that answer. Shopify Partner, Stripe Connect, App Store research,
+design-partner conversations, 369 selling again. **Ask for status; do not assume
+progress, and do not infer it from the passage of time.** With the build list
+essentially finished, this is now the only thing on the critical path.
 
 **Sequencing rule, restated because it has been broken before:** do not use
 time-to-revenue as an argument for ordering work. The user pushed back on this

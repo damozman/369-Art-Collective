@@ -1140,6 +1140,63 @@ export const emailLog = pgTable(
 );
 
 // ============================================================
+// Password resets
+// ============================================================
+
+/** Which of the two sign-ins a reset belongs to. They are separate tables. */
+export const resetSubjectEnum = pgEnum("engine_reset_subject", [
+  "contributor",
+  "tenant_user",
+]);
+
+/**
+ * A pending password reset.
+ *
+ * ⚠️ `tokenHash` IS A HASH, NEVER THE TOKEN. The token exists only in the email
+ * and in the link the person clicks. Storing it in readable form would make a
+ * database backup a set of live account-takeover links for every outstanding
+ * reset — the same reasoning that keeps provider credentials sealed in
+ * `engine_source_connections`, applied to something even shorter-lived.
+ *
+ * Rows are kept after use rather than deleted, so "this link was already used"
+ * can be said precisely instead of being indistinguishable from "this link was
+ * never real".
+ */
+export const passwordResets = pgTable(
+  "engine_password_resets",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    tenantId: varchar("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+
+    subject: resetSubjectEnum("subject").notNull(),
+    /** `contributors.id` or `tenant_users.id` — no FK, because it is one of two. */
+    subjectId: varchar("subject_id").notNull(),
+
+    tokenHash: text("token_hash").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    usedAt: timestamp("used_at"),
+
+    /** Where the request came from, so a burst of them is investigable. */
+    requestedIp: text("requested_ip"),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    // The lookup path: a token arrives, and this is the only way to find it.
+    tokenHashUnique: uniqueIndex("engine_password_resets_token_unique").on(
+      table.tokenHash
+    ),
+    subjectIdx: index("engine_password_resets_subject_idx").on(
+      table.subject,
+      table.subjectId
+    ),
+    expiresIdx: index("engine_password_resets_expires_idx").on(table.expiresAt),
+  })
+);
+
+// ============================================================
 // Inferred types
 // ============================================================
 
@@ -1159,3 +1216,4 @@ export type PayoutBatch = typeof payoutBatches.$inferSelect;
 export type Payout = typeof payouts.$inferSelect;
 export type SourceConnection = typeof sourceConnections.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
+export type PasswordReset = typeof passwordResets.$inferSelect;

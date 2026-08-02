@@ -96,6 +96,12 @@ import { signUp } from "../billing/signup";
 import { FixtureBillingClient } from "../billing/billing-client";
 import { FixtureEmailSender } from "../email/sender";
 import { sendOnce } from "../email/notify";
+import {
+  RESET_TTL_MINUTES,
+  checkReset,
+  completeReset,
+  requestReset,
+} from "../password-reset";
 import { notifyPayoutsPaid, notifyTrialEnding } from "../email/notifications";
 import { runDailyJobs } from "../jobs/daily";
 import {
@@ -2581,6 +2587,154 @@ async function main() {
   );
   check("the CSV carries plain decimals a spreadsheet can sum", () =>
     assert.ok(taxCsv.includes(",2000.00,"))
+  );
+
+  // ============================================================
+  // Password reset
+  // ============================================================
+
+  console.log("\n-- password reset --");
+
+  const resetNow = new Date("2026-08-02T12:00:00Z");
+
+  /**
+   * ⚠️ RULE 2. An unknown address must be indistinguishable from a known one.
+   * A form that says "no account with that email" is a free membership oracle,
+   * and on a payouts product it confirms who a business pays.
+   */
+  const unknown = await requestReset(db, {
+    tenantId: "t-369",
+    subject: "contributor",
+    email: "nobody@example.com",
+    now: resetNow,
+  });
+  check("an unknown address yields no token", () => {
+    assert.equal(unknown.delivered, false);
+    assert.equal(unknown.token, undefined);
+  });
+
+  const known = await requestReset(db, {
+    tenantId: "t-369",
+    subject: "contributor",
+    email: "alice@example.com",
+    now: resetNow,
+  });
+  check("a known address yields a token", () => assert.ok(known.token));
+
+  /** ⚠️ RULE 1. The token must not be readable in the database. */
+  const storedResets = await db
+    .select()
+    .from(schema.passwordResets)
+    .where(eq(schema.passwordResets.tenantId, "t-369"));
+
+  check("the token is stored hashed, never in readable form", () => {
+    assert.ok(storedResets.length > 0);
+    for (const row of storedResets) {
+      assert.notEqual(row.tokenHash, known.token);
+      assert.ok(!row.tokenHash.includes(known.token!));
+    }
+  });
+
+  const goodCheck = await checkReset(db, known.token!, resetNow);
+  check("a fresh link is valid", () => assert.equal(goodCheck.valid, true));
+
+  const bogus = await checkReset(db, "not-a-real-token", resetNow);
+  check("a made-up token is refused", () => assert.equal(bogus.valid, false));
+
+  /** ⚠️ RULE 4. */
+  const expiredCheck = await checkReset(
+    db,
+    known.token!,
+    new Date(resetNow.getTime() + (RESET_TTL_MINUTES + 1) * 60 * 1000)
+  );
+  check("a link past its hour is refused, and says so", () => {
+    assert.equal(expiredCheck.valid, false);
+    assert.match(expiredCheck.reason ?? "", /expired/i);
+  });
+
+  // A password that fails the policy must NOT burn the link — a typo should
+  // not cost somebody another email.
+  await assert.rejects(
+    () => completeReset(db, { token: known.token!, newPassword: "short", now: resetNow }),
+    /at least/
+  );
+  const afterBadPassword = await checkReset(db, known.token!, resetNow);
+  check("a rejected password leaves the link usable", () =>
+    assert.equal(afterBadPassword.valid, true)
+  );
+
+  // Request a second link BEFORE using the first, to prove rule 5.
+  const second = await requestReset(db, {
+    tenantId: "t-369",
+    subject: "contributor",
+    email: "alice@example.com",
+    now: resetNow,
+  });
+  check("a second request yields a different token", () =>
+    assert.notEqual(second.token, known.token)
+  );
+
+  const done = await completeReset(db, {
+    token: known.token!,
+    newPassword: "a brand new passphrase",
+    now: resetNow,
+  });
+  check("the reset completes against the right person", () => {
+    assert.equal(done.subject, "contributor");
+    assert.equal(done.subjectId, "c-alice");
+  });
+
+  const withNewPassword = await authenticateContributor(
+    db, "t-369", "alice@example.com", "a brand new passphrase"
+  );
+  check("the new password works", () =>
+    assert.equal(withNewPassword?.contributorId, "c-alice")
+  );
+
+  /** ⚠️ RULE 3. */
+  const replayedLink = await checkReset(db, known.token!, resetNow);
+  check("the used link cannot be replayed", () => {
+    assert.equal(replayedLink.valid, false);
+    assert.match(replayedLink.reason ?? "", /already been used/i);
+  });
+
+  /** ⚠️ RULE 5 — the stale link from the earlier request must die too. */
+  const stale = await checkReset(db, second.token!, resetNow);
+  check("every other outstanding link for that person also dies", () =>
+    assert.equal(stale.valid, false)
+  );
+
+  // The owner console's sign-in is a separate subject on separate tables.
+  const ownerReset = await requestReset(db, {
+    tenantId: "t-369",
+    subject: "tenant_user",
+    email: "owner@369.example",
+    now: resetNow,
+  });
+  check("an owner can reset too", () => assert.ok(ownerReset.token));
+
+  await completeReset(db, {
+    token: ownerReset.token!,
+    newPassword: "another good passphrase",
+    now: resetNow,
+  });
+  const ownerLogin = await authenticateTenantUser(
+    db, "t-369", "369", "owner@369.example", "another good passphrase"
+  );
+  check("the owner's new password works", () => assert.ok(ownerLogin));
+
+  /**
+   * Identity is (tenant, email). The same address at another business is a
+   * different account, and a reset must not reach across.
+   */
+  const crossTenantReset = await requestReset(db, {
+    tenantId: "t-press",
+    subject: "contributor",
+    email: "alice@example.com",
+    now: resetNow,
+  });
+  check("a reset does not reach into another business", () =>
+    assert.equal(crossTenantReset.delivered, false)
   );
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);

@@ -122,6 +122,11 @@ app.use((req, res, next) => {
     app.use("/api/engine", createSignupRouter(engineDb));
     app.use("/api/engine", createBillingRouter(engineDb));
 
+    // Forgot-password, for both sign-ins. No session — it exists precisely for
+    // people who cannot get one.
+    const { createPasswordResetRouter } = await import("./engine/password-reset-routes");
+    app.use("/api/engine", createPasswordResetRouter(engineDb));
+
     // The two emails that are due because time passed rather than because
     // somebody made a request. Returns null and says why when email is not
     // configured, which is the normal state locally — see `jobs/scheduler.ts`.

@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { login } from "@/lib/admin-api";
+import { ForgotPassword } from "@/pages/reset/password-reset";
 
 export function AdminLogin({
   tenantSlug,
@@ -26,6 +27,7 @@ export function AdminLogin({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [forgot, setForgot] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -39,6 +41,20 @@ export function AdminLogin({
       setError((err as Error).message);
       setSubmitting(false);
     }
+  }
+
+  if (forgot) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="w-full max-w-sm">
+          <ForgotPassword
+            tenantSlug={tenantSlug}
+            subject="tenant_user"
+            onBack={() => setForgot(false)}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -90,6 +106,15 @@ export function AdminLogin({
             >
               {submitting ? "Signing in…" : "Sign in"}
             </Button>
+
+            <button
+              type="button"
+              onClick={() => setForgot(true)}
+              className="block w-full text-center text-sm text-muted-foreground underline-offset-2 hover:underline"
+              data-testid="button-admin-forgot"
+            >
+              Forgotten your password?
+            </button>
           </form>
         </CardContent>
       </Card>

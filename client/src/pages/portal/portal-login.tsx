@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PortalApiError, login, type PortalTenant } from "@/lib/portal-api";
+import { ForgotPassword } from "@/pages/reset/password-reset";
 
 export function PortalLogin({
   tenant,
@@ -28,6 +29,7 @@ export function PortalLogin({
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [forgot, setForgot] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -47,6 +49,20 @@ export function PortalLogin({
       );
       setSubmitting(false);
     }
+  }
+
+  if (forgot) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+        <div className="w-full max-w-md">
+          <ForgotPassword
+            tenantSlug={tenant.slug}
+            subject="contributor"
+            onBack={() => setForgot(false)}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -107,6 +123,15 @@ export function PortalLogin({
             >
               {submitting ? "Signing in…" : "Sign in"}
             </Button>
+
+            <button
+              type="button"
+              onClick={() => setForgot(true)}
+              className="block w-full text-center text-sm text-muted-foreground underline-offset-2 hover:underline"
+              data-testid="button-portal-forgot"
+            >
+              Forgotten your password?
+            </button>
           </form>
         </CardContent>
       </Card>

@@ -171,7 +171,7 @@ Both were resolved in step 5.)
   (`server/engine/payout-account.ts`, Account Links + status read back from Stripe),
   **billing** (plans, trials, usage counting, annual, the Stripe charging seam,
   self-serve signup at `/signup`) and **email** (`server/engine/email/`).
-- **394 unit tests · 245 end-to-end checks against real Postgres.** Every screen has
+- **406 unit tests · 260 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -216,8 +216,8 @@ Summary of that order:
 6. CSV import, then advances (§10b) — advances only once a real publishing or music
    deal can be seen, so the shape is drawn rather than guessed.
 
-Also still open and not in the numbered order: **password reset** for both portals,
-and the **connect-a-store screen** (waits on the Shopify Partner account).
+Also still open and not in the numbered order: the **connect-a-store screen**
+(waits on the Shopify Partner account). ~~Password reset~~ is done.
 
 **Migrating 369 on as tenant #1 stays deferred** by ratified decision #11 until the
 user has evaluated the generic product cleanly.
@@ -316,6 +316,8 @@ third-party log sinks, the client bundle, and the ~70 obsolete
 | `server/engine/email/notify.ts` | `sendOnce` — the at-most-once guarantee |
 | `server/engine/email/notifications.ts` | who gets told what, all failure-swallowing |
 | `server/engine/jobs/daily.ts` | the sweep — trial threshold, who gets nagged. Idempotent by design |
+| `server/engine/password-reset.ts` | forgot-password for both sign-ins — hashed tokens, single use, hour-long |
+| `server/engine/password-reset-routes.ts` | the endpoints; every response identical whether or not an account exists |
 | `server/engine/jobs/scheduler.ts` | the hourly tick. REFUSES to start without a configured sender |
 | `server/engine/tax/report-1099.ts` | pure: the year window, flags, thresholds, CSV. Read its header before changing a rule |
 | `server/engine/tax/report-1099-query.ts` | the grouped read — paid payouts only, summed in Postgres |
@@ -521,6 +523,43 @@ and the payment-failed email says **nothing has been switched off** (`past_due`
 grants full access). Both are true; copy that implies otherwise would cause a
 panic about something that is not happening.
 
+### Password reset — BUILT. Five rules, each a known failure mode
+
+`server/engine/password-reset.ts` serves BOTH sign-ins (`subject` is
+`contributor` or `tenant_user`), scoped by tenant because identity is
+`(tenant, email)`.
+
+1. **The token is stored hashed.** `tokenHash` is SHA-256; the token exists in
+   readable form only in the email. A database backup must not be a set of live
+   account-takeover links. SHA-256 rather than bcrypt is deliberate — the input
+   is already 256 bits of CSPRNG, so there is nothing to slow a guesser down
+   about, and the lookup happens on a click.
+2. **⚠️ Requesting a reset never reveals whether an account exists.** Same
+   response for a known address, an unknown one, and a deactivated contributor.
+   `requestReset` deliberately does not report deliverability, so a route
+   cannot leak this by surfacing a send failure only for real addresses. The
+   confirmation screen matches that wording — do not "improve" either into
+   something more helpful. On a payouts product, confirming that a named person
+   is paid by a named business is itself a disclosure.
+3. **One use.** `usedAt` is set in the same transaction as the password change.
+4. **One hour**, `RESET_TTL_MINUTES`.
+5. **Using a link kills every other outstanding link for that person**, or a
+   stale one from three requests ago quietly widens the window rule 4 closes.
+
+Two more decisions worth keeping: a password that fails validation does NOT burn
+the link (a typo should not cost another email), and completing a reset does
+**not** sign the person in — holding the link is not proof of owning the mailbox
+it went to, and one extra step closes that gap.
+
+The reset email is sent directly rather than through `sendOnce`: a dedupe key
+would make a second request silently do nothing, and a reset must work on the
+second attempt. The rate limiter bounds it instead — 5/hour, tight because each
+request mails somebody who may not have asked.
+
+`PUBLIC_APP_URL` matters more here than anywhere else: without it the link is
+built from a client-controlled `Host` header, which would turn this endpoint
+into a credential harvester sending mail from our own domain.
+
 ### The daily job — BUILT. Four things are load-bearing
 
 `server/engine/jobs/` is what fires `notifyTrialEnding` and `notifyReviewWaiting`,
@@ -678,8 +717,8 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 394 unit tests, no network, no database
-npm run test:e2e      # 245 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 406 unit tests, no network, no database
+npm run test:e2e      # 260 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -850,7 +889,8 @@ Sessions do not share memory. Everything below is the state as of the last commi
 Written at the end of the session that built the daily job and the 1099 export.
 None is blocked on code; two are waiting on the user, one is the next thing to build.
 
-**1. Next build: the audit-log viewer.** The last `WHATS-LEFT.md` step 5 leftover.
+**1. ~~Password reset~~ — done 2026-08-02.** Both sign-ins. See "Password reset"
+below for the five rules it enforces. **Next build: the audit-log viewer.** The last `WHATS-LEFT.md` step 5 leftover.
 Every change is already recorded in `engine_audit_log` — rule edits, review
 resolutions, settings changes, and now tax-report exports (`export_tax_report`,
 added by the 1099 work) — and **nothing displays any of it.** After that: step 6
@@ -890,12 +930,12 @@ makes the product correct and operable, and say so in those terms.
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 394 unit tests — no network, no database
+npm test          # 406 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (245 checks against real Postgres) start the local database
+For the end-to-end run (260 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e

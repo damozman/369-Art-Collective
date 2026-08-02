@@ -46,6 +46,7 @@ import Creators from "@/pages/creators";
 import JoinCreatorverse from "@/pages/join-creatorverse";
 import Portal from "@/pages/portal";
 import EngineAdmin from "@/pages/engine-admin";
+import ResetPage from "@/pages/reset";
 import SignupPage from "@/pages/signup";
 import NotFound from "@/pages/not-found";
 
@@ -239,12 +240,22 @@ function Router() {
         it carries its own tenant-scoped session and must survive Phase 2,
         when everything else in this file is deleted.
       */}
+      {/*
+        Reset routes come BEFORE the portal/console routes they sit under, so
+        wouter matches the more specific path first.
+      */}
+      <Route path="/portal/:tenantSlug/reset">
+        <ResetPage surface="portal" />
+      </Route>
       <Route path="/portal/:tenantSlug" component={Portal} />
 
       {/*
         The tenant owner's console — the other engine surface. Same reasoning as
         the portal above: its own session, its own API, survives Phase 2.
       */}
+      <Route path="/manage/:tenantSlug/reset">
+        <ResetPage surface="manage" />
+      </Route>
       <Route path="/manage/:tenantSlug" component={EngineAdmin} />
 
       {/*

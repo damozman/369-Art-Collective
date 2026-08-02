@@ -179,6 +179,33 @@ export function reviewWaitingEmail(input: {
   );
 }
 
+/**
+ * A password reset link.
+ *
+ * ⚠️ SAYS WHAT TO DO IF THEY DID NOT ASK FOR IT, and that line is not filler.
+ * This email is what somebody receives when an attacker types their address
+ * into the form. "Ignore it, nothing has changed" is both true and the only
+ * useful instruction — a reset that has not been clicked has changed nothing.
+ *
+ * Names the business, for the same reason the paid email does: a contributor
+ * may work with several, and an unattributed "reset your password" is
+ * indistinguishable from phishing.
+ */
+export function passwordResetEmail(input: {
+  name: string;
+  tenantName: string;
+  resetUrl: string;
+  expiresInMinutes: number;
+}): RenderedEmail {
+  return render(`Reset your ${input.tenantName} password`, [
+    `Hello ${input.name},`,
+    "Somebody asked to reset the password on your account. If that was you, use this link:",
+    input.resetUrl,
+    `The link works once, and stops working after ${input.expiresInMinutes} minutes.`,
+    "If it was not you, ignore this email. Nothing has changed, and nobody can get in without the link above.",
+  ]);
+}
+
 /** Told to the platform owner when a business signs up. Not customer-facing. */
 export function newSignupEmail(input: {
   businessName: string;

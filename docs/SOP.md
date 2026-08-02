@@ -606,6 +606,27 @@ that they would have sent something.
 
 ---
 
+## 6e. When somebody forgets their password
+
+There is a **"Forgotten your password?"** link on both sign-in screens — yours and
+your artists'. They enter their email, get a link, and set a new password
+themselves. **You never have to reset anything for anyone.**
+
+Three things worth knowing, because they will generate questions:
+
+- **The link lasts an hour and works once.** Someone who clicks it twice, or comes
+  back the next morning, needs a fresh one. That is deliberate — a reset link is as
+  good as a password, and one sitting in an inbox for a week is a way in.
+- **The screen always says "if that address has an account, a link is on its way"**,
+  even when it isn't. It never confirms whether an email is registered. That stops a
+  stranger from using the form to work out who you pay.
+- **If someone gets a reset email they didn't ask for, nothing has happened.** The
+  email says so. A link that has not been clicked has changed nothing.
+
+Needs the email connection switched on to actually deliver, same as everything else.
+
+---
+
 ## 7. The things waiting on you
 
 None of these go faster by building faster. They all wait on other people.

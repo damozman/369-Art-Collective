@@ -126,7 +126,8 @@ Both were resolved in step 5.)
 - **Phase 0 ✅ · Phase 1 ✅ · the owner-facing product is built ✅ · WHATS-LEFT
   step 1 (Shopify + Stripe against fixtures) ✅ · step 2 (artist bank
   onboarding) ✅ · step 3 (works + settings screens, and recording a missing
-  cost) ✅ · step 4 (billing, signup and pricing) ✅.**
+  cost) ✅ · step 4 (billing, signup and pricing) ✅ · step 5 email ✅ (1099 and
+  the audit viewer remain).**
 - **What exists:** the engine (16 `engine_*` tables, canonical `RevenueEvent`, §6
   rules, immutable ledger, §8 reversals, transactional ingestion, payout batches
   with the state machine), the **contributor portal** at `/portal/:tenantSlug`, the
@@ -135,7 +136,9 @@ Both were resolved in step 5.)
   stuck items — and now **both provider adapters**: the Shopify ingestion path
   (signed webhooks → per-line events → ledger, plus refunds and cancellations) and
   the Stripe `TransferExecutor` — plus **artist payout-account onboarding**
-  (`server/engine/payout-account.ts`, Account Links + status read back from Stripe).
+  (`server/engine/payout-account.ts`, Account Links + status read back from Stripe),
+  **billing** (plans, trials, usage counting, annual, the Stripe charging seam,
+  self-serve signup at `/signup`) and **email** (`server/engine/email/`).
 - **350 unit tests · 216 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
@@ -146,9 +149,15 @@ Both were resolved in step 5.)
 - **Cost fixtures are still invented** — see below. The first real capture happened
   on 2026-07-31 and is recorded in `docs/SOP.md` §6b, but the fixture file has not
   been replaced (one product, one variant; the user is changing supplier first).
-- **Track A: not started as of 2026-07-31.** Shopify Partner, Stripe Connect
+- **Nothing outside is switched on.** No live store, no live bank, no live card
+  charges, no email actually sending. Every one of those is a credentials swap
+  behind a seam that refuses by default rather than pretending — `STRIPE_SECRET_KEY`,
+  `BILLING_STRIPE_SECRET_KEY`, `RESEND_API_KEY` + `EMAIL_FROM`, and a
+  `engine_source_connections` row for Shopify.
+- **Track A: still not started as of 2026-08-01.** Shopify Partner, Stripe Connect
   application, App Store research, design-partner outreach, 369 selling again.
-  Still the real critical path; none of it goes faster by building faster.
+  Still the real critical path; none of it goes faster by building faster. **Ask
+  for status; do not assume.**
 - **Branch:** `claude/business-idea-feedback-7uwumw`
 
 ### What to build next
@@ -164,9 +173,17 @@ Summary of that order:
 2. ~~**Artist bank onboarding**~~ — **done.** See "Payout accounts" below.
 3. ~~**Works and settings screens**~~ — **done.** See "Step 3" below.
 4. ~~**Customer billing and signup**~~ — **done.** See "Billing" below.
-5. ~~Email~~ — **done, see below.** 1099 and the audit viewer remain.
+5. ~~Email~~ — **done, see below.** Three things remain from this step, and they
+   are **the next work in the queue, in this order**:
+   - **The daily job.** `notifyTrialEnding` and `notifyReviewWaiting` are written
+     and tested but nothing calls them on a timer. Smallest of the three.
+   - **1099 export.** US tax reporting. Stripe issues the forms; we supply data.
+   - **The audit-log viewer.** Every change is already recorded; nothing shows it.
 6. CSV import, then advances (§10b) — advances only once a real publishing or music
    deal can be seen, so the shape is drawn rather than guessed.
+
+Also still open and not in the numbered order: **password reset** for both portals,
+and the **connect-a-store screen** (waits on the Shopify Partner account).
 
 **Migrating 369 on as tenant #1 stays deferred** by ratified decision #11 until the
 user has evaluated the generic product cleanly.
@@ -648,12 +665,35 @@ Sessions do not share memory. Everything below is the state as of the last commi
 `claude/business-idea-feedback-7uwumw`. Trust the repo, not any recollection.
 
 **Orientation, in order:**
-1. This file's "Ratified decisions" (ten of them) and "Known defects".
+1. This file's "Ratified decisions" (twelve of them) and "Known defects".
 2. `docs/BLUEPRINT.md` §5 (the fourteen expensive-to-retrofit decisions), §6 (rule
-   shape), §8 (reversals), §9 (phasing), plus **§10a and §10b** — two open items
+   shape), §8 (reversals), §9 (phasing), **§12** (pricing — settled, with the four
+   rules that make it work), plus **§10a, §10b and §10c** — three open items
    recorded rather than resolved.
 3. The engine table above. Every module opens with a comment explaining *why* it is
    shaped the way it is; those comments are load-bearing, not decoration.
+
+### ⚠️ CARRIED OVER — the three open items as of 2026-08-01
+
+The user asked for these to survive into the next session. None is blocked on code;
+two are waiting on them, one is the next thing to build.
+
+1. **Next build: the daily job.** `notifyTrialEnding` and `notifyReviewWaiting` are
+   written, tested and called by nothing. They need a scheduler. After that: 1099
+   export, then the audit-log viewer. All three are `WHATS-LEFT.md` step 5 leftovers.
+2. **During the Stripe Connect application, confirm the one unverified assumption**
+   — that contributor accounts can be created under the *tenant's* Stripe via the
+   `Stripe-Account` header. See "Payout accounts" above. Sandboxes cannot reach
+   `api.stripe.com`, so this has never run live, and the fallback changes ratified
+   decision #1's shape. **Do not promise a customer it works before this is checked.**
+3. **The Printify cost capture happens alongside that same Connect work**, by the
+   user's decision. Do not raise it as a blocker before then — see "The invented cost
+   fixtures — scope corrected" for why it blocks the marketplace and not the engine.
+
+**Track A is still the critical path and still not started** as of 2026-08-01:
+Shopify Partner, Stripe Connect, App Store research, design-partner conversations,
+369 selling again. Ask for status rather than assuming; none of it goes faster by
+building faster.
 
 **Verify the state before changing anything:**
 ```bash

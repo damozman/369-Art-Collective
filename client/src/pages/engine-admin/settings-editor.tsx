@@ -50,12 +50,12 @@ const POLICY_COPY: Record<string, { label: string; detail: string }> = {
   absorb: {
     label: "The business absorbs it",
     detail:
-      "The refund is recorded, but the artist keeps what they were paid. Simplest, and costs you the money.",
+      "The refund is recorded, but they keep what they were paid. Simplest, and costs you the money.",
   },
   reserve: {
     label: "Hold back a reserve from every payout",
     detail:
-      "A slice of each payment is kept aside to cover future refunds, then released later. Costs artists patience rather than money.",
+      "A slice of each payment is kept aside to cover future refunds, then released later. Costs people patience rather than money.",
   },
 };
 

@@ -145,7 +145,7 @@ export function RateEditor({
               id="rule-key"
               value={ruleKey}
               onChange={(e) => setRuleKey(e.target.value)}
-              placeholder="artist-standard"
+              placeholder="standard-rate"
               disabled={isChange}
               required
               data-testid="input-rule-key"

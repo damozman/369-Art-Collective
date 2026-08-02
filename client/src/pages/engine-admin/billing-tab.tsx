@@ -114,7 +114,7 @@ export function BillingTab({ slug, canWrite }: { slug: string; canWrite: boolean
               <p className="font-medium">We could not take your last payment.</p>
               <p className="mt-1 text-muted-foreground">
                 {sub.lastPaymentError ?? "Please update your card."} Everything keeps
-                working in the meantime — your artists are still being paid.
+                working in the meantime — the people you pay are still being paid.
               </p>
             </div>
           </CardContent>

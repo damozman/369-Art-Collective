@@ -62,6 +62,38 @@ explicitly and wait for the user rather than quietly building around it.
     judge. 369 can keep selling on the old marketplace meanwhile — the two are
     unlinked, which is exactly what decision #9 bought.
 
+    **⚠️ Reaffirmed by the user on 2026-08-02, unprompted:** *"we're building this
+    for [sale] as a unit, not specifically for my 369 business… make sure that it's
+    not tailored to my business alone."* A sweep that day found decision #11 was
+    holding in the schema and the new surfaces but **had leaked in four places of
+    visible product copy**, all predating the sweep: the refund-policy descriptions
+    on the settings screen ("the artist keeps what they were paid", "costs artists
+    patience"), the payment-failed notice on the billing screen ("your artists are
+    still being paid"), and the rule-key placeholder (`artist-standard`). All four
+    are fixed. **The lesson is that this leaks through microcopy, not through
+    architecture** — nobody names a table `artworks`, but everybody writes "artist"
+    in a sentence about who gets paid. When adding any customer-visible string,
+    grep the diff for `artist|artwork|art\b` before committing.
+
+    Vocabulary that IS correct: *contributor* or *person* (who earns), *work* (what
+    earns), *business* or *tenant* (the customer). Emails, the contributor portal,
+    signup and pricing were all clean when swept.
+
+    **Two things were deliberately NOT changed and are open questions for the user
+    — do not decide these unilaterally:**
+    - **`docs/SOP.md` says "artist" ~30 times.** It is currently their operating
+      manual for running 369, where the word is correct. If it is to become the
+      customer-facing manual for the product, it needs a neutral rewrite. Section 1
+      already frames it correctly ("369 Art Collective is your first customer, not
+      your business"), so this is a vocabulary question, not a framing one.
+    - **`seed-demo.ts` is an art business** — `demo-369`, canvas prints, `role:
+      "artist"`, Printify costs. Decision #11 names `npm run seed:demo` as the way
+      to demo the generic product, so what the demo depicts is load-bearing. There
+      is a real case each way: a concrete vertical demos better than an abstract
+      one, but an art demo makes a vertical-agnostic product look art-specific to
+      the person evaluating it. A second demo tenant in a different vertical (a
+      label, a press) would settle it by showing the same engine twice.
+
 12. **Pricing: flat monthly tiers by people PAID per month. Settled 2026-08-01.**
     $49/$99/$199 for 10/50/200, 14-day trial, no free tier. Full reasoning and the
     four rules that make it work are in blueprint §12. The two that get broken by

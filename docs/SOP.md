@@ -299,7 +299,7 @@ adjustment, not a rate change.
 
 ## 4a. The Tax tab — what you paid people last year
 
-Once a year your accountant needs to know what you paid each artist. That is what
+Once a year your accountant needs to know what you paid each person. That is what
 this tab is for.
 
 **It shows what you PAID, not what people EARNED, and those are different
@@ -313,14 +313,14 @@ job. The file opens in Excel or Google Sheets.
 
 ### What it does NOT do
 
-**It does not file anything, and it never will.** Your artists are paid out of
-*your* Stripe account, so Stripe issues the tax forms, under your account. This
+**It does not file anything, and it never will.** The people you pay are paid out
+of *your* Stripe account, so Stripe issues the tax forms, under your account. This
 tab gives you your own record of what you paid — the number your accountant files
 from, and the number you check Stripe's own figures against. If the two ever
 disagree, you now have something to disagree *with*, which is the point.
 
 **It doesn't hold anybody's social security number.** Stripe collects those when
-an artist connects their bank, and Stripe keeps them. This system deliberately has
+someone connects their bank, and Stripe keeps them. This system deliberately has
 nowhere to put one. Storing them would make your database far more dangerous to
 lose, and would gain you nothing, because the people who actually file the forms
 already have them.
@@ -357,7 +357,7 @@ US time falls into the next tax year. The exact window is printed at the bottom 
 the screen so the number can always be explained. If you want to avoid thinking
 about it at all, don't run a payout batch on New Year's Eve.
 
-### Non-US artists
+### People outside the US
 
 Somebody who has filed a W-8BEN shows as **"Not a US person"**. They're not a 1099
 at all — that's a different form — but they're still listed, with what you paid

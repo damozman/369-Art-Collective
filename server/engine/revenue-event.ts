@@ -25,6 +25,32 @@ export interface CostInput {
   resolvedAt?: Date;
 }
 
+/**
+ * The cost types an OWNER may choose from — a closed subset of `CostInput.type`.
+ *
+ * ⚠️ THIS IS A CLOSED LIST ON PURPOSE, and it is not cosmetic validation. Rules
+ * decide whose share a cost reduces by matching `costDeductions` against this
+ * string EXACTLY (a `Set.has` on the type, below). A cost recorded as
+ * "proccessing_fee" is stored, shows up in margin reporting, and silently
+ * reduces nobody's share, because no rule lists that spelling. The result is an
+ * overpayment that looks completely correct on every screen.
+ *
+ * Free-text entry would make that a typo away at all times — and there are now
+ * two places an owner types one in: the review screen, and a CSV column
+ * mapping. Adding a type means adding it here *and* to the rules that should
+ * deduct it.
+ *
+ * `CostInput.type` stays wider than this: adapters record what a provider
+ * reports (`discount`, `platform_fee`) without an owner having chosen it.
+ */
+export const RECORDABLE_COST_TYPES = [
+  "production",
+  "shipping",
+  "processing_fee",
+] as const;
+
+export type RecordableCostType = (typeof RECORDABLE_COST_TYPES)[number];
+
 /** How an adapter refers to a contributor before we have resolved them. */
 export interface ContributorRef {
   ref: string;

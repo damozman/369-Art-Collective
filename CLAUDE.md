@@ -159,9 +159,12 @@ Both were resolved in step 5.)
   step 1 (Shopify + Stripe against fixtures) ✅ · step 2 (artist bank
   onboarding) ✅ · step 3 (works + settings screens, and recording a missing
   cost) ✅ · step 4 (billing, signup and pricing) ✅ · step 5 email ✅ · the
-  daily job ✅ · the 1099 export ✅ · password reset ✅ · the Changes tab ✅.**
-  **Steps 1-5 are complete. Only step 6 (CSV import, then advances) remains,
-  plus the connect-a-store screen which waits on the Shopify Partner account.**
+  daily job ✅ · the 1099 export ✅ · password reset ✅ · the Changes tab ✅ ·
+  step 6 CSV import ✅.**
+  **The whole numbered order is now finished.** What remains is deliberately
+  waiting on something: **advances** (§10b — wait for a real publishing or
+  music deal so the shape is drawn rather than guessed) and the
+  **connect-a-store screen** (waits on the Shopify Partner account).
 - **What exists:** the engine (16 `engine_*` tables, canonical `RevenueEvent`, §6
   rules, immutable ledger, §8 reversals, transactional ingestion, payout batches
   with the state machine), the **contributor portal** at `/portal/:tenantSlug`, the
@@ -173,7 +176,7 @@ Both were resolved in step 5.)
   (`server/engine/payout-account.ts`, Account Links + status read back from Stripe),
   **billing** (plans, trials, usage counting, annual, the Stripe charging seam,
   self-serve signup at `/signup`) and **email** (`server/engine/email/`).
-- **406 unit tests · 269 end-to-end checks against real Postgres.** Every screen has
+- **446 unit tests · 289 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -212,11 +215,15 @@ Summary of that order:
    - ~~**The daily job.**~~ — **done.** See "The daily job" below.
    - ~~**1099 export.**~~ — **done.** See "The 1099 export" below.
    - ~~**The audit-log viewer.**~~ — **done.** See "The Changes tab" below.
-6. CSV import, then advances (§10b) — advances only once a real publishing or music
-   deal can be seen, so the shape is drawn rather than guessed.
+6. ~~**CSV import**~~ — **done.** See "CSV import" below. **Advances (§10b) remain
+   deliberately unbuilt** — wait until a real publishing or music deal can be seen,
+   so the shape is drawn from a real structure rather than guessed.
 
 Also still open and not in the numbered order: the **connect-a-store screen**
 (waits on the Shopify Partner account). ~~Password reset~~ is done.
+
+**With step 6 done, nothing on the build list is blocked on us.** Everything left
+is waiting on an external approval or on a design-partner conversation.
 
 **Migrating 369 on as tenant #1 stays deferred** by ratified decision #11 until the
 user has evaluated the generic product cleanly.
@@ -321,6 +328,11 @@ third-party log sinks, the client bundle, and the ~70 obsolete
 | `server/engine/tax/report-1099.ts` | pure: the year window, flags, thresholds, CSV. Read its header before changing a rule |
 | `server/engine/tax/report-1099-query.ts` | the grouped read — paid payouts only, summed in Postgres |
 | `server/engine/review.ts` | + `recordEventCost` — typing in a cost the channel never sent, guarded on 'nothing allocated yet' |
+| `server/engine/adapters/attribution.ts` | `attributeWork` — shared by every adapter. Moved out of the Shopify adapter for the CSV importer |
+| `server/engine/adapters/csv/parse.ts` | RFC 4180 tokenizer, hand-written. Quotes, BOM, CRLF, delimiter sniffing |
+| `server/engine/adapters/csv/map.ts` | **pure.** All six CSV money decisions — read its header before changing anything |
+| `server/engine/adapters/csv/ingest.ts` | preview + commit. The preview writes nothing and holds no state |
+| `client/src/pages/engine-admin/import-tab.tsx` | the Import screen — file, mapping, preview, import |
 
 ### The adapters — §4's two seams, filled in
 
@@ -398,6 +410,85 @@ Neither adapter needs a code change to go live.
 - **`ENGINE_SECRET_KEY` is now required** for anything touching connections
   (`openssl rand -hex 32`, or any passphrase locally). Without it, sealing throws
   rather than storing plaintext.
+
+### CSV import — BUILT. Step 6's first half
+
+`server/engine/adapters/csv/` plus an **Import** tab. Same two-half shape as the
+Shopify adapter: `map.ts` is pure and holds every money decision, `ingest.ts` is
+DB-facing. `attributeWork` moved to `adapters/attribution.ts` and is now shared by
+both adapters rather than copied — every rule in it is a decision about when NOT to
+pay somebody, and two copies drift on the first fix applied to one.
+
+**⚠️ The idempotency key is the weak point, and it is named rather than hidden.**
+A Shopify webhook carries `${orderId}:${lineItemId}`. A spreadsheet row carries
+nothing. Two strategies, both implemented:
+
+- **A reference column**, when the statement has its own transaction id. That id
+  IS the key and the problem disappears entirely. The screen asks for it first.
+- **A content hash scoped to the statement label**, otherwise — work, contributor,
+  date, amount, currency, quantity, share, plus an **occurrence ordinal** so two
+  genuinely identical rows (a book that sold twice on the same day) both import
+  and a re-import of the same file collides on all of them.
+
+The residual risk is stated in the file header, on the screen, and in the SOP: the
+label is part of the key, so **the same rows under two different labels pay twice.**
+That failure was chosen over the alternative — a label-free hash — because that one
+silently DROPS a genuine repeat sale in a later statement, and the standing rule is
+that not paying is recoverable and overpaying is not.
+
+**`findLookAlikes` is the only thing that catches it**, and it exists solely for
+that: it matches candidate rows against already-recorded sales on (work, date,
+amount, currency) rather than on the key, and reports them. It never blocks — a
+business really does sell the same thing twice in a day — and it degrades honestly
+past `LOOKALIKE_SCAN_LIMIT` rather than reporting zero, which would read as a clean
+bill of health. **If that check is ever removed, the double-import is unguarded.**
+
+**Five more decisions, each argued at length in `map.ts`'s header:**
+
+1. **Dates are never sniffed.** `01/02/2026` is two different days and nothing in
+   the file settles it. The owner picks the format; a row that does not match is an
+   error. Auto-detection is right for eleven days a month and then moves a sale into
+   the wrong quarter — and at a year boundary, the wrong tax year.
+2. **Money is read from the string.** Symbols and thousands commas stripped,
+   parentheses mean negative. **A comma not followed by exactly three digits is
+   REJECTED**, because `1,23` is €1.23 in Europe and a badly written $123 elsewhere,
+   and picking one is a 100× error in whichever half of the world we picked wrong.
+3. **A negative row is an error, not a reversal.** §8 models a reversal as
+   referencing the exact event it undoes so the clawback follows the original's own
+   rate and policy. A CSV row has no such reference; importing negatives standalone
+   would create ledger entries that reverse nothing and can never be reconciled.
+4. **A blank cost cell is not zero.** Blank is "the file does not say" and writes no
+   cost row; an explicit `0` is "there was none". Collapsing them is the
+   invented-cost bug in a different hat.
+5. **Preview and commit are separate, and the commit re-parses from scratch.** No
+   server-side state between them, so the file approved and the file imported cannot
+   differ. Rows are independent — not one transaction — mirroring how a Shopify
+   order treats its lines and a payout batch a failed transfer.
+
+Bounded by `MAX_IMPORT_ROWS` (20,000) **and** `MAX_IMPORT_BYTES` (8 MB) — the row
+count alone does not bound the work, since one 8 MB cell is a single row. The
+12 MB body limit is scoped to `/admin/import/` paths in `server/index.ts`, mounted
+BEFORE the default parser (body-parser marks a request parsed and later parsers
+no-op). It is **not** raised globally: the 100 KB default is the cheapest protection
+the other ~150 endpoints have.
+
+`inspect` and `preview` are deliberately **not** behind `write()` — looking at a
+file changes nothing, same reasoning as the tax tab. `commit` is, and writes the
+`import_csv` audit entry from the route (the engine has no actor to record; an e2e
+check asserts the importer does not log a second one).
+
+**Three defects found by loading the screen, one of them real:**
+
+- **⚠️ A stale preview stayed on screen after the mapping changed.** The preview was
+  computed from the config as it stood when the button was pressed; the import read
+  the config as it stood *now*. An owner could read "2 rows, $1,384.56", change
+  which column is the amount, press Import, and import something other than what
+  they approved — with the approval still visible above the button. Every mapping
+  setter now throws the preview away. **This is the sixth defect found by loading
+  the app that a green `tsc`, a green build and a green suite all missed.**
+- The file input was cleared on upload, so the browser showed "No file chosen"
+  beside a fully populated mapping form — which reads as a failed upload.
+- "1 row were left out": the noun was pluralised and the verb was not.
 
 ### Payout accounts — how a contributor gets bankable
 
@@ -750,8 +841,8 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 406 unit tests, no network, no database
-npm run test:e2e      # 269 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 446 unit tests, no network, no database
+npm run test:e2e      # 289 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -919,23 +1010,32 @@ Sessions do not share memory. Everything below is the state as of the last commi
 
 ### ⚠️ CARRIED OVER — the open items as of 2026-08-02 (end of session)
 
-Written at the end of the session that built password reset and the Changes tab.
-Nothing here is blocked on code. Two items wait on the user; one is the next
-thing to build.
+Written at the end of the session that built CSV import. **Nothing here is
+blocked on code, and nothing on the build list is blocked on us.** Everything
+below waits on the user or on an outside party.
 
-**1. The whole `WHATS-LEFT.md` numbered order is now finished except step 6.**
-Steps 1-5 are done, including the daily job, the 1099 export, password reset and
-the audit-log viewer. The user was asked which of the last two came first and
-said *"both are important"*, so both were built.
+**1. The `WHATS-LEFT.md` numbered order is FINISHED.** Steps 1-6 are all done —
+the last of them, CSV import, landed this session. It was built without
+re-confirming with the user first, because their recorded position (end of the
+previous session) was that CSV import was worth doing and advances were not.
+**If that has changed, say so** — nothing about the importer constrains what
+comes next.
 
-**Next: step 6 — CSV import, then advances.** The user's stated position at the
-end of the session was that CSV import is worth doing and **advances are not
-yet** — advances should wait until a real publishing or music deal can be seen,
-so the shape is drawn from a real structure rather than guessed (blueprint §10b).
-Confirm that is still their view before starting.
+**Advances (§10b) are deliberately still unbuilt**, per that same position:
+wait until a real publishing or music deal can be seen, so the shape is drawn
+from a real structure rather than guessed. This is now the only feature-shaped
+thing left, and it is waiting on a conversation rather than on effort.
 
 Also open and outside the numbered order: the **connect-a-store screen**, which
 waits on the Shopify Partner account.
+
+**⚠️ The CSV importer has one accepted weakness the user should know about in
+plain terms**, because it is the kind of thing that surfaces as a support
+question rather than a bug report: without a reference column in the file,
+importing the same rows under two *different* statement names pays them twice.
+The look-alike warning is what catches it, and it warns rather than blocks. This
+is written into `docs/SOP.md` §4 and said on the screen. It is a design trade,
+not an oversight — see "CSV import" above for why the alternative is worse.
 
 **2. During the Stripe Connect application, confirm the one unverified assumption**
 — that contributor accounts can be created under the *tenant's* Stripe via the
@@ -967,12 +1067,12 @@ makes the product correct and operable, and say so in those terms.
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 406 unit tests — no network, no database
+npm test          # 446 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (269 checks against real Postgres) start the local database
+For the end-to-end run (289 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e
@@ -1038,7 +1138,7 @@ pages** — do not extend `client/src/pages/artist-*`, and do not reach for
 ### Traps that have already bitten, in this repo
 
 - **`npm run build` and `tsc` are not evidence the app works.** Load the pages. This
-  has now caught four separate defects that both passed clean.
+  has now caught six separate defects that both passed clean.
 - **A real database catches what unit tests cannot.** Three bugs so far were found only
   by the Postgres run: the Drizzle-wrapped SQLSTATE on `error.cause`, a fixture
   minting colliding transfer ids, and a stale test assumption about a balance.

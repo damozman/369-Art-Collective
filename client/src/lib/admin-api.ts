@@ -603,3 +603,115 @@ export function getAuditLog(
   const query = params.toString();
   return request(`${base(tenantSlug)}/audit${query ? `?${query}` : ""}`);
 }
+
+// ============================================================
+// CSV import
+// ============================================================
+//
+// Three calls for one job, in order: what columns does this file have, what
+// would importing it do, and only then do it. The file content is posted each
+// time rather than held on the server between steps — there is then no window
+// in which the file the owner approved and the file that gets imported differ.
+
+export type CsvDateFormat = "iso" | "mdy" | "dmy";
+
+export interface CsvColumnMapping {
+  amount: string;
+  date: string;
+  work?: string;
+  contributor?: string;
+  reference?: string;
+  quantity?: string;
+  currency?: string;
+  share?: string;
+  role?: string;
+  description?: string;
+  costs?: Partial<Record<"production" | "shipping" | "processing_fee", string>>;
+}
+
+export interface CsvImportConfig {
+  mapping: CsvColumnMapping;
+  dateFormat: CsvDateFormat;
+  currency: string;
+  statementLabel: string;
+}
+
+export interface CsvInspection {
+  headers: string[];
+  delimiter: string;
+  rowCount: number;
+  raggedCount: number;
+  sample: string[][];
+}
+
+export interface CsvPreviewRow {
+  line: number;
+  workRef: string | null;
+  contributorRef: string | null;
+  amount: Money;
+  currency: string;
+  occurredAt: string;
+  outcome: "import" | "hold" | "already_imported";
+  reason?: string;
+}
+
+export interface CsvPreview {
+  statementLabel: string;
+  delimiter: string;
+  headers: string[];
+  totalRows: number;
+  readableRows: number;
+  willImport: number;
+  willHold: number;
+  alreadyImported: number;
+  total: Money;
+  currencies: string[];
+  errors: Array<{ line: number; message: string }>;
+  warnings: string[];
+  unknownWorks: string[];
+  unknownContributors: string[];
+  lookAlikes: Array<{ line: number; existingSource: string; existingSourceEventId: string }>;
+  lookAlikeCheckSkipped: boolean;
+  rows: CsvPreviewRow[];
+}
+
+export interface CsvImportResult {
+  statementLabel: string;
+  imported: number;
+  heldForReview: number;
+  duplicates: number;
+  failed: number;
+  totalGross: Money;
+  totalAllocated: Money;
+  errors: Array<{ line: number; message: string }>;
+}
+
+export function inspectCsv(tenantSlug: string, content: string): Promise<CsvInspection> {
+  return request(`${base(tenantSlug)}/import/csv/inspect`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
+}
+
+/** Writes nothing. Answers "what would this do" before anything is owed. */
+export function previewCsv(
+  tenantSlug: string,
+  content: string,
+  config: CsvImportConfig
+): Promise<CsvPreview> {
+  return request(`${base(tenantSlug)}/import/csv/preview`, {
+    method: "POST",
+    body: JSON.stringify({ content, config }),
+  });
+}
+
+export function commitCsv(
+  tenantSlug: string,
+  content: string,
+  config: CsvImportConfig
+): Promise<CsvImportResult> {
+  return request(`${base(tenantSlug)}/import/csv/commit`, {
+    method: "POST",
+    body: JSON.stringify({ content, config }),
+  });
+}

@@ -30,6 +30,7 @@ import {
   type IngestResult,
 } from "../../ingest";
 import type { RevenueEvent } from "../../revenue-event";
+import { attributeWork } from "../attribution";
 import { NoLineCostSource, type LineCostSource } from "../cost-source";
 import type { ShopifyAdminClient } from "./client";
 import {
@@ -109,93 +110,8 @@ export function readShopifySettings(
 // Attribution
 // ============================================================
 
-interface WorkAttribution {
-  contributorRefs: Array<{ ref: string; role?: string }>;
-  /** Set when nobody could be attached to this work. */
-  reason?: string;
-}
-
-/**
- * Expand a work reference into contributor references.
- *
- * Returns an empty list plus a reason rather than throwing. Every one of these
- * outcomes is an ordinary operational state — a new artwork that has not been
- * set up yet, a product that is the merchant's own and owes nobody — and each
- * of them should produce a reviewable row, not a failed webhook that Shopify
- * retries nineteen times.
- */
-async function attributeWork(
-  db: EngineDb,
-  tenantId: string,
-  workRef: string | null
-): Promise<WorkAttribution> {
-  if (!workRef) {
-    return { contributorRefs: [], reason: "No work reference on the line." };
-  }
-
-  const [work] = await db
-    .select()
-    .from(schema.works)
-    .where(
-      and(eq(schema.works.tenantId, tenantId), eq(schema.works.externalRef, workRef))
-    )
-    .limit(1);
-
-  if (!work) {
-    return {
-      contributorRefs: [],
-      reason: `No work matches the reference "${workRef}".`,
-    };
-  }
-
-  const links = await db
-    .select({
-      role: schema.workContributors.role,
-      externalRef: schema.contributors.externalRef,
-    })
-    .from(schema.workContributors)
-    .innerJoin(
-      schema.contributors,
-      eq(schema.workContributors.contributorId, schema.contributors.id)
-    )
-    .where(
-      and(
-        eq(schema.workContributors.tenantId, tenantId),
-        eq(schema.workContributors.workId, work.id)
-      )
-    );
-
-  if (links.length === 0) {
-    return {
-      contributorRefs: [],
-      reason: `"${work.title ?? workRef}" has nobody attached to it.`,
-    };
-  }
-
-  // `externalRef` is nullable — a contributor added by hand in the console has
-  // no external reference until something imports them. They cannot be
-  // addressed by an adapter, so they are dropped here and the line falls to
-  // review rather than paying whoever happens to remain.
-  const addressable = links.filter(
-    (link): link is typeof link & { externalRef: string } => Boolean(link.externalRef)
-  );
-
-  if (addressable.length !== links.length) {
-    return {
-      contributorRefs: [],
-      reason:
-        `"${work.title ?? workRef}" has ${links.length - addressable.length} contributor(s) ` +
-        "with no external reference, so this sale cannot be split automatically.",
-    };
-  }
-
-  return {
-    contributorRefs: addressable.map((link) => ({
-      ref: link.externalRef,
-      role: link.role ?? undefined,
-    })),
-  };
-}
+// Attribution moved to `../attribution` when the CSV importer needed the same
+// behaviour — see that file's header for why it is shared rather than copied.
 
 // ============================================================
 // Orders

@@ -295,6 +295,55 @@ lose people's trust.
 If you genuinely want to top someone up for past work, that's a separate manual
 adjustment, not a rate change.
 
+### Importing sales from a spreadsheet
+
+**Import** in your console. This is for sales that don't arrive automatically —
+a royalty statement from a distributor, a marketplace report, anything that comes
+to you as a file rather than through a connected store.
+
+It works in three steps, and the middle one is the important one:
+
+1. **Choose the file.** It reads the column names and shows you the first few rows.
+2. **Say what each column is.** It guesses the obvious ones; check them. Only the
+   amount, the date, and either a work or a person are required.
+3. **Check what it would do.** You get counts, a total, and a row-by-row list
+   *before* anything is recorded. Then you import.
+
+**Six things worth knowing before you use it:**
+
+- **Nothing is recorded until you press Import.** Checking is free, and you can
+  check as many times as you like while you get the columns right. If you change a
+  column after checking, the check disappears — you'd otherwise be approving one
+  set of numbers and importing another.
+
+- **It asks how your dates are written, and you must get this right.** `01/02/2026`
+  is 1 February in Britain and 2 January in America, and nothing in the file says
+  which. Getting it wrong puts sales in the wrong month, and at year end, the wrong
+  tax year. The system refuses to guess.
+
+- **Importing the same file twice does nothing the second time.** That's the whole
+  point of the statement name. Use the same name and every row is recognised and
+  skipped. **Use a different name for the same file and it will be counted twice** —
+  so if you're re-importing something, keep the name.
+
+- **It watches for that mistake anyway.** If rows look like sales you already have —
+  same work, same day, same amount — it says so before you import. That's your
+  safety net if the name got changed. It doesn't block you, because businesses
+  genuinely do sell the same thing twice in a day.
+
+- **Rows it can't read are left out and listed, not guessed at.** A blank amount, an
+  unreadable date, a negative line. Fix them in the spreadsheet and import again
+  under the same name — everything that already went in gets skipped.
+
+- **Sales for a work or person you haven't set up still get recorded.** They wait in
+  **Needs attention** until you say who they belong to, and are then paid at the
+  rate that applied on the day of the sale, not today's. Nothing is lost.
+
+**On refunds:** the importer won't take negative rows. A return has to be recorded
+against the sale it undoes, so the clawback follows that sale's own rate and your
+refund policy. A negative line in a spreadsheet has no way of pointing at the
+original. Remove those rows and refund the original sale instead.
+
 ---
 
 ## 4a. The Tax tab — what you paid people last year

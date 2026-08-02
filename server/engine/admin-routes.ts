@@ -95,6 +95,22 @@ const loginLimiter = rateLimit({
   message: { message: "Too many login attempts. Try again in 15 minutes." },
 });
 
+/**
+ * Bound how often a whole statement file can be thrown at the server.
+ *
+ * Generous, because a real import is inspect → preview → preview again after
+ * fixing the mapping → commit, and an owner correcting a column choice several
+ * times is doing exactly what the screen asks of them. Tight enough that the
+ * one place in this API accepting megabytes cannot be hammered.
+ */
+const importLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many import attempts. Try again in a few minutes." },
+});
+
 interface TenantRequest extends Request {
   engineTenant?: { id: string; slug: string; name: string; currency: string };
 }
@@ -1074,5 +1090,215 @@ export function createAdminRouter(
     }
   );
 
+  // ---- CSV import ----
+  //
+  // Three endpoints for what is one job, because the job has three questions
+  // and they have to be answered in order: what columns does this file have,
+  // what would importing it do, and — only then — do it.
+  //
+  // `inspect` and `preview` write NOTHING and are deliberately not behind
+  // `write()`, same reasoning as the tax tab: looking at what a file contains
+  // changes nothing, and a lapsed trial that can still see its own data is the
+  // behaviour billing promises. `commit` is a write and is gated as one.
+  //
+  // The body limit for these paths is raised in `server/index.ts`; the row and
+  // byte ceilings that actually bound the work live in the importer.
+
+  router.post(
+    "/t/:tenantSlug/admin/import/csv/inspect",
+    requireAdmin,
+    importLimiter,
+    async (req: TenantRequest, res) => {
+      const { parseCsv, CsvParseError } = await import("./adapters/csv/parse");
+
+      const content = typeof req.body?.content === "string" ? req.body.content : "";
+      if (content.trim() === "") {
+        return res.status(400).json({ message: "Choose a file to import." });
+      }
+
+      try {
+        const document = parseCsv(content);
+        res.json({
+          headers: document.headers,
+          delimiter: document.delimiter,
+          rowCount: document.rows.length,
+          raggedCount: document.ragged.length,
+          // A handful of rows so the owner can see which column is which while
+          // they map. Not the whole file — this response is only for choosing.
+          sample: document.rows.slice(0, 5).map((row) => row.fields),
+        });
+      } catch (error) {
+        if (error instanceof CsvParseError) {
+          return res.status(400).json({ message: error.message });
+        }
+        throw error;
+      }
+    }
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/import/csv/preview",
+    requireAdmin,
+    importLimiter,
+    async (req: TenantRequest, res) => {
+      const tenant = req.engineTenant!;
+
+      try {
+        const { previewCsvImport } = await import("./adapters/csv/ingest");
+        const preview = await previewCsvImport(db, {
+          tenantId: tenant.id,
+          content: String(req.body?.content ?? ""),
+          config: readImportConfig(req.body?.config, tenant.currency),
+        });
+
+        res.json(serialisePreview(preview));
+      } catch (error) {
+        const message = importErrorMessage(error);
+        if (message) return res.status(400).json({ message });
+        throw error;
+      }
+    }
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/import/csv/commit",
+    requireAdmin,
+    importLimiter,
+    write(async (req, res, session) => {
+      const tenant = req.engineTenant!;
+
+      let result;
+      try {
+        const { commitCsvImport } = await import("./adapters/csv/ingest");
+        result = await commitCsvImport(db, {
+          tenantId: tenant.id,
+          content: String(req.body?.content ?? ""),
+          config: readImportConfig(req.body?.config, tenant.currency),
+        });
+      } catch (error) {
+        const message = importErrorMessage(error);
+        if (message) throw new AdminValidationError(message);
+        throw error;
+      }
+
+      // Logged AFTER the import, so a run that threw never records rows it did
+      // not write. An import is the one way money appears in this system
+      // without a provider having sent it, which makes "who imported what, and
+      // when" the entry an owner most needs when a figure is disputed.
+      await db.insert(schema.auditLog).values({
+        tenantId: tenant.id,
+        actorType: "tenant_user",
+        actorId: session.tenantUserId,
+        action: "import_csv",
+        entityType: "import",
+        entityId: result.statementLabel,
+        after: {
+          statement: result.statementLabel,
+          imported: result.imported,
+          heldForReview: result.heldForReview,
+          duplicates: result.duplicates,
+          failed: result.failed,
+          totalGrossMinor: result.totalGrossMinor.toString(),
+          totalAllocatedMinor: result.totalAllocatedMinor.toString(),
+        },
+      });
+
+      res.json({
+        statementLabel: result.statementLabel,
+        imported: result.imported,
+        heldForReview: result.heldForReview,
+        duplicates: result.duplicates,
+        failed: result.failed,
+        totalGross: money(result.totalGrossMinor),
+        totalAllocated: money(result.totalAllocatedMinor),
+        errors: result.errors,
+      });
+    })
+  );
+
   return router;
+}
+
+/**
+ * Read the import configuration off the request.
+ *
+ * Every field is validated here rather than trusted, because this object
+ * decides which column is money and how a date is read — the two things the
+ * mapper refuses to guess. A malformed config must fail loudly at the edge, not
+ * arrive as `undefined` and take a default that nobody chose.
+ */
+function readImportConfig(
+  raw: unknown,
+  tenantCurrency: string
+): import("./adapters/csv/map").CsvImportConfig {
+  const body = (raw ?? {}) as Record<string, unknown>;
+  const mapping = (body.mapping ?? {}) as Record<string, unknown>;
+
+  const text = (value: unknown): string | undefined => {
+    const trimmed = typeof value === "string" ? value.trim() : "";
+    return trimmed === "" ? undefined : trimmed;
+  };
+
+  const dateFormat = body.dateFormat;
+  if (dateFormat !== "iso" && dateFormat !== "mdy" && dateFormat !== "dmy") {
+    throw new AdminValidationError("Choose how the dates in this file are written.");
+  }
+
+  const label = text(body.statementLabel);
+  if (!label) {
+    throw new AdminValidationError("Give this statement a name.");
+  }
+
+  const costs: Record<string, string> = {};
+  const rawCosts = (mapping.costs ?? {}) as Record<string, unknown>;
+  for (const type of RECORDABLE_COST_TYPES) {
+    const column = text(rawCosts[type]);
+    if (column) costs[type] = column;
+  }
+
+  return {
+    mapping: {
+      amount: text(mapping.amount) ?? "",
+      date: text(mapping.date) ?? "",
+      work: text(mapping.work),
+      contributor: text(mapping.contributor),
+      reference: text(mapping.reference),
+      quantity: text(mapping.quantity),
+      currency: text(mapping.currency),
+      share: text(mapping.share),
+      role: text(mapping.role),
+      description: text(mapping.description),
+      costs,
+    },
+    dateFormat,
+    currency: (text(body.currency) ?? tenantCurrency).toUpperCase(),
+    statementLabel: label,
+  };
+}
+
+/** The importer's own refusals, translated into something an owner can act on. */
+function importErrorMessage(error: unknown): string | null {
+  if (
+    error instanceof AdminValidationError ||
+    (error instanceof Error &&
+      ["CsvParseError", "CsvConfigError", "CsvImportError"].includes(error.name))
+  ) {
+    return error.message;
+  }
+  return null;
+}
+
+/** Money as strings, dates as ISO — the same wire rules as everywhere else. */
+function serialisePreview(preview: import("./adapters/csv/ingest").CsvPreview) {
+  return {
+    ...preview,
+    totalMinor: undefined,
+    total: money(preview.totalMinor),
+    rows: preview.rows.map((row) => ({
+      ...row,
+      amountMinor: undefined,
+      amount: money(row.amountMinor),
+      occurredAt: row.occurredAt.toISOString(),
+    })),
+  };
 }

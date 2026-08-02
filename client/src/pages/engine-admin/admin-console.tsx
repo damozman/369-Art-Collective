@@ -70,6 +70,7 @@ import { PeopleEditor } from "./people-editor";
 import { WorksTab } from "./works-editor";
 import { SettingsTab } from "./settings-editor";
 import { AuditTab } from "./audit-log";
+import { ImportTab } from "./import-tab";
 import { BillingTab } from "./billing-tab";
 import { TaxTab } from "./tax-tab";
 import { formatMoney, isPositive, signOf } from "@/lib/portal-money";
@@ -170,6 +171,7 @@ export function AdminConsole({
             </TabsTrigger>
             <TabsTrigger value="works" data-testid="tab-works">Works</TabsTrigger>
             <TabsTrigger value="rules" data-testid="tab-rules">Rates</TabsTrigger>
+            <TabsTrigger value="import" data-testid="tab-import">Import</TabsTrigger>
             <TabsTrigger value="history" data-testid="tab-history">History</TabsTrigger>
             <TabsTrigger value="tax" data-testid="tab-tax">Tax</TabsTrigger>
             <TabsTrigger value="audit" data-testid="tab-audit">Changes</TabsTrigger>
@@ -199,6 +201,10 @@ export function AdminConsole({
 
           <TabsContent value="works" className="mt-4">
             <WorksTab slug={slug} canWrite={me.role === "admin"} />
+          </TabsContent>
+
+          <TabsContent value="import" className="mt-4">
+            <ImportTab slug={slug} currency={currency} canWrite={me.role === "admin"} />
           </TabsContent>
 
           <TabsContent value="history" className="mt-4">

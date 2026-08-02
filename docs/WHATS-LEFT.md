@@ -5,7 +5,8 @@ An honest map of the distance between here and a product someone pays for.
 Written for the owner. Kept current as things land — if this file says something is
 missing and it isn't, fix the file.
 
-Last updated: 2026-08-02 (steps 1-4 done; step 5 done except the audit viewer).
+Last updated: 2026-08-02 (steps 1-6 all done; only advances and the
+connect-a-store screen remain, both deliberately waiting).
 
 ---
 
@@ -67,8 +68,11 @@ Stripe key, which is a settings change rather than a build.
 - **Year-end payment reporting** — what you paid each person in a calendar year,
   on screen and as a spreadsheet, with the people whose tax details are missing
   called out.
+- **Spreadsheet import** — a royalty statement or marketplace report becomes
+  earnings. You see exactly what it would do before anything is recorded, and
+  importing the same file twice doesn't pay anyone twice.
 
-406 unit tests, 269 end-to-end checks against a real database, every screen driven
+446 unit tests, 289 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
@@ -109,7 +113,7 @@ Everything left in this group waits on somebody else.
 
 | Missing | What it unlocks |
 |---|---|
-| **CSV import** | Music, publishing and stock licensing all at once — they already live in spreadsheets. |
+| ~~CSV import~~ | **Built.** Any business whose sales arrive as a spreadsheet — music, publishing, stock licensing — can now be onboarded without a store connection. |
 | **Advances / recoupment** | Music and book publishing specifically. A known gap in the rule shape — see blueprint §10b. **Don't sell to those industries until it exists.** |
 
 ---
@@ -275,10 +279,47 @@ What it leads with is the actionable part: **how many people you paid whose tax
 details aren't on file.** Those are the ones that cannot be filed for, and the
 fix is asking them to finish connecting their bank.
 
-**6. CSV import, then advances.**
-New markets. Only worth doing when there's demand pointing at them — and advances
-specifically should wait for a real publishing or music conversation, so the shape
-is drawn from a real deal rather than guessed at.
+**6. CSV import ✅ DONE. Advances still waiting, deliberately.**
+
+An **Import** tab in the console. Choose a file, say what the columns mean, see
+exactly what it would do, then import. It opens every business whose sales arrive
+as a spreadsheet rather than through a connected store — which is most of music,
+publishing and stock licensing.
+
+Four things about it are decisions rather than mechanics:
+
+- **Nothing is recorded until you've seen what it would do.** Every other way a
+  sale enters this system is automatic — it arrives whether anyone is watching or
+  not. An import is a person turning a file into money owed, from a file they may
+  have edited or already imported last week. So checking and importing are two
+  separate steps, and changing a column throws the check away rather than letting
+  you approve one set of numbers and import another.
+
+- **It asks how the dates are written, and refuses to guess.** `01/02/2026` is two
+  different days depending on where the file came from, and there is nothing in it
+  that settles the question. Guessing would be right for the first eleven days of
+  every month and then quietly move a sale into the wrong quarter — and, at a year
+  boundary, the wrong tax year.
+
+- **Importing the same file twice does nothing the second time.** This is the hard
+  part of the whole feature. A spreadsheet row has no transaction number of its
+  own, so identity has to be built from what the row says plus the name you give
+  the statement. Use the same name and a repeat import is skipped entirely. The
+  gap that leaves — the same file under a *different* name — is caught by a second
+  check that looks for sales matching on work, date and amount and warns before you
+  import. It warns rather than blocks, because a business really does sell the same
+  thing twice in a day.
+
+- **A row it can't read is left out and named, never guessed at.** Same rule as the
+  cost resolver and the Shopify connection: a row that didn't import can be fixed
+  and imported tomorrow; a payment made on a misread column can't be, once the
+  money has gone. Negative rows are refused outright — a return has to be recorded
+  against the sale it undoes, so the clawback follows that sale's own rate and your
+  refund policy, and a spreadsheet line has no way to point at the original.
+
+**Advances are still not built, on purpose.** They should wait for a real
+publishing or music conversation, so the shape is drawn from an actual deal rather
+than guessed at (blueprint §10b).
 
 ---
 

@@ -2825,6 +2825,300 @@ async function main() {
     assert.equal(leaked.length, 0)
   );
 
+  // ============================================================
+  // CSV import — against real SQL, real constraints, real bigints
+  // ============================================================
+  //
+  // The unit tests pin what a row MEANS. These pin what happens when it meets
+  // the database — which is where this repo has found bugs that a green
+  // type-check and a green suite both missed. The one that matters most is the
+  // re-import: the whole idempotency design is a claim about a unique index,
+  // and only a real index can prove it.
+  //
+  // Dates are in 2029 deliberately, well clear of every other fixture, so the
+  // look-alike scan has a clean window to work in.
+
+  const { previewCsvImport, commitCsvImport } = await import("../adapters/csv/ingest");
+
+  await db.insert(schema.works).values([
+    { id: "w-csv", tenantId: "t-369", title: "Statement Work", externalRef: "csv-work-1" },
+  ]);
+  await db.insert(schema.workContributors).values([
+    { tenantId: "t-369", workId: "w-csv", contributorId: "c-alice", role: "artist" },
+  ]);
+
+  const csvConfig = {
+    mapping: { amount: "amount", date: "date", work: "work" },
+    dateFormat: "iso" as const,
+    currency: "USD",
+    statementLabel: "june-2029",
+  };
+
+  // Two known rows, one unknown work, and a $1,234.56 to prove the bigint path.
+  const statement = [
+    "work,date,amount",
+    "csv-work-1,2029-06-01,100.00",
+    "csv-work-1,2029-06-02,1234.56",
+    "no-such-work,2029-06-03,50.00",
+  ].join("\n");
+
+  const balanceBeforeCsv = await deriveContributorBalance(db, "t-369", "c-alice");
+  const eventsBeforePreview = await db
+    .select({ n: sql<string>`count(*)` })
+    .from(schema.revenueEvents)
+    .where(eq(schema.revenueEvents.tenantId, "t-369"));
+
+  const csvPreview = await previewCsvImport(db, {
+    tenantId: "t-369",
+    content: statement,
+    config: csvConfig,
+  });
+
+  const eventsAfterPreview = await db
+    .select({ n: sql<string>`count(*)` })
+    .from(schema.revenueEvents)
+    .where(eq(schema.revenueEvents.tenantId, "t-369"));
+
+  /**
+   * The property the whole two-step design rests on. A preview that wrote
+   * anything would make "nothing is recorded until you say so" a lie, and it is
+   * the sentence on the screen the owner is trusting.
+   */
+  check("previewing an import writes absolutely nothing", () =>
+    assert.equal(eventsAfterPreview[0].n, eventsBeforePreview[0].n)
+  );
+
+  check("the preview counts what would import and what would be held", () => {
+    assert.equal(csvPreview.willImport, 2);
+    assert.equal(csvPreview.willHold, 1);
+    assert.equal(csvPreview.alreadyImported, 0);
+  });
+
+  check("the preview names the work the business does not have", () =>
+    assert.deepEqual(csvPreview.unknownWorks, ["no-such-work"])
+  );
+
+  check("the preview totals every row it would take in", () =>
+    assert.equal(csvPreview.totalMinor, 138456n)
+  );
+
+  const csvRun = await commitCsvImport(db, {
+    tenantId: "t-369",
+    content: statement,
+    config: csvConfig,
+  });
+
+  check("importing records the readable rows and holds the rest", () => {
+    assert.equal(csvRun.imported, 2);
+    assert.equal(csvRun.heldForReview, 1);
+    assert.equal(csvRun.duplicates, 0);
+    assert.equal(csvRun.failed, 0);
+  });
+
+  /**
+   * A held row is RECORDED, not dropped. The revenue happened; only the
+   * attribution is missing. Dropping it would lose the sale silently, which is
+   * the failure the review queue exists to prevent.
+   */
+  const heldCsv = await db
+    .select()
+    .from(schema.revenueEvents)
+    .where(
+      and(
+        eq(schema.revenueEvents.tenantId, "t-369"),
+        eq(schema.revenueEvents.source, "csv"),
+        eq(schema.revenueEvents.needsReview, true)
+      )
+    );
+  check("a row naming an unknown work is recorded and held, not discarded", () => {
+    assert.equal(heldCsv.length, 1);
+    assert.equal(heldCsv[0].grossAmountMinor, 5000n);
+    assert.ok(heldCsv[0].reviewReason);
+  });
+
+  const heldCsvAllocations = await db
+    .select({ n: sql<string>`count(*)` })
+    .from(schema.allocations)
+    .where(eq(schema.allocations.revenueEventId, heldCsv[0].id));
+  check("a held row allocates nothing to anybody", () =>
+    assert.equal(heldCsvAllocations[0].n, "0")
+  );
+
+  /** Large amounts survive the string → bigint → SQL → bigint round trip. */
+  const bigRow = await db
+    .select()
+    .from(schema.revenueEvents)
+    .where(
+      and(
+        eq(schema.revenueEvents.tenantId, "t-369"),
+        eq(schema.revenueEvents.grossAmountMinor, 123456n)
+      )
+    );
+  check("$1,234.56 round-trips through real SQL as 123456 minor units", () =>
+    assert.equal(bigRow.length, 1)
+  );
+
+  const balanceAfterCsv = await deriveContributorBalance(db, "t-369", "c-alice");
+  check("imported sales actually move a balance", () =>
+    assert.ok(balanceAfterCsv > balanceBeforeCsv)
+  );
+
+  // ---- The re-import. This is the assertion the design exists for. ----
+
+  const csvRerun = await commitCsvImport(db, {
+    tenantId: "t-369",
+    content: statement,
+    config: csvConfig,
+  });
+
+  check("re-importing the identical file pays nobody a second time", () => {
+    assert.equal(csvRerun.imported, 0);
+    assert.equal(csvRerun.heldForReview, 0);
+    assert.equal(csvRerun.duplicates, 3);
+    assert.equal(csvRerun.totalAllocatedMinor, 0n);
+  });
+
+  const balanceAfterRerun = await deriveContributorBalance(db, "t-369", "c-alice");
+  check("and the balance is byte-for-byte what it was before the re-import", () =>
+    assert.equal(balanceAfterRerun, balanceAfterCsv)
+  );
+
+  const rerunPreview = await previewCsvImport(db, {
+    tenantId: "t-369",
+    content: statement,
+    config: csvConfig,
+  });
+  check("the preview says so in advance, rather than after the fact", () => {
+    assert.equal(rerunPreview.alreadyImported, 3);
+    assert.equal(rerunPreview.willImport, 0);
+  });
+
+  /**
+   * ⚠️ THE ACCEPTED WEAKNESS, AND ITS ONLY SAFETY NET. Without a reference
+   * column the statement's name is part of every key, so the same rows under a
+   * different name are NEW keys and would pay twice. Nothing in the key design
+   * can catch that — the look-alike scan is what does, by matching on the facts
+   * instead of on the identity. If this check ever fails, the warning on the
+   * screen is the only thing standing between an owner and a double payment.
+   */
+  const relabelled = await previewCsvImport(db, {
+    tenantId: "t-369",
+    content: statement,
+    config: { ...csvConfig, statementLabel: "june-2029-copy" },
+  });
+  check("the same file under a different name is flagged as already-recorded sales", () => {
+    assert.equal(relabelled.alreadyImported, 0, "a new label genuinely produces new keys");
+    assert.ok(
+      relabelled.lookAlikes.length >= 2,
+      "so the look-alike scan is the only thing that catches it"
+    );
+  });
+
+  // ---- A reference column removes the ambiguity entirely ----
+
+  const referenced = [
+    "ref,work,date,amount",
+    "TX-2029-1,csv-work-1,2029-07-01,20.00",
+  ].join("\n");
+  const referencedConfig = {
+    ...csvConfig,
+    mapping: { ...csvConfig.mapping, reference: "ref" },
+    statementLabel: "july-2029",
+  };
+
+  await commitCsvImport(db, {
+    tenantId: "t-369",
+    content: referenced,
+    config: referencedConfig,
+  });
+  const referencedAgain = await commitCsvImport(db, {
+    tenantId: "t-369",
+    content: referenced,
+    config: { ...referencedConfig, statementLabel: "a-completely-different-name" },
+  });
+
+  check("with a reference column, even a renamed re-import is a no-op", () =>
+    assert.equal(referencedAgain.duplicates, 1)
+  );
+
+  // ---- Tenancy ----
+
+  await db.insert(schema.works).values([
+    { id: "w-csv-press", tenantId: "t-press", title: "Press Work", externalRef: "csv-work-1" },
+  ]);
+  await db.insert(schema.workContributors).values([
+    { tenantId: "t-press", workId: "w-csv-press", contributorId: "c-eve" },
+  ]);
+
+  const pressBefore = await deriveContributorBalance(db, "t-press", "c-eve");
+  const aliceBefore = await deriveContributorBalance(db, "t-369", "c-alice");
+
+  const pressRun = await commitCsvImport(db, {
+    tenantId: "t-press",
+    content: statement,
+    config: csvConfig,
+  });
+
+  /**
+   * The same work reference and the same statement name exist in both
+   * businesses. Uniqueness is `(tenantId, source, sourceEventId)`, so these are
+   * different events — and one tenant's import must not be seen as another's
+   * duplicate, nor pay another's people.
+   */
+  check("an identical file imported by another business is not a duplicate of ours", () =>
+    assert.equal(pressRun.duplicates, 0)
+  );
+  const pressAfter = await deriveContributorBalance(db, "t-press", "c-eve");
+  const aliceAfter = await deriveContributorBalance(db, "t-369", "c-alice");
+  check("and it pays that business's own person", () =>
+    assert.ok(pressAfter > pressBefore)
+  );
+  check("while leaving the first business's balances untouched", () =>
+    assert.equal(aliceAfter, aliceBefore)
+  );
+
+  // ---- A row the engine refuses does not abandon the file ----
+
+  const withBadRow = [
+    "work,date,amount",
+    "csv-work-1,2029-08-01,10.00",
+    "csv-work-1,2029-08-02,(5.00)",
+    "csv-work-1,2029-08-03,15.00",
+  ].join("\n");
+
+  const partial = await commitCsvImport(db, {
+    tenantId: "t-369",
+    content: withBadRow,
+    config: { ...csvConfig, statementLabel: "august-2029" },
+  });
+
+  check("a negative row is left out while the rest of the file still imports", () => {
+    assert.equal(partial.imported, 2);
+    assert.equal(partial.errors.length, 1);
+    assert.equal(partial.errors[0].line, 3);
+    assert.match(partial.errors[0].message, /negative/);
+  });
+
+  /** Fixing the bad row and re-importing must not re-pay the good ones. */
+  const fixed = await commitCsvImport(db, {
+    tenantId: "t-369",
+    content: withBadRow.replace("(5.00)", "5.00"),
+    config: { ...csvConfig, statementLabel: "august-2029" },
+  });
+  check("re-importing after a fix adds only the row that was fixed", () => {
+    assert.equal(fixed.imported, 1);
+    assert.equal(fixed.duplicates, 2);
+  });
+
+  /** The import is answerable for: who did it, when, and how much. */
+  const importAudit = await listAuditLog(db, "t-369", { action: "import_csv" });
+  check("imports are not audit-logged by the engine itself", () =>
+    // Logged by the route, alongside the actor — the engine has no actor to
+    // record. Asserted so nobody adds a second entry inside the importer and
+    // ends up with every import in the history twice.
+    assert.equal(importAudit.length, 0)
+  );
+
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);
 

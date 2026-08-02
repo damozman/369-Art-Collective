@@ -25,7 +25,11 @@ import * as schema from "@shared/engine-schema";
 import { AdminValidationError } from "./admin-mutations";
 import { allocateEvent, type EngineDb } from "./ingest";
 import { formatMoney } from "./money";
-import type { RevenueEvent } from "./revenue-event";
+import {
+  RECORDABLE_COST_TYPES,
+  type RecordableCostType,
+  type RevenueEvent,
+} from "./revenue-event";
 
 /** Rebuild the canonical event from what was stored, so rules see what ingestion saw. */
 async function loadEventForAllocation(
@@ -250,25 +254,21 @@ export async function dismissReview(
 }
 
 /**
- * The cost types the engine understands.
+ * The closed list of cost types, re-exported from where it now lives.
  *
- * ⚠️ THIS IS A CLOSED LIST ON PURPOSE, and it is not cosmetic validation. Rules
- * decide whose share a cost reduces by matching `costDeductions` against this
- * string EXACTLY (`revenue-event.ts:245` — a `Set.has` on the type). A cost
- * recorded as "proccessing_fee" is stored, shows up in margin reporting, and
- * silently reduces nobody's share, because no rule lists that spelling. The
- * result is an overpayment that looks completely correct on every screen.
+ * It moved to `revenue-event.ts` when the CSV importer needed it: that module
+ * is pure, and the mapper that validates a tenant's cost columns must not have
+ * to import this DB-facing file — and therefore Drizzle and the whole schema —
+ * to find out which spellings are legal. The list constrains `CostInput.type`,
+ * so sitting beside that interface is where it always belonged.
  *
- * Free-text entry here would make that a typo away at all times. Adding a type
- * means adding it here *and* to the rules that should deduct it.
+ * Re-exported rather than relocated-and-rewired so every existing importer of
+ * `./review` keeps working; there is exactly one definition either way.
  */
-export const RECORDABLE_COST_TYPES = [
-  "production",
-  "shipping",
-  "processing_fee",
-] as const;
-
-export type RecordableCostType = (typeof RECORDABLE_COST_TYPES)[number];
+export {
+  RECORDABLE_COST_TYPES,
+  type RecordableCostType,
+} from "./revenue-event";
 
 /**
  * Record a cost that the sales channel could not tell us.

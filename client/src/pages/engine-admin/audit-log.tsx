@@ -61,6 +61,7 @@ const ACTION_LABELS: Record<string, string> = {
   signup: "Created this account",
   export_tax_report: "Downloaded the year-end report",
   password_reset: "Reset a password",
+  import_csv: "Imported a statement",
 };
 
 function label(action: string): string {

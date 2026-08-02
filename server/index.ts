@@ -49,6 +49,28 @@ app.use(session({
   proxy: true, // Trust proxy headers (needed for Replit deployments)
 }));
 
+/**
+ * CSV imports carry a whole statement file in the request body, so they need a
+ * body limit far above the 100 KB default.
+ *
+ * Scoped to those routes rather than raised globally: the default limit is the
+ * cheapest protection the other ~150 endpoints have against a large-body
+ * denial of service, and widening it for all of them to serve one screen would
+ * trade a real defence for a convenience. Mounted BEFORE the default parser
+ * because body-parser marks a request as parsed and later parsers no-op —
+ * running second, this would never see the body.
+ *
+ * The importer enforces its own row and byte ceilings on top of this; see
+ * `MAX_IMPORT_ROWS` and `MAX_IMPORT_BYTES`.
+ */
+const importBodyParser = express.json({ limit: "12mb" });
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/engine/") && req.path.includes("/admin/import/")) {
+    return importBodyParser(req, res, next);
+  }
+  next();
+});
+
 app.use(express.json({
   verify: (req, _res, buf) => {
     req.rawBody = buf;

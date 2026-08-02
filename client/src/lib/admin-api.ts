@@ -579,3 +579,27 @@ export function getTaxReport(tenantSlug: string, year: number): Promise<TaxYearR
 export function taxCsvUrl(tenantSlug: string, year: number): string {
   return `${base(tenantSlug)}/tax/1099.csv?year=${encodeURIComponent(String(year))}`;
 }
+
+export interface AdminAuditEntry {
+  id: string;
+  occurredAt: string;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  actorName: string;
+  actorType: string;
+  before: unknown;
+  after: unknown;
+}
+
+export function getAuditLog(
+  tenantSlug: string,
+  options: { action?: string; before?: string } = {}
+): Promise<{ entries: AdminAuditEntry[]; actions: string[] }> {
+  const params = new URLSearchParams();
+  if (options.action) params.set("action", options.action);
+  if (options.before) params.set("before", options.before);
+
+  const query = params.toString();
+  return request(`${base(tenantSlug)}/audit${query ? `?${query}` : ""}`);
+}

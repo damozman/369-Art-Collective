@@ -35,6 +35,8 @@ import {
   listContributors,
   listNeedsReview,
   listPayoutBatches,
+  listAuditActions,
+  listAuditLog,
   listRules,
   listWorks,
 } from "./admin-query";
@@ -606,9 +608,9 @@ export function createAdminRouter(
   router.post(
     "/t/:tenantSlug/admin/rules/:ruleKey/deactivate",
     requireAdmin,
-    write(async (req, res) => {
+    write(async (req, res, session) => {
       const tenant = req.engineTenant!;
-      await deactivateRule(db, tenant.id, String(req.params.ruleKey));
+      await deactivateRule(db, tenant.id, String(req.params.ruleKey), session.tenantUserId);
       res.json({ ok: true });
     })
   );
@@ -839,6 +841,32 @@ export function createAdminRouter(
       res.json({ ok: true });
     })
   );
+
+  /**
+   * The history of changes.
+   *
+   * Deliberately NOT behind `write()` — it is a read, and a lapsed trial that
+   * has gone read-only still needs to be able to answer "who changed this?".
+   * Same reasoning that keeps the tax report readable.
+   */
+  router.get("/t/:tenantSlug/admin/audit", requireAdmin, async (req: TenantRequest, res) => {
+    const tenant = req.engineTenant!;
+    const action = req.query.action ? String(req.query.action) : undefined;
+    const before = req.query.before ? new Date(String(req.query.before)) : undefined;
+
+    const [entries, actions] = await Promise.all([
+      listAuditLog(db, tenant.id, {
+        action,
+        // An unparseable date is ignored rather than throwing — a bad cursor
+        // should show the first page, not an error screen.
+        before: before && !Number.isNaN(before.getTime()) ? before : undefined,
+        limit: 100,
+      }),
+      listAuditActions(db, tenant.id),
+    ]);
+
+    res.json({ entries, actions });
+  });
 
   // ---- Settings ----
 

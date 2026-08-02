@@ -41,6 +41,25 @@ export function formatDate(iso: string | null | undefined): string {
   return `${Number(day)} ${monthName} ${year}`;
 }
 
+/**
+ * `2026-06-15T02:00:00.000Z` → `15 Jun 2026, 02:00 UTC`.
+ *
+ * For the history, where the time of day is the point — "who changed this
+ * before the payout ran?" cannot be answered by a date alone. UTC is stated
+ * explicitly rather than silently converted: a history that renders in the
+ * reader's timezone would disagree with the statements and emails it explains,
+ * all of which are UTC.
+ */
+export function formatDateTime(iso: string | null | undefined): string {
+  const date = formatDate(iso);
+  if (date === "—" || !iso) return date;
+
+  const time = iso.slice(11, 16);
+  if (!/^\d{2}:\d{2}$/.test(time)) return date;
+
+  return `${date}, ${time} UTC`;
+}
+
 /** The `YYYY-MM-DD` part of an ISO timestamp, or null if it is not one. */
 export function isoDate(iso: string | null | undefined): string | null {
   if (!iso) return null;

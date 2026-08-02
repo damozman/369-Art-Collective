@@ -254,26 +254,52 @@ export async function supersedeRule(
  * was, which is the whole reason rules are versioned. A deleted rule would leave
  * old allocations referencing something that no longer exists.
  */
+/**
+ * Stop a rate applying to anything new.
+ *
+ * ⚠️ AUDIT-LOGGED, unlike creating or superseding a rate — and the asymmetry is
+ * deliberate rather than an oversight. A new version writes a ROW: it carries
+ * `createdBy`, `version` and `effectiveFrom`, so the rule table is its own
+ * record of who changed what and when. Deactivation writes no row; it flips a
+ * flag on an existing one, and without an entry here "who turned this off, and
+ * when?" has no answer anywhere in the system.
+ *
+ * That question matters: a deactivated rate silently stops paying somebody.
+ */
 export async function deactivateRule(
   db: EngineDb,
   tenantId: string,
-  ruleKey: string
+  ruleKey: string,
+  actorId?: string
 ): Promise<void> {
-  const updated = await db
-    .update(schema.splitRules)
-    .set({ active: false, effectiveTo: sql`COALESCE(${schema.splitRules.effectiveTo}, NOW())` })
-    .where(
-      and(
-        eq(schema.splitRules.tenantId, tenantId),
-        eq(schema.splitRules.ruleKey, ruleKey),
-        eq(schema.splitRules.active, true)
+  return db.transaction(async (tx) => {
+    const updated = await tx
+      .update(schema.splitRules)
+      .set({ active: false, effectiveTo: sql`COALESCE(${schema.splitRules.effectiveTo}, NOW())` })
+      .where(
+        and(
+          eq(schema.splitRules.tenantId, tenantId),
+          eq(schema.splitRules.ruleKey, ruleKey),
+          eq(schema.splitRules.active, true)
+        )
       )
-    )
-    .returning({ id: schema.splitRules.id });
+      .returning({ id: schema.splitRules.id });
 
-  if (updated.length === 0) {
-    throw new AdminValidationError(`No active rate called "${ruleKey}"`);
-  }
+    if (updated.length === 0) {
+      throw new AdminValidationError(`No active rate called "${ruleKey}"`);
+    }
+
+    await tx.insert(schema.auditLog).values({
+      tenantId,
+      actorType: "tenant_user",
+      actorId: actorId ?? null,
+      action: "deactivate_rule",
+      entityType: "split_rule",
+      entityId: updated[0].id,
+      before: { ruleKey, active: true },
+      after: { ruleKey, active: false },
+    });
+  });
 }
 
 // ============================================================

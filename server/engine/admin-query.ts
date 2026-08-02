@@ -8,7 +8,7 @@
  * showing nothing.
  */
 
-import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, lt, sql } from "drizzle-orm";
 
 import * as schema from "@shared/engine-schema";
 import type { EngineDb } from "./ingest";
@@ -563,4 +563,128 @@ export async function listPayoutBatches(
       totalPaidMinor: paid.reduce((sum, p) => sum + BigInt(p.amountMinor), 0n),
     };
   });
+}
+
+// ============================================================
+// The audit log
+// ============================================================
+
+export interface AdminAuditRow {
+  id: string;
+  occurredAt: Date;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  /** Who did it, resolved to a name. "System" when nothing did it on request. */
+  actorName: string;
+  actorType: string;
+  before: unknown;
+  after: unknown;
+}
+
+/**
+ * What changed, who changed it, and when.
+ *
+ * ⚠️ ACTOR NAMES ARE RESOLVED HERE, NOT IN THE UI. The log stores an id, and an
+ * id is useless to the person reading the screen — "a4f2c… changed the minimum
+ * payout" answers nothing. Resolving on the client would mean shipping the full
+ * user and contributor lists to render a history, which is both slower and a
+ * wider disclosure than the history itself needs.
+ *
+ * Deleted users still resolve, because the join reads the row rather than
+ * filtering on `deletedAt`. That is deliberate: an audit trail that forgets who
+ * did something the moment their account is removed is not an audit trail.
+ */
+export async function listAuditLog(
+  db: EngineDb,
+  tenantId: string,
+  options: { limit?: number; action?: string; before?: Date } = {}
+): Promise<AdminAuditRow[]> {
+  const limit = Math.min(options.limit ?? 100, 500);
+
+  const conditions = [eq(schema.auditLog.tenantId, tenantId)];
+  if (options.action) conditions.push(eq(schema.auditLog.action, options.action));
+  if (options.before) conditions.push(lt(schema.auditLog.occurredAt, options.before));
+
+  const rows = await db
+    .select()
+    .from(schema.auditLog)
+    .where(and(...conditions))
+    .orderBy(desc(schema.auditLog.occurredAt))
+    .limit(limit);
+
+  if (rows.length === 0) return [];
+
+  // Two lookups rather than a join, because the actor is one of two tables and
+  // an outer join to both would produce a wider row for every entry.
+  const actorIds = rows.map((row) => row.actorId).filter((id): id is string => Boolean(id));
+
+  const [users, people] = actorIds.length
+    ? await Promise.all([
+        db
+          .select({ id: schema.tenantUsers.id, name: schema.tenantUsers.name })
+          .from(schema.tenantUsers)
+          .where(
+            and(
+              eq(schema.tenantUsers.tenantId, tenantId),
+              inArray(schema.tenantUsers.id, actorIds)
+            )
+          ),
+        db
+          .select({ id: schema.contributors.id, name: schema.contributors.name })
+          .from(schema.contributors)
+          .where(
+            and(
+              eq(schema.contributors.tenantId, tenantId),
+              inArray(schema.contributors.id, actorIds)
+            )
+          ),
+      ])
+    : [[], []];
+
+  const names = new Map<string, string>();
+  for (const user of users) names.set(user.id, user.name);
+  for (const person of people) names.set(person.id, person.name);
+
+  return rows.map((row) => ({
+    id: row.id,
+    occurredAt: row.occurredAt,
+    action: row.action,
+    entityType: row.entityType,
+    entityId: row.entityId,
+    actorType: row.actorType,
+    /**
+     * ⚠️ "System" ONLY when the actor type actually says so.
+     *
+     * An earlier version fell back to "System" whenever `actorId` was null,
+     * which meant a change made by a person with no recorded actor was
+     * displayed as an automatic one. That is an audit trail asserting something
+     * false, which is worse than one admitting a gap — somebody reading it
+     * would conclude nobody was responsible.
+     *
+     * A missing or unresolvable actor now reads "Unknown", which is true.
+     */
+    actorName:
+      row.actorType === "system"
+        ? "System"
+        : row.actorId
+          ? names.get(row.actorId) ?? "Unknown"
+          : "Unknown",
+    before: row.before,
+    after: row.after,
+  }));
+}
+
+/** Which kinds of change exist for this tenant, for the filter. */
+export async function listAuditActions(
+  db: EngineDb,
+  tenantId: string
+): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ action: schema.auditLog.action })
+    .from(schema.auditLog)
+    .where(eq(schema.auditLog.tenantId, tenantId))
+    .orderBy(schema.auditLog.action);
+
+  return rows.map((row) => row.action);
 }

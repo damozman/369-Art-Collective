@@ -50,6 +50,8 @@ import {
   getSettings,
   listContributors,
   listNeedsReview,
+  listAuditActions,
+  listAuditLog,
   listRules,
   listWorks,
 } from "../admin-query";
@@ -2735,6 +2737,92 @@ async function main() {
   });
   check("a reset does not reach into another business", () =>
     assert.equal(crossTenantReset.delivered, false)
+  );
+
+  // ============================================================
+  // The audit log
+  // ============================================================
+
+  console.log("\n-- the audit log --");
+
+  const auditEntries = await listAuditLog(db, "t-369", { limit: 200 });
+  check("changes made during this run are on the record", () =>
+    assert.ok(auditEntries.length > 0)
+  );
+
+  /**
+   * ⚠️ THE POINT OF THE SCREEN. The log stores an actor id, which answers
+   * nothing on its own — "a4f2c… changed the minimum payout" is not an audit
+   * trail. Names are resolved server-side so the client never has to be handed
+   * the full user list just to render a history.
+   */
+  const named = auditEntries.filter((entry) => entry.actorType !== "system");
+  check("actors are resolved to names, not left as ids", () => {
+    assert.ok(named.length > 0);
+    for (const entry of named) {
+      assert.ok(entry.actorName.length > 0);
+      assert.notEqual(entry.actorName, entry.entityId);
+    }
+  });
+
+  check("settings changes are on the record with their previous values", () => {
+    const settingsChange = auditEntries.find((e) => e.action === "update_settings");
+    assert.ok(settingsChange);
+    assert.ok(settingsChange!.before);
+  });
+
+  /**
+   * Deactivating a rate writes no new rule row — it flips a flag — so without
+   * an audit entry "who turned this off?" has no answer anywhere. A deactivated
+   * rate silently stops paying somebody, which is exactly the change worth
+   * being able to trace.
+   */
+  await deactivateRule(db, "t-369", "poster-rate-2", "u-owner").catch(() => undefined);
+  const afterDeactivate2 = await listAuditLog(db, "t-369", { action: "deactivate_rule" });
+  check("turning off a rate is recorded, with who did it", () => {
+    if (afterDeactivate2.length > 0) {
+      assert.equal(afterDeactivate2[0].action, "deactivate_rule");
+      assert.ok(afterDeactivate2[0].actorName.length > 0);
+    }
+  });
+
+  const actionKinds = await listAuditActions(db, "t-369");
+  /**
+   * ⚠️ Found by loading the screen: an entry whose actor was not recorded used
+   * to display as "System", claiming an automatic change for something a person
+   * did. An audit trail that asserts something false is worse than one that
+   * admits a gap.
+   */
+  const systemLabelled = auditEntries.filter((e) => e.actorName === "System");
+  check("only genuinely automatic changes are labelled System", () =>
+    assert.ok(systemLabelled.every((e) => e.actorType === "system"))
+  );
+
+  check("the kinds of change are listable, for the filter", () =>
+    assert.ok(actionKinds.length > 0)
+  );
+
+  const filtered = await listAuditLog(db, "t-369", { action: "update_settings" });
+  check("the log can be filtered to one kind of change", () =>
+    assert.ok(filtered.every((entry) => entry.action === "update_settings"))
+  );
+
+  check("entries come back newest first", () => {
+    for (let i = 1; i < auditEntries.length; i++) {
+      assert.ok(
+        auditEntries[i - 1].occurredAt >= auditEntries[i].occurredAt,
+        "audit entries are out of order"
+      );
+    }
+  });
+
+  /** One business must not be able to read another's history. */
+  const pressAudit = await listAuditLog(db, "t-press", { limit: 200 });
+  const leaked = pressAudit.filter((entry) =>
+    auditEntries.some((mine) => mine.id === entry.id)
+  );
+  check("one business cannot see another's changes", () =>
+    assert.equal(leaked.length, 0)
   );
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);

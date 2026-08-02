@@ -55,6 +55,8 @@ Stripe key, which is a settings change rather than a build.
   customer refunds after you've paid.
 - **Password reset** — for artists and for you. A link by email, good for an hour
   and usable once. Nobody has to ask you to reset anything by hand.
+- **The Changes tab** — who changed what, and when, in plain English. Rate
+  switch-offs, settings, held sales resolved, plan changes, report downloads.
 - **Recording a cost the sales channel never sent** — a payment fee that PayPal
   didn't report can be typed in from the statement before the sale is assigned,
   instead of the business silently swallowing it.
@@ -66,7 +68,7 @@ Stripe key, which is a settings change rather than a build.
   on screen and as a spreadsheet, with the people whose tax details are missing
   called out.
 
-406 unit tests, 260 end-to-end checks against a real database, every screen driven
+406 unit tests, 269 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
@@ -93,7 +95,7 @@ Everything left in this group waits on somebody else.
 | ~~Works screen~~ | **Built.** Add, edit and archive pieces, and say who earns from each. |
 | ~~Business settings screen~~ | **Built.** Hold period, minimum payout and refund policy, all editable. |
 | ~~Password reset~~ | **Built.** Both sign-ins. Link expires in an hour and works once. |
-| **Audit log viewer** | Every change is recorded; nothing displays it. |
+| ~~Audit log viewer~~ | **Built.** A Changes tab: who changed what, and when. |
 
 ### Group 3 — Needed before real customers, not before a demo
 

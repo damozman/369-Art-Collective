@@ -171,7 +171,7 @@ Both were resolved in step 5.)
   (`server/engine/payout-account.ts`, Account Links + status read back from Stripe),
   **billing** (plans, trials, usage counting, annual, the Stripe charging seam,
   self-serve signup at `/signup`) and **email** (`server/engine/email/`).
-- **406 unit tests · 260 end-to-end checks against real Postgres.** Every screen has
+- **406 unit tests · 269 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -209,10 +209,7 @@ Summary of that order:
    are **the next work in the queue, in this order**:
    - ~~**The daily job.**~~ — **done.** See "The daily job" below.
    - ~~**1099 export.**~~ — **done.** See "The 1099 export" below.
-   - **The audit-log viewer.** Every change is already recorded; nothing shows it.
-     **This is the next thing to build** — and the tax export just added a new
-     entry type to it (`export_tax_report`), so the viewer now has something to
-     show beyond rule edits.
+   - ~~**The audit-log viewer.**~~ — **done.** See "The Changes tab" below.
 6. CSV import, then advances (§10b) — advances only once a real publishing or music
    deal can be seen, so the shape is drawn rather than guessed.
 
@@ -560,6 +557,40 @@ request mails somebody who may not have asked.
 built from a client-controlled `Host` header, which would turn this endpoint
 into a credential harvester sending mail from our own domain.
 
+### The Changes tab — BUILT. The audit log, made readable
+
+`admin-query.ts` (`listAuditLog`, `listAuditActions`) plus
+`client/src/pages/engine-admin/audit-log.tsx`. Labelled **Changes**, not
+History — the console already had a History tab for payout runs, and two tabs
+with the same name is a defect however accurate both labels are alone.
+
+Three things worth keeping:
+
+1. **Actor names are resolved server-side.** The log stores an id, and
+   "a4f2c… changed the minimum payout" answers nothing. Resolving on the client
+   would mean shipping the full user and contributor lists to render a history.
+   Deleted users still resolve — an audit trail that forgets who did something
+   the moment their account is removed is not an audit trail.
+2. **⚠️ "System" appears ONLY when `actorType` says so.** The first version fell
+   back to "System" whenever `actorId` was null, displaying a person's change as
+   an automatic one — an audit trail asserting something false, which is worse
+   than one admitting a gap. A missing or unresolvable actor now reads
+   "Unknown". **Found by loading the screen**, and pinned by an e2e check.
+3. **Unknown action types degrade to readable English** rather than being
+   filtered out. A new entry kind shows up slightly ugly instead of invisibly —
+   the right failure, because an ugly row gets fixed and a missing one does not.
+
+**`deactivateRule` gained an audit entry while building this**, and the
+asymmetry with `createRule`/`supersedeRule` is deliberate: those write a ROW
+carrying `createdBy`, `version` and `effectiveFrom`, so the rule table is its
+own record. Deactivation only flips a flag, so without an entry "who turned this
+off, and when?" had no answer anywhere — and a deactivated rate silently stops
+paying somebody.
+
+The read is not itself audit-logged, matching the tax tab's reasoning in
+reverse: looking at a history leaves nothing, and logging every view would bury
+the entries that matter under noise.
+
 ### The daily job — BUILT. Four things are load-bearing
 
 `server/engine/jobs/` is what fires `notifyTrialEnding` and `notifyReviewWaiting`,
@@ -718,7 +749,7 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 
 ```bash
 npm test              # 406 unit tests, no network, no database
-npm run test:e2e      # 260 checks against a real Postgres (needs DATABASE_URL)
+npm run test:e2e      # 269 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -889,8 +920,14 @@ Sessions do not share memory. Everything below is the state as of the last commi
 Written at the end of the session that built the daily job and the 1099 export.
 None is blocked on code; two are waiting on the user, one is the next thing to build.
 
-**1. ~~Password reset~~ — done 2026-08-02.** Both sign-ins. See "Password reset"
-below for the five rules it enforces. **Next build: the audit-log viewer.** The last `WHATS-LEFT.md` step 5 leftover.
+**1. ~~Password reset~~ and ~~the audit-log viewer~~ — both done 2026-08-02.**
+The user said "both are important" when asked which came first. With those, the
+whole `WHATS-LEFT.md` numbered order is finished except step 6.
+
+**Next: step 6 — CSV import, then advances.** Advances only once a real
+publishing or music deal can be seen, so the shape is drawn rather than guessed
+(blueprint §10b). The **connect-a-store screen** also remains, waiting on the
+Shopify Partner account. The last `WHATS-LEFT.md` step 5 leftover.
 Every change is already recorded in `engine_audit_log` — rule edits, review
 resolutions, settings changes, and now tax-report exports (`export_tax_report`,
 added by the 1099 work) — and **nothing displays any of it.** After that: step 6
@@ -935,7 +972,7 @@ npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (260 checks against real Postgres) start the local database
+For the end-to-end run (269 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e

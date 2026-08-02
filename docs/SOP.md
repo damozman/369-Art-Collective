@@ -627,6 +627,29 @@ Needs the email connection switched on to actually deliver, same as everything e
 
 ---
 
+## 6f. The Changes tab
+
+Every change anybody makes is written down, and the **Changes** tab shows it:
+who did it, what they did, and when. Turning off a rate, editing your settings,
+assigning a held sale, dismissing one, writing off a balance, downloading the
+year-end report, resetting a password.
+
+**Nothing on it can be edited or deleted**, including by you. That is the point —
+a record you can change is not a record.
+
+Two things to know:
+
+- **Times are shown in UTC**, and say so. That matches your artists' statements
+  and every email the system sends, so the three never disagree.
+- **"Unknown" means the change was made without a signed-in person attached** —
+  usually something set up before the system knew who was doing it. It does not
+  mean something suspicious happened.
+
+Use it when somebody disagrees about a number. "Your rate changed on the 14th,
+here's who changed it" ends a conversation that would otherwise go in circles.
+
+---
+
 ## 7. The things waiting on you
 
 None of these go faster by building faster. They all wait on other people.

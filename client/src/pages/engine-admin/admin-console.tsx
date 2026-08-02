@@ -69,6 +69,7 @@ import { RateEditor } from "./rate-editor";
 import { PeopleEditor } from "./people-editor";
 import { WorksTab } from "./works-editor";
 import { SettingsTab } from "./settings-editor";
+import { AuditTab } from "./audit-log";
 import { BillingTab } from "./billing-tab";
 import { TaxTab } from "./tax-tab";
 import { formatMoney, isPositive, signOf } from "@/lib/portal-money";
@@ -171,6 +172,7 @@ export function AdminConsole({
             <TabsTrigger value="rules" data-testid="tab-rules">Rates</TabsTrigger>
             <TabsTrigger value="history" data-testid="tab-history">History</TabsTrigger>
             <TabsTrigger value="tax" data-testid="tab-tax">Tax</TabsTrigger>
+            <TabsTrigger value="audit" data-testid="tab-audit">Changes</TabsTrigger>
             <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
             <TabsTrigger value="billing" data-testid="tab-billing">Billing</TabsTrigger>
           </TabsList>
@@ -207,6 +209,10 @@ export function AdminConsole({
             {/* No `canWrite` — the report is read-only, and a lapsed trial must
                 still be able to get the figures for money that already moved. */}
             <TaxTab slug={slug} />
+          </TabsContent>
+
+          <TabsContent value="audit" className="mt-4">
+            <AuditTab slug={slug} />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-4">

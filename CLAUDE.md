@@ -813,29 +813,48 @@ Sessions do not share memory. Everything below is the state as of the last commi
 3. The engine table above. Every module opens with a comment explaining *why* it is
    shaped the way it is; those comments are load-bearing, not decoration.
 
-### ⚠️ CARRIED OVER — the three open items as of 2026-08-01
+### ⚠️ CARRIED OVER — the open items as of 2026-08-02
 
-The user asked for these to survive into the next session. None is blocked on code;
-two are waiting on them, one is the next thing to build.
+Written at the end of the session that built the daily job and the 1099 export.
+None is blocked on code; two are waiting on the user, one is the next thing to build.
 
-1. ~~**Next build: the daily job.**~~ — **done 2026-08-02.** ~~**Then the 1099
-   export.**~~ — **also done 2026-08-02.** See "The daily job" and "The 1099
-   export" above. **Next: the audit-log viewer**, the last `WHATS-LEFT.md` step 5
-   leftover. After that, step 6 (CSV import), plus password reset and the
-   connect-a-store screen, which sit outside the numbered order.
-2. **During the Stripe Connect application, confirm the one unverified assumption**
-   — that contributor accounts can be created under the *tenant's* Stripe via the
-   `Stripe-Account` header. See "Payout accounts" above. Sandboxes cannot reach
-   `api.stripe.com`, so this has never run live, and the fallback changes ratified
-   decision #1's shape. **Do not promise a customer it works before this is checked.**
-3. **The Printify cost capture happens alongside that same Connect work**, by the
-   user's decision. Do not raise it as a blocker before then — see "The invented cost
-   fixtures — scope corrected" for why it blocks the marketplace and not the engine.
+**1. Next build: the audit-log viewer.** The last `WHATS-LEFT.md` step 5 leftover.
+Every change is already recorded in `engine_audit_log` — rule edits, review
+resolutions, settings changes, and now tax-report exports (`export_tax_report`,
+added by the 1099 work) — and **nothing displays any of it.** After that: step 6
+(CSV import, then advances), plus **password reset** for both portals and the
+**connect-a-store screen**, which sit outside the numbered order. The
+connect-a-store screen waits on the Shopify Partner account; the other two do not
+wait on anything.
 
-**Track A is still the critical path and still not started** as of 2026-08-01:
-Shopify Partner, Stripe Connect, App Store research, design-partner conversations,
-369 selling again. Ask for status rather than assuming; none of it goes faster by
-building faster.
+⚠️ **Three questions were put to the user at the end of that session and had not
+been answered when it closed.** Ask rather than assuming:
+   - Track A status (below).
+   - Whether the audit viewer really is next, or password reset first.
+   - Whether anything about the new Tax tab should change before a real accountant
+     sees it — the judgement calls about what to show and what to warn about are
+     mine, not theirs.
+
+**2. During the Stripe Connect application, confirm the one unverified assumption**
+— that contributor accounts can be created under the *tenant's* Stripe via the
+`Stripe-Account` header. See "Payout accounts" above. Sandboxes cannot reach
+`api.stripe.com`, so this has never run live, and the fallback changes ratified
+decision #1's shape. **Do not promise a customer it works before this is checked.**
+
+**3. The Printify cost capture happens alongside that same Connect work**, by the
+user's decision. Do not raise it as a blocker before then — see "The invented cost
+fixtures — scope corrected" for why it blocks the marketplace and not the engine.
+
+**Track A was still the critical path and still not started as of 2026-08-01**, and
+was asked about again on 2026-08-02 without an answer arriving before the session
+ended: Shopify Partner, Stripe Connect, App Store research, design-partner
+conversations, 369 selling again. **Ask for status rather than assuming**; none of
+it goes faster by building faster.
+
+**Sequencing rule, restated because it has been broken before:** do not use
+time-to-revenue as an argument for ordering work. The user pushed back on this
+directly and it is recorded under "What to build next" above. Sequence on what
+makes the product correct and operable, and say so in those terms.
 
 **Verify the state before changing anything:**
 ```bash
@@ -929,9 +948,13 @@ pages** — do not extend `client/src/pages/artist-*`, and do not reach for
 
 - **No money has ever moved through any payout path.** All fixes are forward-only.
 - **The Printify cost fixtures are invented numbers** with placeholder catalog IDs.
-  See the warning section above. This is the one thing blocking real payouts.
-- **Track A had not started as of 2026-07-31** and is the real critical path. The user
-  expects to begin within ~24 hours of that date. Ask for status; do not assume.
+  See "The invented cost fixtures — scope corrected" above. ⚠️ **An earlier version of
+  this line called it "the one thing blocking real payouts", which is wrong and was
+  corrected** — it blocks the *marketplace* order path, which Phase 2 retires. Nothing
+  in the engine reads it. Do not reinstate the stronger claim.
+- **Track A is the real critical path and had not started as of 2026-08-01.** Asked
+  about again on 2026-08-02 with no answer before the session ended. Ask for status;
+  do not assume, and do not infer progress from the passage of time.
 - **`docs/SOP.md` is the owner's guide** — plain-language, no jargon, written for the
   business owner. Keep it current when behaviour changes; it is the document the user
   actually reads. Technical depth stays here and in code comments.

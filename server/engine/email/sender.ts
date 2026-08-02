@@ -14,6 +14,8 @@
  * that — this file just has to be honest about failing.
  */
 
+import { createRequire } from "node:module";
+
 import type {
   EmailMessageLike,
   EmailSendResult,
@@ -89,7 +91,15 @@ export class ResendEmailSender implements EmailSender {
       return;
     }
 
-    const { createRequire } = require("node:module") as typeof import("node:module");
+    // ⚠️ `createRequire` is imported at the top, NOT pulled off a bare
+    // `require`. This package is ESM (`"type": "module"`), so `require` is not
+    // defined at runtime — the earlier version type-checked, passed every test
+    // that injects a client, and threw `require is not defined` the first time
+    // a real deployment tried to construct this. It was found by booting the
+    // app, which is the only thing that constructs it for real.
+    //
+    // The `resend` package itself stays behind this lazy call so a deployment
+    // with no email configured never loads it.
     const { Resend } = createRequire(import.meta.url)("resend");
     this.client = new Resend(options.apiKey) as ResendLike;
   }
@@ -127,6 +137,17 @@ export function setEmailSender(sender: EmailSender | null): void {
 
 let cached: EmailSender | null = null;
 
+/**
+ * ⚠️ NEVER THROWS, and that is a hard requirement rather than politeness.
+ *
+ * Callers do this AFTER work that has already committed — `admin-routes` builds
+ * a sender to announce a payout whose money has already moved. A constructor
+ * that throws there turns a completed payout into a 500 response, which is
+ * precisely the failure the rest of this subsystem is built to prevent, arriving
+ * through the one line nobody thought could fail. Constructing the provider
+ * loads a package and can genuinely fail, so the failure is caught and turned
+ * into a sender that reports it honestly.
+ */
 export function getEmailSender(): EmailSender {
   if (override) return override;
   if (cached) return cached;
@@ -135,7 +156,11 @@ export function getEmailSender(): EmailSender {
   const from = process.env.EMAIL_FROM;
 
   if (apiKey && from) {
-    cached = new ResendEmailSender({ apiKey, from });
+    try {
+      cached = new ResendEmailSender({ apiKey, from });
+    } catch (error) {
+      cached = new BrokenEmailSender((error as Error).message);
+    }
     return cached;
   }
 
@@ -143,7 +168,41 @@ export function getEmailSender(): EmailSender {
   return cached;
 }
 
+/**
+ * The provider could not be constructed at all. Behaves exactly like
+ * `UnconfiguredEmailSender` but carries the real reason, so the failure shows up
+ * in `engine_email_log.error` instead of as a blank "not configured" that sends
+ * somebody looking for a missing environment variable that is actually set.
+ */
+export class BrokenEmailSender implements EmailSender {
+  constructor(private readonly reason: string) {}
+
+  async send(): Promise<EmailResult> {
+    return { ok: false, error: `Email provider failed to start: ${this.reason}` };
+  }
+}
+
 export function resetEmailSender(): void {
   cached = null;
   override = null;
+}
+
+/**
+ * Can this deployment actually deliver a message?
+ *
+ * ⚠️ EXISTS FOR THE DAILY JOB, and the reason is not cosmetic. `sendOnce`
+ * claims its dedupe row before calling the provider and leaves it claimed when
+ * the send fails, so sweeping every tenant through an unconfigured sender would
+ * permanently burn the one-per-trial warning key for every customer currently
+ * trialing. Adding a real key afterwards would not repair it: the system would
+ * correctly believe those people had already been told.
+ *
+ * Request-path callers must NOT gate on this. They send as a courtesy after
+ * work that has already committed, one message at a time, and recording the
+ * failure is the honest outcome there. It is the unattended sweep across every
+ * tenant at once that has to hold back.
+ */
+export function isEmailConfigured(): boolean {
+  if (override) return true;
+  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 }

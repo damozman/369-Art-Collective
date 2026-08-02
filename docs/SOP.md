@@ -509,9 +509,23 @@ Nobody has to check a screen to find out they have been paid.
 3. **The numbers in an email match the screen exactly.** Same formatting, same
    dates, down to the comma.
 
+**Two of these are on a timer.** "Your trial is ending" and "sales are waiting for
+you" are true because time passed, not because anybody clicked anything, so the
+system checks for them by itself through the day. Two details:
+
+- **The trial warning arrives in the last three days**, not on day one. You get
+  one warning per trial, so sending it early would spend it telling you about
+  something two weeks away.
+- **The stuck-sales note is one summary a day at most**, however many sales are
+  waiting. Fifty separate emails after a bad import would be filtered, and these
+  are exactly the ones somebody has to see.
+
 **Not switched on yet.** Sending needs an email account connected (Resend), the
-same way payouts need Stripe. Until then the system simply records that it would
-have sent something.
+same way payouts need Stripe. Until then, the timed checks do not run at all —
+deliberately. If they ran with no way to send, they would tick every reminder off
+as "done" without anything arriving, and connecting Resend later would not bring
+those messages back. The emails that follow an action, like a payout, still record
+that they would have sent something.
 
 ---
 

@@ -95,6 +95,7 @@ import { FixtureBillingClient } from "../billing/billing-client";
 import { FixtureEmailSender } from "../email/sender";
 import { sendOnce } from "../email/notify";
 import { notifyPayoutsPaid, notifyTrialEnding } from "../email/notifications";
+import { runDailyJobs } from "../jobs/daily";
 import {
   completeCheckout,
   recordPaymentFailure,
@@ -2277,6 +2278,114 @@ async function main() {
   check("the trial warning is not repeated the next day", () =>
     assert.equal(trialAgain.status, "duplicate")
   );
+
+  // ============================================================
+  // The daily job
+  // ============================================================
+  //
+  // The whole design rests on the sweep being safe to run repeatedly — the
+  // scheduler ticks hourly and re-runs on every restart, and nothing tracks
+  // whether today's run already happened. That property comes from a unique
+  // index, so it can only be proved here.
+
+  const sweepCo = await signUp(db, {
+    businessName: "Sweep Co",
+    name: "Dana",
+    email: "dana@sweep.example",
+    password: "a good long passphrase",
+  });
+
+  const sweepMail = new FixtureEmailSender();
+  const twoDaysLeft = new Date(sweepCo.trialEndsAt.getTime() - 2 * 24 * 60 * 60 * 1000);
+
+  const firstSweep = await runDailyJobs(db, {
+    sender: sweepMail,
+    baseUrl: "https://app.example",
+    now: twoDaysLeft,
+  });
+
+  check("the sweep visits every business", () =>
+    assert.ok(firstSweep.tenantsSwept >= 2, `swept ${firstSweep.tenantsSwept}`)
+  );
+  check("the sweep completes without errors", () =>
+    assert.deepEqual(firstSweep.errors, [])
+  );
+  // Counted loosely on purpose: earlier blocks in this file sign up several
+  // businesses on the same clock, so they are near the end of their trials too.
+  // Pinning an exact number here would make this check about how many tenants
+  // the run happens to have created rather than about the sweep.
+  check("a trial two days out is warned about by the sweep", () => {
+    assert.ok(firstSweep.trialWarnings.sent >= 1);
+    assert.ok(sweepMail.lastTo("dana@sweep.example"));
+  });
+
+  // 369 has items flagged for review from earlier in this run.
+  check("businesses with stuck sales get a digest", () =>
+    assert.ok(firstSweep.reviewDigests.sent >= 1, "expected at least one digest")
+  );
+
+  const sentAfterFirst = sweepMail.sent.length;
+
+  // The load-bearing property: running it again sends nothing new.
+  const secondSweep = await runDailyJobs(db, {
+    sender: sweepMail,
+    baseUrl: "https://app.example",
+    now: twoDaysLeft,
+  });
+
+  check("running the sweep again the same day sends nothing new", () => {
+    assert.equal(secondSweep.trialWarnings.sent, 0);
+    assert.equal(secondSweep.reviewDigests.sent, 0);
+    assert.equal(sweepMail.sent.length, sentAfterFirst);
+  });
+
+  check("the repeat run still visited everyone, it just had nothing to say", () =>
+    assert.equal(secondSweep.tenantsSwept, firstSweep.tenantsSwept)
+  );
+
+  // An hour later on the same day is the tick the scheduler actually performs.
+  const anHourLater = new Date(twoDaysLeft.getTime() + 60 * 60 * 1000);
+  const thirdSweep = await runDailyJobs(db, {
+    sender: sweepMail,
+    baseUrl: "https://app.example",
+    now: anHourLater,
+  });
+  check("an hourly tick does not produce hourly email", () => {
+    assert.equal(thirdSweep.trialWarnings.sent, 0);
+    assert.equal(thirdSweep.reviewDigests.sent, 0);
+  });
+
+  // A trial far from its end must not be spent early — the dedupe key is the
+  // trial's end date, so an early warning is the ONLY warning.
+  const earlyMail = new FixtureEmailSender();
+  const freshCo = await signUp(db, {
+    businessName: "Fresh Co",
+    name: "Eli",
+    email: "eli@fresh.example",
+    password: "a good long passphrase",
+  });
+
+  const earlySweep = await runDailyJobs(db, {
+    sender: earlyMail,
+    baseUrl: "https://app.example",
+    now: new Date(freshCo.trialEndsAt.getTime() - 13 * 24 * 60 * 60 * 1000),
+  });
+  check("a trial that has just started is not warned about", () => {
+    assert.equal(earlySweep.trialWarnings.sent, 0);
+    assert.equal(earlyMail.lastTo("eli@fresh.example"), undefined);
+  });
+
+  // And the warning still arrives when it is genuinely due — proving the
+  // silence above was a deferral, not a loss.
+  const dueSweep = await runDailyJobs(db, {
+    sender: earlyMail,
+    baseUrl: "https://app.example",
+    now: new Date(freshCo.trialEndsAt.getTime() - 24 * 60 * 60 * 1000),
+  });
+  check("the warning arrives once the trial is genuinely nearly up", () => {
+    assert.ok(dueSweep.trialWarnings.sent >= 1);
+    assert.ok(earlyMail.lastTo("eli@fresh.example"));
+  });
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

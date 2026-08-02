@@ -19,7 +19,9 @@ import {
   trialEndingEmail,
 } from "../email/templates";
 import {
+  BrokenEmailSender,
   FixtureEmailSender,
+  ResendEmailSender,
   UnconfiguredEmailSender,
 } from "../email/sender";
 
@@ -255,6 +257,40 @@ test("an unconfigured sender reports failure rather than throwing", async () => 
 
   assert.equal(result.ok, false);
   assert.match(result.error ?? "", /not configured/);
+});
+
+/**
+ * ⚠️ REGRESSION GUARD, and worth knowing why it exists.
+ *
+ * The real sender used to reach for a bare `require` to load the provider
+ * lazily. This package is ESM, so `require` is not defined at runtime — but it
+ * type-checked, and every other test here injects a client and so never runs
+ * that line. The result was that ALL live email would have thrown
+ * `require is not defined` on the first real send, including the one announcing
+ * a payout whose money had already moved.
+ *
+ * Found by booting the app, not by the suite. This test is the suite catching
+ * up: it constructs the real sender for real, with no injected client.
+ */
+test("the real sender can actually be constructed on this runtime", () => {
+  assert.doesNotThrow(() => {
+    new ResendEmailSender({ apiKey: "re_not_a_real_key", from: "test@example.com" });
+  });
+});
+
+/**
+ * Construction can still fail for reasons outside our control — a missing
+ * package, a provider SDK that changed shape. Callers build a sender AFTER work
+ * that has already committed, so a throw there turns a completed payout into an
+ * error response. It must degrade instead.
+ */
+test("a provider that will not start degrades instead of throwing", async () => {
+  const broken = new BrokenEmailSender("module not found");
+  const result = await broken.send({ to: "a@example.com", subject: "x", text: "y" });
+
+  assert.equal(result.ok, false);
+  // The real reason survives, so nobody hunts for an env var that is already set.
+  assert.match(result.error ?? "", /module not found/);
 });
 
 test("the fixture records what it sent", async () => {

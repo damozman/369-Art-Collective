@@ -121,6 +121,17 @@ app.use((req, res, next) => {
     );
     app.use("/api/engine", createSignupRouter(engineDb));
     app.use("/api/engine", createBillingRouter(engineDb));
+
+    // The two emails that are due because time passed rather than because
+    // somebody made a request. Returns null and says why when email is not
+    // configured, which is the normal state locally — see `jobs/scheduler.ts`.
+    const { startDailyJobs } = await import("./engine/jobs/scheduler");
+    startDailyJobs(engineDb, {
+      baseUrl: (process.env.PUBLIC_APP_URL ?? "http://localhost:5000").replace(
+        /\/+$/,
+        ""
+      ),
+    });
   }
 
   const server = await registerRoutes(app);

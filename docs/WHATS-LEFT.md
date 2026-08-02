@@ -5,7 +5,8 @@ An honest map of the distance between here and a product someone pays for.
 Written for the owner. Kept current as things land — if this file says something is
 missing and it isn't, fix the file.
 
-Last updated: 2026-08-01 (steps 1-4 of the build order below are done).
+Last updated: 2026-08-02 (steps 1-4 done; step 5 done except 1099 and the audit
+viewer).
 
 ---
 
@@ -58,8 +59,10 @@ Stripe key, which is a settings change rather than a build.
   instead of the business silently swallowing it.
 - **Pricing, signup and billing** — a business creates its own account at
   `/pricing`, runs a 14-day trial with no card, and subscribes monthly or yearly.
+- **The daily job** — the two reminders that are due because time passed rather
+  than because somebody clicked something.
 
-350 unit tests, 216 end-to-end checks against a real database, every screen driven
+364 unit tests, 225 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
@@ -194,7 +197,7 @@ mechanics:
 It also tells a customer when they are paying for *more* than they use. That costs
 money, and it is the reason the rest of it is believable.
 
-**5. Email ✅ DONE. 1099 and the audit viewer remain.**
+**5. Email ✅ DONE. The daily job ✅ DONE. 1099 and the audit viewer remain.**
 
 An artist gets an email when they are paid, naming the business and linking to
 the full breakdown. You get told when a trial is about to end, when a payment
@@ -218,8 +221,25 @@ says **nothing has been switched off**, because that is true, and an owner who
 panics that their artists have stopped being paid is panicking about something
 that is not happening.
 
-**Still to wire:** the trial and stuck-sales emails are written and tested but
-need a daily job to fire them. The rest send by themselves.
+**The daily job ✅ DONE.** The trial and stuck-sales emails now fire on a timer
+rather than needing somebody to trigger them.
+
+Two things about it are decisions rather than mechanics:
+
+- **The trial warning goes out in the last three days, not on day one.** Each
+  trial gets exactly one warning, so sending it early would spend it saying
+  "your trial ends in 14 days" and then say nothing in the week that matters.
+- **It is safe to run over and over.** The job re-runs every hour and on every
+  restart, and sends nothing new when there is nothing new. That is what
+  removes the usual failure of scheduled work — the day the machine happened to
+  be restarting at 3am, and nobody found out it was skipped.
+
+It runs inside the app automatically. It refuses to run at all when email is
+not configured, deliberately: it would otherwise mark every reminder as sent
+without sending it, and those reminders could never be recovered.
+
+`npm run job:daily` runs it by hand, and lets an external scheduler drive it
+instead if the app is ever hosted somewhere that sleeps between requests.
 
 **6. CSV import, then advances.**
 New markets. Only worth doing when there's demand pointing at them — and advances

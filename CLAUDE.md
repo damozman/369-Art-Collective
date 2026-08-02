@@ -126,8 +126,8 @@ Both were resolved in step 5.)
 - **Phase 0 ✅ · Phase 1 ✅ · the owner-facing product is built ✅ · WHATS-LEFT
   step 1 (Shopify + Stripe against fixtures) ✅ · step 2 (artist bank
   onboarding) ✅ · step 3 (works + settings screens, and recording a missing
-  cost) ✅ · step 4 (billing, signup and pricing) ✅ · step 5 email ✅ (1099 and
-  the audit viewer remain).**
+  cost) ✅ · step 4 (billing, signup and pricing) ✅ · step 5 email ✅ · the
+  daily job ✅ (1099 and the audit viewer remain).**
 - **What exists:** the engine (16 `engine_*` tables, canonical `RevenueEvent`, §6
   rules, immutable ledger, §8 reversals, transactional ingestion, payout batches
   with the state machine), the **contributor portal** at `/portal/:tenantSlug`, the
@@ -139,7 +139,7 @@ Both were resolved in step 5.)
   (`server/engine/payout-account.ts`, Account Links + status read back from Stripe),
   **billing** (plans, trials, usage counting, annual, the Stripe charging seam,
   self-serve signup at `/signup`) and **email** (`server/engine/email/`).
-- **350 unit tests · 216 end-to-end checks against real Postgres.** Every screen has
+- **364 unit tests · 225 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -173,10 +173,9 @@ Summary of that order:
 2. ~~**Artist bank onboarding**~~ — **done.** See "Payout accounts" below.
 3. ~~**Works and settings screens**~~ — **done.** See "Step 3" below.
 4. ~~**Customer billing and signup**~~ — **done.** See "Billing" below.
-5. ~~Email~~ — **done, see below.** Three things remain from this step, and they
+5. ~~Email~~ — **done, see below.** Two things remain from this step, and they
    are **the next work in the queue, in this order**:
-   - **The daily job.** `notifyTrialEnding` and `notifyReviewWaiting` are written
-     and tested but nothing calls them on a timer. Smallest of the three.
+   - ~~**The daily job.**~~ — **done.** See "The daily job" below.
    - **1099 export.** US tax reporting. Stripe issues the forms; we supply data.
    - **The audit-log viewer.** Every change is already recorded; nothing shows it.
 6. CSV import, then advances (§10b) — advances only once a real publishing or music
@@ -281,6 +280,8 @@ third-party log sinks, the client bundle, and the ~70 obsolete
 | `server/engine/email/templates.ts` | pure; every word the customer reads |
 | `server/engine/email/notify.ts` | `sendOnce` — the at-most-once guarantee |
 | `server/engine/email/notifications.ts` | who gets told what, all failure-swallowing |
+| `server/engine/jobs/daily.ts` | the sweep — trial threshold, who gets nagged. Idempotent by design |
+| `server/engine/jobs/scheduler.ts` | the hourly tick. REFUSES to start without a configured sender |
 | `server/engine/review.ts` | + `recordEventCost` — typing in a cost the channel never sent, guarded on 'nothing allocated yet' |
 
 ### The adapters — §4's two seams, filled in
@@ -483,13 +484,86 @@ and the payment-failed email says **nothing has been switched off** (`past_due`
 grants full access). Both are true; copy that implies otherwise would cause a
 panic about something that is not happening.
 
-**Not yet scheduled:** `notifyTrialEnding` and `notifyReviewWaiting` are written
-and tested but nothing calls them on a timer — they need a daily job. Signup and
-payout notifications fire from their request paths already.
+### The daily job — BUILT. Four things are load-bearing
+
+`server/engine/jobs/` is what fires `notifyTrialEnding` and `notifyReviewWaiting`,
+the two notifications that are due because time passed rather than because a
+request arrived. Started from `server/index.ts` when the engine DB is configured;
+`npm run job:daily` runs one sweep and exits, for an external scheduler or by hand.
+
+1. **The sweep is idempotent, and the scheduler depends on it.** It ticks HOURLY
+   and re-runs on every restart. There is no last-run timestamp and no lock
+   table — `sendOnce`'s unique index is the only thing preventing repeats, which
+   is why the keys are the trial's end date and the calendar day. **Anything
+   added to the sweep must go through `sendOnce` with a key derived from stable
+   facts.** A key containing the current time turns an hourly tick into hourly
+   email. The hourly design is deliberate over "run at 03:00": a process that is
+   not awake at 03:00 silently skips that day forever, and on a host that
+   recycles it could skip weeks.
+2. **⚠️ It REFUSES to start when email is unconfigured, and this is not
+   cosmetic.** `sendOnce` claims its dedupe row BEFORE calling the provider and
+   leaves it claimed on failure. Sweeping every tenant through
+   `UnconfiguredEmailSender` would burn every trial-warning key permanently —
+   adding a real `RESEND_API_KEY` afterwards would NOT repair it, because the
+   system would correctly believe those customers had already been told.
+   `isEmailConfigured()` exists for this. **Request-path callers must not gate on
+   it** — one-at-a-time courtesy sends after committed work should record the
+   failure honestly.
+3. **`TRIAL_WARNING_DAYS = 3` lives in the job, not in `notifyTrialEnding`.** The
+   notifier sends whenever asked; it has no opinion about when a message is due.
+   Without the threshold on the job's side, a daily sweep would fire on the
+   customer's first morning saying "your trial ends in 14 days", burn the key
+   (which is the trial's end date), and then say nothing in the week that
+   matters. The threshold is the final 72 hours because the day count rounds up,
+   matching the number the email prints.
+4. **Only an explicit `canceled` silences the review digest.** The tempting rule —
+   "only nag people who can currently write" — silences two groups who should be
+   nagged: a lapsed trial is read-only but is exactly who a "four sales are stuck"
+   notice should reach, and a tenant with **no subscription row at all** is not
+   delinquent. The engine predates billing and **369 will be provisioned by hand
+   as tenant #1**, so gating on billing state would quietly mute the first real
+   customer.
+
+Interval is `DAILY_JOB_INTERVAL_MINUTES` (default 60). A non-numeric value falls
+back rather than becoming `setInterval(fn, NaN)`, which Node treats as 1ms and
+would sweep every tenant in a tight loop.
+
+One honest consequence: the review digest goes out on the first tick after
+midnight UTC, so its arrival time depends on when the process last started. If it
+ever needs to land at a specific local hour, that is per-tenant timezone plus a
+send-hour preference — a real feature, not a tweak to the interval.
+
+Signup, payout and payment-failure notifications still fire from their request
+paths and are not part of the sweep.
+
+**⚠️ A live defect was found by BOOTING THE APP while building this, and it had
+nothing to do with the job.** `ResendEmailSender` loaded the provider through a
+bare `require`. This package is ESM, so `require` is not defined at runtime — but
+it type-checked, and every test injects a client and so never executed that line.
+**All live email would have thrown `require is not defined` on the first real
+send**, including `notifyPayoutsPaid` for a payout whose money had already moved.
+Nothing had ever constructed the real sender before, because nothing had ever run
+with `RESEND_API_KEY` set.
+
+Two fixes, both worth keeping:
+
+- `createRequire` is now imported at the top of `sender.ts`. The `resend` package
+  itself stays behind the lazy call, which is what the laziness was ever for.
+- **`getEmailSender()` no longer throws, by contract.** `admin-routes` builds a
+  sender AFTER the payout has committed, so a throwing constructor turns a
+  completed payout into a 500 — the exact failure the whole email subsystem is
+  built to prevent, arriving through the one line nobody thought could fail. A
+  construction failure now yields `BrokenEmailSender`, which carries the real
+  reason into `engine_email_log.error` rather than a misleading "not configured".
+
+A unit test now constructs the real sender with no injected client. **This is the
+fourth defect found by loading the app that a green `tsc`, a green build and a
+green suite all missed.**
 
 **Config:** `RESEND_API_KEY` + `EMAIL_FROM` to send at all, `PUBLIC_APP_URL` so
-emailed links do not come from a client-controlled `Host` header, and
-`PLATFORM_NOTIFY_EMAIL` to be told about new signups.
+emailed links do not come from a client-controlled `Host` header,
+`PLATFORM_NOTIFY_EMAIL` to be told about new signups, and
+`DAILY_JOB_INTERVAL_MINUTES` (default 60) for the sweep.
 
 The portal UI, which is the engine's surface rather than the marketplace's:
 
@@ -506,8 +580,8 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 350 unit tests, no network, no database
-npm run test:e2e      # 216 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 364 unit tests, no network, no database
+npm run test:e2e      # 225 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -678,9 +752,9 @@ Sessions do not share memory. Everything below is the state as of the last commi
 The user asked for these to survive into the next session. None is blocked on code;
 two are waiting on them, one is the next thing to build.
 
-1. **Next build: the daily job.** `notifyTrialEnding` and `notifyReviewWaiting` are
-   written, tested and called by nothing. They need a scheduler. After that: 1099
-   export, then the audit-log viewer. All three are `WHATS-LEFT.md` step 5 leftovers.
+1. ~~**Next build: the daily job.**~~ — **done 2026-08-02.** See "The daily job"
+   above. **Next: 1099 export, then the audit-log viewer** — both `WHATS-LEFT.md`
+   step 5 leftovers.
 2. **During the Stripe Connect application, confirm the one unverified assumption**
    — that contributor accounts can be created under the *tenant's* Stripe via the
    `Stripe-Account` header. See "Payout accounts" above. Sandboxes cannot reach
@@ -697,12 +771,12 @@ building faster.
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 350 unit tests — no network, no database
+npm test          # 364 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (216 checks against real Postgres) start the local database
+For the end-to-end run (225 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e

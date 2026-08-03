@@ -2491,11 +2491,11 @@ async function main() {
   });
 
   check("the first instant of the year is inside the window", () =>
-    assert.equal(taxRow("c-tax-w9")!.firstPaidAt.toISOString(), "2026-01-01T00:00:00.000Z")
+    assert.equal(taxRow("c-tax-w9")!.firstPaidAt!.toISOString(), "2026-01-01T00:00:00.000Z")
   );
 
   check("the last second of the year is inside the window", () =>
-    assert.equal(taxRow("c-tax-w9")!.lastPaidAt.toISOString(), "2026-12-31T23:59:59.000Z")
+    assert.equal(taxRow("c-tax-w9")!.lastPaidAt!.toISOString(), "2026-12-31T23:59:59.000Z")
   );
 
   const taxReport2027 = await getTaxYearReport(db, "t-tax", 2027);

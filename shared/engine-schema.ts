@@ -136,6 +136,27 @@ export const ledgerEntryTypeEnum = pgEnum("engine_ledger_entry_type", [
   "adjustment", // manual correction or bonus
   "payout", // money left for the contributor
   "payout_reversal", // a failed payout returned the balance
+  "advance_recoupment", // earnings applied against an advance already paid (§10b)
+]);
+
+/**
+ * The states an advance can be *put into*. Notice what is absent: there is no
+ * `recouped`. Whether an advance is fully recovered is a SUM over its recoupment
+ * ledger entries, derived like every other balance in this engine (§5 #4). A
+ * stored `recouped` flag would be a cached balance under another name, and the
+ * one thing that must never drift is how much somebody still owes.
+ *
+ * `cancelled` and `written_off` look similar and mean opposite things.
+ * `cancelled` is "this was recorded in error and no money ever left" — only legal
+ * while nothing has been recouped against it. `written_off` is "the money did
+ * leave, we are not going to get it back" — legal at any time, and deliberately
+ * irreversible, because forgiving a debt and then un-forgiving it is a
+ * conversation, not a button.
+ */
+export const advanceStatusEnum = pgEnum("engine_advance_status", [
+  "open",
+  "written_off",
+  "cancelled",
 ]);
 
 export const adjustmentReasonEnum = pgEnum("engine_adjustment_reason", [
@@ -722,6 +743,13 @@ export const ledgerEntries = pgTable(
     allocationId: varchar("allocation_id").references(() => allocations.id),
     payoutId: varchar("payout_id").references((): any => payouts.id),
     adjustmentId: varchar("adjustment_id").references((): any => adjustments.id),
+    /**
+     * Set on `advance_recoupment` entries only. These entries ARE the record of
+     * how much of an advance has been recovered — there is no separate
+     * recoupments table, because a second place to record it is a second place
+     * for it to disagree with the ledger.
+     */
+    advanceId: varchar("advance_id").references((): any => advances.id),
 
     /**
      * When this entry becomes payable. Allocations land with a hold derived from
@@ -747,6 +775,99 @@ export const ledgerEntries = pgTable(
     ),
     allocationIdx: index("engine_ledger_allocation_idx").on(table.allocationId),
     payoutIdx: index("engine_ledger_payout_idx").on(table.payoutId),
+    /** Makes "how much of this advance is left?" a single indexed sum. */
+    advanceIdx: index("engine_ledger_advance_idx").on(table.advanceId),
+  })
+);
+
+/**
+ * A recoupable advance (§10b, blueprint §6's one unbuildable structure).
+ *
+ * Money paid to a contributor BEFORE they earned it, recovered out of what they
+ * earn later. Standard in music and book publishing, and the reason those two
+ * verticals were off-limits until now.
+ *
+ * FOUR THINGS ABOUT THE SHAPE, each of which is a decision rather than a detail.
+ *
+ * 1. **This engine records advances; it does not disburse them.** There is no
+ *    transfer here and no payout row. An advance is negotiated, usually paid on
+ *    signature, and frequently paid before the person has any payout account at
+ *    all — so making it flow through the payout rail would block the advance on
+ *    Connect onboarding, which is exactly backwards. The tenant pays it however
+ *    they already pay it, and records it here so it recoups.
+ *
+ * 2. **The advance is NOT a negative ledger entry.** That was the tempting
+ *    version — put the contributor in deficit and let the existing floor-at-zero
+ *    logic do the rest — and it is wrong for one reason: it can only ever express
+ *    100% recoupment. Half of real advance clauses recoup at some rate below 100
+ *    precisely so the contributor still sees cash while paying it down. A
+ *    recoupable balance therefore has to sit *beside* the ledger balance, which is
+ *    exactly what §10b predicted.
+ *
+ * 3. **`recoupmentBasisPoints` is a promise to the contributor**, not a schedule
+ *    for the tenant: "you keep at least (100 − rate)% of anything you earn". It
+ *    is capped at 10000 and rejected at zero — a zero-rate advance never recoups
+ *    and is a gift with extra steps, which is `write_off` and should be recorded
+ *    as one.
+ *
+ * 4. **`issuedAt` is supplied, not defaulted to now.** It is the date the money
+ *    actually left, which is what decides the tax year it is reported in. An
+ *    advance paid in December and entered in January belongs to December.
+ */
+export const advances = pgTable(
+  "engine_advances",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    tenantId: varchar("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    contributorId: varchar("contributor_id")
+      .notNull()
+      .references(() => contributors.id),
+
+    /** Always positive. The direction is in the table's name, not its sign. */
+    amountMinor: bigint("amount_minor", { mode: "bigint" }).notNull(),
+    currency: text("currency").notNull(),
+
+    /**
+     * How much of each payout run's payable amount goes to recouping this.
+     * 10000 = the whole of it until the advance is cleared; 5000 = half, so the
+     * contributor keeps the other half while paying it down.
+     */
+    recoupmentBasisPoints: integer("recoupment_basis_points").notNull().default(10000),
+
+    /**
+     * Optional. An advance against one specific work — a book, an album — rather
+     * than against the contributor generally. Recorded for the tenant's own
+     * records; it does NOT restrict which earnings recoup it, because an advance
+     * that only recoups from its own work is a different clause and no partner
+     * has asked for it. Naming that limit here rather than implying otherwise.
+     */
+    workId: varchar("work_id").references(() => works.id),
+
+    status: advanceStatusEnum("status").notNull().default("open"),
+
+    /** When the money actually left. Drives which tax year reports it. */
+    issuedAt: timestamp("issued_at").notNull(),
+    note: text("note"),
+
+    /** Set when written off or cancelled. */
+    closedAt: timestamp("closed_at"),
+    closedBy: varchar("closed_by").references(() => tenantUsers.id),
+    closeNote: text("close_note"),
+
+    createdBy: varchar("created_by").references(() => tenantUsers.id),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    tenantIdx: index("engine_advances_tenant_idx").on(table.tenantId, table.status),
+    contributorIdx: index("engine_advances_contributor_idx").on(
+      table.tenantId,
+      table.contributorId,
+      table.status
+    ),
+    /** The year window the tax report reads. */
+    issuedIdx: index("engine_advances_issued_idx").on(table.tenantId, table.issuedAt),
   })
 );
 

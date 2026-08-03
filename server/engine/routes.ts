@@ -221,6 +221,18 @@ export function createEngineRouter(db: EngineDb): Router {
         new Date()
       );
 
+      // An unrecouped advance is the single biggest reason a contributor's next
+      // payment is smaller than their earnings, so it belongs on the same screen
+      // as the balance rather than only in the statement's line items. Somebody
+      // who has to work out why they were paid less has already lost trust in
+      // the number.
+      const { outstandingForContributor } = await import("./advance");
+      const advance = await outstandingForContributor(
+        db,
+        tenant.id,
+        session.contributorId
+      );
+
       res.json({
         contributorId: session.contributorId,
         name: session.name,
@@ -236,6 +248,9 @@ export function createEngineRouter(db: EngineDb): Router {
           ? balanceMinor - payableMinor
           : 0n
         ).toString(),
+        advanceOutstandingMinor: advance.outstandingMinor.toString(),
+        advanceOutstanding: formatMinor(advance.outstandingMinor),
+        advanceCount: advance.count,
       });
     }
   );

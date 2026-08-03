@@ -14,11 +14,18 @@
  *
  * SIGNS. Positive increases what the contributor is owed:
  *
- *   allocation       +   earned from a sale
- *   reversal         −   a refund reversed an earlier allocation
- *   adjustment       ±   manual correction, bonus, or clawback recoupment
- *   payout           −   money left for the contributor
- *   payout_reversal  +   a failed payout returned the balance
+ *   allocation          +   earned from a sale
+ *   reversal            −   a refund reversed an earlier allocation
+ *   adjustment          ±   manual correction, bonus, or clawback recoupment
+ *   payout              −   money left for the contributor
+ *   payout_reversal     +   a failed payout returned the balance
+ *   advance_recoupment  −   earnings applied against an advance already paid (§10b)
+ *
+ * `advance_recoupment` is negative for the same reason `payout` is: in both cases
+ * the contributor no longer has the money. The difference is only where it went —
+ * out to their bank, or against a debt they already collected on. Keeping it a
+ * distinct type rather than an `adjustment` is what makes "how much of this
+ * advance is left?" a sum over an indexed column instead of a guess from a note.
  *
  * Balances may legally go negative. A refund on a sale whose royalty has already
  * been paid out leaves the contributor in deficit until future earnings recoup
@@ -32,7 +39,8 @@ export type LedgerEntryType =
   | "reversal"
   | "adjustment"
   | "payout"
-  | "payout_reversal";
+  | "payout_reversal"
+  | "advance_recoupment";
 
 /** An entry as the engine reasons about it, with bigints already converted. */
 export interface LedgerEntryInput {
@@ -45,6 +53,8 @@ export interface LedgerEntryInput {
   allocationId?: string | null;
   payoutId?: string | null;
   adjustmentId?: string | null;
+  /** Set on `advance_recoupment` entries — which advance this paid down. */
+  advanceId?: string | null;
   /** When this becomes payable. Null means immediately. */
   availableAt?: Date | null;
   description?: string | null;
@@ -82,6 +92,7 @@ export function validateEntry(entry: LedgerEntryInput): void {
     reversal: "negative",
     payout: "negative",
     payout_reversal: "positive",
+    advance_recoupment: "negative",
     // adjustments are legitimately either sign
   };
 

@@ -30,6 +30,7 @@
 import { and, eq, inArray, lte, or, sql } from "drizzle-orm";
 
 import * as schema from "@shared/engine-schema";
+import { loadOpenAdvances, planRecoupment, type RecoupmentPlan } from "./advance";
 import type { EngineDb } from "./ingest";
 import { formatMoney } from "./money";
 import { reserveForPayout, type ClawbackPolicy } from "./reversal";
@@ -152,7 +153,16 @@ export interface PayoutCandidate {
   contributorId: string;
   contributorName: string;
   destinationAccountId: string | null;
+  /** What the ledger says is payable, before any advance is recouped. */
   payableMinor: bigint;
+  /**
+   * How much of `payableMinor` goes to paying down outstanding advances (§10b),
+   * and which advances it goes to. Zero for every contributor without one, which
+   * is almost all of them.
+   */
+  recoupment: RecoupmentPlan;
+  /** `payableMinor` minus recoupment. This is what a transfer is sized on. */
+  netPayableMinor: bigint;
   currency: string;
   /** Why this contributor was excluded, when they were. */
   skipReason?: string;
@@ -164,6 +174,12 @@ export interface PayoutCandidate {
  * Held credits are excluded; debits always count. That asymmetry is what stops a
  * contributor with a fresh clawback and a still-held allocation being paid money
  * they no longer have.
+ *
+ * Advance recoupment is computed HERE rather than only inside `runPayoutBatch`,
+ * because this is what the payout preview screen reads. An owner who is shown
+ * "$400 to Alice" and then sees $250 leave has been lied to by the preview, and
+ * the recoupment is the least intuitive number in the whole run — it is exactly
+ * the one that has to appear before they press the button.
  */
 export async function selectPayoutCandidates(
   db: EngineDb,
@@ -215,17 +231,31 @@ export async function selectPayoutCandidates(
   const identityById = new Map(identityRows.map((i) => [i.contributorId, i]));
 
   const minimum = BigInt(tenant.minimumPayoutMinor);
+  const advancesByContributor = await loadOpenAdvances(db, tenantId, contributorIds);
 
   return rows.map((row) => {
     const payableMinor = BigInt(row.payable);
     const contributor = byId.get(row.contributorId);
     const identity = identityById.get(row.contributorId);
 
+    // A deleted contributor is excluded from recoupment as well as from payment
+    // — settling a debt against somebody who has been removed writes ledger
+    // entries nobody will ever see or be able to query from a screen.
+    const advances = contributor?.deletedAt
+      ? []
+      : (advancesByContributor.get(row.contributorId) ?? []).filter(
+          (advance) => advance.currency === row.currency
+        );
+
+    const recoupment = planRecoupment(payableMinor, advances);
+
     const candidate: PayoutCandidate = {
       contributorId: row.contributorId,
       contributorName: contributor?.name ?? "(unknown)",
       destinationAccountId: identity?.stripeAccountId ?? null,
       payableMinor,
+      recoupment,
+      netPayableMinor: recoupment.netPayableMinor,
       currency: row.currency,
     };
 
@@ -234,19 +264,67 @@ export async function selectPayoutCandidates(
         payableMinor === 0n
           ? "Nothing payable"
           : `Negative balance ${formatMoney(payableMinor, row.currency)} — recouping against future earnings`;
+    } else if (candidate.netPayableMinor <= 0n) {
+      // Not a failure, and worded so it does not read as one: the money was not
+      // withheld, it settled a debt. The recoupment still happens.
+      candidate.skipReason =
+        `All ${formatMoney(payableMinor, row.currency)} applied to their outstanding advance`;
     } else if (!identity?.stripeAccountId) {
       candidate.skipReason = "No payout account connected";
     } else if (!identity.stripePayoutsEnabled) {
       candidate.skipReason = "Payouts not enabled on the connected account";
     } else if (contributor?.deletedAt) {
       candidate.skipReason = "Contributor is deleted";
-    } else if (payableMinor < minimum) {
+    } else if (candidate.netPayableMinor < minimum) {
+      // Measured on the net, not the gross. Somebody whose earnings are mostly
+      // recouped would otherwise pass a minimum they do not actually clear.
       candidate.skipReason =
         `Below the ${formatMoney(minimum, row.currency)} minimum — carried to the next run`;
     }
 
     return candidate;
   });
+}
+
+/**
+ * Apply a contributor's recoupment plan to the ledger.
+ *
+ * One negative `advance_recoupment` entry per advance, each pointing at the
+ * advance it pays down. Those entries are the only record of how much of an
+ * advance has been recovered (§10b decision 7), so they are written inside the
+ * caller's transaction wherever one exists.
+ *
+ * `availableAt` is null: a debit is never held. Same rule as a payout and a
+ * reversal, and for the same reason — holds exist to delay paying money out, not
+ * to delay taking it back.
+ */
+async function applyRecoupment(
+  tx: EngineDb,
+  options: {
+    tenantId: string;
+    contributorId: string;
+    currency: string;
+    plan: RecoupmentPlan;
+    occurredAt: Date;
+  }
+): Promise<void> {
+  for (const application of options.plan.applications) {
+    await tx.insert(schema.ledgerEntries).values({
+      tenantId: options.tenantId,
+      contributorId: options.contributorId,
+      entryType: "advance_recoupment",
+      amountMinor: -application.amountMinor,
+      currency: options.currency,
+      advanceId: application.advanceId,
+      availableAt: null,
+      description:
+        `${formatMoney(application.amountMinor, options.currency)} applied to your advance` +
+        (application.remainingMinor > 0n
+          ? ` — ${formatMoney(application.remainingMinor, options.currency)} still to recoup`
+          : " — now fully recouped"),
+      occurredAt: options.occurredAt,
+    });
+  }
 }
 
 // ============================================================
@@ -261,6 +339,13 @@ export interface BatchResult {
   skipped: number;
   totalPaidMinor: bigint;
   totalReservedMinor: bigint;
+  /**
+   * What went to paying down advances rather than to contributors (§10b). Its
+   * own line because it is the one figure in a run that reduces what people
+   * receive without anything having failed.
+   */
+  totalRecoupedMinor: bigint;
+  recouped: Array<{ contributorId: string; name: string; amountMinor: bigint }>;
   skipped_reasons: Array<{ contributorId: string; reason: string }>;
   /**
    * Why each failed payout failed. Surfaced to the owner: "2 failed" with no
@@ -321,6 +406,8 @@ export async function runPayoutBatch(
     skipped: skipped.length,
     totalPaidMinor: 0n,
     totalReservedMinor: 0n,
+    totalRecoupedMinor: 0n,
+    recouped: [],
     skipped_reasons: skipped.map((c) => ({
       contributorId: c.contributorId,
       reason: c.skipReason!,
@@ -328,17 +415,50 @@ export async function runPayoutBatch(
     failures: [],
   };
 
+  // Advance recoupment, for EVERY candidate with a plan — not just the ones
+  // being transferred to (§10b decision 4). A contributor whose whole payable
+  // amount recoups is never paid, so gating recoupment on a successful transfer
+  // would leave their advance outstanding forever.
+  const recouping = candidates.filter((c) => c.recoupment.totalMinor > 0n);
+
+  if (!options.dryRun && recouping.length > 0) {
+    await db.transaction(async (tx) => {
+      for (const candidate of recouping) {
+        // The cast mirrors `ingest.ts`: a drizzle transaction inserts exactly
+        // like a database handle but is not that type.
+        await applyRecoupment(tx as unknown as EngineDb, {
+          tenantId: options.tenantId,
+          contributorId: candidate.contributorId,
+          currency: candidate.currency,
+          plan: candidate.recoupment,
+          occurredAt: options.asOf,
+        });
+      }
+    });
+  }
+
+  for (const candidate of recouping) {
+    result.totalRecoupedMinor += candidate.recoupment.totalMinor;
+    result.recouped.push({
+      contributorId: candidate.contributorId,
+      name: candidate.contributorName,
+      amountMinor: candidate.recoupment.totalMinor,
+    });
+  }
+
   if (options.dryRun) {
     return { ...result, status: "cancelled" };
   }
 
   for (const candidate of eligible) {
+    // Sized on the NET. The recoupment has already left the ledger above, so
+    // transferring the gross would pay out money the contributor no longer has.
     const reserveMinor = reserveForPayout(
-      candidate.payableMinor,
+      candidate.netPayableMinor,
       tenant.clawbackPolicy as ClawbackPolicy,
       tenant.reserveBasisPoints
     );
-    const transferMinor = candidate.payableMinor - reserveMinor;
+    const transferMinor = candidate.netPayableMinor - reserveMinor;
 
     if (transferMinor <= 0n) {
       result.skipped += 1;

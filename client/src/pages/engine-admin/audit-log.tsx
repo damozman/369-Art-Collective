@@ -62,6 +62,9 @@ const ACTION_LABELS: Record<string, string> = {
   export_tax_report: "Downloaded the year-end report",
   password_reset: "Reset a password",
   import_csv: "Imported a statement",
+  create_advance: "Recorded an advance",
+  write_off_advance: "Wrote off an advance",
+  cancel_advance: "Cancelled an advance",
 };
 
 function label(action: string): string {

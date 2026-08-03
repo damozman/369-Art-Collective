@@ -20,7 +20,19 @@ import { formatMoney, sumMinor } from "./money";
 
 export interface StatementLine {
   occurredAt: Date;
-  type: "allocation" | "reversal" | "adjustment" | "payout" | "payout_reversal";
+  /**
+   * `advance_recoupment` is included because a contributor MUST be able to see
+   * money taken back against an advance on their own statement. An amount that
+   * leaves their balance with no line explaining it is precisely the kind of
+   * silence this product exists to remove.
+   */
+  type:
+    | "allocation"
+    | "reversal"
+    | "adjustment"
+    | "payout"
+    | "payout_reversal"
+    | "advance_recoupment";
   amountMinor: bigint;
   currency: string;
 

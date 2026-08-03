@@ -1021,10 +1021,42 @@ previous session) was that CSV import was worth doing and advances were not.
 **If that has changed, say so** — nothing about the importer constrains what
 comes next.
 
-**Advances (§10b) are deliberately still unbuilt**, per that same position:
-wait until a real publishing or music deal can be seen, so the shape is drawn
-from a real structure rather than guessed. This is now the only feature-shaped
-thing left, and it is waiting on a conversation rather than on effort.
+**⚠️ ADVANCES (§10b) NOW EXIST AS BACKEND-ONLY, UNTESTED WORK IN PROGRESS, AND
+THE USER HAS NOT AGREED TO THEM.** Read this before touching anything advance-
+shaped.
+
+`server/engine/advance.ts` (586 lines) plus a schema table, a payout-time
+recoupment step, a ledger entry type and tax-report integration were found
+**uncommitted on disk** at the start of the 2026-08-03 session, left behind by a
+session whose context did not survive. They were committed rather than discarded
+because the container is ephemeral and uncommitted work is lost — a commit is
+reversible, deletion is not.
+
+What is true about it:
+
+- It compiles, and it breaks nothing: 446 unit tests and 289 e2e checks pass
+  with it in place. Six mechanical type errors were fixed to get there (a
+  missing `inArray` import, null-safe first/last-paid dates now that a
+  contributor can have an advance and no payouts, and the statement line union
+  widened to include `advance_recoupment`).
+- **It has ZERO tests of its own and NO screen.** Nothing in the console can
+  create, view or close an advance. It is reachable only through the API.
+- Its design is documented at length in its own header — seven decisions,
+  including the load-bearing one that an advance is NOT a negative ledger
+  balance (a deficit can only express 100% recoupment, and real deals routinely
+  recoup at less).
+
+**The user's recorded position is that advances should wait** until a real
+publishing or music deal can be seen, so the shape is drawn from a real
+structure rather than guessed. That position has not been revisited. **Ask
+before building on this.** The three live options are: finish it (tests + a
+screen), leave it dormant as-is, or revert it — `git revert` of the commit
+titled "wip(advances)" removes it cleanly.
+
+Note the header of `advance.ts` names its own weakest point: with several
+advances at different rates, recoupment takes the HIGHEST rate. That is a
+genuine ambiguity only a real contract can settle, and it is exactly what a
+design-partner conversation is for.
 
 Also open and outside the numbered order: the **connect-a-store screen**, which
 waits on the Shopify Partner account.

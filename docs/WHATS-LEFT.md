@@ -114,7 +114,7 @@ Everything left in this group waits on somebody else.
 | Missing | What it unlocks |
 |---|---|
 | ~~CSV import~~ | **Built.** Any business whose sales arrive as a spreadsheet — music, publishing, stock licensing — can now be onboarded without a store connection. |
-| **Advances / recoupment** | Music and book publishing specifically. A known gap in the rule shape — see blueprint §10b. **Don't sell to those industries until it exists.** |
+| **Advances / recoupment** | ⚠️ **Half-built, and not agreed with you.** The engine part exists but has no tests and no screen — see the note below. **Don't sell to music or publishing until it is finished and checked.** |
 
 ---
 
@@ -320,6 +320,35 @@ Four things about it are decisions rather than mechanics:
 **Advances are still not built, on purpose.** They should wait for a real
 publishing or music conversation, so the shape is drawn from an actual deal rather
 than guessed at (blueprint §10b).
+
+---
+
+## ⚠️ One thing to decide: advances
+
+Work on **advances** — paying somebody up front and earning it back — was found
+half-finished on the machine at the start of 3 August, left by a session whose
+memory did not survive. It has been saved rather than thrown away, because
+throwing it away could not be undone and saving it can.
+
+**Where it actually stands:** the engine part is written and does not break
+anything. But it has **no tests of its own and no screen** — there is no way to
+add or view an advance from your console. It is not finished, and it was not
+something you asked for.
+
+**Your position on record** was that advances should wait until you can see a
+real publishing or music deal, so the shape is drawn from a real contract rather
+than guessed. That still seems right to me: the design makes a judgement call
+about what happens when somebody has two advances at different recoupment rates,
+and only a real contract can settle which answer is correct.
+
+**Three options, all fine:**
+
+- **Leave it dormant.** It costs nothing sitting there and blocks nothing.
+- **Finish it** — tests and a screen — if a publishing or music conversation
+  makes it urgent.
+- **Remove it.** One command, and it is gone cleanly.
+
+Nothing else in the system depends on it.
 
 ---
 

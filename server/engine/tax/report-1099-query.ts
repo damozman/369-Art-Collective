@@ -12,7 +12,7 @@
  * parsed with `BigInt`, never `Number`.
  */
 
-import { and, asc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 
 import * as schema from "@shared/engine-schema";
 import type { EngineDb } from "../ingest";
@@ -87,19 +87,92 @@ export async function getTaxYearReport(
       schema.contributorIdentities.taxIdentityStatus
     );
 
-  const inputs: TaxYearRowInput[] = rows.map((row) => ({
-    contributorId: row.contributorId,
-    name: row.name,
-    email: row.email,
-    stripeAccountId: row.stripeAccountId ?? null,
-    taxFormType: row.taxFormType ?? null,
-    taxIdentityStatus: row.taxIdentityStatus ?? null,
-    currency: row.currency,
-    paidMinor: BigInt(row.paidMinor),
-    payoutCount: Number(row.payoutCount),
-    firstPaidAt: new Date(row.firstPaidAt),
-    lastPaidAt: new Date(row.lastPaidAt),
-  }));
+  // Advances issued in the same window (§10b, rule 6). A SEPARATE query rather
+  // than a join: an advance and a payout are different events on different
+  // tables, and joining them would multiply each payout row by the number of
+  // advances the same person has — an over-report that grows with how well the
+  // feature is used, which is the worst possible failure mode for a tax figure.
+  const { advancesIssuedInYear } = await import("../advance");
+  const advanceRows = await advancesIssuedInYear(db, tenantId, from, until);
+
+  const advanceByKey = new Map<string, bigint>();
+  for (const row of advanceRows) {
+    const key = `${row.contributorId}:${row.currency}`;
+    advanceByKey.set(key, (advanceByKey.get(key) ?? 0n) + row.totalMinor);
+  }
+
+  const inputs: TaxYearRowInput[] = rows.map((row) => {
+    const key = `${row.contributorId}:${row.currency}`;
+    const advanceMinor = advanceByKey.get(key) ?? 0n;
+    advanceByKey.delete(key); // consumed; whatever is left is advance-only
+
+    return {
+      contributorId: row.contributorId,
+      name: row.name,
+      email: row.email,
+      stripeAccountId: row.stripeAccountId ?? null,
+      taxFormType: row.taxFormType ?? null,
+      taxIdentityStatus: row.taxIdentityStatus ?? null,
+      currency: row.currency,
+      paidMinor: BigInt(row.paidMinor),
+      advanceMinor,
+      payoutCount: Number(row.payoutCount),
+      firstPaidAt: new Date(row.firstPaidAt),
+      lastPaidAt: new Date(row.lastPaidAt),
+    };
+  });
+
+  // Anyone who took an advance and was never transferred to. Rule 6 says they
+  // are a real reportable row — they received cash — and they would be invisible
+  // if the report only ever started from the payouts table.
+  if (advanceByKey.size > 0) {
+    const orphanIds = [...advanceByKey.keys()].map((key) => key.split(":")[0]);
+
+    const people = await db
+      .select({
+        id: schema.contributors.id,
+        name: schema.contributors.name,
+        email: schema.contributors.email,
+        stripeAccountId: schema.contributorIdentities.stripeAccountId,
+        taxFormType: schema.contributorIdentities.taxFormType,
+        taxIdentityStatus: schema.contributorIdentities.taxIdentityStatus,
+      })
+      .from(schema.contributors)
+      .leftJoin(
+        schema.contributorIdentities,
+        eq(schema.contributorIdentities.contributorId, schema.contributors.id)
+      )
+      .where(
+        and(
+          eq(schema.contributors.tenantId, tenantId),
+          inArray(schema.contributors.id, orphanIds)
+        )
+      );
+
+    const byId = new Map(people.map((person) => [person.id, person]));
+
+    for (const [key, advanceMinor] of advanceByKey) {
+      const [contributorId, currency] = key.split(":");
+      const person = byId.get(contributorId);
+      if (!person) continue;
+
+      inputs.push({
+        contributorId,
+        name: person.name,
+        email: person.email,
+        stripeAccountId: person.stripeAccountId ?? null,
+        taxFormType: person.taxFormType ?? null,
+        taxIdentityStatus: person.taxIdentityStatus ?? null,
+        currency,
+        paidMinor: 0n,
+        advanceMinor,
+        payoutCount: 0,
+        // No transfer happened, so there is no transfer date. Rule 6.
+        firstPaidAt: null,
+        lastPaidAt: null,
+      });
+    }
+  }
 
   return assembleReport(year, inputs);
 }

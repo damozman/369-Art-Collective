@@ -416,16 +416,25 @@ export function createAdminRouter(
 
       res.json({
         currency: tenant.currency,
-        totalToPay: money(eligible.reduce((sum, c) => sum + c.payableMinor, 0n)),
+        // The NET, which is what actually leaves. Totalling the gross here would
+        // put a number on screen that no bank statement will ever match.
+        totalToPay: money(eligible.reduce((sum, c) => sum + c.netPayableMinor, 0n)),
+        totalToRecoup: money(
+          candidates.reduce((sum, c) => sum + c.recoupment.totalMinor, 0n)
+        ),
         eligible: eligible.map((c) => ({
           contributorId: c.contributorId,
           name: c.contributorName,
-          amount: money(c.payableMinor),
+          amount: money(c.netPayableMinor),
+          earned: money(c.payableMinor),
+          recouped: money(c.recoupment.totalMinor),
         })),
         skipped: skipped.map((c) => ({
           contributorId: c.contributorId,
           name: c.contributorName,
-          amount: money(c.payableMinor),
+          amount: money(c.netPayableMinor),
+          earned: money(c.payableMinor),
+          recouped: money(c.recoupment.totalMinor),
           reason: c.skipReason,
         })),
       });
@@ -475,6 +484,12 @@ export function createAdminRouter(
         failed: result.failed,
         skipped: result.skipped,
         totalPaid: money(result.totalPaidMinor),
+        totalRecouped: money(result.totalRecoupedMinor),
+        recouped: result.recouped.map((r) => ({
+          contributorId: r.contributorId,
+          name: r.name,
+          amount: money(r.amountMinor),
+        })),
         skippedReasons: result.skipped_reasons,
         failures: result.failures,
       });
@@ -1016,8 +1031,10 @@ export function createAdminRouter(
         currency: row.currency,
         paid: money(row.paidMinor),
         payoutCount: row.payoutCount,
-        firstPaidAt: row.firstPaidAt.toISOString(),
-        lastPaidAt: row.lastPaidAt.toISOString(),
+        // Null when somebody has an advance but has never been paid — they
+        // belong on the report, and a missing date is not an error.
+        firstPaidAt: row.firstPaidAt?.toISOString() ?? null,
+        lastPaidAt: row.lastPaidAt?.toISOString() ?? null,
         flags: row.flags,
       })),
     });
@@ -1087,6 +1104,188 @@ export function createAdminRouter(
         `attachment; filename="${csvFilename(tenant.slug, year)}"`
       );
       res.send(toCsv(report));
+    }
+  );
+
+  // ---- Advances (§10b) ----
+  //
+  // The read is not behind `write()`, matching the tax and import screens: a
+  // lapsed trial can still look at what it owes and is owed. Creating and
+  // closing an advance are writes and are gated.
+
+  router.get(
+    "/t/:tenantSlug/admin/advances",
+    requireAdmin,
+    async (req: TenantRequest, res) => {
+      const tenant = req.engineTenant!;
+      const { listAdvances } = await import("./advance");
+
+      const rows = await listAdvances(db, tenant.id, {
+        includeClosed: req.query.includeClosed === "true",
+        contributorId: req.query.contributorId
+          ? String(req.query.contributorId)
+          : undefined,
+      });
+
+      res.json({
+        currency: tenant.currency,
+        advances: rows.map((row) => ({
+          id: row.id,
+          contributorId: row.contributorId,
+          contributorName: row.contributorName,
+          amount: money(row.amountMinor),
+          recouped: money(row.recoupedMinor),
+          outstanding: money(row.outstandingMinor),
+          recoupmentPercent: row.recoupmentBasisPoints / 100,
+          currency: row.currency,
+          status: row.status,
+          workId: row.workId,
+          workTitle: row.workTitle,
+          issuedAt: row.issuedAt,
+          note: row.note,
+          closedAt: row.closedAt,
+          closeNote: row.closeNote,
+        })),
+      });
+    }
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/advances",
+    requireAdmin,
+    async (req: TenantRequest, res) => {
+      const tenant = req.engineTenant!;
+      const session = (req as TenantRequest & { adminSession?: AdminSession }).adminSession!;
+
+      try {
+        assertCanWrite(session);
+      } catch (error) {
+        if (error instanceof AuthError) {
+          return res.status(403).json({ message: error.message });
+        }
+        throw error;
+      }
+
+      const { createAdvance, AdvanceError } = await import("./advance");
+      const body = req.body ?? {};
+
+      let amountMinor: bigint;
+      try {
+        amountMinor = parseDecimalToMinor(String(body.amount ?? ""), tenant.currency);
+      } catch {
+        return res.status(400).json({ message: "That amount is not a number." });
+      }
+
+      const percent = Number(body.recoupmentPercent ?? 100);
+      if (!Number.isFinite(percent)) {
+        return res.status(400).json({ message: "That recoupment rate is not a number." });
+      }
+
+      // Parsed here rather than defaulted server-side: the date the money left
+      // decides which tax year reports it, and "today" is only right when the
+      // advance is entered the same day it was paid.
+      const issuedAt = new Date(String(body.issuedAt ?? ""));
+      if (Number.isNaN(issuedAt.getTime())) {
+        return res.status(400).json({ message: "That is not a valid date." });
+      }
+
+      try {
+        const advance = await createAdvance(db, {
+          tenantId: tenant.id,
+          contributorId: String(body.contributorId ?? ""),
+          amountMinor,
+          currency: tenant.currency,
+          recoupmentBasisPoints: Math.round(percent * 100),
+          issuedAt,
+          workId: body.workId ? String(body.workId) : null,
+          note: body.note ? String(body.note) : null,
+          createdBy: session.tenantUserId,
+        });
+
+        await db.insert(schema.auditLog).values({
+          tenantId: tenant.id,
+          actorType: "tenant_user",
+          actorId: session.tenantUserId,
+          action: "create_advance",
+          entityType: "advance",
+          entityId: advance.id,
+          after: {
+            contributorId: advance.contributorId,
+            amountMinor: advance.amountMinor.toString(),
+            currency: advance.currency,
+            recoupmentBasisPoints: advance.recoupmentBasisPoints,
+            issuedAt: advance.issuedAt.toISOString(),
+          },
+        });
+
+        res.status(201).json({ id: advance.id });
+      } catch (error) {
+        if (error instanceof AdvanceError) {
+          return res.status(400).json({ message: error.message });
+        }
+        throw error;
+      }
+    }
+  );
+
+  router.post(
+    "/t/:tenantSlug/admin/advances/:advanceId/close",
+    requireAdmin,
+    async (req: TenantRequest, res) => {
+      const tenant = req.engineTenant!;
+      const session = (req as TenantRequest & { adminSession?: AdminSession }).adminSession!;
+
+      try {
+        assertCanWrite(session);
+      } catch (error) {
+        if (error instanceof AuthError) {
+          return res.status(403).json({ message: error.message });
+        }
+        throw error;
+      }
+
+      const status = String(req.body?.status ?? "");
+      if (status !== "written_off" && status !== "cancelled") {
+        return res
+          .status(400)
+          .json({ message: "An advance can only be written off or cancelled." });
+      }
+
+      const { closeAdvance, AdvanceError } = await import("./advance");
+
+      try {
+        const advance = await closeAdvance(db, {
+          tenantId: tenant.id,
+          advanceId: String(req.params.advanceId),
+          status,
+          note: req.body?.note ? String(req.body.note) : null,
+          closedBy: session.tenantUserId,
+        });
+
+        // Always audited. Both outcomes end a debt somebody owed, and "who
+        // decided to stop chasing this, and when" has no other answer — the
+        // advance row itself only records that it happened.
+        await db.insert(schema.auditLog).values({
+          tenantId: tenant.id,
+          actorType: "tenant_user",
+          actorId: session.tenantUserId,
+          action: status === "written_off" ? "write_off_advance" : "cancel_advance",
+          entityType: "advance",
+          entityId: advance.id,
+          after: {
+            status: advance.status,
+            outstandingMinor: advance.outstandingMinor.toString(),
+            note: advance.closeNote,
+          },
+        });
+
+        res.json({ ok: true });
+      } catch (error) {
+        if (error instanceof AdvanceError) {
+          return res.status(400).json({ message: error.message });
+        }
+        throw error;
+      }
     }
   );
 

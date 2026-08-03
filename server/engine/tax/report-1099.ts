@@ -33,7 +33,7 @@
  * answer is that they come from Stripe's tax reporting, not from us.
  *
  * ============================================================
- * THE FIVE RULES THAT DECIDE WHAT LANDS IN A YEAR
+ * THE SIX RULES THAT DECIDE WHAT LANDS IN A YEAR
  * ============================================================
  *
  * 1. CASH BASIS. A 1099 reports what was PAID during the calendar year, not
@@ -73,6 +73,21 @@
  *    in the NEXT tax year. The window is printed on the report so the figure can
  *    always be explained, and a tenant who needs local-midnight boundaries needs
  *    a per-tenant timezone — a real feature, not a tweak here.
+ *
+ * 6. AN ADVANCE COUNTS IN THE YEAR IT WAS ISSUED, AND RECOUPMENT NEVER TAKES IT
+ *    BACK (§10b). An advance is cash the contributor received, so rule 1 puts it
+ *    in the year the money left. What happens afterwards does NOT restate it:
+ *    recouping an advance out of later earnings is not a repayment, it is the
+ *    reason a later payout is smaller — and that smaller payout is already what
+ *    the later year reports. Counting the recoupment as well would deduct the
+ *    same dollar twice, once from a year that was probably already filed.
+ *
+ *    Two consequences worth being able to explain out loud. A contributor can
+ *    have a reportable year with no transfers at all, if they took an advance
+ *    and earned nothing — so an advance-only row is a real row and has no payout
+ *    dates. And a written-off advance still counts: the person kept the money. A
+ *    CANCELLED advance does not, because cancelling asserts no money ever left,
+ *    which is why it is refused once anything has been recouped against it.
  *
  * ============================================================
  * THRESHOLDS ARE REPORTED, NEVER ENFORCED
@@ -122,12 +137,17 @@ export interface TaxYearRow {
   taxFormType: string | null;
   taxIdentityStatus: string;
   currency: string;
-  /** Total actually transferred in the year, in minor units. */
+  /** Total actually transferred in the year, in minor units. Excludes advances. */
   paidMinor: bigint;
+  /** Advances issued in the year (§10b rule 6). Cash received, kept separate. */
+  advanceMinor: bigint;
+  /** `paidMinor + advanceMinor`. What the person actually received. */
+  totalReceivedMinor: bigint;
   /** How many transfers make it up. A single large figure invites "from what?". */
   payoutCount: number;
-  firstPaidAt: Date;
-  lastPaidAt: Date;
+  /** Null when the year contains advances but no transfers. */
+  firstPaidAt: Date | null;
+  lastPaidAt: Date | null;
   flags: TaxRowFlag[];
 }
 
@@ -183,9 +203,11 @@ export interface TaxYearRowInput {
   taxIdentityStatus: string | null;
   currency: string;
   paidMinor: bigint;
+  /** Advances issued in the year. Omitted by callers that have none. */
+  advanceMinor?: bigint;
   payoutCount: number;
-  firstPaidAt: Date;
-  lastPaidAt: Date;
+  firstPaidAt: Date | null;
+  lastPaidAt: Date | null;
 }
 
 /**
@@ -199,6 +221,10 @@ export function flagsFor(input: TaxYearRowInput): TaxRowFlag[] {
   const flags: TaxRowFlag[] = [];
   const form = (input.taxFormType ?? "").toUpperCase();
   const status = input.taxIdentityStatus ?? "not_collected";
+  // Measured on everything the person received, transfers and advances alike.
+  // Testing transfers alone would mark a $10,000 advance and no sales as
+  // "below threshold", which is both wrong and wrong in the expensive direction.
+  const receivedMinor = input.paidMinor + (input.advanceMinor ?? 0n);
 
   if (form.startsWith("W-8") || form.startsWith("W8")) {
     // A non-US person is not a 1099 at all — it is a 1042-S, which is a
@@ -212,7 +238,7 @@ export function flagsFor(input: TaxYearRowInput): TaxRowFlag[] {
   }
 
   if (input.currency !== "USD") flags.push("non_usd");
-  else if (input.paidMinor < REPORTING_THRESHOLD_MINOR) flags.push("below_threshold");
+  else if (receivedMinor < REPORTING_THRESHOLD_MINOR) flags.push("below_threshold");
 
   return flags;
 }
@@ -230,24 +256,32 @@ export function assembleReport(
 ): TaxYearReport {
   const { from, until } = taxYearWindow(year);
 
-  const rows: TaxYearRow[] = inputs.map((input) => ({
-    ...input,
-    taxIdentityStatus: input.taxIdentityStatus ?? "not_collected",
-    flags: flagsFor(input),
-  }));
+  const rows: TaxYearRow[] = inputs.map((input) => {
+    const advanceMinor = input.advanceMinor ?? 0n;
+    return {
+      ...input,
+      advanceMinor,
+      totalReceivedMinor: input.paidMinor + advanceMinor,
+      taxIdentityStatus: input.taxIdentityStatus ?? "not_collected",
+      flags: flagsFor(input),
+    };
+  });
 
   // Largest first — the rows that matter most for filing are the ones an owner
-  // wants to check, and an alphabetical list buries them.
+  // wants to check, and an alphabetical list buries them. Sorted on the total
+  // received, so an advance-heavy year does not sink to the bottom.
   rows.sort((a, b) => {
     if (a.currency !== b.currency) return a.currency < b.currency ? -1 : 1;
-    if (a.paidMinor !== b.paidMinor) return a.paidMinor > b.paidMinor ? -1 : 1;
+    if (a.totalReceivedMinor !== b.totalReceivedMinor) {
+      return a.totalReceivedMinor > b.totalReceivedMinor ? -1 : 1;
+    }
     return a.name.localeCompare(b.name);
   });
 
   const totals = new Map<string, { totalMinor: bigint; rowCount: number }>();
   for (const row of rows) {
     const current = totals.get(row.currency) ?? { totalMinor: 0n, rowCount: 0 };
-    current.totalMinor += row.paidMinor;
+    current.totalMinor += row.totalReceivedMinor;
     current.rowCount += 1;
     totals.set(row.currency, current);
   }
@@ -261,7 +295,7 @@ export function assembleReport(
       .map(([currency, t]) => ({ currency, ...t }))
       .sort((a, b) => a.currency.localeCompare(b.currency)),
     reportableRowCount: rows.filter(
-      (row) => row.currency === "USD" && row.paidMinor >= REPORTING_THRESHOLD_MINOR
+      (row) => row.currency === "USD" && row.totalReceivedMinor >= REPORTING_THRESHOLD_MINOR
     ).length,
     missingTaxFormCount: rows.filter(
       (row) => row.flags.includes("no_tax_form") || row.flags.includes("invalid_tax_identity")
@@ -313,11 +347,24 @@ function decimal(amountMinor: bigint): string {
   return `${negative ? "-" : ""}${abs / 100n}.${(abs % 100n).toString().padStart(2, "0")}`;
 }
 
-/** `2026-08-02`, UTC, from an instant. Matches every other date this system prints. */
-function isoDate(value: Date): string {
-  return value.toISOString().slice(0, 10);
+/**
+ * `2026-08-02`, UTC, from an instant. Matches every other date this system prints.
+ *
+ * Null becomes an empty cell rather than a date, because a row can legitimately
+ * have advances and no transfers (rule 6) and inventing a date for it would put
+ * a payment on a day nothing was paid.
+ */
+function isoDate(value: Date | null): string {
+  return value ? value.toISOString().slice(0, 10) : "";
 }
 
+/**
+ * `advances_paid` and `total_received` are separate columns rather than one
+ * merged figure. An accountant reconciling against Stripe will find the
+ * transfers there and NOT the advances — those left the business by whatever
+ * means the tenant used — so a single blended total looks like Stripe is
+ * under-reporting. Two columns make the difference self-explaining.
+ */
 export const CSV_COLUMNS = [
   "contributor_id",
   "name",
@@ -327,6 +374,8 @@ export const CSV_COLUMNS = [
   "tax_identity_status",
   "currency",
   "total_paid",
+  "advances_paid",
+  "total_received",
   "payout_count",
   "first_paid_on",
   "last_paid_on",
@@ -355,10 +404,14 @@ export function toCsv(report: TaxYearReport): string {
         row.taxIdentityStatus,
         row.currency,
         decimal(row.paidMinor),
+        decimal(row.advanceMinor),
+        decimal(row.totalReceivedMinor),
         String(row.payoutCount),
         isoDate(row.firstPaidAt),
         isoDate(row.lastPaidAt),
-        row.currency === "USD" && row.paidMinor >= REPORTING_THRESHOLD_MINOR ? "yes" : "no",
+        row.currency === "USD" && row.totalReceivedMinor >= REPORTING_THRESHOLD_MINOR
+          ? "yes"
+          : "no",
         row.flags.join(" "),
       ]
         .map(csvField)

@@ -60,9 +60,10 @@ data flowing months before you ever submit a listing.
 - A demo store, or a video, showing the whole install-to-value flow.
 - **Justification for every permission you request.** Reviewers reject apps that ask
   for more than they use. Ours is narrow, which helps.
-- GDPR webhook endpoints — Shopify requires apps to respond to customer data
-  request/erasure and shop redaction webhooks. **We do not have these yet.** They are
-  small (an hour of work) but they are a hard requirement for listing, not optional.
+- GDPR webhook endpoints — **✅ BUILT 2026-08-03.** All three are live and tested,
+  including the part review actually probes: a deliberately bad signature gets a
+  401 rather than a 200. Two of the three answer "we hold no customer data",
+  which is true — we never store a buyer's name, email or address.
 
 ### What our code actually needs from Shopify
 
@@ -327,9 +328,12 @@ Three, all needing you or somebody outside:
 
 1. **Whether Stripe permits creating contributor accounts under the customer's own
    Stripe.** Item 2. Everything about the payout architecture assumes yes.
-2. **Whether the App Store listing needs the GDPR webhook endpoints before or after
-   first submission.** Item 1. Cheap to build either way; worth knowing before we
-   spend a review cycle finding out.
+2. ~~Whether the listing needs the GDPR webhooks before or after first
+   submission.~~ **Moot — they are built.** You will need to paste three URLs
+   into the Partner dashboard when you create the app:
+   `/api/engine/webhooks/shopify/customers/data_request`,
+   `/api/engine/webhooks/shopify/customers/redact`, and
+   `/api/engine/webhooks/shopify/shop/redact`.
 3. **Whether an accountant agrees with how the year-end payment report decides which
    year a payment falls in.** Not strictly Track A, but it is the other thing in the
    product resting on a judgement nobody qualified has checked.

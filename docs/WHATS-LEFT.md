@@ -70,11 +70,13 @@ Stripe key, which is a settings change rather than a build.
   called out.
 - **Advances** — money paid up front, earned back out of later payments, at
   whatever share of their earnings you agree.
+- **Shopify's required privacy endpoints** — the three every App Store listing
+  must have. One known rejection reason removed before you ever submit.
 - **Spreadsheet import** — a royalty statement or marketplace report becomes
   earnings. You see exactly what it would do before anything is recorded, and
   importing the same file twice doesn't pay anyone twice.
 
-471 unit tests, 303 end-to-end checks against a real database, every screen driven
+471 unit tests, 316 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---

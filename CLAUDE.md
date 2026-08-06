@@ -176,7 +176,7 @@ Both were resolved in step 5.)
   (`server/engine/payout-account.ts`, Account Links + status read back from Stripe),
   **billing** (plans, trials, usage counting, annual, the Stripe charging seam,
   self-serve signup at `/signup`) and **email** (`server/engine/email/`).
-- **471 unit tests · 303 end-to-end checks against real Postgres.** Every screen has
+- **471 unit tests · 316 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -344,6 +344,8 @@ third-party log sinks, the client bundle, and the ~70 obsolete
 | `server/engine/adapters/shopify/map.ts` | **pure.** All five money decisions live here — read its header before changing anything |
 | `server/engine/adapters/shopify/client.ts` | Admin API seam + `LiveShopifyClient` + `FixtureShopifyClient` + `syncWebhooks` |
 | `server/engine/adapters/shopify/ingest.ts` | DB-facing: attribution via `works`/`work_contributors`, then `ingestEvent` |
+| `server/engine/adapters/shopify/gdpr.ts` | the three compliance handlers — what we hold (nothing) and what shop/redact removes |
+| `server/engine/adapters/shopify/gdpr-routes.ts` | their endpoints; 401 on a bad signature is an App Store requirement |
 | `server/engine/adapters/shopify/routes.ts` | `POST /api/engine/webhooks/shopify` — one URL for all tenants |
 | `server/engine/adapters/stripe/client.ts` | four-call Stripe surface + `LiveStripeClient` + `FixtureStripeClient` |
 | `server/engine/adapters/stripe/transfer-executor.ts` | `TransferExecutor` over Stripe; bigint→number checked, never rounded |
@@ -410,6 +412,38 @@ Neither adapter needs a code change to go live.
 - **`ENGINE_SECRET_KEY` is now required** for anything touching connections
   (`openssl rand -hex 32`, or any passphrase locally). Without it, sealing throws
   rather than storing plaintext.
+
+### Shopify compliance webhooks — BUILT. Required for any App Store listing
+
+`gdpr.ts` + `gdpr-routes.ts`, three endpoints Shopify mandates and actively
+tests during review. Four things differ from the revenue webhooks:
+
+1. **They are signed with the APP secret** (`SHOPIFY_API_SECRET`), not the
+   per-connection secret `routes.ts` reads off the connection row. Verifying
+   these against a connection's stored secret would fail every delivery.
+2. **⚠️ They arrive for shops that are no longer connected, and that is NORMAL.**
+   `shop/redact` is sent ~48h AFTER uninstall — by which time `app/uninstalled`
+   has already destroyed the credential. Nothing in these handlers requires a
+   connection to exist.
+3. **⚠️ A bad signature MUST return 401.** Review sends a deliberately invalid
+   HMAC to each URL and rejects the listing if it gets a 200. Six e2e checks pin
+   this — two per endpoint. A missing secret also refuses rather than skipping
+   verification; these endpoints erase things.
+4. **⚠️ `shop/redact` does NOT delete the tenant's ledger**, and this is the
+   most important decision in the feature. Uninstalling a Shopify app is not
+   leaving the product — a tenant can run entirely on CSV import — and the
+   ledger is their own financial record, the basis of their tax reporting, and
+   the source of every contributor's statement. What is destroyed is the
+   *connection and its credentials*. An e2e check asserts the ledger row count
+   is unchanged across a redaction. Deleting a tenant is §5 #14's
+   export-then-delete, requested by them, never triggered by an inbound webhook.
+
+**Two of the three are honest no-ops, because we store no customer personal
+data at all.** A Shopify order becomes amounts, currency, quantity and a line
+reference; `map.ts` never reads a name, email, address or customer id and the
+schema has nowhere to put one. `customers/data_request` says so and
+`customers/redact` has nothing to erase. That is worth stating in the listing —
+it is the shortest possible answer to a reviewer's data question.
 
 ### CSV import — BUILT. Step 6's first half
 
@@ -874,7 +908,7 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 
 ```bash
 npm test              # 471 unit tests, no network, no database
-npm run test:e2e      # 303 checks against a real Postgres (needs DATABASE_URL)
+npm run test:e2e      # 316 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -1111,7 +1145,7 @@ npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (303 checks against real Postgres) start the local database
+For the end-to-end run (316 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e

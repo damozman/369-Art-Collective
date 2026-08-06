@@ -136,6 +136,12 @@ app.use((req, res, next) => {
     const { createShopifyWebhookRouter } = await import("./engine/adapters/shopify/routes");
     app.use("/api/engine", createShopifyWebhookRouter(engineDb));
 
+    // Shopify's three mandatory compliance webhooks. Separate from the revenue
+    // ones because they are signed with the APP secret and must work for shops
+    // that are no longer connected — shop/redact arrives ~48h after uninstall.
+    const { createShopifyGdprRouter } = await import("./engine/adapters/shopify/gdpr-routes");
+    app.use("/api/engine", createShopifyGdprRouter(engineDb));
+
     // Signing up and paying. The signup half carries no session at all — it is
     // how a business that does not yet exist creates itself.
     const { createSignupRouter, createBillingRouter } = await import(

@@ -92,6 +92,7 @@ import {
   readShopifySettings,
 } from "../adapters/shopify/ingest";
 import { createShopifyWebhookRouter } from "../adapters/shopify/routes";
+import { createShopifyGdprRouter } from "../adapters/shopify/gdpr-routes";
 import { signWebhookBody } from "../adapters/shopify/webhook-auth";
 import { FixtureStripeClient } from "../adapters/stripe/client";
 import { signUp } from "../billing/signup";
@@ -3300,6 +3301,160 @@ async function main() {
     /Unknown contributor/
   );
   check("one business cannot record an advance against another's person", async () => {});
+
+  // ============================================================
+  // Shopify's compliance webhooks — over real HTTP
+  // ============================================================
+  //
+  // Driven over HTTP rather than by calling the handlers, because what Shopify
+  // actually tests during review is the HTTP behaviour: a deliberately bad
+  // signature must produce a 401, and a good one a 200.
+
+  console.log("\n-- compliance webhooks --");
+
+  const APP_SECRET = "app-client-secret-for-compliance";
+  const COMPLIANCE_SHOP = "369-compliance.myshopify.com";
+
+  await upsertConnection(db, {
+    tenantId: "t-369",
+    provider: "shopify",
+    externalRef: COMPLIANCE_SHOP,
+    label: COMPLIANCE_SHOP,
+    credential: "shpat_compliance_token",
+    webhookSecret: WEBHOOK_SECRET,
+    settings: { attribution: { from: "sku", pattern: "^ART-(\\d+)-" }, onUnknownFee: "hold" },
+    status: "active",
+  });
+
+  const gdprApp = express();
+  gdprApp.use(
+    express.json({
+      verify: (req, _res, buf) => {
+        (req as unknown as { rawBody: Buffer }).rawBody = buf;
+      },
+    })
+  );
+  gdprApp.use("/api/engine", createShopifyGdprRouter(db, { appSecret: APP_SECRET }));
+
+  const gdprServer = await new Promise<import("node:http").Server>((resolve) => {
+    const s = gdprApp.listen(0, () => resolve(s));
+  });
+  const gdprPort = (gdprServer.address() as { port: number }).port;
+
+  async function compliance(
+    path: string,
+    payload: unknown,
+    options: { secret?: string | null; shop?: string | null } = {}
+  ) {
+    const body = JSON.stringify(payload);
+    const headers: Record<string, string> = { "content-type": "application/json" };
+    if (options.shop !== null) {
+      headers["x-shopify-shop-domain"] = options.shop ?? COMPLIANCE_SHOP;
+    }
+    if (options.secret !== null) {
+      headers["x-shopify-hmac-sha256"] = signWebhookBody(body, options.secret ?? APP_SECRET);
+    }
+    const response = await fetch(`http://127.0.0.1:${gdprPort}/api/engine${path}`, {
+      method: "POST",
+      headers,
+      body,
+    });
+    return {
+      status: response.status,
+      body: (await response.json().catch(() => ({}))) as Record<string, unknown>,
+    };
+  }
+
+  const DATA_REQUEST = "/webhooks/shopify/customers/data_request";
+  const CUSTOMER_REDACT = "/webhooks/shopify/customers/redact";
+  const SHOP_REDACT = "/webhooks/shopify/shop/redact";
+
+  /**
+   * ⚠️ THE CHECK SHOPIFY ACTUALLY RUNS. Review sends a deliberately invalid
+   * HMAC to each compliance URL and requires a 401. Returning 200 is an
+   * automatic listing rejection — and would also mean anybody could call an
+   * endpoint whose job is erasing things.
+   */
+  for (const [name, path] of [
+    ["customer data request", DATA_REQUEST],
+    ["customer redact", CUSTOMER_REDACT],
+    ["shop redact", SHOP_REDACT],
+  ] as const) {
+    const badSignature = await compliance(path, { shop_id: 1 }, { secret: "wrong-secret" });
+    check(`${name} rejects a bad signature`, () =>
+      assert.equal(badSignature.status, 401)
+    );
+
+    const unsigned = await compliance(path, { shop_id: 1 }, { secret: null });
+    check(`${name} rejects an unsigned delivery`, () =>
+      assert.equal(unsigned.status, 401)
+    );
+  }
+
+  const dataRequest = await compliance(DATA_REQUEST, {
+    shop_domain: COMPLIANCE_SHOP,
+    customer: { id: 999, email: "buyer@example.com" },
+  });
+  check("a properly signed data request is acknowledged", () =>
+    assert.equal(dataRequest.status, 200)
+  );
+  check("and answers that no customer data is held", () =>
+    assert.match(String(dataRequest.body.outcome), /[Nn]o customer personal data/)
+  );
+
+  const customerRedact = await compliance(CUSTOMER_REDACT, {
+    shop_domain: COMPLIANCE_SHOP,
+    customer: { id: 999, email: "buyer@example.com" },
+  });
+  check("a customer erasure request is acknowledged", () =>
+    assert.equal(customerRedact.status, 200)
+  );
+
+  /**
+   * ⚠️ SHOP REDACT MUST NOT DESTROY THE BUSINESS'S LEDGER. Uninstalling a
+   * Shopify app is not leaving the product — a tenant can keep running entirely
+   * on CSV import — and the ledger is their own financial record and the source
+   * of every contributor's statement.
+   */
+  const ledgerBeforeRedact = await db
+    .select({ id: schema.ledgerEntries.id })
+    .from(schema.ledgerEntries)
+    .where(eq(schema.ledgerEntries.tenantId, "t-369"));
+
+  const shopRedact = await compliance(SHOP_REDACT, { shop_domain: COMPLIANCE_SHOP });
+  check("a shop erasure request is acknowledged", () =>
+    assert.equal(shopRedact.status, 200)
+  );
+
+  const redactedConnection = await findConnectionByExternalRef(db, "shopify", COMPLIANCE_SHOP);
+  check("the store connection and its credentials are destroyed", () => {
+    assert.equal(redactedConnection!.status, "revoked");
+    assert.equal(redactedConnection!.credentialSealed, null);
+    assert.equal(redactedConnection!.webhookSecretSealed, null);
+  });
+
+  const ledgerAfterRedact = await db
+    .select({ id: schema.ledgerEntries.id })
+    .from(schema.ledgerEntries)
+    .where(eq(schema.ledgerEntries.tenantId, "t-369"));
+
+  check("but the ledger is untouched — it is the business's own record", () =>
+    assert.equal(ledgerAfterRedact.length, ledgerBeforeRedact.length)
+  );
+
+  /**
+   * The normal case: shop/redact arrives ~48h after uninstall, by which time
+   * app/uninstalled has already removed the connection. A handler that
+   * required one would fail the exact delivery it exists to serve.
+   */
+  const redactAgain = await compliance(SHOP_REDACT, {
+    shop_domain: "never-connected.myshopify.com",
+  });
+  check("erasing a shop we have no connection to still succeeds", () =>
+    assert.equal(redactAgain.status, 200)
+  );
+
+  await new Promise<void>((resolve) => gdprServer.close(() => resolve()));
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

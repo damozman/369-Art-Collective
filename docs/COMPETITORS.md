@@ -1,17 +1,42 @@
 # Who else does this
 
 The first real market data this project has had. Written 2026-08-03.
+**Partially verified 2026-08-06** — see the two boxes below.
 
-> ## ⚠️ UNVERIFIED
+> ## ⚠️ STILL UNVERIFIED: EVERY PRICE IN THIS FILE
 >
-> This came from an AI-generated summary the user pasted in, not from reading the
-> listings. **Treat every number as a claim, not a fact.** The pricing figures in
-> particular are load-bearing enough that acting on them without checking would be
+> The pricing tables came from an AI-generated summary the user pasted in, not
+> from reading the listings. **Treat every number as a claim, not a fact.** The
+> figures are load-bearing enough that acting on them without checking would be
 > a mistake.
 >
 > **Verify before use:** open each app's Shopify App Store listing and read its
-> own pricing page. Five minutes. Then delete this box and note the date it was
-> checked.
+> own pricing page. Then correct the tables here and note the date.
+
+> ## ✅ VERIFIED 2026-08-06 — CollabPay's own marketing material
+>
+> The user supplied CollabPay's published flow infographic. What it establishes,
+> first-hand rather than by summary:
+>
+> 1. **They do not hold funds either.** Their own words: *"CollabPay does not
+>    handle payments directly, rather it instructs payments via PayPal or Stripe.
+>    Payouts occur directly from you to your collaborators."* That is the same
+>    architecture as ratified decision #1. **It is therefore NOT a
+>    differentiator** — it is table stakes in this category, and any positioning
+>    that leans on "we never touch your money" is describing the competition too.
+> 2. **They cover Shopify, WooCommerce AND Squarespace.** We cover Shopify plus
+>    CSV import. Broader native channel coverage than ours on the storefront
+>    side; ours is broader off-storefront, since a record label or a press with
+>    no online store at all can still be a customer.
+> 3. **They read costs, tags, discount codes and affiliate referrals** off the
+>    order (their step 07). Closer to our cost-resolution work than the text
+>    summary suggested. "We subtract real costs before splitting" is not by
+>    itself a distinguishing claim.
+>
+> **What this does NOT tell us**, and what the "what nobody appears to do" list
+> below still hangs on: refunds landing after a payout, advances and
+> recoupment, a stored derivation per payment, and year-end reporting. A flow
+> diagram showing eleven happy-path steps is silent about the unhappy ones.
 
 ---
 
@@ -121,11 +146,18 @@ to produce exactly the words real buyers type.
 Stated as a hypothesis to test, not a finding — absence from a summary is not
 evidence of absence from the product.
 
+**Two candidates were struck off on 2026-08-06** by CollabPay's own material: not
+holding funds, and reading real costs off the order. Both are things they do too.
+What is left is the list below, and it is now a shorter and more honest list.
+
 - **A refund or chargeback that lands AFTER the contributor was paid.** Recoup
   from future earnings, absorb it, or hold a reserve. This is the single hardest
   thing in our engine and the one most likely to be genuinely unmatched.
 - **Advances and recoupment.** Built here; a publishing or music requirement.
-- **Sales that did not come from Shopify.** The CSV importer.
+- **Sales that did not come from Shopify, WooCommerce or Squarespace.** The CSV
+  importer. Note this is narrower than it looked: CollabPay covers three
+  storefronts natively. Our edge is the customer with *no storefront* — a label,
+  a press, a licensor working from a distributor's statement.
 - **Year-end payment reporting.**
 - **An immutable record of who changed what.**
 - **A stored derivation for every payment** — not "here is your total" but

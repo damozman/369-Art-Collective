@@ -5,8 +5,8 @@ An honest map of the distance between here and a product someone pays for.
 Written for the owner. Kept current as things land — if this file says something is
 missing and it isn't, fix the file.
 
-Last updated: 2026-08-02 (steps 1-6 all done; only advances and the
-connect-a-store screen remain, both deliberately waiting).
+Last updated: 2026-08-03 (everything on the build list is done, including
+advances; only the connect-a-store screen remains, waiting on Shopify).
 
 ---
 
@@ -68,11 +68,13 @@ Stripe key, which is a settings change rather than a build.
 - **Year-end payment reporting** — what you paid each person in a calendar year,
   on screen and as a spreadsheet, with the people whose tax details are missing
   called out.
+- **Advances** — money paid up front, earned back out of later payments, at
+  whatever share of their earnings you agree.
 - **Spreadsheet import** — a royalty statement or marketplace report becomes
   earnings. You see exactly what it would do before anything is recorded, and
   importing the same file twice doesn't pay anyone twice.
 
-446 unit tests, 289 end-to-end checks against a real database, every screen driven
+471 unit tests, 303 end-to-end checks against a real database, every screen driven
 in a real browser, and the webhook endpoint exercised over real HTTP.
 
 ---
@@ -114,7 +116,7 @@ Everything left in this group waits on somebody else.
 | Missing | What it unlocks |
 |---|---|
 | ~~CSV import~~ | **Built.** Any business whose sales arrive as a spreadsheet — music, publishing, stock licensing — can now be onboarded without a store connection. |
-| **Advances / recoupment** | ⚠️ **Half-built, and not agreed with you.** The engine part exists but has no tests and no screen — see the note below. **Don't sell to music or publishing until it is finished and checked.** |
+| ~~Advances / recoupment~~ | **Built.** Record money paid up front, and it comes back out of what they earn. One term is worth checking against a real contract — see below. |
 
 ---
 
@@ -323,32 +325,26 @@ than guessed at (blueprint §10b).
 
 ---
 
-## ⚠️ One thing to decide: advances
+## Advances — built, with one question for a real contract
 
-Work on **advances** — paying somebody up front and earning it back — was found
-half-finished on the machine at the start of 3 August, left by a session whose
-memory did not survive. It has been saved rather than thrown away, because
-throwing it away could not be undone and saving it can.
+You can now record money paid to somebody up front, and the system takes it back
+out of what they earn afterwards. There's an **Advances** tab: record one, see
+how much you've recovered, and close it if you decide to stop chasing it.
 
-**Where it actually stands:** the engine part is written and does not break
-anything. But it has **no tests of its own and no screen** — there is no way to
-add or view an advance from your console. It is not finished, and it was not
-something you asked for.
+**The thing worth understanding:** you set what share of their earnings goes to
+clearing it. At 100%, everything they earn goes to the advance until it's clear.
+At 50%, they keep half while it clears — which is usually the point, because
+somebody who sees nothing for six months tends to lose interest.
 
-**Your position on record** was that advances should wait until you can see a
-real publishing or music deal, so the shape is drawn from a real contract rather
-than guessed. That still seems right to me: the design makes a judgement call
-about what happens when somebody has two advances at different recoupment rates,
-and only a real contract can settle which answer is correct.
+Recording an advance **does not** change what anyone is owed today. It starts
+taking effect from their next payment, and they see it on their own statement as
+a line with an explanation.
 
-**Three options, all fine:**
-
-- **Leave it dormant.** It costs nothing sitting there and blocks nothing.
-- **Finish it** — tests and a screen — if a publishing or music conversation
-  makes it urgent.
-- **Remove it.** One command, and it is gone cleanly.
-
-Nothing else in the system depends on it.
+**One open question, and it needs a real contract to settle.** If somebody has
+two advances with different rates, the system takes the higher one. That's
+defensible — it honours the stricter of two agreements you made — but it's a
+judgement call, not a fact. **Worth checking against a real publishing or music
+contract before you sell to those industries.**
 
 ---
 

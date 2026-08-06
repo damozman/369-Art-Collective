@@ -715,3 +715,61 @@ export function commitCsv(
     body: JSON.stringify({ content, config }),
   });
 }
+
+export interface AdminAdvance {
+  id: string;
+  contributorId: string;
+  contributorName: string;
+  amount: Money;
+  recouped: Money;
+  outstanding: Money;
+  recoupmentPercent: number;
+  currency: string;
+  status: "open" | "written_off" | "cancelled";
+  workId: string | null;
+  workTitle: string | null;
+  issuedAt: string;
+  note: string | null;
+  closedAt: string | null;
+  closeNote: string | null;
+}
+
+export function getAdvances(
+  tenantSlug: string,
+  options: { includeClosed?: boolean } = {}
+): Promise<{ currency: string; advances: AdminAdvance[] }> {
+  const query = options.includeClosed ? "?includeClosed=true" : "";
+  return request(`${base(tenantSlug)}/advances${query}`);
+}
+
+/**
+ * `amount` goes up as a decimal STRING, never a number — the server parses it
+ * with the engine's exact reader. Same rule as the minimum payout.
+ */
+export function createAdvance(
+  tenantSlug: string,
+  input: {
+    contributorId: string;
+    amount: string;
+    recoupmentPercent: number;
+    issuedAt: string;
+    workId?: string | null;
+    note?: string | null;
+  }
+): Promise<{ advance: AdminAdvance }> {
+  return request(`${base(tenantSlug)}/advances`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function closeAdvance(
+  tenantSlug: string,
+  advanceId: string,
+  input: { status: "written_off" | "cancelled"; note?: string }
+): Promise<{ advance: AdminAdvance }> {
+  return request(`${base(tenantSlug)}/advances/${encodeURIComponent(advanceId)}/close`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}

@@ -95,6 +95,7 @@ import { createShopifyWebhookRouter } from "../adapters/shopify/routes";
 import { signWebhookBody } from "../adapters/shopify/webhook-auth";
 import { FixtureStripeClient } from "../adapters/stripe/client";
 import { signUp } from "../billing/signup";
+import { closeAdvance, createAdvance, listAdvances } from "../advance";
 import { FixtureBillingClient } from "../billing/billing-client";
 import { FixtureEmailSender } from "../email/sender";
 import { sendOnce } from "../email/notify";
@@ -3118,6 +3119,187 @@ async function main() {
     // ends up with every import in the history twice.
     assert.equal(importAudit.length, 0)
   );
+
+  // ============================================================
+  // Advances (§10b) — money paid up front, earned back
+  // ============================================================
+
+  console.log("\n-- advances --");
+
+  // The real owner row: `advances.created_by` carries a foreign key, unlike the
+  // audit log's free-form actor id.
+  const [advanceActor] = await db
+    .select({ id: schema.tenantUsers.id })
+    .from(schema.tenantUsers)
+    .where(
+      and(
+        eq(schema.tenantUsers.tenantId, "t-369"),
+        eq(schema.tenantUsers.email, "owner@369.example")
+      )
+    )
+    .limit(1);
+
+  await db.insert(schema.contributors).values({
+    id: "c-advance", tenantId: "t-369", name: "Nadia Okonkwo",
+    email: "nadia@example.com", externalRef: "nadia",
+  });
+  await db.insert(schema.contributorIdentities).values({
+    tenantId: "t-369", contributorId: "c-advance",
+    stripeAccountId: "acct_nadia", stripePayoutsEnabled: true,
+  });
+
+  const created = await createAdvance(db, {
+    tenantId: "t-369",
+    contributorId: "c-advance",
+    amountMinor: 50000n,
+    currency: "USD",
+    recoupmentBasisPoints: 5000,
+    issuedAt: new Date("2026-01-15T00:00:00Z"),
+    note: "Book deal, half of earnings",
+    createdBy: advanceActor.id,
+  });
+  const advanceId = created.id;
+  check("an advance can be recorded", () => assert.ok(advanceId));
+
+  const advanceRows = await listAdvances(db, "t-369", {});
+  const nadia = advanceRows.find((row) => row.contributorId === "c-advance")!;
+  check("it shows as fully outstanding before anything is earned", () => {
+    assert.equal(nadia.amountMinor, 50000n);
+    assert.equal(nadia.recoupedMinor, 0n);
+    assert.equal(nadia.outstandingMinor, 50000n);
+  });
+
+  /**
+   * ⚠️ AN ADVANCE IS NOT A NEGATIVE LEDGER BALANCE (decision 1). Recording one
+   * must not move what the contributor is owed — the recoupable balance sits
+   * beside the ledger balance, which is the only way a rate below 100% can be
+   * expressed at all.
+   */
+  const balanceAfterAdvance = await deriveContributorBalance(db, "t-369", "c-advance");
+  check("recording an advance does NOT put the person into deficit", () =>
+    assert.equal(balanceAfterAdvance, 0n)
+  );
+
+  // Earn them something, then see what a payout run proposes.
+  await db.insert(schema.ledgerEntries).values({
+    tenantId: "t-369", contributorId: "c-advance", entryType: "allocation",
+    amountMinor: 20000n, currency: "USD", availableAt: null,
+    occurredAt: new Date("2026-03-01T00:00:00Z"),
+  });
+
+  const withAdvance = await selectPayoutCandidates(db, "t-369", new Date("2026-06-01T00:00:00Z"));
+  const nadiaCandidate = withAdvance.find((c) => c.contributorId === "c-advance")!;
+
+  check("half the earnings are taken back at a 50% rate", () => {
+    assert.equal(nadiaCandidate.payableMinor, 20000n);
+    assert.equal(nadiaCandidate.recoupment.totalMinor, 10000n);
+    assert.equal(nadiaCandidate.netPayableMinor, 10000n);
+  });
+
+  /**
+   * The point of a sub-100% rate: the contributor keeps seeing money while the
+   * advance clears. If this ever reads zero, the deal has silently become
+   * "we take everything", which is a different contract.
+   */
+  check("and the other half is still theirs to receive", () =>
+    assert.ok(nadiaCandidate.netPayableMinor > 0n)
+  );
+
+  const advanceBatch = await runPayoutBatch(db, {
+    tenantId: "t-369",
+    asOf: new Date("2026-06-01T00:00:00Z"),
+    executor: new FixtureTransferExecutor(),
+  });
+  check("the run completes with the advance in play", () => assert.ok(advanceBatch.batchId));
+
+  const afterRun = await listAdvances(db, "t-369", {});
+  const nadiaAfter = afterRun.find((row) => row.contributorId === "c-advance")!;
+  check("the advance is paid down by what was recouped", () => {
+    assert.equal(nadiaAfter.recoupedMinor, 10000n);
+    assert.equal(nadiaAfter.outstandingMinor, 40000n);
+  });
+
+  /**
+   * ⚠️ THE CONTRIBUTOR MUST BE ABLE TO SEE IT. Money leaving a balance with no
+   * line explaining it is exactly the silence this product exists to remove.
+   */
+  const recoupEntries = await db
+    .select()
+    .from(schema.ledgerEntries)
+    .where(
+      and(
+        eq(schema.ledgerEntries.tenantId, "t-369"),
+        eq(schema.ledgerEntries.contributorId, "c-advance"),
+        eq(schema.ledgerEntries.entryType, "advance_recoupment")
+      )
+    );
+
+  check("the recoupment is a ledger line, with a readable description", () => {
+    assert.equal(recoupEntries.length, 1);
+    assert.equal(recoupEntries[0].amountMinor, -10000n);
+    assert.ok((recoupEntries[0].description ?? "").length > 0);
+  });
+  check("the recoupment line references the advance it paid down", () =>
+    assert.equal(recoupEntries[0].advanceId, advanceId)
+  );
+
+  const nadiaBalance = await deriveContributorBalance(db, "t-369", "c-advance");
+  check("their balance reflects both the payout and the recoupment", () =>
+    assert.equal(nadiaBalance, 0n)
+  );
+
+  // Closing an advance the business decides not to chase.
+  await closeAdvance(db, {
+    tenantId: "t-369",
+    advanceId,
+    status: "written_off",
+    note: "Project cancelled, not chasing it",
+    closedBy: advanceActor.id,
+  });
+
+  const closed = await listAdvances(db, "t-369", { includeClosed: true });
+  const nadiaClosed = closed.find((row) => row.id === advanceId)!;
+  check("an advance can be written off, with a reason on the record", () => {
+    assert.equal(nadiaClosed.status, "written_off");
+    assert.ok(nadiaClosed.closeNote);
+    assert.ok(nadiaClosed.closedAt);
+  });
+
+  const openOnly = await listAdvances(db, "t-369", {});
+  check("a closed advance drops out of the default list", () =>
+    assert.ok(!openOnly.some((r) => r.id === advanceId))
+  );
+
+  // Earn again — a written-off advance must stop taking money.
+  await db.insert(schema.ledgerEntries).values({
+    tenantId: "t-369", contributorId: "c-advance", entryType: "allocation",
+    amountMinor: 15000n, currency: "USD", availableAt: null,
+    occurredAt: new Date("2026-07-01T00:00:00Z"),
+  });
+
+  const afterWriteOff = await selectPayoutCandidates(db, "t-369", new Date("2026-08-01T00:00:00Z"));
+  const nadiaNow = afterWriteOff.find((c) => c.contributorId === "c-advance")!;
+  check("a written-off advance takes nothing more", () => {
+    assert.equal(nadiaNow.recoupment.totalMinor, 0n);
+    assert.equal(nadiaNow.netPayableMinor, 15000n);
+  });
+
+  // Cross-tenant: an advance belongs to one business only.
+  await assert.rejects(
+    () =>
+      createAdvance(db, {
+        tenantId: "t-press",
+        contributorId: "c-advance",
+        amountMinor: 10000n,
+        currency: "USD",
+        recoupmentBasisPoints: 5000,
+        issuedAt: new Date(),
+      }),
+    // "Unknown contributor" rather than "not in this business" on purpose: the
+    // second phrasing would confirm the person exists somewhere else.
+    /Unknown contributor/
+  );
+  check("one business cannot record an advance against another's person", async () => {});
 
   console.log(`\nAll ${results.length} end-to-end checks passed against real Postgres.`);
   console.log(`Alice final balance: ${formatMoney(await deriveContributorBalance(db, "t-369", "c-alice"))}`);

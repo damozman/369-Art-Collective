@@ -70,6 +70,7 @@ import { PeopleEditor } from "./people-editor";
 import { WorksTab } from "./works-editor";
 import { SettingsTab } from "./settings-editor";
 import { AuditTab } from "./audit-log";
+import { AdvancesTab } from "./advances-tab";
 import { ImportTab } from "./import-tab";
 import { BillingTab } from "./billing-tab";
 import { TaxTab } from "./tax-tab";
@@ -173,6 +174,7 @@ export function AdminConsole({
             <TabsTrigger value="rules" data-testid="tab-rules">Rates</TabsTrigger>
             <TabsTrigger value="import" data-testid="tab-import">Import</TabsTrigger>
             <TabsTrigger value="history" data-testid="tab-history">History</TabsTrigger>
+            <TabsTrigger value="advances" data-testid="tab-advances">Advances</TabsTrigger>
             <TabsTrigger value="tax" data-testid="tab-tax">Tax</TabsTrigger>
             <TabsTrigger value="audit" data-testid="tab-audit">Changes</TabsTrigger>
             <TabsTrigger value="settings" data-testid="tab-settings">Settings</TabsTrigger>
@@ -215,6 +217,10 @@ export function AdminConsole({
             {/* No `canWrite` — the report is read-only, and a lapsed trial must
                 still be able to get the figures for money that already moved. */}
             <TaxTab slug={slug} />
+          </TabsContent>
+
+          <TabsContent value="advances" className="mt-4">
+            <AdvancesTab slug={slug} currency={currency} canWrite={me.role === "admin"} />
           </TabsContent>
 
           <TabsContent value="audit" className="mt-4">

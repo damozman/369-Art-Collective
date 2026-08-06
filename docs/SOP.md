@@ -699,6 +699,41 @@ here's who changed it" ends a conversation that would otherwise go in circles.
 
 ---
 
+## 6g. Advances — paying somebody before they earn it
+
+If you pay an artist, author or musician money up front against future earnings,
+record it under **Advances**. The system then takes it back out of what they earn
+afterwards, automatically, and stops the moment it is clear.
+
+**The number you set is the share of their earnings that goes to clearing it**,
+not the share of the advance. At 100%, everything they earn goes to the advance
+until it is paid off. At 50%, they keep half while it clears — which is usually
+the point, because somebody who sees nothing for six months tends to lose
+interest.
+
+Three things worth knowing:
+
+- **Recording an advance changes nothing today.** It does not move money and does
+  not put anyone into debt on screen. It starts working from their next payment.
+- **They can see it.** The recoupment shows on their own statement as a line with
+  an explanation, so money never leaves their balance unexplained.
+- **You cannot edit the amount or the rate afterwards.** Those are the terms of a
+  deal you struck, and changing them later would quietly rewrite what somebody has
+  already had taken. If one is wrong, cancel it and record a new one.
+
+**Closing one.** If you decide not to chase an advance, close it — write it off,
+or cancel it if nothing has been recovered yet. Either way it stops taking money
+from future payments, and anything already recovered stays recovered. You are
+asked for a reason, and it goes on the record.
+
+⚠️ **One thing to check with a real contract.** If somebody has two advances at
+different rates, the system takes the higher of the two. That honours the stricter
+of the two agreements you made, which seems right — but it is a judgement, not a
+rule from anywhere. Worth confirming against a real publishing or music contract
+before you sell into those industries.
+
+---
+
 ## 7. The things waiting on you
 
 None of these go faster by building faster. They all wait on other people.

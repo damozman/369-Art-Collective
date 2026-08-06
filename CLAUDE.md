@@ -176,7 +176,7 @@ Both were resolved in step 5.)
   (`server/engine/payout-account.ts`, Account Links + status read back from Stripe),
   **billing** (plans, trials, usage counting, annual, the Stripe charging seam,
   self-serve signup at `/signup`) and **email** (`server/engine/email/`).
-- **446 unit tests · 289 end-to-end checks against real Postgres.** Every screen has
+- **471 unit tests · 303 end-to-end checks against real Postgres.** Every screen has
   been driven in a real browser, and the webhook endpoint over real HTTP.
 - **Money has still never moved, and no live store is connected.** Both adapters are
   written and proven against fixtures; neither has credentials. `getTransferExecutor`
@@ -650,6 +650,38 @@ request mails somebody who may not have asked.
 built from a client-controlled `Host` header, which would turn this endpoint
 into a credential harvester sending mail from our own domain.
 
+### Advances — BUILT, tests and screen, 2026-08-03
+
+`server/engine/advance.ts` + an Advances tab. §10b said this would need a new
+table and a payout-time step rather than a change to the rules engine, and that
+is exactly what it is. Four things are load-bearing:
+
+1. **⚠️ AN ADVANCE IS NOT A NEGATIVE LEDGER BALANCE.** The obvious
+   implementation — write a negative entry and let `derivePayable`'s floor do
+   the work — can only ever express **100%** recoupment. Real deals routinely
+   recoup at less, specifically so the contributor keeps seeing money and does
+   not walk away, so the recoupable balance lives *beside* the ledger balance.
+   An e2e check asserts that recording an advance does not move anyone's
+   balance.
+2. **The capping rate is ONE rate applied ONCE, and it is the highest.** Two
+   advances at 60% must not between them take 120% of a payment. Summing is
+   wrong; taking the lowest silently overrides the stricter clause the tenant
+   agreed to. Highest-wins honours it and can never exceed 100%. **This is the
+   place a design partner's paperwork should be checked against what we built.**
+3. **Recoupment applies to what is PAYABLE, not what was earned.** Held earnings
+   inside the refund window are untouched, so a refund never has to unwind a
+   recoupment — an advance balance that moves backwards is a support ticket.
+4. **The contributor sees it.** `advance_recoupment` is a ledger entry type and
+   appears on their statement. Money leaving a balance with no line explaining
+   it is the exact silence this product exists to remove.
+
+The screen offers no delete and no editing of the amount or rate: those are the
+terms of a deal that was struck, and changing them retroactively would rewrite
+what somebody has already had taken. A wrong advance is cancelled and
+re-recorded. **Cancel is only offered while nothing has been recouped** —
+afterwards the contributor really did have money withheld, and "this never
+happened" would contradict their own statement.
+
 ### The Changes tab — BUILT. The audit log, made readable
 
 `admin-query.ts` (`listAuditLog`, `listAuditActions`) plus
@@ -841,8 +873,8 @@ The portal UI, which is the engine's surface rather than the marketplace's:
 | `client/src/lib/portal-date.ts` | UTC date formatting (see below for why) |
 
 ```bash
-npm test              # 446 unit tests, no network, no database
-npm run test:e2e      # 289 checks against a real Postgres (needs DATABASE_URL)
+npm test              # 471 unit tests, no network, no database
+npm run test:e2e      # 303 checks against a real Postgres (needs DATABASE_URL)
 npm run seed:demo     # realistic demo data; prints the sign-ins
 npm run db:push:engine
 npm run printify:costs -- --fixture   # local only, needs real credentials
@@ -1021,42 +1053,17 @@ previous session) was that CSV import was worth doing and advances were not.
 **If that has changed, say so** — nothing about the importer constrains what
 comes next.
 
-**⚠️ ADVANCES (§10b) NOW EXIST AS BACKEND-ONLY, UNTESTED WORK IN PROGRESS, AND
-THE USER HAS NOT AGREED TO THEM.** Read this before touching anything advance-
-shaped.
+**Advances (§10b) are now FINISHED — tests and a screen, 2026-08-03.** They were
+found half-built and uncommitted at the start of that session; the user was told
+plainly, and chose to finish rather than shelve or revert: *"I still think I have
+some opportunity, but I would need to be able to show it off."* Demonstrability
+was the reason, so the screen was the point.
 
-`server/engine/advance.ts` (586 lines) plus a schema table, a payout-time
-recoupment step, a ledger entry type and tax-report integration were found
-**uncommitted on disk** at the start of the 2026-08-03 session, left behind by a
-session whose context did not survive. They were committed rather than discarded
-because the container is ephemeral and uncommitted work is lost — a commit is
-reversible, deletion is not.
-
-What is true about it:
-
-- It compiles, and it breaks nothing: 446 unit tests and 289 e2e checks pass
-  with it in place. Six mechanical type errors were fixed to get there (a
-  missing `inArray` import, null-safe first/last-paid dates now that a
-  contributor can have an advance and no payouts, and the statement line union
-  widened to include `advance_recoupment`).
-- **It has ZERO tests of its own and NO screen.** Nothing in the console can
-  create, view or close an advance. It is reachable only through the API.
-- Its design is documented at length in its own header — seven decisions,
-  including the load-bearing one that an advance is NOT a negative ledger
-  balance (a deficit can only express 100% recoupment, and real deals routinely
-  recoup at less).
-
-**The user's recorded position is that advances should wait** until a real
-publishing or music deal can be seen, so the shape is drawn from a real
-structure rather than guessed. That position has not been revisited. **Ask
-before building on this.** The three live options are: finish it (tests + a
-screen), leave it dormant as-is, or revert it — `git revert` of the commit
-titled "wip(advances)" removes it cleanly.
-
-Note the header of `advance.ts` names its own weakest point: with several
-advances at different rates, recoupment takes the HIGHEST rate. That is a
-genuine ambiguity only a real contract can settle, and it is exactly what a
-design-partner conversation is for.
+See "Advances" below for the four things that are load-bearing. The one that
+still wants a real contract: with several advances at different rates,
+recoupment takes the HIGHEST. That is a genuine ambiguity §10b predicted, it is
+covered by a test that names it as a judgement call, and it is the single best
+question to put to a publishing or music design partner.
 
 Also open and outside the numbered order: the **connect-a-store screen**, which
 waits on the Shopify Partner account.
@@ -1099,12 +1106,12 @@ makes the product correct and operable, and say so in those terms.
 
 **Verify the state before changing anything:**
 ```bash
-npm test          # 446 unit tests — no network, no database
+npm test          # 471 unit tests — no network, no database
 npx tsc --noEmit  # must be clean
 npm run build     # must pass
 ```
 
-For the end-to-end run (289 checks against real Postgres) start the local database
+For the end-to-end run (303 checks against real Postgres) start the local database
 first — see "Running the app in a cloud sandbox" below, then:
 ```bash
 DATABASE_URL=postgres://postgres@127.0.0.1:55432/art369 npm run test:e2e

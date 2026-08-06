@@ -169,16 +169,104 @@ gets harder and should be had properly.
 
 ---
 
-## The one research task this does not replace
+## ✅ The negative reviews — READ 2026-08-06. The best material we have
 
-Track A item 3 asks for something this summary cannot give: **what the one-star
-reviews say.** Pricing tables describe what a product claims; angry reviews
-describe where it actually fails. That is what should set our price and our
-listing copy, and it is an afternoon's work.
+Supplied by the user from CollabPay's own listing. **This is verified, first-hand,
+and it changes the positioning more than the pricing table did.**
 
-Specifically worth extracting from CollabPay's negative reviews:
+### The numbers
 
-- Does anything go wrong with refunds?
-- Do creators dispute the numbers, and can the merchant answer them?
-- Does it break at any particular scale?
-- What do people say when they leave for something else?
+25 reviews: 21×5★, 1×4★, 1×3★, 1×2★, 1×1★.
+
+**That distribution averages 4.6, but the listing displays 3.5.** The discrepancy
+is unexplained and is noted rather than resolved — possibly a different
+aggregation window, possibly recency weighting. **Do not quote either figure as
+fact.** What matters here is not the average: it is that **84% are five-star, so
+this is not a broken product.** It is a working product with a narrow, expensive
+failure mode and thin support. Positioning against it as "bad software" would be
+wrong and would not survive a prospect actually trying it.
+
+### The three negatives, in full
+
+| Rating | Who | Tenure | The complaint |
+|---|---|---|---|
+| 1★ | Geometry Wholesale (US) | **13 days** | 50+ collaborators, **highest tier**. Same issue reported repeatedly, a different support person each time, never resolved. Told their support emails "got lost". |
+| 3★ | Matik Design (Australia) | 27 days | Setup "quite tricky", UI needs work. **PayPal payouts are not automatic** — you must contact PayPal and be approved, and this is not stated up front. Stripe "extremely complicated to set up". Currency conversion wrong. |
+| 2★ | Science Collective (Canada) | 9 months | CAD shop paying a USD collaborator. **The app calculated in CAD and paid out in USD without converting — resulting in overpayment.** Support did not help, then ignored follow-ups, then replied defensively once the review appeared. |
+
+### Four things this establishes
+
+**1. The top complaint is support, not features.** Two of the three are primarily
+about nobody answering. That is an operational weakness, and it is the one kind of
+advantage a small operation can actually take — *by answering email*. It costs no
+engineering and cannot be copied by shipping a feature. It is also the easiest
+thing in the world to lose the moment we have twenty customers, so if it becomes
+part of the pitch it has to be resourced, not just promised.
+
+**2. Currency is their recurring product defect, and in Canada it caused
+OVERPAYMENT.** Two independent reviewers, different countries, months apart. This
+is the exact failure our standing rule names as unrecoverable: *not paying is
+recoverable, overpaying is not*. The merchant sent real money they cannot get
+back, and support went quiet.
+
+**We checked ourselves against this on the same day and we do not have it.** There
+is no currency conversion anywhere in the engine: balances are grouped by
+`(contributor, currency)`, advances are filtered to the matching currency, the
+rules engine refuses to mix via `assertSameCurrency`, and a payout carries the
+ledger row's own currency straight through to Stripe. It cannot compute in one
+currency and pay in another because it never converts at all.
+
+⚠️ **That is not the same as "we support multi-currency", and the distinction must
+not blur in marketing copy.** Ratified decision #6 is USD-only for Phase 1, and we
+have two real gaps of our own — a single minimum-payout threshold applied across
+every currency, and no currency symbol for anything but USD. Both are recorded in
+`docs/WHATS-LEFT.md`. Neither can overpay anybody. **The honest claim is
+"structurally incapable of paying the wrong currency", not "handles your
+currency".** Claiming the second would earn us the same review.
+
+**3. Connecting the payout rails is where customers get stuck.** PayPal mass
+payouts need separate approval nobody warns them about; Stripe setup is "extremely
+complicated". This is precisely what `server/engine/payout-account.ts` exists for —
+hosted Account Links, status read back from Stripe rather than assumed. **It should
+be demonstrated, not described**, and the listing should state plainly what a
+contributor has to do and how long it takes.
+
+**4. The 1★ was their highest-paying customer and churned in 13 days.** 50+
+collaborators on the top plan — the same profile that would pay us our top tier.
+Whatever the underlying issue was, it was fatal inside two weeks at the exact size
+where this software stops being a convenience.
+
+### What the reviews do NOT settle
+
+- **Refunds after payout.** Nobody mentions one. Still our strongest hypothesis
+  and still untested — no evidence either way.
+- **Whether contributors dispute the numbers.** No review touches it, so the
+  stored-derivation argument remains unproven as a felt pain rather than a
+  theoretical one.
+- **Scale limits.** The 1★ is suggestive at 50+ collaborators but the actual
+  issue is never named.
+
+### What this is worth to the listing copy
+
+Three claims that are now evidence-backed rather than guessed, and each is
+defensible because it is narrow:
+
+1. Payments are computed and paid in the currency they were earned in, and the
+   system never converts — so it cannot pay the wrong amount in the wrong money.
+2. Every payment shows the sale, the costs, the rule and its version, and the
+   arithmetic — so a contributor asking "why is this number this?" is answered on
+   screen instead of by email.
+3. Setting up the payout account is a hosted flow, and the status comes from
+   Stripe rather than from having finished a form.
+
+**None of those is "we are cheaper" and none is "they are bad."** That is
+deliberate: 21 of 25 customers are happy, and a pitch that contradicts a
+prospect's own trial is worse than no pitch.
+
+---
+
+## The one research task still open
+
+The reviews are done. What remains from Track A item 3 is the **pricing check** —
+open the listing and read the real numbers, because everything in the pricing
+tables above is still an unverified AI summary.

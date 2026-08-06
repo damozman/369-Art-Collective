@@ -111,7 +111,29 @@ Everything left in this group waits on somebody else.
 |---|---|
 | ~~Email~~ | **Built.** Artists are told when they are paid; you are told about trials, failed payments and stuck sales. Needs a Resend key to send. |
 | ~~1099 export~~ | **Built.** What you paid each person in a year, on screen and as a spreadsheet. Stripe still issues the forms. |
-| **Multi-currency** | USD only by decision. Fine until a non-US customer appears. |
+| **Multi-currency** | USD only by decision. **Upgraded in importance 2026-08-06** — this is the single most common product complaint in CollabPay's negative reviews, and in one case it caused an *overpayment*. See `docs/COMPETITORS.md`. Two specific gaps on our side are listed below; neither is the bug they have. |
+
+**The two multi-currency gaps in our own code**, found by checking ourselves
+against those reviews on 2026-08-06. Both are real, neither is urgent, and
+**neither can overpay anyone** — recording them so they are not rediscovered as
+a surprise:
+
+1. **The minimum payout is one number for every currency.** `selectPayoutCandidates`
+   compares `tenant.minimumPayoutMinor` against each contributor's balance
+   *whatever currency that balance is in*, so a $25 minimum also means 25 CAD and
+   25 GBP. It can only ever **delay** a payout, never inflate one, which is why
+   it is documented rather than hot-fixed. The honest fix is per-currency minimums,
+   which is a schema change and should wait for a customer who needs it.
+2. **`formatMoney` prints no symbol for anything but USD.** A CAD amount renders
+   as a bare `1,234.56`. Wrong-looking rather than wrong, but on a payments screen
+   an unlabelled number is exactly the kind of thing a contributor disputes.
+
+**What we do NOT have is their bug.** Ledger balances are grouped by
+`(contributor, currency)`, advances are filtered to the matching currency, the
+rules engine throws via `assertSameCurrency` rather than mixing, and the payout
+carries the ledger row's own currency straight through to Stripe. There is **no
+currency conversion anywhere in the engine** — which is precisely why it cannot
+compute in one currency and pay in another.
 
 ### Group 4 — Opens new markets
 

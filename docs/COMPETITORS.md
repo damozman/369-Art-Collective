@@ -3,15 +3,16 @@
 The first real market data this project has had. Written 2026-08-03.
 **Partially verified 2026-08-06** — see the two boxes below.
 
-> ## ⚠️ STILL UNVERIFIED: EVERY PRICE IN THIS FILE
+> ## ⚠️ STILL UNVERIFIED: EVERY PRICE EXCEPT CollabPay's
 >
 > The pricing tables came from an AI-generated summary the user pasted in, not
-> from reading the listings. **Treat every number as a claim, not a fact.** The
-> figures are load-bearing enough that acting on them without checking would be
-> a mistake.
+> from reading the listings. **Treat every number as a claim, not a fact** —
+> except CollabPay's, which was verified 2026-08-15 from screenshots of their
+> own pricing page and turned out to be exactly right.
 >
-> **Verify before use:** open each app's Shopify App Store listing and read its
-> own pricing page. Then correct the tables here and note the date.
+> Puppet Vendors, UpPromote, Refersion and the rest are still summary-derived.
+> **Verify before use:** open each app's listing and read its own pricing page.
+> Then correct the tables here and note the date.
 
 > ## ✅ VERIFIED 2026-08-06 — CollabPay's own marketing material
 >
@@ -54,27 +55,66 @@ throughout this project as the differentiator. If CollabPay ships a creator
 dashboard, the differentiator is not "we show the artist something" — it is
 *what* we show them, which is the full derivation of every number.
 
-### Reported pricing
+### Verified pricing (2026-08-15, from their own pricing page)
 
-| Tier | Price | Bound |
-|---|---|---|
-| Basic | $19/mo | up to 3 collaborators |
-| Essential | $39/mo | up to 10 |
-| Premium | $59/mo | up to 50 |
-| Plus | $79/mo | unlimited |
+The summary was **exactly right on every number**. Recorded so the next reader
+knows the figures below are first-hand, not inferred.
 
-14-day trial. Gateway fees separate.
+| Tier | Monthly | Annual | Collaborators |
+|---|---|---|---|
+| Basic | $19 | $190 | 3 |
+| Essential | $39 | $390 | 10 |
+| Premium ← *"Most popular"* | $59 | $590 | 50 |
+| Plus | $79 | $790 | unlimited |
+
+14-day free trial on all plans. Annual is 10× monthly — "two months free", the
+same discount shape we independently chose (`ANNUAL_MONTHS_CHARGED = 10n`). All
+prices USD. Gateway fees separate.
+
+### The thing the summary missed: they gate features, we don't
+
+This is the finding that actually matters, and no summary would have surfaced it.
+
+| Feature | Basic $19 | Essential $39 | Premium $59 | Plus $79 |
+|---|---|---|---|---|
+| Collaborators | 3 | 10 | 50 | unlimited |
+| Unlimited payouts/month | ✅ | ✅ | ✅ | ✅ |
+| White label | ❌ | ❌ | ✅ | ✅ |
+| API access | ❌ | ❌ | ✅ | ✅ |
+| Advanced payouts | ❌ | ❌ | ✅ | ✅ |
+| Integrate with multiple platforms | ❌ | ❌ | ✅ | ✅ |
+
+**Basic and Essential are the same product with different seat counts.**
+Everything beyond "split it and pay them" starts at $59.
+
+We have no feature gating at all — every plan is the whole engine, bounded only
+by people paid in a month. That was never a positioning decision; it fell out of
+`plans.ts` having one limit and no flags. It is now a differentiator worth
+stating: their $39 customer cannot reach an API or run more than one platform.
 
 ### What that means against our §12 placeholders
 
-| People | CollabPay | Us | Multiple |
-|---|---|---|---|
-| ~10 | $39 | **$49** | 1.3× |
-| ~50 | $59 | **$99** | 1.7× |
-| 200 / unlimited | $79 | **$199** | 2.5× |
+The old comparison in this file put our $49 against their $39 and called it
+1.3×. That compared unlike things. Two comparisons, both honest:
 
-**We are more expensive at every tier and the gap widens with size.** Their
-unlimited tier undercuts our 200-person tier by $120/month.
+**At feature parity** — against Premium, their cheapest tier with API access,
+white label and multi-platform:
+
+| People | CollabPay | Us | |
+|---|---|---|---|
+| ~10 | $59 (Premium) | **$49** (Starter) | **we undercut by $10** |
+| ~50 | $59 (Premium) | **$99** (Growth) | 1.7× |
+| 200 | $79 (Plus) | **$199** (Scale) | 2.5× |
+
+**At the price a small prospect actually sees** — if they don't need the gated
+features, they compare our $49 to their $39, and we are 1.3× dearer.
+
+So the shape of the problem has changed:
+
+- **At the small end we are no longer clearly more expensive.** A 10-person shop
+  that wants an API pays them $59 and us $49.
+- **At the top end the gap is worse than it looked**, because their $79 Plus is
+  unlimited *and* fully featured. $79 against our $199 is the real fight.
 
 This does **not** automatically mean our numbers are wrong. It means they now
 need defending against a visible cheaper anchor, which is a different sales
@@ -265,8 +305,20 @@ prospect's own trial is worse than no pitch.
 
 ---
 
-## The one research task still open
+## Research status
 
-The reviews are done. What remains from Track A item 3 is the **pricing check** —
-open the listing and read the real numbers, because everything in the pricing
-tables above is still an unverified AI summary.
+**Track A item 3 is now done for CollabPay.** Reviews read (2026-08-06), pricing
+verified from their own page (2026-08-15). The summary's numbers were right; what
+it missed was the feature gating, which changed the comparison more than any
+number did.
+
+**Still open:** every other vendor's pricing — Puppet Vendors, UpPromote,
+Refersion — is still an unverified AI summary. Puppet Vendors matters most,
+because the claim that our $49/$99/$199 sits mid-market rather than high rests
+on their reported $49/$119/$249. If that is wrong, the mid-market argument goes
+with it.
+
+**Still deferred:** the pricing decision itself (user, 2026-08-03: *"wait for
+now, I'll do some research"*). The research now says our top tier is the exposed
+one — $199 against a fully-featured unlimited $79 — and our entry tier is
+stronger than we thought.

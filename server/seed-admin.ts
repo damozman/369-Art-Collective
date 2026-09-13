@@ -8,16 +8,29 @@ const ADMIN_BOOTSTRAP_SECRET = process.env.ADMIN_BOOTSTRAP_SECRET;
 async function createAdmin() {
   const baseUrl = `http://localhost:${process.env.PORT || 5000}`;
 
+  // ⚠️ The password comes from the environment and is NEVER hardcoded or
+  // logged. This file used to carry a weak literal password in tracked source
+  // and print it to stdout — a weak, published credential for an admin account,
+  // readable by anyone with repository access and preserved in every old commit.
+  //
+  // This script is a one-off that nothing imports, so the exposure was smaller
+  // than the leaks in the live auth path, but the fix is the same and costs
+  // nothing.
+  const password = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+  if (!password) {
+    console.error("❌ Set ADMIN_BOOTSTRAP_PASSWORD to the password you want this admin to have.");
+    process.exit(1);
+  }
+
   const adminData = {
-    email: "admin@example.com",
+    email: process.env.ADMIN_BOOTSTRAP_EMAIL ?? "admin@example.com",
     name: "Admin User",
-    password: "admin123",
+    password,
   };
 
   console.log("Creating admin account...");
   console.log(`Email: ${adminData.email}`);
-  console.log(`Password: ${adminData.password}`);
-  console.log("\n⚠️  IMPORTANT: Change these credentials after first login!\n");
+  console.log("\n⚠️  IMPORTANT: Change this password after first login!\n");
 
   if (!ADMIN_BOOTSTRAP_SECRET) {
     console.error("❌ Error: ADMIN_BOOTSTRAP_SECRET environment variable not set");

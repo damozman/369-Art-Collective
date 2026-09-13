@@ -57,46 +57,39 @@ app.use(express.json({
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// Debug: Log incoming cookies to diagnose session cookie transmission
-app.use((req, _res, next) => {
-  if (req.path.startsWith('/api/')) {
-    console.log('[DEBUG][COOKIES] Request to', req.path, {
-      cookieHeader: req.headers.cookie,
-      parsedCookies: req.cookies,
-      sessionID: req.sessionID,
-      hasSessionUser: !!req.session?.user
-    });
-  }
-  next();
-});
+// A debug middleware here used to log `req.headers.cookie`, `req.cookies` and
+// `req.sessionID` on every /api/ request, to diagnose session transmission.
+//
+// ⚠️ NEVER REINSTATE IT. A session cookie is a bearer credential: whoever holds
+// it *is* that user until it expires, with no password involved. Writing one to
+// stdout turns anywhere logs are visible — a hosting dashboard, a shipped log
+// drain, a support screenshare — into account takeover.
+//
+// If cookie transmission ever needs diagnosing again, log PRESENCE and never the
+// value: `console.log('[cookies]', req.path, { hasCookie: !!req.headers.cookie })`.
 
 // Affiliate tracking middleware - captures ?ref= parameter and sets cookies
 app.use(affiliateTrackingMiddleware);
 
+// Request logging: method, path, status and duration. Nothing else.
+//
+// ⚠️ THE RESPONSE BODY IS NEVER LOGGED. This used to append the serialised JSON
+// response, truncated to 79 characters — but truncation caps how MUCH leaks, not
+// WHAT. Several responses carry credentials in their opening characters: the
+// Stripe Connect onboarding link (`{"url":"https://connect.stripe.com/setup/e/..."}`)
+// is single-use and grants access to an artist's payout onboarding, and any
+// future token-bearing response would be captured the same way.
+//
+// When one endpoint genuinely needs tracing, trace inside that handler through
+// `server/lib/secure-logger.ts`, which redacts known-sensitive fields.
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
 
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
+      log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
     }
   });
 

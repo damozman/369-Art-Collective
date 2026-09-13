@@ -1148,20 +1148,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             return res.status(500).json({ message: "Login failed" });
           }
 
-          console.log("[DEBUG][LOGIN] Session saved successfully:", {
-            sessionID: req.sessionID,
-            userInSession: req.session.user,
+          // ⚠️ THIS BLOCK USED TO LOG THE SESSION ITSELF. It printed
+          // `req.sessionID`, and on response `res.getHeader('set-cookie')` plus
+          // every response header — the freshly minted session cookie, written
+          // to stdout on every successful login, ready to replay.
+          //
+          // Anyone able to read these logs could sign in as that artist without
+          // their password. Never log a session id, a Set-Cookie header, or a
+          // full header dump. Cookie configuration is diagnosable without them:
+          // log the flags, never the value.
+          console.log("[login] artist session established", {
             cookieSecure: req.session.cookie.secure,
-            cookieSameSite: req.session.cookie.sameSite
-          });
-
-          // Log response headers to debug cookie delivery
-          res.once('finish', () => {
-            console.log("[DEBUG][LOGIN] Response headers sent:", {
-              sessionID: req.sessionID,
-              setCookie: res.getHeader('set-cookie'),
-              allHeaders: res.getHeaders()
-            });
+            cookieSameSite: req.session.cookie.sameSite,
           });
 
           const { password: _, ...artistData} = artist;

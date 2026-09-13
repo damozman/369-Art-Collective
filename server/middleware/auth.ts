@@ -26,14 +26,17 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 export async function requireArtist(req: Request, res: Response, next: NextFunction) {
-  console.log("[DEBUG][AUTH] requireArtist middleware:", {
-    path: req.path,
-    sessionID: req.sessionID,
-    hasSession: !!req.session,
-    sessionUser: req.session?.user,
-    sessionKeys: req.session ? Object.keys(req.session) : [],
-    cookie: req.headers.cookie
-  });
+  // ⚠️ A raw `console.log` here printed `req.sessionID` and the full `Cookie`
+  // header on EVERY artist-gated request — the highest-volume credential leak in
+  // this codebase, since it fired on every page load of a signed-in artist.
+  //
+  // The irony worth remembering: `safeContext` below was already computed, three
+  // lines away, precisely to be the redacted thing that gets logged. And
+  // `secureLog` already redacts `sessionID`, `cookie` and `token` by name. The
+  // leak was a raw `console.log` routed straight around both.
+  //
+  // Prefer `secureLog` over `console.log` anywhere near auth, and log presence
+  // rather than values.
 
   const safeContext = {
     path: req.path,
